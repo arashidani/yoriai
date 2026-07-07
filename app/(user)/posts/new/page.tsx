@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Typography from '@mui/material/Typography'
 import { PostForm } from '@/components/posts/post-form'
 import { client } from '@/lib/hono/client'
 import type { CreatePostInput } from '@/lib/schemas/post'
@@ -17,7 +18,9 @@ export default function NewPostPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">質問を投稿する</h1>
+      <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', mb: 3 }}>
+        質問を投稿する
+      </Typography>
       <PostForm onSubmit={handleSubmit} />
     </div>
   )
