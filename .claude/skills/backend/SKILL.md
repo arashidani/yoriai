@@ -202,13 +202,15 @@ await prisma.post.delete({ where: { id } })
 | `import ... from '@/app/generated/prisma'` | `import ... from '@/app/generated/prisma/client'` |
 | `previewFeatures = ["driverAdapters"]` | 不要（Prisma 7 で stable） |
 
-### スキーマ変更の手順
+### スキーマ変更・マイグレーションの手順
+
+詳細手順（コマンド早見表、本番デプロイ、Supabaseのpooled/direct接続の使い分けなど）は [migration skill](../migration/SKILL.md) を参照。
 
 ```bash
 # 1. prisma/schema.prisma を編集
-# 2. マイグレーション作成
+# 2. マイグレーション作成+適用
 npx prisma migrate dev --name <変更内容>
-# 3. クライアント再生成（migrate dev が自動でやるが念のため）
+# 3. クライアント再生成（Prisma 7では自動実行されないので必須）
 npx prisma generate
 ```
 
