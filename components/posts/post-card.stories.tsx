@@ -36,10 +36,11 @@ export const Default: Story = {
 export const CssCheck: Story = {
   args: { post: basePost },
   play: async ({ canvas }) => {
-    const card = canvas.getByText(/Next\.js App Router/).closest('a')
-    await expect(card).toBeVisible()
-    // Card uses border — verify global CSS loaded
-    const cardEl = canvas.getByText(/Next\.js App Router/).closest('[class*="card"]') as HTMLElement
+    // CardActionArea renders an anchor via Next.js Link
+    const link = canvas.getByText(/Next\.js App Router/).closest('a')
+    await expect(link).toBeVisible()
+    // Verify MUI theme/styles loaded — card root carries the MUI class
+    const cardEl = canvas.getByText(/Next\.js App Router/).closest('.MuiCard-root') as HTMLElement
     await expect(cardEl).toBeVisible()
   },
 }

@@ -1,3 +1,4 @@
+import Typography from '@mui/material/Typography'
 import { PostCard } from '@/components/posts/post-card'
 import { MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
@@ -15,9 +16,11 @@ export default async function HomePage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold mb-6">最新の質問</h1>
+      <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', mb: 3 }}>
+        最新の質問
+      </Typography>
       {posts.length === 0 ? (
-        <p className="text-muted-foreground">まだ質問がありません。</p>
+        <Typography color="text.secondary">まだ質問がありません。</Typography>
       ) : (
         <div className="grid gap-4">
           {posts.map((post) => (
