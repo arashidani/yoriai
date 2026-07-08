@@ -1,11 +1,12 @@
 'use client'
 
-import { useForm, Controller } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import TextField from '@mui/material/TextField'
 import { createPostSchema, type CreatePostInput } from '@/lib/schemas/post'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 
 type PostFormProps = {
   onSubmit: (data: CreatePostInput) => Promise<void>
@@ -13,50 +14,44 @@ type PostFormProps = {
 }
 
 export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
-  const { control, handleSubmit } = useForm<CreatePostInput>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreatePostInput>({
     resolver: zodResolver(createPostSchema),
-    defaultValues: { title: '', body: '' },
   })
 
   return (
-    <Box
-      component="form"
-      onSubmit={handleSubmit(onSubmit)}
-      sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
-    >
-      <Controller
-        name="title"
-        control={control}
-        render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            label="タイトル"
-            placeholder="質問のタイトルを入力してください"
-            error={!!fieldState.error}
-            helperText={fieldState.error?.message}
-            fullWidth
-          />
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-2">
+        <Label htmlFor="title">タイトル</Label>
+        <Input
+          id="title"
+          placeholder="質問のタイトルを入力してください"
+          {...register('title')}
+          aria-invalid={!!errors.title}
+        />
+        {errors.title && (
+          <p className="text-sm text-destructive">{errors.title.message}</p>
         )}
-      />
-      <Controller
-        name="body"
-        control={control}
-        render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            label="本文"
-            placeholder="質問の詳細を入力してください"
-            multiline
-            minRows={8}
-            error={!!fieldState.error}
-            helperText={fieldState.error?.message}
-            fullWidth
-          />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="body">本文</Label>
+        <Textarea
+          id="body"
+          placeholder="質問の詳細を入力してください"
+          rows={8}
+          {...register('body')}
+          aria-invalid={!!errors.body}
+        />
+        {errors.body && (
+          <p className="text-sm text-destructive">{errors.body.message}</p>
         )}
-      />
-      <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ alignSelf: 'flex-start' }}>
+      </div>
+      <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? '送信中...' : '投稿する'}
       </Button>
-    </Box>
+    </form>
   )
 }
