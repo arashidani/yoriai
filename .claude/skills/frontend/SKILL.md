@@ -285,28 +285,63 @@ export const ServerError: Story = {
 
 ---
 
-## 7. デザインシステム（globals.css）
+## 7. デザインシステム（globals.css / Obra デザイントークン）
 
-**ルール: 色・角丸・フォントは Primitive 層（`--color-blue-500` など）を直接使わず、Semantic 層（`--color-primary` など）を使う。**
+**ルール: スタイルは必ず `app/globals.css` のデザイントークンを使う。生のカラースケール（`blue-500` など）や任意値（`bg-[#3b82f6]`）を直接書かない。**
 
-`app/globals.css` にトークンを2層で定義している:
+トークンは Figma の **Obra shadcn/ui kit (community edition 1.6.0)** の variables を移植したもので、shadcn の意味トークンへ 1:1 で対応している。Light/Dark は `:root` / `.dark` で値だけを切り替えるため、コンポーネント側のクラス指定は同じでよい。
 
-- Primitive 層: `--color-blue-500` のような生の値
-- Semantic 層: `--color-primary` のような役割ベースの値（Primitive を参照）
+### 使うトークン（意味トークン = shadcn 準拠）
 
-コンポーネント側では `bg-primary` `text-heading` `border-edge` のように Semantic 層由来のユーティリティを使う。ダークモードは `.dark` セレクタで Semantic 層の値だけを上書きしているため、コンポーネント側のクラス指定を変える必要はない。
+| 用途 | ユーティリティ |
+|---|---|
+| 背景 / 文字 | `bg-background` `text-foreground` |
+| カード | `bg-card` `text-card-foreground` |
+| ポップオーバー | `bg-popover` `text-popover-foreground` |
+| 主要アクション | `bg-primary` `text-primary-foreground` |
+| 副次アクション | `bg-secondary` `text-secondary-foreground` |
+| 補助 / 控えめ | `bg-muted` `text-muted-foreground` |
+| アクセント | `bg-accent` `text-accent-foreground` |
+| 破壊的操作 | `bg-destructive` `text-destructive-foreground`（テキストは `text-destructive`） |
+| 罫線 / 入力枠 / フォーカス | `border-border` `border-input` `ring-ring` |
+| グラフ | `text-chart-1` 〜 `text-chart-5`（`fill-*` / `stroke-*` も可） |
+| サイドバー | `bg-sidebar` `text-sidebar-foreground` `bg-sidebar-accent` … |
 
-**注意: Tailwind v4 では `theme()` 関数は非推奨方向。値の参照は `var(--color-*)` を素直に使う（`theme('colors.blue.500')` のような書き方はしない）。**
+### タイポグラフィ（Obra スケール）
+
+見出し・本文は Obra のテキストトークンを使う（size / line-height / letter-spacing / weight が同梱される）。
 
 ```tsx
-// ✅ Good: Semantic 層 + var()
-<div style={{ borderColor: 'var(--color-edge-focus)' }} className="bg-surface text-heading">
-
-// ❌ Bad: Primitive 層を直接コンポーネントで使う
-<div className="bg-[--color-blue-500]">
+<h1 className="text-heading-1">見出し</h1>       {/* heading-1〜4 */}
+<p className="text-paragraph">本文</p>            {/* paragraph-large / paragraph / -small / -mini */}
+<span className="text-caption">キャプション</span> {/* caption / monospaced */}
 ```
 
-**注意: `--spacing` は v4 では単一の基準値（デフォルト `0.25rem` = 4px）から `p-4` などのユーティリティが計算される方式。Figma 側の spacing スケールも「4px の倍数」ルールに揃えておくと、デザインと実装の値がズレない。**
+フォントファミリは `font-sans`（= Geist）/ `font-heading` / `font-mono`（= Geist Mono）。個別の `text-[15px]` などは使わない。
+
+### 角丸・シャドウ・余白
+
+- 角丸: `rounded-sm` / `-md` / `-lg` / `-xl`（`--radius` 基準で派生）
+- シャドウ: `shadow-2xs` 〜 `shadow-2xl`（Obra 準拠）
+- 余白: `--spacing`（`0.25rem` = 4px）基準で `p-4` `gap-2` などが生成される。Figma 側も「4px の倍数」に揃える
+
+### 注意
+
+- **Tailwind v4 では `theme()` 関数は使わない。** 素の値参照が必要なときだけ `var(--…)` を使う（`theme('colors.blue.500')` は書かない）。
+- 生のプリミティブ（`blue-500` `neutral-900` や `black-alpha-*`）は原則使わない。オーバーレイ等でどうしても必要な場合のみ `bg-black-alpha-50` などを使う。
+- 新しい役割の色が必要になったら、その場で任意値を書かず **`globals.css` にトークンを追加**してから使う。
+
+```tsx
+// ✅ Good: 意味トークン + Obra タイポトークン
+<div className="bg-card text-card-foreground rounded-lg border-border shadow-md">
+  <h2 className="text-heading-3">タイトル</h2>
+  <p className="text-paragraph text-muted-foreground">説明</p>
+</div>
+
+// ❌ Bad: 生スケール / 任意値 / 旧トークン
+<div className="bg-[#ffffff] text-gray-900 border-edge">
+<div className="bg-blue-500 text-[18px]">
+```
 
 ---
 
