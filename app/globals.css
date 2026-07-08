@@ -4,175 +4,227 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================================
+   Obra shadcn/ui kit (community edition 1.6.0) 準拠トークン
+   ------------------------------------------------------------
+   - 色プリミティブ（blue/neutral/red… 50-950）は Tailwind v4 の
+     組み込みパレットと同一値のため再定義せず、そのまま利用する
+     （bg-blue-500 等のユーティリティは標準で使える）。
+   - ここでは Obra の「意味トークン（semantic）」を shadcn の
+     CSS 変数へ 1:1 で対応させる。値は Obra のエイリアスを解決した
+     具体値（hex）。Light = Obra "shadcn" / Dark = "shadcn-dark"。
+   ============================================================ */
+
+/* ── shadcn トークン → Tailwind ユーティリティ ブリッジ ── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Fonts（Obra = Geist / Geist Mono、next/font 読み込み済み。日本語フォールバック付き） */
+  --font-sans: var(--font-geist-sans), "Noto Sans JP", sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-geist-sans), "Noto Sans JP", sans-serif;
+
+  /* Radius（Obra: --radius = 0.625rem を基準に shadcn 標準の段階派生） */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ============================================================
-   デザインシステム
-   shadcn/ui 生成分（@theme inline 上部）より後に書くことで、
-   同名トークン（--color-primary, --color-muted, --radius-* など）を上書きする。
-   ============================================================ */
-
-/* ── Primitive 層 ── */
+/* ── Obra アルファ系プリミティブ（Tailwind 標準に無いので定義） ──
+   overlay / ghost / outline 等で利用。bg-black-alpha-50 等のユーティリティにもなる。 */
 @theme {
-  /* Color primitives */
-  --color-blue-50:  #EFF6FF;
-  --color-blue-400: #60A5FA;
-  --color-blue-500: #3B82F6;
-  --color-blue-600: #2563EB;
-  --color-blue-900: #1E3A5F;
-  --color-red-500:  #EF4444;
-  --color-gray-50:  #F9FAFB;
-  --color-gray-200: #E5E7EB;
-  --color-gray-400: #9CA3AF;
-  --color-gray-500: #6B7280;
-  --color-gray-700: #374151;
-  --color-gray-800: #1F2937;
-  --color-gray-900: #111827;
-
-  /* Spacing / Radius / Typography */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --text-sm:  14px;
-  --text-base: 16px;
-  /* TODO: Noto Sans JP は next/font 未導入のため未読み込み。現状は環境依存フォントにフォールバックする（app/layout.tsx 参照） */
-  --font-sans: "Noto Sans JP", sans-serif;
+  --color-black-alpha-5: #0000000d;
+  --color-black-alpha-10: #0000001a;
+  --color-black-alpha-15: #00000026;
+  --color-black-alpha-20: #00000033;
+  --color-black-alpha-30: #0000004d;
+  --color-black-alpha-40: #00000066;
+  --color-black-alpha-50: #00000080;
+  --color-black-alpha-60: #00000099;
+  --color-black-alpha-70: #000000b2;
+  --color-black-alpha-80: #000000cc;
+  --color-black-alpha-90: #000000e5;
+  --color-black-alpha-100: #000000;
+  --color-white-alpha-5: #ffffff0d;
+  --color-white-alpha-10: #ffffff1a;
+  --color-white-alpha-15: #ffffff26;
+  --color-white-alpha-20: #ffffff33;
+  --color-white-alpha-30: #ffffff4d;
+  --color-white-alpha-40: #ffffff66;
+  --color-white-alpha-50: #ffffff80;
+  --color-white-alpha-60: #ffffff99;
+  --color-white-alpha-70: #ffffffb2;
+  --color-white-alpha-80: #ffffffcc;
+  --color-white-alpha-90: #ffffffe5;
+  --color-white-alpha-100: #ffffff;
 }
 
-/* ── Semantic 層 ── */
+/* ── Obra タイポグラフィ / スペーシング / シャドウ ── */
 @theme {
-  --color-primary:       var(--color-blue-500);
-  --color-primary-hover: var(--color-blue-600);
-  --color-danger:        var(--color-red-500);
-  --color-surface:       var(--color-gray-50);
-  --color-surface-card:  #FFFFFF;
-  --color-heading:       var(--color-gray-900);
-  --color-muted:         var(--color-gray-500);
-  --color-edge:          var(--color-gray-200);
-  --color-edge-focus:    var(--color-blue-500);
+  /* Spacing: Obra の --0〜--96 は 0.25rem 刻みで Tailwind 既定と完全一致。
+     基準値を明示（p-4=1rem, gap-2=0.5rem … 全ステップがこの倍数で生成される）。 */
+  --spacing: 0.25rem;
+
+  /* Typography: Obra 独自スケール（size / line-height / letter-spacing / weight 同梱）
+     利用例: text-heading-1, text-paragraph, text-caption, font は font-heading/-sans/-mono */
+  --text-heading-1: 3rem;
+  --text-heading-1--line-height: 3rem;
+  --text-heading-1--letter-spacing: -0.0938rem;
+  --text-heading-1--font-weight: 600;
+  --text-heading-2: 1.875rem;
+  --text-heading-2--line-height: 1.875rem;
+  --text-heading-2--letter-spacing: -0.0625rem;
+  --text-heading-2--font-weight: 600;
+  --text-heading-3: 1.5rem;
+  --text-heading-3--line-height: 1.8rem;
+  --text-heading-3--letter-spacing: -0.0625rem;
+  --text-heading-3--font-weight: 600;
+  --text-heading-4: 1.25rem;
+  --text-heading-4--line-height: 1.5rem;
+  --text-heading-4--letter-spacing: 0rem;
+  --text-heading-4--font-weight: 600;
+  --text-paragraph-large: 1.125rem;
+  --text-paragraph-large--line-height: 1.6875rem;
+  --text-paragraph-large--font-weight: 400;
+  --text-paragraph: 1rem;
+  --text-paragraph--line-height: 1.5rem;
+  --text-paragraph--font-weight: 400;
+  --text-paragraph-small: 0.875rem;
+  --text-paragraph-small--line-height: 1.25rem;
+  --text-paragraph-small--font-weight: 400;
+  --text-paragraph-mini: 0.75rem;
+  --text-paragraph-mini--line-height: 1rem;
+  --text-paragraph-mini--font-weight: 400;
+  --text-caption: 0.875rem;
+  --text-caption--line-height: 1.3125rem;
+  --text-caption--letter-spacing: 0.0938rem;
+  --text-caption--font-weight: 400;
+  --text-monospaced: 1rem;
+  --text-monospaced--line-height: 1.5rem;
+  --text-monospaced--font-weight: 400;
+
+  /* Shadow: Obra スケール。2xs〜xl は Tailwind 既定と同値、2xl のみ不透明度が
+     Obra 準拠（0.1）で既定（0.25）を上書き。 */
+  --shadow-2xs: 0 1px 0 0 rgb(0 0 0 / 0.05);
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.1);
 }
 
+/* ── Light（Obra "shadcn"） ── */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.625rem; /* Obra --radius-10 */
+
+  --background: #ffffff;
+  --foreground: #0a0a0a; /* neutral-950 */
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  /* NOTE: Obra は popover を反転（黒地に白文字）で定義している。
+     shadcn では popover をドロップダウン/セレクト等でも使うため、
+     暗い見た目が不都合なら card と同値（#ffffff / #0a0a0a）へ変更可。 */
+  --popover: #000000;
+  --popover-foreground: #ffffff;
+  --primary: #171717; /* neutral-900 */
+  --primary-foreground: #fafafa; /* neutral-50 */
+  --secondary: #f5f5f5; /* neutral-100 */
+  --secondary-foreground: #171717;
+  --muted: #f5f5f5;
+  --muted-foreground: #737373; /* neutral-500 */
+  --accent: #f5f5f5;
+  --accent-foreground: #171717;
+  --destructive: #dc2626; /* red-600 */
+  --destructive-foreground: #ffffff;
+  --border: #e5e5e5; /* neutral-200 */
+  --input: #ffffff;
+  --ring: #d4d4d4; /* neutral-300 (focus-ring) */
+
+  --chart-1: #f54a00;
+  --chart-2: #009689;
+  --chart-3: #104e64;
+  --chart-4: #ffb900;
+  --chart-5: #fe9a00;
+
+  --sidebar: #fafafa; /* neutral-50 */
+  --sidebar-foreground: #404040; /* neutral-700 */
+  --sidebar-primary: #171717;
+  --sidebar-primary-foreground: #fafafa;
+  --sidebar-accent: #f5f5f5;
+  --sidebar-accent-foreground: #171717;
+  --sidebar-border: #e5e5e5;
+  --sidebar-ring: #d4d4d4;
 }
 
+/* ── Dark（Obra "shadcn-dark"） ── */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+  --background: #0a0a0a; /* neutral-950 */
+  --foreground: #fafafa; /* neutral-50 */
+  --card: #171717; /* neutral-900 */
+  --card-foreground: #ffffff;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #f5f5f5; /* neutral-100 */
+  --primary-foreground: #0a0a0a;
+  --secondary: #262626; /* neutral-800 */
+  --secondary-foreground: #f5f5f5;
+  --muted: #171717;
+  --muted-foreground: #a3a3a3; /* neutral-400 */
+  --accent: #171717;
+  --accent-foreground: #f5f5f5;
+  --destructive: #9e4042;
+  --destructive-foreground: #ffffff;
+  --border: #404040; /* neutral-700 */
+  --input: #ffffff0d; /* white-alpha-5 */
+  --ring: #404040; /* focus-ring dark */
 
-/* ── デザインシステム: ダークモード ── */
-@layer base {
-  .dark {
-    --color-primary:      var(--color-blue-400);
-    --color-surface:      var(--color-gray-900);
-    --color-surface-card: var(--color-gray-800);
-    --color-heading:      #FFFFFF;
-    --color-muted:        var(--color-gray-400);
-    --color-edge:         var(--color-gray-700);
-  }
+  --chart-1: #1447e6;
+  --chart-2: #00bc7d;
+  --chart-3: #fd9a00;
+  --chart-4: #ad46ff;
+  --chart-5: #ff2056;
+
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #d4d4d4; /* neutral-300 */
+  --sidebar-primary: #fafafa;
+  --sidebar-primary-foreground: #171717;
+  --sidebar-accent: #171717;
+  --sidebar-accent-foreground: #f5f5f5;
+  --sidebar-border: #262626; /* neutral-800 */
+  --sidebar-ring: #404040;
 }
 
 @layer base {
