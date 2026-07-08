@@ -5,7 +5,6 @@
 ![Hono](https://img.shields.io/badge/Hono-4.12.27-orange?logo=hono)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?logo=tailwindcss)
-![MUI](https://img.shields.io/badge/MUI-9.2.0-007fff?logo=mui)
 ![Supabase](https://img.shields.io/badge/Supabase-2.110.0-3ecf8e?logo=supabase)
 ![Prisma](https://img.shields.io/badge/Prisma-7.8.0-2d3748?logo=prisma)
 ![Storybook](https://img.shields.io/badge/Storybook-10.4.6-ff4785?logo=storybook)
@@ -20,7 +19,7 @@
 - **API**: Hono (Route Handler) + Hono RPC
 - **DB**: Supabase (PostgreSQL) + Prisma
 - **認証**: Supabase Auth
-- **UI**: Tailwind CSS + shadcn/ui（管理者画面） / MUI（一般ユーザー画面）
+- **UI**: Tailwind CSS + shadcn/ui
 - **状態管理**: Zustand
 - **バリデーション**: Zod + react-hook-form
 - **コンポーネント開発**: Storybook 10
@@ -39,8 +38,8 @@ yoriai/
 │   ├── (auth)/                   # ログイン・登録（レイアウトなし）
 │   │   ├── login/page.tsx        # ログイン (/login)
 │   │   └── register/page.tsx     # 新規登録 (/register)
-│   ├── (user)/                   # 一般ユーザー向け画面（MUI使用）
-│   │   ├── layout.tsx            # ヘッダーナビゲーション + MUI AppRouterCacheProvider
+│   ├── (user)/                   # 一般ユーザー向け画面
+│   │   ├── layout.tsx            # ヘッダーナビゲーション
 │   │   ├── page.tsx              # トップページ・投稿一覧 (/)
 │   │   └── posts/
 │   │       ├── [id]/page.tsx     # 投稿詳細 (/posts/:id)

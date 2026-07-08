@@ -1,8 +1,6 @@
 import { notFound } from 'next/navigation'
-import NextLink from 'next/link'
-import Box from '@mui/material/Box'
-import Button from '@mui/material/Button'
-import Typography from '@mui/material/Typography'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import { MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
@@ -27,27 +25,19 @@ export default async function PostDetailPage({ params }: Props) {
 
   return (
     <article>
-      <Box sx={{ mb: 3 }}>
-        <NextLink href="/" style={{ textDecoration: 'none' }}>
-          <Button variant="text" size="small">
-            ← 一覧に戻る
-          </Button>
-        </NextLink>
-      </Box>
-      <Typography variant="h5" component="h1" sx={{ fontWeight: 'bold', mb: 2 }}>
-        {post.title}
-      </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-        <Typography variant="body2" color="text.secondary">
-          {post.author ? post.author.name ?? post.author.email : '退会したユーザー'}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {new Date(post.createdAt).toLocaleDateString('ja-JP')}
-        </Typography>
-      </Box>
-      <Typography component="p" sx={{ whiteSpace: 'pre-wrap' }}>
-        {post.body}
-      </Typography>
+      <div className="mb-6">
+        <Link href="/">
+          <Button variant="ghost" size="sm">← 一覧に戻る</Button>
+        </Link>
+      </div>
+      <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
+      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-8">
+        <span>{post.author ? post.author.name ?? post.author.email : '退会したユーザー'}</span>
+        <span>{new Date(post.createdAt).toLocaleDateString('ja-JP')}</span>
+      </div>
+      <div className="prose max-w-none">
+        <p className="whitespace-pre-wrap">{post.body}</p>
+      </div>
     </article>
   )
 }
