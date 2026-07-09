@@ -58,7 +58,14 @@
             "example": "user-2"
           },
           "author": {
-            "$ref": "#/components/schemas/User"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "createdAt": {
             "type": "string",
@@ -81,10 +88,7 @@
         ]
       },
       "User": {
-        "type": [
-          "object",
-          "null"
-        ],
+        "type": "object",
         "properties": {
           "id": {
             "type": "string",
