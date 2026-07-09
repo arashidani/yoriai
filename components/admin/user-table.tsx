@@ -50,7 +50,7 @@ export function UserTable({ users: initialUsers, currentUserId }: UserTableProps
             <TableRow>
               <TableHead>名前</TableHead>
               <TableHead>メール</TableHead>
-              <TableHead>ロール</TableHead>
+              <TableHead>ユーザー権限</TableHead>
               <TableHead>登録日</TableHead>
               <TableHead>操作</TableHead>
             </TableRow>

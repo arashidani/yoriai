@@ -30,7 +30,7 @@ export default function CreateUserPage() {
           <Input id="password" type="password" placeholder="••••••••" disabled />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="role">ロール</Label>
+          <Label htmlFor="role">ユーザー権限</Label>
           <div className="flex gap-2">
             <span className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground font-medium">一般ユーザー</span>
             <span className="text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary font-medium">管理者</span>
