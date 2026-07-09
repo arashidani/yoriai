@@ -22,14 +22,6 @@ export default function CreateUserPage() {
           <Input id="name" placeholder="山田 太郎" disabled />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="email">メールアドレス</Label>
-          <Input id="email" type="email" placeholder="taro@example.com" disabled />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">初期パスワード</Label>
-          <Input id="password" type="password" placeholder="••••••••" disabled />
-        </div>
-        <div className="space-y-2">
           <Label htmlFor="role">ユーザー権限</Label>
           <div className="flex gap-2">
             <span className="text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground font-medium">一般ユーザー</span>
