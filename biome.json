@@ -24,9 +24,6 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
-      "complexity": {
-        "noForEach": "warn"
-      },
       "correctness": {
         "useExhaustiveDependencies": "warn",
         "noUnusedImports": "warn",
