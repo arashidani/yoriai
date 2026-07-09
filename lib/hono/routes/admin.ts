@@ -1,10 +1,10 @@
-import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
+import { Role } from '@/app/generated/prisma/enums'
 import { authMiddleware } from '@/lib/hono/middleware/auth'
-import { updateUserSchema } from '@/lib/schemas/user'
 import { MOCK_POSTS, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { Role } from '@/app/generated/prisma/enums'
+import { updateUserSchema } from '@/lib/schemas/user'
 
 export const adminRoute = new Hono()
   .use(authMiddleware)

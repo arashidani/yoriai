@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw'
+import { HttpResponse, http } from 'msw'
 import { MOCK_POSTS, MOCK_USERS } from '../lib/mocks/fixtures'
 
 export const mswHandlers = {
@@ -10,7 +10,7 @@ export const mswHandlers = {
       return HttpResponse.json({ post })
     }),
     http.post('/api/posts', async ({ request }) => {
-      const body = await request.json() as { title: string; body: string }
+      const body = (await request.json()) as { title: string; body: string }
       return HttpResponse.json(
         {
           post: {
@@ -23,7 +23,7 @@ export const mswHandlers = {
             updatedAt: new Date().toISOString(),
           },
         },
-        { status: 201 }
+        { status: 201 },
       )
     }),
   ],

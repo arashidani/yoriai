@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { HttpResponse, http } from 'msw'
 import { expect, fn, screen } from 'storybook/test'
-import { http, HttpResponse } from 'msw'
-import { EditUserDialog } from './edit-user-dialog'
 import { Role } from '@/app/generated/prisma/enums'
+import { EditUserDialog } from './edit-user-dialog'
 
 const meta = {
   component: EditUserDialog,
@@ -41,7 +41,10 @@ export const SelfCannotChangeRole: Story = {
   },
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'ユーザーを編集' }))
-    await expect(screen.getByRole('switch', { name: '管理者権限' })).toHaveAttribute('aria-disabled', 'true')
+    await expect(screen.getByRole('switch', { name: '管理者権限' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    )
   },
 }
 
@@ -74,7 +77,7 @@ export const UpdateFails: Story = {
     msw: {
       handlers: [
         http.patch('/api/admin/users/:id', () =>
-          HttpResponse.json({ error: '更新に失敗しました' }, { status: 400 })
+          HttpResponse.json({ error: '更新に失敗しました' }, { status: 400 }),
         ),
       ],
     },

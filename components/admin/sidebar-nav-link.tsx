@@ -14,9 +14,7 @@ export function SidebarNavLink({ href, children }: SidebarNavLinkProps) {
 
   return (
     <SidebarMenuButton
-      render={
-        <Link href={href} onClick={() => isMobile && setOpenMobile(false)} />
-      }
+      render={<Link href={href} onClick={() => isMobile && setOpenMobile(false)} />}
     >
       {children}
     </SidebarMenuButton>

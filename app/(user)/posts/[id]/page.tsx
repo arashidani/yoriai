@@ -1,5 +1,5 @@
-import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
@@ -27,12 +27,14 @@ export default async function PostDetailPage({ params }: Props) {
     <article>
       <div className="mb-6">
         <Link href="/">
-          <Button variant="ghost" size="sm">← 一覧に戻る</Button>
+          <Button variant="ghost" size="sm">
+            ← 一覧に戻る
+          </Button>
         </Link>
       </div>
       <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
       <div className="flex items-center gap-4 text-sm text-muted-foreground mb-8">
-        <span>{post.author ? post.author.name ?? post.author.email : '退会したユーザー'}</span>
+        <span>{post.author ? (post.author.name ?? post.author.email) : '退会したユーザー'}</span>
         <span>{new Date(post.createdAt).toLocaleDateString('ja-JP')}</span>
       </div>
       <div className="prose max-w-none">
