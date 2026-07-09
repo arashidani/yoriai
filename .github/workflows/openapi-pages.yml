@@ -1,0 +1,62 @@
+name: Deploy OpenAPI to GitHub Pages
+
+# ルート定義から OpenAPI 仕様書を生成し、静的サイトとして GitHub Pages に公開する。
+# 生成スクリプト(scripts/generate-openapi.ts)は DB / Supabase に接続しないため、
+# シークレットや外部接続なしで実行できる。
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/hono/**'
+      - 'scripts/generate-openapi.ts'
+      - 'openapi/index.html'
+      - '.github/workflows/openapi-pages.yml'
+  workflow_dispatch:
+
+# GitHub Pages へのデプロイに必要な権限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同時実行を1本に絞る（進行中のデプロイはキャンセルしない）
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate OpenAPI document
+        run: npm run openapi:generate
+
+      # openapi/ には index.html(Scalar) と生成物 openapi.json / openapi.yaml が揃う
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: openapi
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
