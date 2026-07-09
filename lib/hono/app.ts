@@ -1,9 +1,9 @@
-import { OpenAPIHono } from '@hono/zod-openapi'
 import { swaggerUI } from '@hono/swagger-ui'
-import { postsRoute } from './routes/posts'
-import { adminRoute } from './routes/admin'
-import { usersRoute } from './routes/users'
+import { OpenAPIHono } from '@hono/zod-openapi'
 import { openApiConfig } from './openapi/config'
+import { adminRoute } from './routes/admin'
+import { postsRoute } from './routes/posts'
+import { usersRoute } from './routes/users'
 
 const app = new OpenAPIHono()
   .basePath('/api')

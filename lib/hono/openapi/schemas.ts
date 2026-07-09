@@ -8,9 +8,7 @@ import { z } from '@hono/zod-openapi'
 
 /** Prisma の Date をそのまま c.json に渡せるよう入力型は Date のまま、ドキュメント表現だけ date-time 文字列にする */
 const dateTime = () =>
-  z
-    .date()
-    .openapi({ type: 'string', format: 'date-time', example: '2024-01-01T00:00:00.000Z' })
+  z.date().openapi({ type: 'string', format: 'date-time', example: '2024-01-01T00:00:00.000Z' })
 
 export const UserSchema = z
   .object({
@@ -49,9 +47,7 @@ export const SuccessSchema = z
 
 /** パスパラメータ :id */
 export const IdParamSchema = z.object({
-  id: z
-    .string()
-    .openapi({ param: { name: 'id', in: 'path' }, example: 'post-1' }),
+  id: z.string().openapi({ param: { name: 'id', in: 'path' }, example: 'post-1' }),
 })
 
 /** よく使うエラーレスポンス定義 */

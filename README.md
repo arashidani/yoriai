@@ -94,6 +94,8 @@ yoriai/
 npm install
 ```
 
+`npm install` 実行後、[lefthook](https://github.com/evilmartians/lefthook) によるGit hooksが自動的に有効化される（`postinstall` で `lefthook install` を実行）。以降、コミット時に差分ファイルへBiomeのフォーマット・Lintが自動実行される。
+
 `.env.local` を作成:
 
 ```env
@@ -116,6 +118,23 @@ npm run dev
 # Storybook起動
 npm run storybook
 ```
+
+## Lint・Format
+
+[Biome](https://biomejs.dev/) でLint・フォーマットを統一管理している。
+
+```bash
+# Lintチェック
+npm run lint
+
+# フォーマット適用
+npm run format
+
+# Lint + フォーマットをまとめて実行
+npm run check
+```
+
+コミット時は [lefthook](https://github.com/evilmartians/lefthook) + [lint-staged](https://github.com/okonet/lint-staged) により、ステージ済みファイルに対して自動でBiomeのフォーマット・Lintが実行される（Lintエラー時はコミットが中断される）。`push` 時には型チェック（`tsc --noEmit`）が実行される。
 
 ## ドキュメント
 

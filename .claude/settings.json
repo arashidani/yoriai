@@ -1,9 +1,6 @@
 {
   "permissions": {
-    "deny": [
-      "Read(.env)",
-      "Read(.env.*)",
-      "Bash(cat .env*)"
-    ]
+    "deny": ["Read(.env)", "Read(.env.*)", "Bash(cat .env*)"],
+    "allow": ["Bash(grep -rn *)"]
   }
 }
