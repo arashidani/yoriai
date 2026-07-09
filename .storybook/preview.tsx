@@ -1,10 +1,10 @@
-import type { Preview } from '@storybook/nextjs-vite'
-import { initialize, mswLoader } from 'msw-storybook-addon'
-import '../app/globals.css'
-import { mswHandlers } from './msw-handlers'
-import { Toaster } from '../components/ui/sonner'
+import type { Preview } from "@storybook/nextjs-vite";
+import { initialize, mswLoader } from "msw-storybook-addon";
+import "../app/globals.css";
+import { Toaster } from "../components/ui/sonner";
+import { mswHandlers } from "./msw-handlers";
 
-initialize({ onUnhandledRequest: 'bypass' })
+initialize({ onUnhandledRequest: "bypass" });
 
 const preview: Preview = {
   loaders: [mswLoader],
@@ -18,10 +18,7 @@ const preview: Preview = {
   ],
   parameters: {
     msw: {
-      handlers: [
-        ...mswHandlers.posts,
-        ...mswHandlers.admin,
-      ],
+      handlers: [...mswHandlers.posts, ...mswHandlers.admin],
     },
     controls: {
       matchers: {
@@ -30,9 +27,9 @@ const preview: Preview = {
       },
     },
     a11y: {
-      test: 'todo',
+      test: "todo",
     },
   },
-}
+};
 
-export default preview
+export default preview;
