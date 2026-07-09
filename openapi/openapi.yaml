@@ -434,6 +434,12 @@ paths:
                     $ref: "#/components/schemas/User"
                 required:
                   - user
+        "400":
+          description: メールアドレスが取得できない、またはリクエストが不正
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "401":
           description: 未認証
           content:

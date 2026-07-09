@@ -5,7 +5,7 @@ import type { Hook } from '@hono/zod-openapi'
  * これを指定しないと zValidator 既定の zod エラー構造が返り、OpenAPI 上の
  * ErrorSchema と実際のレスポンスがずれる。
  */
-// E(Env) は各ルートで異なるため any で受ける
+// biome-ignore lint/suspicious/noExplicitAny: 異なるEnv型の複数インスタンスで共有するためEはanyで受ける
 export const defaultHook: Hook<unknown, any, string, unknown> = (result, c) => {
   if (!result.success) {
     const message = result.error.issues[0]?.message ?? 'リクエストが不正です'

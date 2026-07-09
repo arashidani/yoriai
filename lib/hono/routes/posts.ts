@@ -1,16 +1,11 @@
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
-import { authMiddleware, type AuthVariables } from '@/lib/hono/middleware/auth'
-import { createPostSchema } from '@/lib/schemas/post'
-import {
-  PostSchema,
-  SuccessSchema,
-  IdParamSchema,
-  errorResponse,
-} from '@/lib/hono/openapi/schemas'
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { Role } from '@/app/generated/prisma/enums'
+import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
+import { errorResponse, IdParamSchema, PostSchema, SuccessSchema } from '@/lib/hono/openapi/schemas'
 import { MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { Role } from '@/app/generated/prisma/enums'
+import { createPostSchema } from '@/lib/schemas/post'
 
 const listRoute = createRoute({
   method: 'get',
@@ -115,7 +110,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
             updatedAt: new Date(),
           },
         },
-        201
+        201,
       )
     }
     const post = await prisma.post.create({

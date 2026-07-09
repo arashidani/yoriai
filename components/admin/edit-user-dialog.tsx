@@ -1,15 +1,12 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Pencil } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { client } from '@/lib/hono/client'
-import { updateUserSchema, type UpdateUserInput } from '@/lib/schemas/user'
+import { Role } from '@/app/generated/prisma/enums'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -19,8 +16,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Role } from '@/app/generated/prisma/enums'
-import { Pencil } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { client } from '@/lib/hono/client'
+import { type UpdateUserInput, updateUserSchema } from '@/lib/schemas/user'
 
 type EditUserDialogProps = {
   userId: string
@@ -65,7 +65,8 @@ export function EditUserDialog({
 
     if (!res.ok) {
       const body = await res.json()
-      const message = 'error' in body && typeof body.error === 'string' ? body.error : '更新に失敗しました'
+      const message =
+        'error' in body && typeof body.error === 'string' ? body.error : '更新に失敗しました'
       toast.error(message)
       return
     }

@@ -1,18 +1,18 @@
-import { OpenAPIHono, createRoute, z, $ } from '@hono/zod-openapi'
+import { $, createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { createMiddleware } from 'hono/factory'
-import { authMiddleware, type AuthVariables } from '@/lib/hono/middleware/auth'
-import { updateUserSchema } from '@/lib/schemas/user'
+import { Role } from '@/app/generated/prisma/enums'
+import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
+import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
-  UserSchema,
+  errorResponse,
+  IdParamSchema,
   PostSchema,
   SuccessSchema,
-  IdParamSchema,
-  errorResponse,
+  UserSchema,
 } from '@/lib/hono/openapi/schemas'
-import { defaultHook } from '@/lib/hono/openapi/hook'
 import { MOCK_POSTS, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { Role } from '@/app/generated/prisma/enums'
+import { updateUserSchema } from '@/lib/schemas/user'
 
 const adminGuard = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
   if (c.get('user').role !== Role.ADMIN) return c.json({ error: 'Forbidden' }, 403)
@@ -92,7 +92,7 @@ const deleteUserRoute = createRoute({
 export const adminRoute = $(
   new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
     .use(authMiddleware)
-    .use(adminGuard)
+    .use(adminGuard),
 )
   .openapi(listUsersRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
@@ -130,7 +130,7 @@ export const adminRoute = $(
             role: role ?? MOCK_USERS[0].role,
           },
         },
-        200
+        200,
       )
     }
 

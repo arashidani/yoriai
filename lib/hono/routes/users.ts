@@ -1,11 +1,12 @@
-import { OpenAPIHono, createRoute, z } from '@hono/zod-openapi'
-import { authMiddleware, type AuthVariables } from '@/lib/hono/middleware/auth'
-import { createUserSchema } from '@/lib/schemas/user'
-import { UserSchema, errorResponse } from '@/lib/hono/openapi/schemas'
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { createServerClient } from '@supabase/ssr'
+import { requireEnv } from '@/lib/env'
+import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
+import { errorResponse, UserSchema } from '@/lib/hono/openapi/schemas'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { createServerClient } from '@supabase/ssr'
+import { createUserSchema } from '@/lib/schemas/user'
 
 const createRoute_ = createRoute({
   method: 'post',
@@ -25,6 +26,7 @@ const createRoute_ = createRoute({
       description: '既に存在するユーザー',
       content: { 'application/json': { schema: z.object({ user: UserSchema }) } },
     },
+    400: errorResponse('メールアドレスが取得できない、またはリクエストが不正'),
     401: errorResponse('未認証'),
   },
 })
@@ -53,8 +55,8 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
 
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
       {
         cookies: {
           getAll() {
@@ -67,10 +69,12 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
           },
           setAll() {},
         },
-      }
+      },
     )
 
-    const { data: { user: authUser } } = await supabase.auth.getUser()
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser()
     if (!authUser) return c.json({ error: 'Unauthorized' }, 401)
 
     const { name } = c.req.valid('json')
@@ -80,10 +84,14 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     })
     if (existing) return c.json({ user: existing }, 200)
 
+    if (!authUser.email) {
+      return c.json({ error: 'Email not found' }, 400)
+    }
+
     const user = await prisma.user.create({
       data: {
         supabaseId: authUser.id,
-        email: authUser.email!,
+        email: authUser.email,
         name: name ?? authUser.user_metadata?.name ?? null,
       },
     })

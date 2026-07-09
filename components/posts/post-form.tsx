@@ -1,12 +1,12 @@
 'use client'
 
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createPostSchema, type CreatePostInput } from '@/lib/schemas/post'
+import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { type CreatePostInput, createPostSchema } from '@/lib/schemas/post'
 
 type PostFormProps = {
   onSubmit: (data: CreatePostInput) => Promise<void>
@@ -32,9 +32,7 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
           {...register('title')}
           aria-invalid={!!errors.title}
         />
-        {errors.title && (
-          <p className="text-sm text-destructive">{errors.title.message}</p>
-        )}
+        {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
       </div>
       <div className="space-y-2">
         <Label htmlFor="body">本文</Label>
@@ -45,9 +43,7 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
           {...register('body')}
           aria-invalid={!!errors.body}
         />
-        {errors.body && (
-          <p className="text-sm text-destructive">{errors.body.message}</p>
-        )}
+        {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
       </div>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? '送信中...' : '投稿する'}

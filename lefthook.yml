@@ -1,0 +1,9 @@
+pre-commit:
+  jobs:
+    - name: lint-staged
+      run: npx lint-staged
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: npx tsc --noEmit

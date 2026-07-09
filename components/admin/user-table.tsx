@@ -1,12 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Role } from '@/app/generated/prisma/enums'
+import { DeleteUserButton } from '@/components/admin/delete-user-button'
+import { EditUserDialog } from '@/components/admin/edit-user-dialog'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -15,9 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { EditUserDialog } from '@/components/admin/edit-user-dialog'
-import { DeleteUserButton } from '@/components/admin/delete-user-button'
-import { Role } from '@/app/generated/prisma/enums'
 import { cn } from '@/lib/utils'
 
 type User = {
@@ -70,15 +65,15 @@ export function UserTable({ users: initialUsers, currentUserId }: UserTableProps
                   <TableCell>
                     <span
                       className={cn(
-                        user.role === Role.ADMIN ? 'text-primary font-medium' : 'text-muted-foreground'
+                        user.role === Role.ADMIN
+                          ? 'text-primary font-medium'
+                          : 'text-muted-foreground',
                       )}
                     >
                       {user.role}
                     </span>
                   </TableCell>
-                  <TableCell>
-                    {new Date(user.createdAt).toLocaleDateString('ja-JP')}
-                  </TableCell>
+                  <TableCell>{new Date(user.createdAt).toLocaleDateString('ja-JP')}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <EditUserDialog
