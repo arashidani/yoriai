@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -6,21 +6,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/table'
 
 type Post = {
-  id: string;
-  title: string;
-  createdAt: Date | string;
+  id: string
+  title: string
+  createdAt: Date | string
   author: {
-    name: string | null;
-    email: string;
-  } | null;
-};
+    name: string | null
+    email: string
+  } | null
+}
 
 type PostTableProps = {
-  posts: Post[];
-};
+  posts: Post[]
+}
 
 export function PostTable({ posts }: PostTableProps) {
   return (
@@ -51,5 +51,5 @@ export function PostTable({ posts }: PostTableProps) {
         </Table>
       </CardContent>
     </Card>
-  );
+  )
 }

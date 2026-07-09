@@ -1,37 +1,37 @@
-'use client';
+'use client'
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { createClient } from '@/lib/supabase/client'
 
 export default function RegisterPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
 
     // supabaseでユーザー作成
-    const supabase = createClient();
+    const supabase = createClient()
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { name } },
-    });
+    })
 
     if (signUpError) {
-      setError(signUpError.message);
-      setLoading(false);
-      return;
+      setError(signUpError.message)
+      setLoading(false)
+      return
     }
 
     // Supabaseユーザー作成後、PrismaのUserレコードを作成
@@ -40,16 +40,16 @@ export default function RegisterPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name }),
-      });
+      })
       if (!res.ok) {
-        setError('ユーザー情報の保存に失敗しました');
-        setLoading(false);
-        return;
+        setError('ユーザー情報の保存に失敗しました')
+        setLoading(false)
+        return
       }
     }
 
-    router.push('/');
-    router.refresh();
+    router.push('/')
+    router.refresh()
   }
 
   return (
@@ -103,5 +103,5 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
-  );
+  )
 }

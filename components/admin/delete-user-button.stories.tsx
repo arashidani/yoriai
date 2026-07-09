@@ -1,14 +1,14 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
-import { HttpResponse, http } from 'msw';
-import { expect, fn, screen } from 'storybook/test';
-import { DeleteUserButton } from './delete-user-button';
+import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { HttpResponse, http } from 'msw'
+import { expect, fn, screen } from 'storybook/test'
+import { DeleteUserButton } from './delete-user-button'
 
 const meta = {
   component: DeleteUserButton,
-} satisfies Meta<typeof DeleteUserButton>;
+} satisfies Meta<typeof DeleteUserButton>
 
-export default meta;
-type Story = StoryObj<typeof meta>;
+export default meta
+type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
@@ -18,12 +18,12 @@ export const Default: Story = {
     onDeleted: fn(),
   },
   play: async ({ canvas, userEvent, args }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'ユーザーを削除' }));
-    await userEvent.click(await screen.findByRole('button', { name: '削除する' }));
-    await expect(await screen.findByText('ユーザーを削除しました')).toBeInTheDocument();
-    await expect(args.onDeleted).toHaveBeenCalledWith('user-2');
+    await userEvent.click(canvas.getByRole('button', { name: 'ユーザーを削除' }))
+    await userEvent.click(await screen.findByRole('button', { name: '削除する' }))
+    await expect(await screen.findByText('ユーザーを削除しました')).toBeInTheDocument()
+    await expect(args.onDeleted).toHaveBeenCalledWith('user-2')
   },
-};
+}
 
 export const SelfCannotDelete: Story = {
   args: {
@@ -33,9 +33,9 @@ export const SelfCannotDelete: Story = {
     onDeleted: fn(),
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: 'ユーザーを削除' })).toBeDisabled();
+    await expect(canvas.getByRole('button', { name: 'ユーザーを削除' })).toBeDisabled()
   },
-};
+}
 
 export const DeleteFails: Story = {
   args: {
@@ -54,8 +54,8 @@ export const DeleteFails: Story = {
     },
   },
   play: async ({ canvas, userEvent }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'ユーザーを削除' }));
-    await userEvent.click(await screen.findByRole('button', { name: '削除する' }));
-    await expect(await screen.findByText('削除に失敗しました')).toBeInTheDocument();
+    await userEvent.click(canvas.getByRole('button', { name: 'ユーザーを削除' }))
+    await userEvent.click(await screen.findByRole('button', { name: '削除する' }))
+    await expect(await screen.findByText('削除に失敗しました')).toBeInTheDocument()
   },
-};
+}

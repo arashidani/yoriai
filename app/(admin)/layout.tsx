@@ -1,9 +1,9 @@
-import { ArrowLeft, FileText, LayoutDashboard, Users } from 'lucide-react';
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { Role } from '@/app/generated/prisma/enums';
-import { SidebarNavLink } from '@/components/admin/sidebar-nav-link';
-import { LogoutButton } from '@/components/logout-button';
+import { ArrowLeft, FileText, LayoutDashboard, Users } from 'lucide-react'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { Role } from '@/app/generated/prisma/enums'
+import { SidebarNavLink } from '@/components/admin/sidebar-nav-link'
+import { LogoutButton } from '@/components/logout-button'
 import {
   Sidebar,
   SidebarContent,
@@ -16,12 +16,12 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-} from '@/components/ui/sidebar';
-import { getCurrentUser } from '@/lib/auth/current-user';
+} from '@/components/ui/sidebar'
+import { getCurrentUser } from '@/lib/auth/current-user'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
-  if (!user || user.role !== Role.ADMIN) redirect('/');
+  const user = await getCurrentUser()
+  if (!user || user.role !== Role.ADMIN) redirect('/')
 
   return (
     <SidebarProvider>
@@ -76,5 +76,5 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <main className="flex-1 p-8">{children}</main>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }

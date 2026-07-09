@@ -1,16 +1,16 @@
-import { HttpResponse, http } from 'msw';
-import { MOCK_POSTS, MOCK_USERS } from '../lib/mocks/fixtures';
+import { HttpResponse, http } from 'msw'
+import { MOCK_POSTS, MOCK_USERS } from '../lib/mocks/fixtures'
 
 export const mswHandlers = {
   posts: [
     http.get('/api/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
     http.get('/api/posts/:id', ({ params }) => {
-      const post = MOCK_POSTS.find((p) => p.id === params.id);
-      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 });
-      return HttpResponse.json({ post });
+      const post = MOCK_POSTS.find((p) => p.id === params.id)
+      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      return HttpResponse.json({ post })
     }),
     http.post('/api/posts', async ({ request }) => {
-      const body = (await request.json()) as { title: string; body: string };
+      const body = (await request.json()) as { title: string; body: string }
       return HttpResponse.json(
         {
           post: {
@@ -24,7 +24,7 @@ export const mswHandlers = {
           },
         },
         { status: 201 },
-      );
+      )
     }),
   ],
   admin: [
@@ -33,4 +33,4 @@ export const mswHandlers = {
     http.patch('/api/admin/users/:id', () => HttpResponse.json({ success: true })),
     http.delete('/api/admin/users/:id', () => HttpResponse.json({ success: true })),
   ],
-};
+}

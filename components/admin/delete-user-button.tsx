@@ -1,8 +1,8 @@
-'use client';
+'use client'
 
-import { Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,38 +13,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { client } from '@/lib/hono/client';
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { client } from '@/lib/hono/client'
 
 type DeleteUserButtonProps = {
-  userId: string;
-  userName: string | null;
-  isSelf: boolean;
-  onDeleted: (userId: string) => void;
-};
+  userId: string
+  userName: string | null
+  isSelf: boolean
+  onDeleted: (userId: string) => void
+}
 
 export function DeleteUserButton({ userId, userName, isSelf, onDeleted }: DeleteUserButtonProps) {
-  const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(false);
+  const [open, setOpen] = useState(false)
+  const [pending, setPending] = useState(false)
 
   async function handleConfirm() {
-    setPending(true);
+    setPending(true)
     const res = await client.api.admin.users[':id'].$delete({
       param: { id: userId },
-    });
-    setPending(false);
-    setOpen(false);
+    })
+    setPending(false)
+    setOpen(false)
 
     if (!res.ok) {
-      const body = await res.json();
+      const body = await res.json()
       const message =
-        'error' in body && typeof body.error === 'string' ? body.error : '削除に失敗しました';
-      toast.error(message);
-      return;
+        'error' in body && typeof body.error === 'string' ? body.error : '削除に失敗しました'
+      toast.error(message)
+      return
     }
-    onDeleted(userId);
-    toast.success('ユーザーを削除しました');
+    onDeleted(userId)
+    toast.success('ユーザーを削除しました')
   }
 
   return (
@@ -71,5 +71,5 @@ export function DeleteUserButton({ userId, userName, isSelf, onDeleted }: Delete
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }
