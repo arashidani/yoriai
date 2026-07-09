@@ -1,13 +1,9 @@
 import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
-import { z } from 'zod'
 import { authMiddleware } from '@/lib/hono/middleware/auth'
+import { createUserSchema } from '@/lib/schemas/user'
 import { prisma } from '@/lib/prisma/client'
 import { createServerClient } from '@supabase/ssr'
-
-const createUserSchema = z.object({
-  name: z.string().min(1).max(100).optional(),
-})
 
 export const usersRoute = new Hono()
   // 登録直後に呼ばれる — Supabaseセッションクッキーからユーザーを特定してPrisma Userを作成
