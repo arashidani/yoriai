@@ -5,7 +5,7 @@ info:
   description: yoriai バックエンド（Hono + Prisma + Supabase Auth）のAPI仕様書。認証は Supabase
     のセッションクッキーで行う。
 servers:
-  - url: /api
+  - url: /
     description: デフォルト
 tags:
   - name: posts
@@ -23,91 +23,33 @@ components:
       description: "Supabase Auth のセッションクッキーによる認証。実際のクッキー名はSupabaseプロジェクトごとに異なる（例:
         sb-<project-ref>-auth-token）。"
   schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: string
-        supabaseId:
-          type: string
-        email:
-          type: string
-        name:
-          anyOf:
-            - type: string
-            - type: "null"
-        role:
-          type: string
-          enum:
-            - USER
-            - ADMIN
-          description: ユーザーロール
-        createdAt:
-          type: string
-          format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-      required:
-        - id
-        - supabaseId
-        - email
-        - name
-        - role
-        - createdAt
-      additionalProperties: false
     Post:
       type: object
       properties:
         id:
           type: string
+          example: post-1
         title:
           type: string
+          example: Next.js App Routerの使い方を教えてください
         body:
           type: string
+          example: App Router と Pages Router の違いが分かりません。
         authorId:
-          anyOf:
-            - type: string
-            - type: "null"
+          type:
+            - string
+            - "null"
+          example: user-2
         author:
-          anyOf:
-            - type: object
-              properties:
-                id:
-                  type: string
-                supabaseId:
-                  type: string
-                email:
-                  type: string
-                name:
-                  anyOf:
-                    - type: string
-                    - type: "null"
-                role:
-                  type: string
-                  enum:
-                    - USER
-                    - ADMIN
-                  description: ユーザーロール
-                createdAt:
-                  type: string
-                  format: date-time
-                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-              required:
-                - id
-                - supabaseId
-                - email
-                - name
-                - role
-                - createdAt
-              additionalProperties: false
-            - type: "null"
+          $ref: "#/components/schemas/User"
         createdAt:
           type: string
           format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          example: 2024-01-01T00:00:00.000Z
         updatedAt:
           type: string
           format: date-time
-          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
+          example: 2024-01-01T00:00:00.000Z
       required:
         - id
         - title
@@ -115,17 +57,61 @@ components:
         - authorId
         - createdAt
         - updatedAt
-      additionalProperties: false
+    User:
+      type:
+        - object
+        - "null"
+      properties:
+        id:
+          type: string
+          example: user-1
+        supabaseId:
+          type: string
+          example: supabase-user-1
+        email:
+          type: string
+          example: user@example.com
+        name:
+          type:
+            - string
+            - "null"
+          example: 一般ユーザー
+        role:
+          type: string
+          enum:
+            - USER
+            - ADMIN
+          example: USER
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - supabaseId
+        - email
+        - name
+        - role
+        - createdAt
     Error:
       type: object
       properties:
         error:
           type: string
+          example: Not found
       required:
         - error
-      additionalProperties: false
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+      required:
+        - success
+  parameters: {}
 paths:
-  /posts:
+  /api/posts:
     get:
       tags:
         - posts
@@ -141,75 +127,14 @@ paths:
                   posts:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        title:
-                          type: string
-                        body:
-                          type: string
-                        authorId:
-                          anyOf:
-                            - type: string
-                            - type: "null"
-                        author:
-                          anyOf:
-                            - type: object
-                              properties:
-                                id:
-                                  type: string
-                                supabaseId:
-                                  type: string
-                                email:
-                                  type: string
-                                name:
-                                  anyOf:
-                                    - type: string
-                                    - type: "null"
-                                role:
-                                  type: string
-                                  enum:
-                                    - USER
-                                    - ADMIN
-                                  description: ユーザーロール
-                                createdAt:
-                                  type: string
-                                  format: date-time
-                                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                              required:
-                                - id
-                                - supabaseId
-                                - email
-                                - name
-                                - role
-                                - createdAt
-                              additionalProperties: false
-                            - type: "null"
-                        createdAt:
-                          type: string
-                          format: date-time
-                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                        updatedAt:
-                          type: string
-                          format: date-time
-                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                      required:
-                        - id
-                        - title
-                        - body
-                        - authorId
-                        - createdAt
-                        - updatedAt
-                      additionalProperties: false
+                      $ref: "#/components/schemas/Post"
                 required:
                   - posts
-                additionalProperties: false
     post:
       tags:
         - posts
       summary: 投稿を作成
-      security: &a1
+      security:
         - supabaseSession: []
       requestBody:
         required: true
@@ -228,7 +153,6 @@ paths:
               required:
                 - title
                 - body
-              additionalProperties: false
       responses:
         "201":
           description: 作成された投稿
@@ -238,105 +162,27 @@ paths:
                 type: object
                 properties:
                   post:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      title:
-                        type: string
-                      body:
-                        type: string
-                      authorId:
-                        anyOf:
-                          - type: string
-                          - type: "null"
-                      author:
-                        anyOf:
-                          - type: object
-                            properties:
-                              id:
-                                type: string
-                              supabaseId:
-                                type: string
-                              email:
-                                type: string
-                              name:
-                                anyOf:
-                                  - type: string
-                                  - type: "null"
-                              role:
-                                type: string
-                                enum:
-                                  - USER
-                                  - ADMIN
-                                description: ユーザーロール
-                              createdAt:
-                                type: string
-                                format: date-time
-                                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                            required:
-                              - id
-                              - supabaseId
-                              - email
-                              - name
-                              - role
-                              - createdAt
-                            additionalProperties: false
-                          - type: "null"
-                      createdAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                      updatedAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                    required:
-                      - id
-                      - title
-                      - body
-                      - authorId
-                      - createdAt
-                      - updatedAt
-                    additionalProperties: false
+                    $ref: "#/components/schemas/Post"
                 required:
                   - post
-                additionalProperties: false
-        "400": &a4
-          description: リクエストが不正（バリデーションエラーなど）
+        "401":
+          description: 未認証
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                required:
-                  - error
-                additionalProperties: false
-        "401": &a2
-          description: 未認証（ログインが必要）
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                required:
-                  - error
-                additionalProperties: false
-  /posts/{id}:
+                $ref: "#/components/schemas/Error"
+  /api/posts/{id}:
     get:
       tags:
         - posts
       summary: 投稿を1件取得
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
+        - schema:
             type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
       responses:
         "200":
           description: 投稿詳細
@@ -346,276 +192,54 @@ paths:
                 type: object
                 properties:
                   post:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      title:
-                        type: string
-                      body:
-                        type: string
-                      authorId:
-                        anyOf:
-                          - type: string
-                          - type: "null"
-                      author:
-                        anyOf:
-                          - type: object
-                            properties:
-                              id:
-                                type: string
-                              supabaseId:
-                                type: string
-                              email:
-                                type: string
-                              name:
-                                anyOf:
-                                  - type: string
-                                  - type: "null"
-                              role:
-                                type: string
-                                enum:
-                                  - USER
-                                  - ADMIN
-                                description: ユーザーロール
-                              createdAt:
-                                type: string
-                                format: date-time
-                                pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                            required:
-                              - id
-                              - supabaseId
-                              - email
-                              - name
-                              - role
-                              - createdAt
-                            additionalProperties: false
-                          - type: "null"
-                      createdAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                      updatedAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                    required:
-                      - id
-                      - title
-                      - body
-                      - authorId
-                      - createdAt
-                      - updatedAt
-                    additionalProperties: false
+                    $ref: "#/components/schemas/Post"
                 required:
                   - post
-                additionalProperties: false
         "404":
-          description: リソースが見つからない
+          description: 投稿が見つからない
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                required:
-                  - error
-                additionalProperties: false
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - posts
       summary: 投稿を削除（管理者のみ）
-      security: *a1
+      security:
+        - supabaseSession: []
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
+        - schema:
             type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
       responses:
         "200":
           description: 削除成功
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    const: true
-                required:
-                  - success
-                additionalProperties: false
-        "401": *a2
-        "403": &a3
-          description: 権限不足（管理者専用の操作など）
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: 未認証
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                required:
-                  - error
-                additionalProperties: false
-  /users:
-    post:
-      tags:
-        - users
-      summary: サインアップ直後にPrisma上のUserを作成（Supabaseセッション必須）
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  minLength: 1
-                  maxLength: 100
-              additionalProperties: false
-      responses:
-        "200":
-          description: 既に存在するユーザー
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      supabaseId:
-                        type: string
-                      email:
-                        type: string
-                      name:
-                        anyOf:
-                          - type: string
-                          - type: "null"
-                      role:
-                        type: string
-                        enum:
-                          - USER
-                          - ADMIN
-                        description: ユーザーロール
-                      createdAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                    required:
-                      - id
-                      - supabaseId
-                      - email
-                      - name
-                      - role
-                      - createdAt
-                    additionalProperties: false
-                required:
-                  - user
-                additionalProperties: false
-        "201":
-          description: 作成されたユーザー
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      supabaseId:
-                        type: string
-                      email:
-                        type: string
-                      name:
-                        anyOf:
-                          - type: string
-                          - type: "null"
-                      role:
-                        type: string
-                        enum:
-                          - USER
-                          - ADMIN
-                        description: ユーザーロール
-                      createdAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                    required:
-                      - id
-                      - supabaseId
-                      - email
-                      - name
-                      - role
-                      - createdAt
-                    additionalProperties: false
-                required:
-                  - user
-                additionalProperties: false
-        "401": *a2
-  /users/me:
-    get:
-      tags:
-        - users
-      summary: 自分のプロフィールを取得
-      security: *a1
-      responses:
-        "200":
-          description: 自分のユーザー情報
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  user:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      supabaseId:
-                        type: string
-                      email:
-                        type: string
-                      name:
-                        anyOf:
-                          - type: string
-                          - type: "null"
-                      role:
-                        type: string
-                        enum:
-                          - USER
-                          - ADMIN
-                        description: ユーザーロール
-                      createdAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                    required:
-                      - id
-                      - supabaseId
-                      - email
-                      - name
-                      - role
-                      - createdAt
-                    additionalProperties: false
-                required:
-                  - user
-                additionalProperties: false
-        "401": *a2
-  /admin/users:
+                $ref: "#/components/schemas/Error"
+  /api/admin/users:
     get:
       tags:
         - admin
       summary: ユーザー一覧を取得（管理者専用）
-      security: *a1
+      security: &a1
+        - supabaseSession: []
       responses:
         "200":
           description: ユーザー一覧
@@ -627,42 +251,22 @@ paths:
                   users:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        supabaseId:
-                          type: string
-                        email:
-                          type: string
-                        name:
-                          anyOf:
-                            - type: string
-                            - type: "null"
-                        role:
-                          type: string
-                          enum:
-                            - USER
-                            - ADMIN
-                          description: ユーザーロール
-                        createdAt:
-                          type: string
-                          format: date-time
-                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                      required:
-                        - id
-                        - supabaseId
-                        - email
-                        - name
-                        - role
-                        - createdAt
-                      additionalProperties: false
+                      $ref: "#/components/schemas/User"
                 required:
                   - users
-                additionalProperties: false
-        "401": *a2
-        "403": *a3
-  /admin/posts:
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/posts:
     get:
       tags:
         - admin
@@ -679,84 +283,34 @@ paths:
                   posts:
                     type: array
                     items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        title:
-                          type: string
-                        body:
-                          type: string
-                        authorId:
-                          anyOf:
-                            - type: string
-                            - type: "null"
-                        author:
-                          anyOf:
-                            - type: object
-                              properties:
-                                id:
-                                  type: string
-                                supabaseId:
-                                  type: string
-                                email:
-                                  type: string
-                                name:
-                                  anyOf:
-                                    - type: string
-                                    - type: "null"
-                                role:
-                                  type: string
-                                  enum:
-                                    - USER
-                                    - ADMIN
-                                  description: ユーザーロール
-                                createdAt:
-                                  type: string
-                                  format: date-time
-                                  pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                              required:
-                                - id
-                                - supabaseId
-                                - email
-                                - name
-                                - role
-                                - createdAt
-                              additionalProperties: false
-                            - type: "null"
-                        createdAt:
-                          type: string
-                          format: date-time
-                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                        updatedAt:
-                          type: string
-                          format: date-time
-                          pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                      required:
-                        - id
-                        - title
-                        - body
-                        - authorId
-                        - createdAt
-                        - updatedAt
-                      additionalProperties: false
+                      $ref: "#/components/schemas/Post"
                 required:
                   - posts
-                additionalProperties: false
-        "401": *a2
-        "403": *a3
-  /admin/users/{id}:
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/admin/users/{id}:
     patch:
       tags:
         - admin
       summary: ユーザーの名前・ロールを更新（管理者専用、自分自身のロール変更は不可）
       security: *a1
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
+        - schema:
             type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
       requestBody:
         required: true
         content:
@@ -772,7 +326,6 @@ paths:
                   enum:
                     - USER
                     - ADMIN
-              additionalProperties: false
       responses:
         "200":
           description: 更新後のユーザー
@@ -782,67 +335,134 @@ paths:
                 type: object
                 properties:
                   user:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      supabaseId:
-                        type: string
-                      email:
-                        type: string
-                      name:
-                        anyOf:
-                          - type: string
-                          - type: "null"
-                      role:
-                        type: string
-                        enum:
-                          - USER
-                          - ADMIN
-                        description: ユーザーロール
-                      createdAt:
-                        type: string
-                        format: date-time
-                        pattern: ^(?:(?:\d\d[2468][048]|\d\d[13579][26]|\d\d0[48]|[02468][048]00|[13579][26]00)-02-29|\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\d|30)|(?:02)-(?:0[1-9]|1\d|2[0-8])))T(?:(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?(?:Z))$
-                    required:
-                      - id
-                      - supabaseId
-                      - email
-                      - name
-                      - role
-                      - createdAt
-                    additionalProperties: false
+                    $ref: "#/components/schemas/User"
                 required:
                   - user
-                additionalProperties: false
-        "400": *a4
-        "401": *a2
-        "403": *a3
+        "400":
+          description: 自分自身のロールは変更できないなど
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - admin
       summary: ユーザーを削除（管理者専用、自分自身は削除不可）
       security: *a1
       parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
+        - schema:
             type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
       responses:
         "200":
           description: 削除成功
           content:
             application/json:
               schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: 自分自身は削除できない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/users:
+    post:
+      tags:
+        - users
+      summary: サインアップ直後にPrisma上のUserを作成（Supabaseセッション必須）
+      security:
+        - supabaseSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+      responses:
+        "200":
+          description: 既に存在するユーザー
+          content:
+            application/json:
+              schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    const: true
+                  user:
+                    $ref: "#/components/schemas/User"
                 required:
-                  - success
-                additionalProperties: false
-        "400": *a4
-        "401": *a2
-        "403": *a3
+                  - user
+        "201":
+          description: 作成されたユーザー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                required:
+                  - user
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /api/users/me:
+    get:
+      tags:
+        - users
+      summary: 自分のプロフィールを取得
+      security:
+        - supabaseSession: []
+      responses:
+        "200":
+          description: 自分のユーザー情報
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                required:
+                  - user
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+webhooks: {}
