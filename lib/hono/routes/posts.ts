@@ -1,41 +1,41 @@
-import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
-import { Role } from "@/app/generated/prisma/enums";
-import { authMiddleware } from "@/lib/hono/middleware/auth";
-import { MOCK_POSTS } from "@/lib/mocks/fixtures";
-import { prisma } from "@/lib/prisma/client";
-import { createPostSchema } from "@/lib/schemas/post";
+import { zValidator } from '@hono/zod-validator';
+import { Hono } from 'hono';
+import { Role } from '@/app/generated/prisma/enums';
+import { authMiddleware } from '@/lib/hono/middleware/auth';
+import { MOCK_POSTS } from '@/lib/mocks/fixtures';
+import { prisma } from '@/lib/prisma/client';
+import { createPostSchema } from '@/lib/schemas/post';
 
 export const postsRoute = new Hono()
-  .get("/", async (c) => {
-    if (process.env.MOCK_MODE === "true") {
+  .get('/', async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
       return c.json({ posts: MOCK_POSTS });
     }
     const posts = await prisma.post.findMany({
       include: { author: true },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
     return c.json({ posts });
   })
-  .get("/:id", async (c) => {
-    const id = c.req.param("id");
-    if (process.env.MOCK_MODE === "true") {
+  .get('/:id', async (c) => {
+    const id = c.req.param('id');
+    if (process.env.MOCK_MODE === 'true') {
       const post = MOCK_POSTS.find((p) => p.id === id);
-      if (!post) return c.json({ error: "Not found" }, 404);
+      if (!post) return c.json({ error: 'Not found' }, 404);
       return c.json({ post });
     }
     const post = await prisma.post.findUnique({
       where: { id },
       include: { author: true },
     });
-    if (!post) return c.json({ error: "Not found" }, 404);
+    if (!post) return c.json({ error: 'Not found' }, 404);
     return c.json({ post });
   })
-  .post("/", authMiddleware, zValidator("json", createPostSchema), async (c) => {
-    const user = c.get("user");
-    const data = c.req.valid("json");
+  .post('/', authMiddleware, zValidator('json', createPostSchema), async (c) => {
+    const user = c.get('user');
+    const data = c.req.valid('json');
 
-    if (process.env.MOCK_MODE === "true") {
+    if (process.env.MOCK_MODE === 'true') {
       return c.json(
         {
           post: {
@@ -56,12 +56,12 @@ export const postsRoute = new Hono()
     });
     return c.json({ post }, 201);
   })
-  .delete("/:id", authMiddleware, async (c) => {
-    const user = c.get("user");
-    if (user.role !== Role.ADMIN) return c.json({ error: "Forbidden" }, 403);
+  .delete('/:id', authMiddleware, async (c) => {
+    const user = c.get('user');
+    if (user.role !== Role.ADMIN) return c.json({ error: 'Forbidden' }, 403);
 
-    const id = c.req.param("id");
-    if (process.env.MOCK_MODE === "true") {
+    const id = c.req.param('id');
+    if (process.env.MOCK_MODE === 'true') {
       return c.json({ success: true });
     }
     await prisma.post.delete({ where: { id } });

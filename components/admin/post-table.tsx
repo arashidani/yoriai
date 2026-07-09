@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -6,7 +6,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 
 type Post = {
   id: string;
@@ -42,9 +42,9 @@ export function PostTable({ posts }: PostTableProps) {
               <TableRow key={post.id}>
                 <TableCell className="max-w-xs truncate">{post.title}</TableCell>
                 <TableCell>
-                  {post.author ? (post.author.name ?? post.author.email) : "退会したユーザー"}
+                  {post.author ? (post.author.name ?? post.author.email) : '退会したユーザー'}
                 </TableCell>
-                <TableCell>{new Date(post.createdAt).toLocaleDateString("ja-JP")}</TableCell>
+                <TableCell>{new Date(post.createdAt).toLocaleDateString('ja-JP')}</TableCell>
               </TableRow>
             ))}
           </TableBody>

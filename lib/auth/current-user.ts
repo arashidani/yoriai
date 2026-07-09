@@ -1,10 +1,10 @@
-import { cache } from "react";
-import { MOCK_USERS } from "@/lib/mocks/fixtures";
-import { prisma } from "@/lib/prisma/client";
-import { createClient } from "@/lib/supabase/server";
+import { cache } from 'react';
+import { MOCK_USERS } from '@/lib/mocks/fixtures';
+import { prisma } from '@/lib/prisma/client';
+import { createClient } from '@/lib/supabase/server';
 
 export const getCurrentUser = cache(async () => {
-  if (process.env.MOCK_MODE === "true") {
+  if (process.env.MOCK_MODE === 'true') {
     return MOCK_USERS[0];
   }
 

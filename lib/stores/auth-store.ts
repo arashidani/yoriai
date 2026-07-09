@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import type { MOCK_USERS } from "@/lib/mocks/fixtures";
+import { create } from 'zustand';
+import type { MOCK_USERS } from '@/lib/mocks/fixtures';
 
 type MockUser = (typeof MOCK_USERS)[number];
 

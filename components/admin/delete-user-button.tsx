@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Trash2 } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,9 +13,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { client } from "@/lib/hono/client";
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { client } from '@/lib/hono/client';
 
 type DeleteUserButtonProps = {
   userId: string;
@@ -30,7 +30,7 @@ export function DeleteUserButton({ userId, userName, isSelf, onDeleted }: Delete
 
   async function handleConfirm() {
     setPending(true);
-    const res = await client.api.admin.users[":id"].$delete({
+    const res = await client.api.admin.users[':id'].$delete({
       param: { id: userId },
     });
     setPending(false);
@@ -39,12 +39,12 @@ export function DeleteUserButton({ userId, userName, isSelf, onDeleted }: Delete
     if (!res.ok) {
       const body = await res.json();
       const message =
-        "error" in body && typeof body.error === "string" ? body.error : "削除に失敗しました";
+        'error' in body && typeof body.error === 'string' ? body.error : '削除に失敗しました';
       toast.error(message);
       return;
     }
     onDeleted(userId);
-    toast.success("ユーザーを削除しました");
+    toast.success('ユーザーを削除しました');
   }
 
   return (
@@ -60,7 +60,7 @@ export function DeleteUserButton({ userId, userName, isSelf, onDeleted }: Delete
         <AlertDialogHeader>
           <AlertDialogTitle>ユーザーを削除しますか？</AlertDialogTitle>
           <AlertDialogDescription>
-            {userName ?? "このユーザー"}を削除します。この操作は取り消せません。
+            {userName ?? 'このユーザー'}を削除します。この操作は取り消せません。
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
