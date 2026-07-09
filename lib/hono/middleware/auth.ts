@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { createMiddleware } from 'hono/factory'
 import type { User } from '@/app/generated/prisma/client'
+import { requireEnv } from '@/lib/env'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
@@ -15,8 +16,8 @@ export const authMiddleware = createMiddleware<{ Variables: Variables }>(async (
   }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
     {
       cookies: {
         getAll() {
