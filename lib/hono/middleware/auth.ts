@@ -5,11 +5,11 @@ import { requireEnv } from '@/lib/env'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
-type Variables = {
+export type AuthVariables = {
   user: User | (typeof MOCK_USERS)[number]
 }
 
-export const authMiddleware = createMiddleware<{ Variables: Variables }>(async (c, next) => {
+export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
   if (process.env.MOCK_MODE === 'true') {
     c.set('user', MOCK_USERS[0])
     return next()

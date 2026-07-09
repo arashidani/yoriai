@@ -11,7 +11,8 @@
       "**",
       "!**/app/generated",
       "!**/public/mockServiceWorker.js",
-      "!**/app/api/**/route.ts"
+      "!**/app/api/**/route.ts",
+      "!**/openapi/openapi.json"
     ]
   },
   "formatter": {

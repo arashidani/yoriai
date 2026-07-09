@@ -1,6 +1,12 @@
 import { z } from 'zod'
 import { Role } from '@/app/generated/prisma/enums'
 
+export const createUserSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+})
+
+export type CreateUserInput = z.infer<typeof createUserSchema>
+
 export const updateUserSchema = z.object({
   name: z.string().min(1, '名前を入力してください').optional(),
   role: z.nativeEnum(Role).optional(),
