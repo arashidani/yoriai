@@ -1,9 +1,8 @@
 'use client'
 
+import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { client } from '@/lib/hono/client'
-import { Button } from '@/components/ui/button'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +14,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
-import { Trash2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { client } from '@/lib/hono/client'
 
 type DeleteUserButtonProps = {
   userId: string
@@ -38,7 +38,8 @@ export function DeleteUserButton({ userId, userName, isSelf, onDeleted }: Delete
 
     if (!res.ok) {
       const body = await res.json()
-      const message = 'error' in body && typeof body.error === 'string' ? body.error : '削除に失敗しました'
+      const message =
+        'error' in body && typeof body.error === 'string' ? body.error : '削除に失敗しました'
       toast.error(message)
       return
     }

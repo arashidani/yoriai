@@ -1,10 +1,10 @@
-import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
+import { Role } from '@/app/generated/prisma/enums'
 import { authMiddleware } from '@/lib/hono/middleware/auth'
-import { createPostSchema } from '@/lib/schemas/post'
 import { MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { Role } from '@/app/generated/prisma/enums'
+import { createPostSchema } from '@/lib/schemas/post'
 
 export const postsRoute = new Hono()
   .get('/', async (c) => {
@@ -36,16 +36,19 @@ export const postsRoute = new Hono()
     const data = c.req.valid('json')
 
     if (process.env.MOCK_MODE === 'true') {
-      return c.json({
-        post: {
-          id: `post-${Date.now()}`,
-          ...data,
-          authorId: user.id,
-          author: user,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+      return c.json(
+        {
+          post: {
+            id: `post-${Date.now()}`,
+            ...data,
+            authorId: user.id,
+            author: user,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
         },
-      }, 201)
+        201,
+      )
     }
     const post = await prisma.post.create({
       data: { ...data, authorId: user.id },

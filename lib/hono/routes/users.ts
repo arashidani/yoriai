@@ -1,9 +1,10 @@
-import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
+import { createServerClient } from '@supabase/ssr'
+import { Hono } from 'hono'
 import { z } from 'zod'
+import { requireEnv } from '@/lib/env'
 import { authMiddleware } from '@/lib/hono/middleware/auth'
 import { prisma } from '@/lib/prisma/client'
-import { createServerClient } from '@supabase/ssr'
 
 const createUserSchema = z.object({
   name: z.string().min(1).max(100).optional(),
@@ -17,8 +18,8 @@ export const usersRoute = new Hono()
     }
 
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+      requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
       {
         cookies: {
           getAll() {
@@ -31,10 +32,12 @@ export const usersRoute = new Hono()
           },
           setAll() {},
         },
-      }
+      },
     )
 
-    const { data: { user: authUser } } = await supabase.auth.getUser()
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser()
     if (!authUser) return c.json({ error: 'Unauthorized' }, 401)
 
     const { name } = c.req.valid('json')
@@ -44,10 +47,14 @@ export const usersRoute = new Hono()
     })
     if (existing) return c.json({ user: existing })
 
+    if (!authUser.email) {
+      return c.json({ error: 'Email not found' }, 400)
+    }
+
     const user = await prisma.user.create({
       data: {
         supabaseId: authUser.id,
-        email: authUser.email!,
+        email: authUser.email,
         name: name ?? authUser.user_metadata?.name ?? null,
       },
     })

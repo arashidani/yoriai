@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { HttpResponse, http } from 'msw'
 import { expect, fn, screen } from 'storybook/test'
-import { http, HttpResponse } from 'msw'
 import { DeleteUserButton } from './delete-user-button'
 
 const meta = {
@@ -48,7 +48,7 @@ export const DeleteFails: Story = {
     msw: {
       handlers: [
         http.delete('/api/admin/users/:id', () =>
-          HttpResponse.json({ error: '削除に失敗しました' }, { status: 400 })
+          HttpResponse.json({ error: '削除に失敗しました' }, { status: 400 }),
         ),
       ],
     },

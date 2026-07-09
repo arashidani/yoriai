@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
-import { postsRoute } from './routes/posts'
 import { adminRoute } from './routes/admin'
+import { postsRoute } from './routes/posts'
 import { usersRoute } from './routes/users'
 
 const app = new Hono()
