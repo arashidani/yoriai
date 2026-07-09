@@ -1,17 +1,17 @@
-import { PostCard } from '@/components/posts/post-card'
-import { MOCK_POSTS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
+import { PostCard } from "@/components/posts/post-card";
+import { MOCK_POSTS } from "@/lib/mocks/fixtures";
+import { prisma } from "@/lib/prisma/client";
 
 async function getPosts() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
+  if (process.env.MOCK_MODE === "true") return MOCK_POSTS;
   return prisma.post.findMany({
     include: { author: true },
-    orderBy: { createdAt: 'desc' },
-  })
+    orderBy: { createdAt: "desc" },
+  });
 }
 
 export default async function HomePage() {
-  const posts = await getPosts()
+  const posts = await getPosts();
 
   return (
     <>
@@ -26,5 +26,5 @@ export default async function HomePage() {
         </div>
       )}
     </>
-  )
+  );
 }
