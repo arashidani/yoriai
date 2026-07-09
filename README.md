@@ -154,6 +154,13 @@ const res = await client.api.posts.$get()
 const { posts } = await res.json()
 ```
 
+### OpenAPI（Swagger UI）
+
+起動後、ブラウザで以下にアクセスすると API 仕様を確認できる。
+
+- Swagger UI: `http://localhost:3000/api/docs`
+- OpenAPI JSON: `http://localhost:3000/api/openapi.json`
+
 ## Supabase接続
 
 ### 環境変数の取得場所
