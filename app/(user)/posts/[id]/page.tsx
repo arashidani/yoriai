@@ -1,27 +1,27 @@
-import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { MOCK_POSTS } from '@/lib/mocks/fixtures';
-import { prisma } from '@/lib/prisma/client';
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { MOCK_POSTS } from '@/lib/mocks/fixtures'
+import { prisma } from '@/lib/prisma/client'
 
 type Props = {
-  params: Promise<{ id: string }>;
-};
+  params: Promise<{ id: string }>
+}
 
 async function getPost(id: string) {
   if (process.env.MOCK_MODE === 'true') {
-    return MOCK_POSTS.find((p) => p.id === id) ?? null;
+    return MOCK_POSTS.find((p) => p.id === id) ?? null
   }
   return prisma.post.findUnique({
     where: { id },
     include: { author: true },
-  });
+  })
 }
 
 export default async function PostDetailPage({ params }: Props) {
-  const { id } = await params;
-  const post = await getPost(id);
-  if (!post) notFound();
+  const { id } = await params
+  const post = await getPost(id)
+  if (!post) notFound()
 
   return (
     <article>
@@ -41,5 +41,5 @@ export default async function PostDetailPage({ params }: Props) {
         <p className="whitespace-pre-wrap">{post.body}</p>
       </div>
     </article>
-  );
+  )
 }

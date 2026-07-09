@@ -1,4 +1,4 @@
-import { Role } from '@/app/generated/prisma/enums';
+import { Role } from '@/app/generated/prisma/enums'
 
 export const MOCK_USERS = [
   {
@@ -17,7 +17,7 @@ export const MOCK_USERS = [
     role: Role.USER,
     createdAt: new Date('2024-01-02'),
   },
-];
+]
 
 export const MOCK_POSTS = [
   {
@@ -56,4 +56,4 @@ export const MOCK_POSTS = [
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
   },
-];
+]

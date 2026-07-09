@@ -1,11 +1,11 @@
-import Link from 'next/link';
-import { Role } from '@/app/generated/prisma/enums';
-import { LogoutButton } from '@/components/logout-button';
-import { Button } from '@/components/ui/button';
-import { getCurrentUser } from '@/lib/auth/current-user';
+import Link from 'next/link'
+import { Role } from '@/app/generated/prisma/enums'
+import { LogoutButton } from '@/components/logout-button'
+import { Button } from '@/components/ui/button'
+import { getCurrentUser } from '@/lib/auth/current-user'
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser()
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -29,5 +29,5 @@ export default async function UserLayout({ children }: { children: React.ReactNo
       </header>
       <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">{children}</main>
     </div>
-  );
+  )
 }

@@ -1,17 +1,17 @@
-'use client';
+'use client'
 
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { type CreatePostInput, createPostSchema } from '@/lib/schemas/post';
+import { zodResolver } from '@hookform/resolvers/zod'
+import { useForm } from 'react-hook-form'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { type CreatePostInput, createPostSchema } from '@/lib/schemas/post'
 
 type PostFormProps = {
-  onSubmit: (data: CreatePostInput) => Promise<void>;
-  isSubmitting?: boolean;
-};
+  onSubmit: (data: CreatePostInput) => Promise<void>
+  isSubmitting?: boolean
+}
 
 export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
   const {
@@ -20,7 +20,7 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
     formState: { errors },
   } = useForm<CreatePostInput>({
     resolver: zodResolver(createPostSchema),
-  });
+  })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -49,5 +49,5 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
         {isSubmitting ? '送信中...' : '投稿する'}
       </Button>
     </form>
-  );
+  )
 }
