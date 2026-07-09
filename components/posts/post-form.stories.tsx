@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/nextjs-vite";
-import { expect, fn } from "storybook/test";
-import { PostForm } from "./post-form";
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+import { expect, fn } from 'storybook/test';
+import { PostForm } from './post-form';
 
 const meta = {
   component: PostForm,
@@ -12,9 +12,9 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {
-    const titleInput = canvas.getByLabelText("タイトル");
+    const titleInput = canvas.getByLabelText('タイトル');
     await expect(titleInput).toBeVisible();
-    const bodyTextarea = canvas.getByLabelText("本文");
+    const bodyTextarea = canvas.getByLabelText('本文');
     await expect(bodyTextarea).toBeVisible();
   },
 };
@@ -25,7 +25,7 @@ export const Submitting: Story = {
     isSubmitting: true,
   },
   play: async ({ canvas }) => {
-    const button = canvas.getByRole("button", { name: /送信中/ });
+    const button = canvas.getByRole('button', { name: /送信中/ });
     await expect(button).toBeDisabled();
   },
 };
@@ -33,8 +33,8 @@ export const Submitting: Story = {
 export const ValidationErrors: Story = {
   args: { onSubmit: fn() },
   play: async ({ canvas, userEvent }) => {
-    const button = canvas.getByRole("button", { name: /投稿する/ });
+    const button = canvas.getByRole('button', { name: /投稿する/ });
     await userEvent.click(button);
-    await expect(await canvas.findByText("タイトルは必須です")).toBeVisible();
+    await expect(await canvas.findByText('タイトルは必須です')).toBeVisible();
   },
 };

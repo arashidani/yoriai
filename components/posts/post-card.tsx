@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from 'next/link';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 
 type Author = {
   id: string;
@@ -20,7 +20,7 @@ type PostCardProps = {
 };
 
 export function PostCard({ post }: PostCardProps) {
-  const createdAt = new Date(post.createdAt).toLocaleDateString("ja-JP");
+  const createdAt = new Date(post.createdAt).toLocaleDateString('ja-JP');
   const excerpt = post.body.length > 100 ? `${post.body.slice(0, 100)}…` : post.body;
 
   return (
@@ -33,7 +33,7 @@ export function PostCard({ post }: PostCardProps) {
           <p className="text-muted-foreground text-sm line-clamp-3">{excerpt}</p>
         </CardContent>
         <CardFooter className="text-xs text-muted-foreground flex justify-between">
-          <span>{post.author ? (post.author.name ?? post.author.email) : "退会したユーザー"}</span>
+          <span>{post.author ? (post.author.name ?? post.author.email) : '退会したユーザー'}</span>
           <span>{createdAt}</span>
         </CardFooter>
       </Card>

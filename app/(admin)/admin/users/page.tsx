@@ -1,11 +1,11 @@
-import { UserTable } from "@/components/admin/user-table";
-import { getCurrentUser } from "@/lib/auth/current-user";
-import { MOCK_USERS } from "@/lib/mocks/fixtures";
-import { prisma } from "@/lib/prisma/client";
+import { UserTable } from '@/components/admin/user-table';
+import { getCurrentUser } from '@/lib/auth/current-user';
+import { MOCK_USERS } from '@/lib/mocks/fixtures';
+import { prisma } from '@/lib/prisma/client';
 
 async function getUsers() {
-  if (process.env.MOCK_MODE === "true") return MOCK_USERS;
-  return prisma.user.findMany({ orderBy: { createdAt: "desc" } });
+  if (process.env.MOCK_MODE === 'true') return MOCK_USERS;
+  return prisma.user.findMany({ orderBy: { createdAt: 'desc' } });
 }
 
 export default async function AdminUsersPage() {

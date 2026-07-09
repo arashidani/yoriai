@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil } from "lucide-react";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { Role } from "@/app/generated/prisma/enums";
-import { Button } from "@/components/ui/button";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Pencil } from 'lucide-react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { Role } from '@/app/generated/prisma/enums';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -15,12 +15,12 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { client } from "@/lib/hono/client";
-import { type UpdateUserInput, updateUserSchema } from "@/lib/schemas/user";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { client } from '@/lib/hono/client';
+import { type UpdateUserInput, updateUserSchema } from '@/lib/schemas/user';
 
 type EditUserDialogProps = {
   userId: string;
@@ -46,19 +46,19 @@ export function EditUserDialog({
     formState: { errors, isSubmitting },
   } = useForm<UpdateUserInput>({
     resolver: zodResolver(updateUserSchema),
-    defaultValues: { name: initialName ?? "" },
+    defaultValues: { name: initialName ?? '' },
   });
 
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (next) {
       setRole(initialRole);
-      reset({ name: initialName ?? "" });
+      reset({ name: initialName ?? '' });
     }
   }
 
   async function onSubmit(data: UpdateUserInput) {
-    const res = await client.api.admin.users[":id"].$patch({
+    const res = await client.api.admin.users[':id'].$patch({
       param: { id: userId },
       json: { name: data.name, role },
     });
@@ -66,14 +66,14 @@ export function EditUserDialog({
     if (!res.ok) {
       const body = await res.json();
       const message =
-        "error" in body && typeof body.error === "string" ? body.error : "更新に失敗しました";
+        'error' in body && typeof body.error === 'string' ? body.error : '更新に失敗しました';
       toast.error(message);
       return;
     }
 
     setOpen(false);
     onUpdated({ name: data.name ?? null, role });
-    toast.success("ユーザー情報を更新しました");
+    toast.success('ユーザー情報を更新しました');
   }
 
   return (
@@ -93,7 +93,7 @@ export function EditUserDialog({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="name">名前</Label>
-            <Input id="name" {...register("name")} aria-invalid={!!errors.name} />
+            <Input id="name" {...register('name')} aria-invalid={!!errors.name} />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
           <div className="flex items-center justify-between">
@@ -108,7 +108,7 @@ export function EditUserDialog({
           </div>
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "保存中..." : "保存する"}
+              {isSubmitting ? '保存中...' : '保存する'}
             </Button>
           </DialogFooter>
         </form>

@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Role } from "@/app/generated/prisma/enums";
-import { DeleteUserButton } from "@/components/admin/delete-user-button";
-import { EditUserDialog } from "@/components/admin/edit-user-dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState } from 'react';
+import { Role } from '@/app/generated/prisma/enums';
+import { DeleteUserButton } from '@/components/admin/delete-user-button';
+import { EditUserDialog } from '@/components/admin/edit-user-dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -12,8 +12,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 type User = {
   id: string;
@@ -60,20 +60,20 @@ export function UserTable({ users: initialUsers, currentUserId }: UserTableProps
               const isSelf = user.id === currentUserId;
               return (
                 <TableRow key={user.id}>
-                  <TableCell>{user.name ?? "—"}</TableCell>
+                  <TableCell>{user.name ?? '—'}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <span
                       className={cn(
                         user.role === Role.ADMIN
-                          ? "text-primary font-medium"
-                          : "text-muted-foreground",
+                          ? 'text-primary font-medium'
+                          : 'text-muted-foreground',
                       )}
                     >
                       {user.role}
                     </span>
                   </TableCell>
-                  <TableCell>{new Date(user.createdAt).toLocaleDateString("ja-JP")}</TableCell>
+                  <TableCell>{new Date(user.createdAt).toLocaleDateString('ja-JP')}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <EditUserDialog

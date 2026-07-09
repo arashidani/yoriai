@@ -1,4 +1,4 @@
-import app from "@/lib/hono/app";
+import app from '@/lib/hono/app';
 
 export const GET = app.fetch;
 export const POST = app.fetch;

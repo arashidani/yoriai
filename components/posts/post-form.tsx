@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { type CreatePostInput, createPostSchema } from "@/lib/schemas/post";
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { type CreatePostInput, createPostSchema } from '@/lib/schemas/post';
 
 type PostFormProps = {
   onSubmit: (data: CreatePostInput) => Promise<void>;
@@ -29,7 +29,7 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
         <Input
           id="title"
           placeholder="質問のタイトルを入力してください"
-          {...register("title")}
+          {...register('title')}
           aria-invalid={!!errors.title}
         />
         {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
@@ -40,13 +40,13 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
           id="body"
           placeholder="質問の詳細を入力してください"
           rows={8}
-          {...register("body")}
+          {...register('body')}
           aria-invalid={!!errors.body}
         />
         {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
       </div>
       <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? "送信中..." : "投稿する"}
+        {isSubmitting ? '送信中...' : '投稿する'}
       </Button>
     </form>
   );

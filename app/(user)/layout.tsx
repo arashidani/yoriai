@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { Role } from "@/app/generated/prisma/enums";
-import { LogoutButton } from "@/components/logout-button";
-import { Button } from "@/components/ui/button";
-import { getCurrentUser } from "@/lib/auth/current-user";
+import Link from 'next/link';
+import { Role } from '@/app/generated/prisma/enums';
+import { LogoutButton } from '@/components/logout-button';
+import { Button } from '@/components/ui/button';
+import { getCurrentUser } from '@/lib/auth/current-user';
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();

@@ -1,4 +1,4 @@
-import { MOCK_POSTS, MOCK_USERS } from "@/lib/mocks/fixtures";
+import { MOCK_POSTS, MOCK_USERS } from '@/lib/mocks/fixtures';
 
 export default async function AdminDashboardPage() {
   // TODO: Supabase接続後はPrismaで取得

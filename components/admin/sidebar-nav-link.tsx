@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import type { ComponentProps, ReactNode } from "react";
-import { SidebarMenuButton, useSidebar } from "@/components/ui/sidebar";
+import Link from 'next/link';
+import type { ComponentProps, ReactNode } from 'react';
+import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 
 type SidebarNavLinkProps = {
-  href: ComponentProps<typeof Link>["href"];
+  href: ComponentProps<typeof Link>['href'];
   children: ReactNode;
 };
 
