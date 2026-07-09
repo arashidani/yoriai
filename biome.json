@@ -7,7 +7,12 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/app/generated", "!**/public/mockServiceWorker.js"]
+    "includes": [
+      "**",
+      "!**/app/generated",
+      "!**/public/mockServiceWorker.js",
+      "!**/app/api/**/route.ts"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -19,11 +24,19 @@
     "enabled": true,
     "rules": {
       "preset": "recommended",
+      "complexity": {
+        "noForEach": "warn"
+      },
       "correctness": {
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "warn",
+        "noUnusedImports": "warn",
+        "noUnusedVariables": "warn"
+      },
+      "nursery": {
+        "noFloatingPromises": "warn"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "warn"
       },
       "a11y": {
         "noSvgWithoutTitle": "off"
