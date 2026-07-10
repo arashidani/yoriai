@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Role } from '@/app/generated/prisma/enums'
+import { Logo } from '@/components/brand/logo'
 import { LogoutButton } from '@/components/logout-button'
 import { Button } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/auth/current-user'
@@ -11,8 +12,8 @@ export default async function UserLayout({ children }: { children: React.ReactNo
     <div className="min-h-screen flex flex-col">
       <header className="border-b">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="font-bold text-lg">
-            社内Q&A
+          <Link href="/">
+            <Logo variant="full" preload className="h-7 w-auto" />
           </Link>
           <nav className="flex items-center gap-4">
             {user?.role === Role.ADMIN && (
