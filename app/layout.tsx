@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 // 反映するには next/font/google の Noto_Sans_JP（または Webフォント読み込み）を追加する。
 
 export const metadata: Metadata = {
-  title: '社内Q&Aツール',
+  title: 'Yoriai',
   description: '社内向け質問共有プラットフォーム',
 }
 
