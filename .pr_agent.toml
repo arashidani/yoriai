@@ -1,0 +1,4 @@
+# QODO Merge 設定ファイル
+[config]
+# develop→main は feature でレビュー済みのためスキップ（^develop$ で完全一致）
+ignore_pr_source_branches = ['^develop$']
