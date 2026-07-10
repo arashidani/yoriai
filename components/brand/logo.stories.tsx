@@ -12,6 +12,13 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
+export const Default: Story = {
+  args: { className: 'h-12 w-auto' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByAltText('Yoriai')).toBeVisible()
+  },
+}
+
 export const Full: Story = {
   args: { variant: 'full', className: 'h-12 w-auto' },
   play: async ({ canvas }) => {
