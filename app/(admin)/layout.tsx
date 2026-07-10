@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Role } from '@/app/generated/prisma/enums'
 import { SidebarNavLink } from '@/components/admin/sidebar-nav-link'
+import { Logo } from '@/components/brand/logo'
 import { LogoutButton } from '@/components/logout-button'
 import {
   Sidebar,
@@ -27,8 +28,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <Link href="/" className="px-2 py-1.5 font-bold text-lg">
-            社内Q&A
+          <Link href="/" className="px-2 py-1.5">
+            <Logo variant="full" preload className="h-7 w-auto" />
           </Link>
         </SidebarHeader>
         <SidebarContent>
