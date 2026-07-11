@@ -53,7 +53,8 @@
   /* Fonts（主フォント = Kosugi Maru（丸ゴシック）、Geist / Noto Sans JP をフォールバック。next/font 読み込み済み） */
   --font-sans: var(--font-kosugi-maru), var(--font-geist-sans), "Noto Sans JP", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-heading: var(--font-kosugi-maru), var(--font-geist-sans), "Noto Sans JP", sans-serif;
+  /* 見出しは可変ウェイトの Geist Sans を優先し、Kosugi Maru（400固定）による合成太字を避ける */
+  --font-heading: var(--font-geist-sans), var(--font-kosugi-maru), "Noto Sans JP", sans-serif;
 
   /* Radius（Obra: --radius = 0.625rem を基準に shadcn 標準の段階派生） */
   --radius-sm: calc(var(--radius) - 4px);
