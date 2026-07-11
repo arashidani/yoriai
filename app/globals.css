@@ -50,10 +50,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Fonts（Obra = Geist / Geist Mono、next/font 読み込み済み。日本語フォールバック付き） */
-  --font-sans: var(--font-geist-sans), "Noto Sans JP", sans-serif;
+  /* Fonts（主フォント = Kosugi Maru（丸ゴシック）、Geist / Noto Sans JP をフォールバック。next/font 読み込み済み） */
+  --font-sans: var(--font-kosugi-maru), var(--font-geist-sans), "Noto Sans JP", sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  --font-heading: var(--font-geist-sans), "Noto Sans JP", sans-serif;
+  /* 見出しは可変ウェイトの Geist Sans を優先し、Kosugi Maru（400固定）による合成太字を避ける */
+  --font-heading: var(--font-geist-sans), var(--font-kosugi-maru), "Noto Sans JP", sans-serif;
 
   /* Radius（Obra: --radius = 0.625rem を基準に shadcn 標準の段階派生） */
   --radius-sm: calc(var(--radius) - 4px);
@@ -154,11 +155,12 @@
   --foreground: #0a0a0a; /* neutral-950 */
   --card: #ffffff;
   --card-foreground: #0a0a0a;
-  /* NOTE: Obra は popover を反転（黒地に白文字）で定義している。
-     shadcn では popover をドロップダウン/セレクト等でも使うため、
-     暗い見た目が不都合なら card と同値（#ffffff / #0a0a0a）へ変更可。 */
-  --popover: #000000;
-  --popover-foreground: #ffffff;
+  /* NOTE: Obra は popover を反転（黒地に白文字）で定義しているが、
+     shadcn では popover を DropdownMenu / Select 等の多くのフローティング
+     UI で使う。反転させると light で真っ黒・dark で真っ白になり UX を
+     損ねるため、shadcn 標準に合わせて card と同値（明色）にする。 */
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
   --primary: #171717; /* neutral-900 */
   --primary-foreground: #fafafa; /* neutral-50 */
   --secondary: #f5f5f5; /* neutral-100 */
@@ -170,8 +172,8 @@
   --destructive: #dc2626; /* red-600 */
   --destructive-foreground: #ffffff;
   --border: #e5e5e5; /* neutral-200 */
-  --input: #ffffff;
-  --ring: #d4d4d4; /* neutral-300 (focus-ring) */
+  --input: #e5e5e5; /* neutral-200 (境界線として視認可能に。白背景で消えないよう border と同値) */
+  --ring: #0a0a0a; /* neutral-950 (focus-ring: WCAG 3:1 を満たすよう高コントラスト化) */
 
   --chart-1: #f54a00;
   --chart-2: #009689;
@@ -195,8 +197,8 @@
   --foreground: #fafafa; /* neutral-50 */
   --card: #171717; /* neutral-900 */
   --card-foreground: #ffffff;
-  --popover: #ffffff;
-  --popover-foreground: #000000;
+  --popover: #171717; /* neutral-900 (dark で真っ白になり眩しくならないよう card と同値) */
+  --popover-foreground: #ffffff;
   --primary: #f5f5f5; /* neutral-100 */
   --primary-foreground: #0a0a0a;
   --secondary: #262626; /* neutral-800 */
@@ -208,8 +210,8 @@
   --destructive: #9e4042;
   --destructive-foreground: #ffffff;
   --border: #404040; /* neutral-700 */
-  --input: #ffffff0d; /* white-alpha-5 */
-  --ring: #404040; /* focus-ring dark */
+  --input: #404040; /* neutral-700 (dark:bg-input/30 併用時に消えないソリッド値。border と同値) */
+  --ring: #d4d4d4; /* neutral-300 (focus-ring dark: 視認できるよう高コントラスト化) */
 
   --chart-1: #1447e6;
   --chart-2: #00bc7d;
