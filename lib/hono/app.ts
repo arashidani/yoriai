@@ -2,6 +2,7 @@ import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { openApiConfig } from './openapi/config'
 import { adminRoute } from './routes/admin'
+import { pingRoute } from './routes/ping'
 import { postsRoute } from './routes/posts'
 import { usersRoute } from './routes/users'
 
@@ -10,6 +11,7 @@ const app = new OpenAPIHono()
   .route('/posts', postsRoute)
   .route('/admin', adminRoute)
   .route('/users', usersRoute)
+  .route('/', pingRoute)
 
 app.openAPIRegistry.registerComponent('securitySchemes', 'supabaseSession', {
   type: 'apiKey',
