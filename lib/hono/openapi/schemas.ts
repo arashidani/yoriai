@@ -27,6 +27,7 @@ export const PostSchema = z
     title: z.string().openapi({ example: 'Next.js App Routerの使い方を教えてください' }),
     body: z.string().openapi({ example: 'App Router と Pages Router の違いが分かりません。' }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
+    // .nullable() だと登録済みコンポーネント User 自体が nullable になるため union で書く
     author: z.union([UserSchema, z.null()]).optional(),
     createdAt: dateTime(),
     updatedAt: dateTime(),
