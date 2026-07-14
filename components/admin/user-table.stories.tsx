@@ -49,6 +49,15 @@ export const Empty: Story = {
   args: { users: [], currentUserId: 'user-1' },
 }
 
+export const Search: Story = {
+  args: { users, currentUserId: 'user-1' },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.type(canvas.getByPlaceholderText('名前またはメールで検索'), '一般')
+    await expect(canvas.getByText('一般ユーザー')).toBeVisible()
+    await expect(canvas.queryByText('管理者')).not.toBeInTheDocument()
+  },
+}
+
 export const NoName: Story = {
   args: {
     users: [

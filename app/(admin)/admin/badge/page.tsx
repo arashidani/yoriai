@@ -1,20 +1,22 @@
-import { Award, Medal, Crown, Sparkles } from 'lucide-react'
+import {
+  BADGE_ICONS,
+  type BadgeIconName,
+  RARITY_LABELS,
+  RARITY_STYLES,
+} from '@/components/admin/badge-icons'
+import { MOCK_BADGES } from '@/lib/mocks/fixtures'
+import { prisma } from '@/lib/prisma/client'
 
-const rarityStyles: Record<string, string> = {
-  ブロンズ: 'bg-amber-700/10 text-amber-700',
-  シルバー: 'bg-slate-400/10 text-slate-500',
-  ゴールド: 'bg-yellow-500/10 text-yellow-600',
-  プラチナ: 'bg-violet-500/10 text-violet-600',
+export const dynamic = 'force-dynamic'
+
+async function getBadges() {
+  if (process.env.MOCK_MODE === 'true') return MOCK_BADGES
+  return prisma.badge.findMany({ orderBy: { createdAt: 'desc' } })
 }
 
-const badges = [
-  { icon: Medal, name: '初投稿', desc: '初めて投稿を作成した', rarity: 'ブロンズ', earned: 842 },
-  { icon: Award, name: '質問マスター', desc: '質問を50件投稿した', rarity: 'シルバー', earned: 213 },
-  { icon: Crown, name: 'ベストアンサー王', desc: 'ベストアンサーを100件獲得した', rarity: 'ゴールド', earned: 34 },
-  { icon: Sparkles, name: '伝説の回答者', desc: '累計いいねを1000件獲得した', rarity: 'プラチナ', earned: 5 },
-]
+export default async function BadgePage() {
+  const badges = await getBadges()
 
-export default function BadgePage() {
   return (
     <div className="space-y-6">
       <div>
@@ -24,27 +26,36 @@ export default function BadgePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {badges.map((b) => (
-          <div key={b.name} className="rounded-xl border p-5 space-y-4">
-            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-              <b.icon className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium">{b.name}</h3>
+      {badges.length === 0 ? (
+        <p className="text-sm text-muted-foreground">まだバッジがありません</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {badges.map((b) => {
+            const Icon = BADGE_ICONS[b.icon as BadgeIconName] ?? BADGE_ICONS.Medal
+            return (
+              <div key={b.id} className="rounded-xl border p-5 space-y-4">
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                  <Icon className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-medium">{b.name}</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{b.description}</p>
+                </div>
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${RARITY_STYLES[b.rarity]}`}
+                  >
+                    {RARITY_LABELS[b.rarity]}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{b.earnedCount}人が獲得</span>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{b.desc}</p>
-            </div>
-            <div className="flex items-center justify-between pt-2 border-t">
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${rarityStyles[b.rarity]}`}>
-                {b.rarity}
-              </span>
-              <span className="text-xs text-muted-foreground">{b.earned}人が獲得</span>
-            </div>
-          </div>
-        ))}
-      </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
