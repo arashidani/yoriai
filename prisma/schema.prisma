@@ -14,6 +14,7 @@ model User {
   name       String?
   role       Role     @default(USER)
   posts      Post[]
+  aiFlags    AiFlag[]
   createdAt  DateTime @default(now())
 }
 
@@ -27,7 +28,80 @@ model Post {
   updatedAt DateTime @updatedAt
 }
 
+model Badge {
+  id          String       @id @default(cuid())
+  name        String
+  description String
+  icon        String
+  rarity      BadgeRarity
+  earnedCount Int          @default(0)
+  missions    Mission[]
+  createdAt   DateTime     @default(now())
+}
+
+model Mission {
+  id                String   @id @default(cuid())
+  name              String
+  description       String
+  durationLabel     String
+  targetCount       Int
+  active            Boolean  @default(true)
+  participantsCount Int      @default(0)
+  progressPercent   Int      @default(0)
+  rewardBadgeId     String?
+  rewardBadge       Badge?   @relation(fields: [rewardBadgeId], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+}
+
+model AiFlag {
+  id           String       @id @default(cuid())
+  title        String
+  detail       String
+  severity     FlagSeverity
+  status       FlagStatus   @default(UNREAD)
+  targetUserId String?
+  targetUser   User?        @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
+  createdAt    DateTime     @default(now())
+}
+
+model Invite {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  name      String?
+  role      Role      @default(USER)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
 enum Role {
   USER
   ADMIN
+}
+
+enum BadgeRarity {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+}
+
+enum FlagSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum FlagStatus {
+  UNREAD
+  CONFIRMED
 }

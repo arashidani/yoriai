@@ -3,6 +3,7 @@ import { Role } from '@/app/generated/prisma/enums'
 
 export const createUserSchema = z.object({
   name: z.string().min(1).max(100).optional(),
+  inviteToken: z.string().min(1, '招待リンクが必要です'),
 })
 
 export type CreateUserInput = z.infer<typeof createUserSchema>

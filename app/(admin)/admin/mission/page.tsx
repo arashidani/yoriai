@@ -1,13 +1,17 @@
-import { Target, CheckCircle2, Flag } from 'lucide-react'
+import { CheckCircle2, Flag, Target } from 'lucide-react'
+import { MOCK_MISSIONS } from '@/lib/mocks/fixtures'
+import { prisma } from '@/lib/prisma/client'
 
-const missions = [
-  { name: '3日連続ログイン', desc: '3日間連続でログインする', progress: 100, participants: 421, active: true },
-  { name: '週に5件投稿', desc: '1週間で5件の投稿を作成する', progress: 62, participants: 189, active: true },
-  { name: 'コメントを10件つける', desc: '他のユーザーの投稿にコメントする', progress: 34, participants: 97, active: true },
-  { name: '月間トップ回答者', desc: '月内で最も多くベストアンサーを獲得する', progress: 8, participants: 26, active: false },
-]
+export const dynamic = 'force-dynamic'
 
-export default function MissionPage() {
+async function getMissions() {
+  if (process.env.MOCK_MODE === 'true') return MOCK_MISSIONS
+  return prisma.mission.findMany({ include: { rewardBadge: true }, orderBy: { createdAt: 'desc' } })
+}
+
+export default async function MissionPage() {
+  const missions = await getMissions()
+
   return (
     <div className="space-y-6">
       <div>
@@ -17,43 +21,50 @@ export default function MissionPage() {
         </p>
       </div>
 
-      <div className="space-y-3 max-w-2xl">
-        {missions.map((m) => (
-          <div key={m.name} className="rounded-xl border p-5 space-y-3">
-            <div className="flex items-start gap-4">
-              <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Target className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-sm font-medium">{m.name}</h3>
-                  <span
-                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      m.active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                    }`}
-                  >
-                    {m.active ? '実施中' : '停止中'}
-                  </span>
+      {missions.length === 0 ? (
+        <p className="text-sm text-muted-foreground">まだミッションがありません</p>
+      ) : (
+        <div className="space-y-3 max-w-2xl">
+          {missions.map((m) => (
+            <div key={m.id} className="rounded-xl border p-5 space-y-3">
+              <div className="flex items-start gap-4">
+                <div className="h-9 w-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <Target className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <p className="text-sm text-muted-foreground mt-0.5">{m.desc}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-medium">{m.name}</h3>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        m.active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {m.active ? '実施中' : '停止中'}
+                    </span>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5">{m.description}</p>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+                  <Flag className="h-3.5 w-3.5" />
+                  {m.participantsCount}人が挑戦中
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
-                <Flag className="h-3.5 w-3.5" />
-                {m.participants}人が挑戦中
+              <div className="flex items-center gap-3 pl-13">
+                <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${m.progressPercent}%` }}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground w-10 text-right flex items-center gap-1">
+                  {m.progressPercent === 100 && <CheckCircle2 className="h-3 w-3" />}
+                  {m.progressPercent}%
+                </span>
               </div>
             </div>
-            <div className="flex items-center gap-3 pl-13">
-              <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full bg-primary rounded-full" style={{ width: `${m.progress}%` }} />
-              </div>
-              <span className="text-xs text-muted-foreground w-10 text-right flex items-center gap-1">
-                {m.progress === 100 && <CheckCircle2 className="h-3 w-3" />}
-                {m.progress}%
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

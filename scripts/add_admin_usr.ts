@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
-import { PrismaClient } from '../app/generated/prisma'
+import { requireEnv } from '../lib/env'
+import { prisma } from '../lib/prisma/client'
 
-const prisma = new PrismaClient()
 const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // server-only, never expose client-side
+  requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
+  requireEnv('SUPABASE_SERVICE_ROLE_KEY'), // server-only, never expose client-side
 )
 
 async function main() {
@@ -29,4 +29,4 @@ async function main() {
   console.log('Admin created:', email)
 }
 
-main().finally(() => prisma.$disconnect())
+void main().finally(() => prisma.$disconnect())

@@ -33,6 +33,81 @@ export const PostSchema = z
   })
   .openapi('Post')
 
+export const BadgeSchema = z
+  .object({
+    id: z.string().openapi({ example: 'badge-1' }),
+    name: z.string().openapi({ example: '初投稿' }),
+    description: z.string().openapi({ example: '初めて投稿を作成した' }),
+    icon: z.string().openapi({ example: 'Medal' }),
+    rarity: z.enum(['BRONZE', 'SILVER', 'GOLD', 'PLATINUM']).openapi({ example: 'BRONZE' }),
+    earnedCount: z.number().openapi({ example: 842 }),
+    createdAt: dateTime(),
+  })
+  .openapi('Badge')
+
+export const MissionSchema = z
+  .object({
+    id: z.string().openapi({ example: 'mission-1' }),
+    name: z.string().openapi({ example: '週に5件投稿' }),
+    description: z.string().openapi({ example: '1週間で5件の投稿を作成する' }),
+    durationLabel: z.string().openapi({ example: '1週間' }),
+    targetCount: z.number().openapi({ example: 5 }),
+    active: z.boolean().openapi({ example: true }),
+    participantsCount: z.number().openapi({ example: 189 }),
+    progressPercent: z.number().openapi({ example: 62 }),
+    rewardBadgeId: z.string().nullable().openapi({ example: 'badge-1' }),
+    rewardBadge: z.union([BadgeSchema, z.null()]).optional(),
+    createdAt: dateTime(),
+  })
+  .openapi('Mission')
+
+export const AiFlagSchema = z
+  .object({
+    id: z.string().openapi({ example: 'flag-1' }),
+    title: z.string().openapi({ example: '攻撃的な表現を検出' }),
+    detail: z.string().openapi({ example: '投稿内に攻撃的な表現が含まれています' }),
+    severity: z.enum(['LOW', 'MEDIUM', 'HIGH']).openapi({ example: 'HIGH' }),
+    status: z.enum(['UNREAD', 'CONFIRMED']).openapi({ example: 'UNREAD' }),
+    targetUserId: z.string().nullable().openapi({ example: 'user-1' }),
+    targetUser: z.union([UserSchema, z.null()]).optional(),
+    createdAt: dateTime(),
+  })
+  .openapi('AiFlag')
+
+export const InviteSchema = z
+  .object({
+    name: z.string().nullable().openapi({ example: '山田 太郎（仮）' }),
+    role: z.enum(['USER', 'ADMIN']).openapi({ example: 'USER' }),
+  })
+  .openapi('Invite')
+
+export const InviteCreatedSchema = z
+  .object({
+    token: z.string().openapi({ example: 'a1b2c3...' }),
+    name: z.string().nullable().openapi({ example: '山田 太郎（仮）' }),
+    role: z.enum(['USER', 'ADMIN']).openapi({ example: 'USER' }),
+    expiresAt: dateTime(),
+  })
+  .openapi('InviteCreated')
+
+export const InviteListItemSchema = z
+  .object({
+    id: z.string().openapi({ example: 'invite-1' }),
+    name: z.string().nullable().openapi({ example: '山田 太郎（仮）' }),
+    role: z.enum(['USER', 'ADMIN']).openapi({ example: 'USER' }),
+    status: z.enum(['PENDING', 'USED', 'EXPIRED']).openapi({ example: 'PENDING' }),
+    expiresAt: dateTime(),
+    createdAt: dateTime(),
+  })
+  .openapi('InviteListItem')
+
+export const PasswordResetCreatedSchema = z
+  .object({
+    token: z.string().openapi({ example: 'a1b2c3...' }),
+    expiresAt: dateTime(),
+  })
+  .openapi('PasswordResetCreated')
+
 export const ErrorSchema = z
   .object({
     error: z.string().openapi({ example: 'Not found' }),

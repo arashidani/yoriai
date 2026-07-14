@@ -14,5 +14,7 @@ export const openApiConfig = {
     { name: 'posts', description: '投稿の閲覧・作成・削除' },
     { name: 'users', description: 'ユーザー登録・自分のプロフィール取得' },
     { name: 'admin', description: '管理者専用のユーザー・投稿管理' },
+    { name: 'invites', description: '招待リンクの発行・確認' },
+    { name: 'password-resets', description: 'パスワードリセットリンクの確認・実行' },
   ],
 }
