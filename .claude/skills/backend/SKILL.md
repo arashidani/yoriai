@@ -221,6 +221,43 @@ app.openapi(route, async (c) => {
 - スキーマの `min`/`max` などの制約は OpenAPI ドキュメントにも反映される。
 - スキーマをルートファイルにインラインで書くのは、フロントと共有しない場合のみ許容。
 
+### zod のユニオンの使い分け（DO / DO NOT）
+
+`z.union` は「最初にマッチしたスキーマが採用される」ため、バリアント同士が排他的でないと意図しない結果になる。さらに OpenAPI 生成時に `anyOf` になり、`z.discriminatedUnion` / `z.xor` なら `oneOf` になる。
+
+**DO**
+
+```ts
+// 通常のフィールドの nullable は .nullable() を使う
+name: z.string().nullable()
+
+// .openapi('User') で登録済みのコンポーネントを nullable にする場合だけ union + z.null() を使う
+// （.nullable() だと components.schemas.User 自体が type: [object, "null"] になり、参照する全箇所が汚染される）
+author: z.union([UserSchema, z.null()]).optional()
+
+// 複数バリアントは判別キー付きの discriminatedUnion を使う
+const resultSchema = z.discriminatedUnion('status', [
+  z.object({ status: z.literal('success'), data: PostSchema }),
+  z.object({ status: z.literal('error'), error: z.string() }),
+])
+
+// 判別キーを持てない2択は z.xor（排他）を使う
+const contactSchema = z.xor(
+  z.object({ email: z.string() }),
+  z.object({ phone: z.string() })
+)
+```
+
+**DO NOT**
+
+```ts
+// 登録済みコンポーネントに .nullable() を付けない（共有スキーマ側が nullable になる）
+author: UserSchema.nullable().optional()
+
+// オブジェクト同士を z.union で並べない（最初にマッチしたものが採用され、OpenAPI も anyOf になる）
+const resultSchema = z.union([successSchema, errorSchema])
+```
+
 ---
 
 ## 5. Prisma クエリパターン
