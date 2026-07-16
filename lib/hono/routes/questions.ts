@@ -28,21 +28,27 @@ const QuestionDetailSchema = QuestionSummarySchema.extend({
 })
 
 const ListQuestionsQuerySchema = z.object({
-  q: z.string().optional().openapi({
-    param: { name: 'q', in: 'query' },
-    example: '年末調整',
-    description: '質問タイトル・質問本文を対象にしたキーワード検索',
-  }),
+  q: z
+    .string()
+    .optional()
+    .openapi({
+      param: { name: 'q', in: 'query' },
+      example: '年末調整',
+      description: '質問タイトル・質問本文を対象にしたキーワード検索',
+    }),
   status: QuestionStatusSchema.optional().openapi({
     param: { name: 'status', in: 'query' },
     example: 'open',
     description: '質問ステータス絞り込み',
   }),
-  unansweredOnly: z.coerce.boolean().optional().openapi({
-    param: { name: 'unansweredOnly', in: 'query' },
-    example: true,
-    description: '未回答の質問だけを取得する',
-  }),
+  unansweredOnly: z.coerce
+    .boolean()
+    .optional()
+    .openapi({
+      param: { name: 'unansweredOnly', in: 'query' },
+      example: true,
+      description: '未回答の質問だけを取得する',
+    }),
 })
 
 const CreateQuestionSchema = z.object({
