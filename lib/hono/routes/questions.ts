@@ -4,6 +4,7 @@ import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, SuccessSchema } from '@/lib/hono/openapi/schemas'
 
 const QuestionStatusSchema = z.enum(['open', 'answered', 'resolved', 'hidden'])
+type QuestionStatus = z.infer<typeof QuestionStatusSchema>
 
 const QuestionSummarySchema = z.object({
   id: z.string().openapi({ example: 'question-1' }),
@@ -229,7 +230,7 @@ const mockQuestion = {
   id: 'question-1',
   title: '年末調整の申請期限はいつですか？',
   body: '提出先もあわせて知りたいです。',
-  status: 'open' as const,
+  status: 'open' as QuestionStatus,
   answerCount: 1,
   createdAt: '2026-07-16T09:00:00.000Z',
   updatedAt: '2026-07-16T10:00:00.000Z',
