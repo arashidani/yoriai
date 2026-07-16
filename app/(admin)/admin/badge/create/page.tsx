@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { client } from '@/lib/hono/client'
 import { type CreateBadgeInput, createBadgeSchema } from '@/lib/schemas/badge'
+import { cn } from '@/lib/utils'
 
 const iconNames = Object.keys(BADGE_ICONS) as BadgeIconName[]
 const rarities = [BadgeRarity.BRONZE, BadgeRarity.SILVER, BadgeRarity.GOLD, BadgeRarity.PLATINUM]
@@ -75,11 +76,12 @@ export default function CreateBadgePage() {
                     key={iconName}
                     type="button"
                     onClick={() => setSelectedIcon(iconName)}
-                    className={`h-10 w-10 rounded-lg flex items-center justify-center border transition-colors ${
+                    className={cn(
+                      'h-10 w-10 rounded-lg flex items-center justify-center border transition-colors',
                       selectedIcon === iconName
                         ? 'bg-primary/10 border-primary text-primary'
-                        : 'text-muted-foreground'
-                    }`}
+                        : 'text-muted-foreground',
+                    )}
                   >
                     <OptionIcon className="h-4 w-4" />
                   </button>

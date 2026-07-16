@@ -1,11 +1,10 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
-import { createClient as createSupabaseAdminClient } from '@supabase/supabase-js'
-import { requireEnv } from '@/lib/env'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, SuccessSchema } from '@/lib/hono/openapi/schemas'
 import { MOCK_PASSWORD_RESETS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { completePasswordResetSchema } from '@/lib/schemas/password-reset'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 const TokenParamSchema = z.object({
   token: z.string().openapi({ param: { name: 'token', in: 'path' }, example: 'a1b2c3' }),
@@ -44,6 +43,7 @@ const completePasswordResetRoute = createRoute({
       content: { 'application/json': { schema: SuccessSchema } },
     },
     404: errorResponse('リンクが見つからない、期限切れ、または使用済み'),
+    500: errorResponse('パスワード更新に失敗した'),
   },
 })
 
@@ -77,21 +77,28 @@ export const passwordResetsRoute = new OpenAPIHono({ defaultHook })
       return c.json({ success: true }, 200)
     }
 
-    const reset = await prisma.passwordReset.findUnique({ where: { token } })
-    if (!reset || reset.usedAt || reset.expiresAt < new Date()) {
+    const now = new Date()
+
+    // usedAt/expiresAtを条件にした原子的な確保。同一トークンの並行リクエストでも1件しか成功しない
+    const claimed = await prisma.passwordReset.updateMany({
+      where: { token, usedAt: null, expiresAt: { gt: now } },
+      data: { usedAt: now },
+    })
+    if (claimed.count !== 1) {
       return c.json({ error: 'リンクが見つかりません' }, 404)
     }
 
+    const reset = await prisma.passwordReset.findUniqueOrThrow({ where: { token } })
     const user = await prisma.user.findUnique({ where: { id: reset.userId } })
     if (!user) return c.json({ error: 'リンクが見つかりません' }, 404)
 
-    const supabaseAdmin = createSupabaseAdminClient(
-      requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
-      requireEnv('SUPABASE_SERVICE_ROLE_KEY'),
-    )
+    const supabaseAdmin = createSupabaseAdminClient()
     const { error } = await supabaseAdmin.auth.admin.updateUserById(user.supabaseId, { password })
-    if (error) return c.json({ error: error.message }, 404)
+    if (error) {
+      // 外部更新に失敗したのでトークンを解放し、再試行できるようにする
+      await prisma.passwordReset.update({ where: { token }, data: { usedAt: null } })
+      return c.json({ error: 'パスワード更新に失敗しました' }, 500)
+    }
 
-    await prisma.passwordReset.update({ where: { id: reset.id }, data: { usedAt: new Date() } })
     return c.json({ success: true }, 200)
   })

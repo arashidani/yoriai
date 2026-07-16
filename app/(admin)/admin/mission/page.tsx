@@ -1,6 +1,7 @@
 import { CheckCircle2, Flag, Target } from 'lucide-react'
 import { MOCK_MISSIONS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { cn } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,9 +36,10 @@ export default async function MissionPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-medium">{m.name}</h3>
                     <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        m.active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                      }`}
+                      className={cn(
+                        'text-xs px-2 py-0.5 rounded-full font-medium',
+                        m.active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+                      )}
                     >
                       {m.active ? '実施中' : '停止中'}
                     </span>

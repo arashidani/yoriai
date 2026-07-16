@@ -30,6 +30,7 @@ import { createBadgeSchema } from '@/lib/schemas/badge'
 import { createInviteSchema } from '@/lib/schemas/invite'
 import { createMissionSchema } from '@/lib/schemas/mission'
 import { updateUserSchema } from '@/lib/schemas/user'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const PASSWORD_RESET_TTL_MS = 24 * 60 * 60 * 1000
@@ -363,6 +364,14 @@ export const adminRoute = $(
       where: { id: targetId },
       data: { ...(name !== undefined && { name }), ...(role !== undefined && { role }) },
     })
+
+    if (role !== undefined) {
+      const supabaseAdmin = createSupabaseAdminClient()
+      await supabaseAdmin.auth.admin.updateUserById(user.supabaseId, {
+        app_metadata: { role: user.role },
+      })
+    }
+
     return c.json({ user }, 200)
   })
   .openapi(deleteUserRoute, async (c) => {

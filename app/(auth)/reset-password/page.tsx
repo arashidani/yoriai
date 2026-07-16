@@ -1,21 +1,28 @@
 'use client'
 
+import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { client } from '@/lib/hono/client'
+import { type ResetPasswordFormInput, resetPasswordFormSchema } from '@/lib/schemas/password-reset'
 
 function ResetPasswordForm() {
   const router = useRouter()
   const token = useSearchParams().get('token')
   const [checking, setChecking] = useState(true)
   const [tokenValid, setTokenValid] = useState(false)
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ResetPasswordFormInput>({
+    resolver: zodResolver(resetPasswordFormSchema),
+  })
 
   useEffect(() => {
     if (!token) {
@@ -28,25 +35,18 @@ function ResetPasswordForm() {
     })
   }, [token])
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  async function onSubmit(data: ResetPasswordFormInput) {
     if (!token) return
-    if (password !== confirmPassword) {
-      setError('パスワードが一致しません')
-      return
-    }
-    setLoading(true)
     setError(null)
 
     const res = await client.api['password-resets'][':token'].$post({
       param: { token },
-      json: { password },
+      json: { password: data.password },
     })
 
     if (!res.ok) {
       const body = await res.json()
       setError('error' in body ? body.error : '更新に失敗しました')
-      setLoading(false)
       return
     }
 
@@ -75,33 +75,35 @@ function ResetPasswordForm() {
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-full max-w-sm space-y-6 p-8 border rounded-xl">
         <h1 className="text-2xl font-bold text-center">パスワードの再設定</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="password">新しいパスワード</Label>
             <Input
               id="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               placeholder="8文字以上"
-              minLength={8}
-              required
+              {...register('password')}
+              aria-invalid={!!errors.password}
             />
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">新しいパスワード（確認）</Label>
             <Input
               id="confirmPassword"
               type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              minLength={8}
-              required
+              {...register('confirmPassword')}
+              aria-invalid={!!errors.confirmPassword}
             />
+            {errors.confirmPassword && (
+              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+            )}
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? '更新中...' : 'パスワードを更新'}
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? '更新中...' : 'パスワードを更新'}
           </Button>
         </form>
       </div>

@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { client } from '@/lib/hono/client'
 import { type CreateInviteInput, createInviteSchema } from '@/lib/schemas/invite'
+import { cn } from '@/lib/utils'
 
 export function CreateInviteDialog() {
   const router = useRouter()
@@ -120,18 +121,20 @@ export function CreateInviteDialog() {
                 <button
                   type="button"
                   onClick={() => setRole(Role.USER)}
-                  className={`text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground font-medium transition-opacity ${
-                    role === Role.USER ? 'opacity-100' : 'opacity-40'
-                  }`}
+                  className={cn(
+                    'text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground font-medium transition-opacity',
+                    role === Role.USER ? 'opacity-100' : 'opacity-40',
+                  )}
                 >
                   一般ユーザー
                 </button>
                 <button
                   type="button"
                   onClick={() => setRole(Role.ADMIN)}
-                  className={`text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary font-medium transition-opacity ${
-                    role === Role.ADMIN ? 'opacity-100' : 'opacity-40'
-                  }`}
+                  className={cn(
+                    'text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary font-medium transition-opacity',
+                    role === Role.ADMIN ? 'opacity-100' : 'opacity-40',
+                  )}
                 >
                   管理者
                 </button>
