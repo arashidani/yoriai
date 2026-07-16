@@ -1,8 +1,8 @@
 'use client'
 
+import { LogOut } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
@@ -11,10 +11,10 @@ const tabs = [
   { href: '/admin/users/create', label: 'ユーザー作成' },
   { href: '/admin/users', label: 'ユーザー管理' },
   { href: '/admin/ai-flags', label: 'AIフラグ' },
-  {href: '/admin/badge', label: 'バッジ管理'},
-  {href: '/admin/badge/create', label: 'バッジ作成'},
-  {href: '/admin/mission', label: 'ミッション管理'},
-  {href: '/admin/mission/create', label: 'ミッション作成'},
+  { href: '/admin/badge', label: 'バッジ管理' },
+  { href: '/admin/badge/create', label: 'バッジ作成' },
+  { href: '/admin/mission', label: 'ミッション管理' },
+  { href: '/admin/mission/create', label: 'ミッション作成' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 'px-4 py-2 text-sm border-b-2 -mb-px transition-colors',
                 pathname === tab.href
                   ? 'border-primary text-primary font-medium'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
               )}
             >
               {tab.label}
@@ -51,6 +51,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </div>
         <button
+          type="button"
           onClick={handleLogout}
           className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >

@@ -70,6 +70,8 @@ export const AiFlagSchema = z
     status: z.enum(['UNREAD', 'CONFIRMED']).openapi({ example: 'UNREAD' }),
     targetUserId: z.string().nullable().openapi({ example: 'user-1' }),
     targetUser: z.union([UserSchema, z.null()]).optional(),
+    postId: z.string().nullable().openapi({ example: 'post-1' }),
+    post: z.union([PostSchema, z.null()]).optional(),
     createdAt: dateTime(),
   })
   .openapi('AiFlag')

@@ -24,6 +24,7 @@ model Post {
   body      String
   authorId  String?
   author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  aiFlags   AiFlag[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -61,6 +62,8 @@ model AiFlag {
   status       FlagStatus   @default(UNREAD)
   targetUserId String?
   targetUser   User?        @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
+  postId       String?
+  post         Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
   createdAt    DateTime     @default(now())
 }
 

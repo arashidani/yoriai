@@ -155,12 +155,14 @@ export const MOCK_MISSIONS = [
 export const MOCK_AI_FLAGS = [
   {
     id: 'flag-1',
-    title: '攻撃的な表現を検出',
-    detail: '投稿「業務効率化について」内に、攻撃的とみられる表現が含まれています',
+    title: '不適切な投稿の可能性: Next.js App Routerの使い方を教えてください',
+    detail: '投稿内に、脅迫・ハラスメントとみられる表現が含まれています',
     severity: FlagSeverity.HIGH,
     status: FlagStatus.UNREAD,
     targetUserId: 'user-1',
     targetUser: MOCK_USERS[0],
+    postId: 'post-1',
+    post: MOCK_POSTS[0],
     createdAt: new Date('2024-01-10'),
   },
   {
@@ -171,6 +173,8 @@ export const MOCK_AI_FLAGS = [
     status: FlagStatus.UNREAD,
     targetUserId: 'user-2',
     targetUser: MOCK_USERS[1],
+    postId: null,
+    post: null,
     createdAt: new Date('2024-01-11'),
   },
   {
@@ -181,6 +185,8 @@ export const MOCK_AI_FLAGS = [
     status: FlagStatus.CONFIRMED,
     targetUserId: 'user-2',
     targetUser: MOCK_USERS[1],
+    postId: null,
+    post: null,
     createdAt: new Date('2024-01-12'),
   },
   {
@@ -191,6 +197,8 @@ export const MOCK_AI_FLAGS = [
     status: FlagStatus.CONFIRMED,
     targetUserId: 'user-1',
     targetUser: MOCK_USERS[0],
+    postId: null,
+    post: null,
     createdAt: new Date('2024-01-13'),
   },
 ]

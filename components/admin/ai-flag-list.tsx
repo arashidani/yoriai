@@ -1,8 +1,10 @@
 'use client'
 
 import { AlertTriangle, MessageSquareWarning, ShieldAlert } from 'lucide-react'
+import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { DeletePostButton } from '@/components/posts/delete-post-button'
 import { client } from '@/lib/hono/client'
 
 const SEVERITY_ICONS = {
@@ -25,6 +27,7 @@ type AiFlag = {
   severity: keyof typeof SEVERITY_ICONS
   status: 'UNREAD' | 'CONFIRMED'
   targetUser: { name: string | null } | null
+  post: { id: string; title: string } | null
   createdAt: Date | string
 }
 
@@ -92,15 +95,32 @@ export function AiFlagList({ flags: initialFlags }: { flags: AiFlag[] }) {
                   対象ユーザー: {flag.targetUser?.name ?? '不明'} ・{' '}
                   {new Date(flag.createdAt).toLocaleString('ja-JP')}
                 </p>
+                {flag.post && (
+                  <Link
+                    href={`/posts/${flag.post.id}`}
+                    className="inline-block text-xs underline underline-offset-4 text-muted-foreground hover:text-primary"
+                  >
+                    該当の投稿を見る: {flag.post.title}
+                  </Link>
+                )}
               </div>
-              <button
-                type="button"
-                disabled={flag.status === 'CONFIRMED' || pendingId === flag.id}
-                onClick={() => handleConfirm(flag.id)}
-                className="shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border text-muted-foreground disabled:opacity-50"
-              >
-                {flag.status === 'CONFIRMED' ? '確認済み' : '確認済みにする'}
-              </button>
+              <div className="shrink-0 flex items-center gap-2">
+                {flag.post && (
+                  <DeletePostButton
+                    postId={flag.post.id}
+                    postTitle={flag.post.title}
+                    onDeleted={() => setFlags((prev) => prev.filter((f) => f.id !== flag.id))}
+                  />
+                )}
+                <button
+                  type="button"
+                  disabled={flag.status === 'CONFIRMED' || pendingId === flag.id}
+                  onClick={() => handleConfirm(flag.id)}
+                  className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border text-muted-foreground disabled:opacity-50"
+                >
+                  {flag.status === 'CONFIRMED' ? '確認済み' : '確認済みにする'}
+                </button>
+              </div>
             </div>
           )
         })

@@ -6,7 +6,10 @@ export const dynamic = 'force-dynamic'
 
 async function getAiFlags() {
   if (process.env.MOCK_MODE === 'true') return MOCK_AI_FLAGS
-  return prisma.aiFlag.findMany({ include: { targetUser: true }, orderBy: { createdAt: 'desc' } })
+  return prisma.aiFlag.findMany({
+    include: { targetUser: true, post: true },
+    orderBy: { createdAt: 'desc' },
+  })
 }
 
 export default async function AiFlagsPage() {
