@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { client } from '@/lib/hono/client'
 import { type CreateMissionInput, createMissionSchema } from '@/lib/schemas/mission'
+import { cn } from '@/lib/utils'
 
 const durations = ['1日間', '3日間', '1週間', '1ヶ月']
 
@@ -102,11 +103,12 @@ export default function CreateMissionPage() {
                 key={d}
                 type="button"
                 onClick={() => setSelectedDuration(d)}
-                className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+                className={cn(
+                  'text-xs px-3 py-1.5 rounded-full font-medium transition-colors',
                   selectedDuration === d
                     ? 'bg-primary/10 text-primary'
-                    : 'bg-muted text-muted-foreground'
-                }`}
+                    : 'bg-muted text-muted-foreground',
+                )}
               >
                 {d}
               </button>

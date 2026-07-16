@@ -1,11 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
-import { requireEnv } from '../lib/env'
 import { prisma } from '../lib/prisma/client'
+import { createSupabaseAdminClient } from '../lib/supabase/admin'
 
-const supabaseAdmin = createClient(
-  requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
-  requireEnv('SUPABASE_SERVICE_ROLE_KEY'), // server-only, never expose client-side
-)
+const supabaseAdmin = createSupabaseAdminClient()
 
 async function main() {
   const [email, password] = process.argv.slice(2)

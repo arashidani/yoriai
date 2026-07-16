@@ -7,6 +7,7 @@ import { errorResponse, UserSchema } from '@/lib/hono/openapi/schemas'
 import { MOCK_INVITES, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { createUserSchema } from '@/lib/schemas/user'
+import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 const createRoute_ = createRoute({
   method: 'post',
@@ -92,20 +93,36 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       return c.json({ error: 'Email not found' }, 400)
     }
 
-    const invite = await prisma.invite.findUnique({ where: { token: inviteToken } })
-    if (!invite || invite.usedAt || invite.expiresAt < new Date()) {
+    const now = new Date()
+
+    const user = await prisma.$transaction(async (tx) => {
+      // usedAt/expiresAtを条件にした原子的な確保。同一トークンの並行リクエストでも1件しか成功しない
+      const claimed = await tx.invite.updateMany({
+        where: { token: inviteToken, usedAt: null, expiresAt: { gt: now } },
+        data: { usedAt: now },
+      })
+      if (claimed.count !== 1) return null
+
+      const invite = await tx.invite.findUniqueOrThrow({ where: { token: inviteToken } })
+
+      return tx.user.create({
+        data: {
+          supabaseId: authUser.id,
+          email: authUser.email as string,
+          name: name ?? invite.name ?? authUser.user_metadata?.name ?? null,
+          role: invite.role,
+        },
+      })
+    })
+
+    if (!user) {
       return c.json({ error: '招待リンクが無効です' }, 400)
     }
 
-    const user = await prisma.user.create({
-      data: {
-        supabaseId: authUser.id,
-        email: authUser.email,
-        name: name ?? invite.name ?? authUser.user_metadata?.name ?? null,
-        role: invite.role,
-      },
+    const supabaseAdmin = createSupabaseAdminClient()
+    await supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+      app_metadata: { role: user.role },
     })
-    await prisma.invite.update({ where: { id: invite.id }, data: { usedAt: new Date() } })
 
     return c.json({ user }, 201)
   })
