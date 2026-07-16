@@ -4,11 +4,13 @@ import { openApiConfig } from './openapi/config'
 import { adminRoute } from './routes/admin'
 import { pingRoute } from './routes/ping'
 import { postsRoute } from './routes/posts'
+import { questionsRoute } from './routes/questions'
 import { usersRoute } from './routes/users'
 
 const app = new OpenAPIHono()
   .basePath('/api')
   .route('/posts', postsRoute)
+  .route('/questions', questionsRoute)
   .route('/admin', adminRoute)
   .route('/users', usersRoute)
   .route('/', pingRoute)
