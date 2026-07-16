@@ -13,6 +13,7 @@ export const openApiConfig = {
   tags: [
     { name: 'posts', description: '投稿の閲覧・作成・削除' },
     { name: 'questions', description: '質問一覧・質問投稿・質問詳細' },
+    { name: 'reports', description: '質問・回答の通報' },
     { name: 'users', description: 'ユーザー登録・自分のプロフィール取得' },
     { name: 'admin', description: '管理者専用のユーザー・投稿管理' },
   ],

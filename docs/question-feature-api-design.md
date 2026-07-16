@@ -8,19 +8,17 @@
 
 ---
 
-## 今回先に切る 3 つの API
+## 今回含める API
 
-1. `GET /api/questions`
-2. `POST /api/questions`
-3. `GET /api/questions/{questionId}`
-
-この 3 つがあると、質問一覧画面、質問投稿画面、質問詳細画面の会話を先に進めやすい。
+今回は、質問機能 MVP を一通り回せるところまで OpenAPI に含める。
 
 ---
 
 ## API 一覧
 
-### `GET /api/questions`
+### Questions
+
+#### `GET /api/questions`
 
 質問一覧を取得する。
 
@@ -37,7 +35,7 @@
 - `status`
 - `unansweredOnly`
 
-### `POST /api/questions`
+#### `POST /api/questions`
 
 新しい質問を投稿する。
 
@@ -47,7 +45,7 @@
 
 認証ありの API とする。
 
-### `GET /api/questions/{questionId}`
+#### `GET /api/questions/{questionId}`
 
 質問詳細を取得する。
 
@@ -58,25 +56,96 @@
 
 質問詳細画面の初期表示に使う。
 
----
+#### `POST /api/questions/{questionId}/answers`
 
-## 今回あえて含めない API
+対象質問に回答を追加する。
 
-今回は設計を広げすぎないため、以下はまだ OpenAPI の主対象にしない。
+用途:
+- 質問詳細画面から回答を投稿する
 
-- 回答投稿 API
-- 解決済みにする API
-- 通報 API
-- 管理者の非表示 API
-- 管理者の実ユーザー確認 API
+認証ありの API とする。
 
-これらは MVP では必要だが、今は質問一覧、質問投稿、質問詳細の 3 点を先に固める。
+#### `POST /api/questions/{questionId}/resolve`
+
+質問を解決済みにする。
+
+用途:
+- 質問者が回答受付を終了する
+
+認証ありの API とする。
+
+### Reports
+
+#### `POST /api/questions/{questionId}/reports`
+
+質問を通報する。
+
+用途:
+- 不適切な質問を通報する
+
+認証ありの API とする。
+
+#### `POST /api/answers/{answerId}/reports`
+
+回答を通報する。
+
+用途:
+- 不適切な回答を通報する
+
+認証ありの API とする。
+
+### Admin
+
+#### `GET /api/admin/reports`
+
+通報一覧を取得する。
+
+用途:
+- 管理者が未対応通報を確認する
+
+管理者専用の API とする。
+
+#### `POST /api/admin/questions/{questionId}/hide`
+
+質問を非表示にする。
+
+用途:
+- 管理者が不適切な質問に対応する
+
+管理者専用の API とする。
+
+#### `POST /api/admin/answers/{answerId}/hide`
+
+回答を非表示にする。
+
+用途:
+- 管理者が不適切な回答に対応する
+
+管理者専用の API とする。
+
+#### `GET /api/admin/questions/{questionId}/identity`
+
+質問者の実ユーザー情報を確認する。
+
+用途:
+- 匿名表示の裏側を管理者だけ確認する
+
+管理者専用の API とする。
+
+#### `GET /api/admin/answers/{answerId}/identity`
+
+回答者の実ユーザー情報を確認する。
+
+用途:
+- 匿名表示の裏側を管理者だけ確認する
+
+管理者専用の API とする。
 
 ---
 
 ## OpenAPI 上の扱い
 
-Swagger で会話できるように、今回の 3 API は `questions` タグで公開する。
+Swagger で会話できるように、今回の API は `questions`、`reports`、`admin` タグで公開する。
 
 ただし、現時点では実処理まで確定していないため、OpenAPI に最低限の request / response 例だけを置き、サーバー実装は未実装レスポンスを返す段階に留めてもよい。
 

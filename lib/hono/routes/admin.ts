@@ -20,6 +20,31 @@ const adminGuard = createMiddleware<{ Variables: AuthVariables }>(async (c, next
 })
 
 const security = [{ supabaseSession: [] }]
+const QuestionIdParamSchema = z.object({
+  questionId: z.string().openapi({
+    param: { name: 'questionId', in: 'path' },
+    example: 'question-1',
+  }),
+})
+const AnswerIdParamSchema = z.object({
+  answerId: z.string().openapi({
+    param: { name: 'answerId', in: 'path' },
+    example: 'answer-1',
+  }),
+})
+const ReportSummarySchema = z.object({
+  id: z.string().openapi({ example: 'report-1' }),
+  targetType: z.enum(['question', 'answer']).openapi({ example: 'question' }),
+  targetId: z.string().openapi({ example: 'question-1' }),
+  reason: z.string().openapi({ example: '誹謗中傷が含まれているため確認してほしいです。' }),
+  status: z.enum(['open', 'handled']).openapi({ example: 'open' }),
+  createdAt: z.string().datetime().openapi({ example: '2026-07-16T12:00:00.000Z' }),
+})
+const IdentitySchema = z.object({
+  userId: z.string().openapi({ example: 'user-1' }),
+  name: z.string().nullable().openapi({ example: '一般ユーザー' }),
+  email: z.string().openapi({ example: 'user@example.com' }),
+})
 
 const listUsersRoute = createRoute({
   method: 'get',
@@ -89,6 +114,112 @@ const deleteUserRoute = createRoute({
   },
 })
 
+const listReportsRoute = createRoute({
+  method: 'get',
+  path: '/reports',
+  tags: ['admin'],
+  summary: '通報一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: '通報一覧',
+      content: {
+        'application/json': { schema: z.object({ reports: z.array(ReportSummarySchema) }) },
+      },
+    },
+    401: errorResponse('未認証'),
+    403: errorResponse('権限不足（管理者専用）'),
+    501: errorResponse('未実装'),
+  },
+})
+
+const hideQuestionRoute = createRoute({
+  method: 'post',
+  path: '/questions/{questionId}/hide',
+  tags: ['admin'],
+  summary: '質問を非表示にする（管理者専用）',
+  security,
+  request: { params: QuestionIdParamSchema },
+  responses: {
+    200: { description: '非表示成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証'),
+    403: errorResponse('権限不足（管理者専用）'),
+    404: errorResponse('質問が見つからない'),
+    501: errorResponse('未実装'),
+  },
+})
+
+const hideAnswerRoute = createRoute({
+  method: 'post',
+  path: '/answers/{answerId}/hide',
+  tags: ['admin'],
+  summary: '回答を非表示にする（管理者専用）',
+  security,
+  request: { params: AnswerIdParamSchema },
+  responses: {
+    200: { description: '非表示成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証'),
+    403: errorResponse('権限不足（管理者専用）'),
+    404: errorResponse('回答が見つからない'),
+    501: errorResponse('未実装'),
+  },
+})
+
+const getQuestionIdentityRoute = createRoute({
+  method: 'get',
+  path: '/questions/{questionId}/identity',
+  tags: ['admin'],
+  summary: '質問者の実ユーザー情報を取得（管理者専用）',
+  security,
+  request: { params: QuestionIdParamSchema },
+  responses: {
+    200: {
+      description: '質問者情報',
+      content: { 'application/json': { schema: z.object({ user: IdentitySchema }) } },
+    },
+    401: errorResponse('未認証'),
+    403: errorResponse('権限不足（管理者専用）'),
+    404: errorResponse('質問が見つからない'),
+    501: errorResponse('未実装'),
+  },
+})
+
+const getAnswerIdentityRoute = createRoute({
+  method: 'get',
+  path: '/answers/{answerId}/identity',
+  tags: ['admin'],
+  summary: '回答者の実ユーザー情報を取得（管理者専用）',
+  security,
+  request: { params: AnswerIdParamSchema },
+  responses: {
+    200: {
+      description: '回答者情報',
+      content: { 'application/json': { schema: z.object({ user: IdentitySchema }) } },
+    },
+    401: errorResponse('未認証'),
+    403: errorResponse('権限不足（管理者専用）'),
+    404: errorResponse('回答が見つからない'),
+    501: errorResponse('未実装'),
+  },
+})
+
+const mockReports = [
+  {
+    id: 'report-1',
+    targetType: 'question' as const,
+    targetId: 'question-1',
+    reason: '誹謗中傷が含まれているため確認してほしいです。',
+    status: 'open' as const,
+    createdAt: '2026-07-16T12:00:00.000Z',
+  },
+]
+
+const mockIdentity = {
+  userId: 'user-1',
+  name: '一般ユーザー',
+  email: 'user@example.com',
+}
+
 export const adminRoute = $(
   new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
     .use(authMiddleware)
@@ -154,4 +285,50 @@ export const adminRoute = $(
 
     await prisma.user.delete({ where: { id: targetId } })
     return c.json({ success: true }, 200)
+  })
+  .openapi(listReportsRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ reports: mockReports }, 200)
+    }
+    return c.json({ error: 'Not implemented yet' }, 501)
+  })
+  .openapi(hideQuestionRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      const { questionId } = c.req.valid('param')
+      if (questionId !== 'question-1') {
+        return c.json({ error: 'Question not found' }, 404)
+      }
+      return c.json({ success: true }, 200)
+    }
+    return c.json({ error: 'Not implemented yet' }, 501)
+  })
+  .openapi(hideAnswerRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      const { answerId } = c.req.valid('param')
+      if (answerId !== 'answer-1') {
+        return c.json({ error: 'Answer not found' }, 404)
+      }
+      return c.json({ success: true }, 200)
+    }
+    return c.json({ error: 'Not implemented yet' }, 501)
+  })
+  .openapi(getQuestionIdentityRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      const { questionId } = c.req.valid('param')
+      if (questionId !== 'question-1') {
+        return c.json({ error: 'Question not found' }, 404)
+      }
+      return c.json({ user: mockIdentity }, 200)
+    }
+    return c.json({ error: 'Not implemented yet' }, 501)
+  })
+  .openapi(getAnswerIdentityRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      const { answerId } = c.req.valid('param')
+      if (answerId !== 'answer-1') {
+        return c.json({ error: 'Answer not found' }, 404)
+      }
+      return c.json({ user: mockIdentity }, 200)
+    }
+    return c.json({ error: 'Not implemented yet' }, 501)
   })
