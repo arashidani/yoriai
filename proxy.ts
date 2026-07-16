@@ -55,11 +55,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // 管理者は /admin 以外（/api を除く）を利用不可 — 一般ユーザーとして振る舞わせない
-  if (role === 'ADMIN' && !pathname.startsWith('/admin') && !pathname.startsWith('/api')) {
-    return NextResponse.redirect(new URL('/admin', request.url))
-  }
-
   return supabaseResponse
 }
 

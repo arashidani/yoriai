@@ -452,7 +452,7 @@ export const adminRoute = $(
       return c.json({ flags: MOCK_AI_FLAGS }, 200)
     }
     const flags = await prisma.aiFlag.findMany({
-      include: { targetUser: true },
+      include: { targetUser: true, post: true },
       orderBy: { createdAt: 'desc' },
     })
     return c.json({ flags }, 200)
@@ -469,7 +469,7 @@ export const adminRoute = $(
     const flag = await prisma.aiFlag.update({
       where: { id },
       data: { status: FlagStatus.CONFIRMED },
-      include: { targetUser: true },
+      include: { targetUser: true, post: true },
     })
     return c.json({ flag }, 200)
   })

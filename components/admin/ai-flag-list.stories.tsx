@@ -17,6 +17,7 @@ const flags = [
     severity: 'HIGH' as const,
     status: 'UNREAD' as const,
     targetUser: { name: '田中 陽子' },
+    post: null,
     createdAt: '2024-01-10T00:00:00Z',
   },
   {
@@ -26,6 +27,7 @@ const flags = [
     severity: 'MEDIUM' as const,
     status: 'CONFIRMED' as const,
     targetUser: { name: '山本 直樹' },
+    post: null,
     createdAt: '2024-01-11T00:00:00Z',
   },
 ]

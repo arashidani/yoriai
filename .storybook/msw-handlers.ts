@@ -34,6 +34,7 @@ export const mswHandlers = {
         { status: 201 },
       )
     }),
+    http.delete('/api/posts/:id', () => HttpResponse.json({ success: true })),
   ],
   admin: [
     http.get('/api/admin/users', () => HttpResponse.json({ users: MOCK_USERS })),

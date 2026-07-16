@@ -44,14 +44,15 @@ Prisma モデル: `User` `Post` `Badge` `Mission` `AiFlag` `Invite` `PasswordRes
 
 ## 2. 権限分離ルール（`proxy.ts`）
 
-**ルール: 管理者(`ADMIN`)は `/admin/*` 以外のページを閲覧できない。一般ユーザーは `/admin/*` に入れない。**
+**ルール: `ADMIN` は一般ユーザー向けページ（`/` 以下）も含めて全ページを閲覧でき、加えて `/admin/*` にもアクセスできる（`ADMIN` ⊇ `USER` の包含関係）。一般ユーザー（`USER`）だけが `/admin/*` に入れない。**
 
 `proxy.ts` の判定順序（`user.app_metadata.role` を見る。Hono側の `authMiddleware` は Prisma の `User.role` を見ており、参照元が違う点に注意——両方を同じ値に保つのは admin 作成経路の責務）:
 
 1. 未認証 → `/login`・`/register`・`/reset-password`・`/api/*` 以外は `/login` へリダイレクト
-2. 認証済みで `/login`・`/register`・`/reset-password` にアクセス → 自分のロールに応じたホーム（`ADMIN` なら `/admin`、それ以外は `/`）へリダイレクト
+2. 認証済みで `/login`・`/register`・`/reset-password` にアクセス → 自分のロールに応じたホーム（`ADMIN` なら `/admin`、それ以外は `/`）へリダイレクト。**ログイン直後のホームだけの話であり、以降の遷移を制限するものではない。**
 3. `/admin` 配下 && ロールが `ADMIN` でない → `/` へリダイレクト
-4. ロールが `ADMIN` && パスが `/admin` 配下でも `/api` 配下でもない → `/admin` へリダイレクト（**これが「管理者は一般ユーザーとして振る舞えない」の実装**）
+
+`ADMIN` を `/admin` 以外のページから締め出すリダイレクトはかつて存在したが廃止済み（「管理者は`/admin`専用ロールではなく、`/admin`にも入れる一般ユーザー」という方針転換のため）。新しく制限を足すときはこの包含関係を崩さないこと。
 
 **新しく未認証アクセス可能なページを追加したら、`publicPaths` 配列に必ず追加する。** 忘れると全ユーザーが `/login` に弾かれる。
 
@@ -127,7 +128,28 @@ POST /api/admin/users/{id}/password-resets（管理者専用）
 
 ---
 
-## 6. このセッションで踏んだ地雷（再発防止）
+## 6. Geminiによる投稿モデレーション → AiFlag
+
+**ルール: 新規投稿作成時（`POST /api/posts`、`lib/hono/routes/posts.ts` の `createPostRoute`）に、Gemini（`@google/genai`, `gemini-flash-latest`, 無料枠）でタイトル・本文を判定し、脅迫・ハラスメント等の職場で許容されない内容が疑われる場合のみ `AiFlag` を自動作成する。** 判定ロジックは `lib/ai/moderate-post.ts` の `moderatePost()` に集約。
+
+- モデル文字列は日付固定の `gemini-2.5-flash` ではなく `gemini-flash-latest`（Googleが常時最新の推奨flashモデルを指すよう管理するエイリアス）を使う。Geminiは個別モデルの廃止サイクルが早く、固定モデル名は数ヶ月で404 (`... is no longer available to new users`) になりうる——地雷を踏んで判明した。
+
+- `AiFlag` に `postId`（`Post` への任意リレーション、`onDelete: Cascade`）を追加済み。投稿を削除すると紐づくフラグも自動的に消える。
+- Gemini呼び出しは `moderatePost()` 内で `try/catch` されており、失敗（APIキー未設定・レート制限・`API_KEY_SERVICE_BLOCKED` 等）しても投稿作成自体は失敗しない（`null` を返すだけ）。
+- `MOCK_MODE === 'true'` のときは Prisma 呼び出し前に早期returnするため、Gemini は一切呼ばれない（既存の MOCK_MODE パターンをそのまま踏襲）。
+- 必要な環境変数: `GEMINI_API_KEY`（サーバー専用、`requireEnv()` 経由）。取得は https://aistudio.google.com/apikey 。無料枠あり。
+- **地雷**: Google Cloud Console でAPIキーの制限をかける場合、選択すべきAPIは「Generative Language API」（AI Studioキー用）であり、「Gemini API」（Vertex AI用、サービスアカウント認証が必要）ではない。プロジェクトで有効化していないと制限リストに出てこない。それでも `API_KEY_SERVICE_BLOCKED` が出る場合は https://aistudio.google.com/apikey で新規キーを発行するのが最速（正しいAPIが自動で有効化された状態のプロジェクトが作られる）。
+- admin ai-flags 一覧（`components/admin/ai-flag-list.tsx`）は `flag.post` があれば投稿へのリンクと `DeletePostButton`（`components/posts/delete-post-button.tsx`）を表示する。投稿削除に成功すると `postId` カスケードでサーバー側のフラグ行も消えるため、フロントは楽観的にローカルの `flags` state から該当フラグを取り除くだけでよい。
+
+## 6.5 投稿削除（管理者専用アイコン）
+
+**ルール: `ADMIN` は投稿カード右下のゴミ箱アイコンから任意の投稿を削除できる。バックエンドは既存の `DELETE /api/posts/{id}`（`postsRoute`, 管理者専用）を使う。**
+
+- `components/posts/post-card.tsx` は `isAdmin` / `onDeleted` を受け取ったときだけ `DeletePostButton` を絶対配置で表示する（`Card` を包む `Link` の外側の `relative` な `div` に重ねる形。ボタン自身の `onClick` で `preventDefault`/`stopPropagation` して `Link` の遷移を止める）。
+- 一覧の状態管理は `components/posts/post-list.tsx`（Client Component）に集約し、削除成功時にローカル配列から取り除く（`ai-flag-list.tsx` の楽観的更新パターンと同じ考え方）。
+- `admin` は `/admin` 専用ロールではなく一般ページも閲覧できる（§2 参照）ため、この削除アイコンは通常の `/`（`app/(user)/page.tsx`）でも表示される。
+
+## 7. このセッションで踏んだ地雷（再発防止）
 
 - **`process.env.MOCK_MODE === 'true'` の分岐は本番ビルド時に静的評価される。** Server Component が `cookies()` を呼ぶ関数（例: `getCurrentUser()`）を、その関数内で `MOCK_MODE` 分岐より後に呼んでいると、ビルド時 `MOCK_MODE=true` だと dead-code除去されて該当ページが「静的」と誤判定されることがある。管理者ページのように毎回最新データを出したいページには `export const dynamic = 'force-dynamic'` を明示する（本セッションでは dashboard/badge/mission/ai-flags に付与）。ビルド後の `Route (app)` 表に `○`(static) と出たら疑う。
 - **Hono RPCクライアントでダッシュ入りパスセグメントやネストしたパラメータは bracket記法。** 例: `client.api.admin['ai-flags'][':id'].$patch(...)`、`client.api.admin.users[':id']['password-resets'].$post(...)`。

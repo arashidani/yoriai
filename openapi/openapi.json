@@ -23,6 +23,14 @@
     {
       "name": "admin",
       "description": "管理者専用のユーザー・投稿管理"
+    },
+    {
+      "name": "invites",
+      "description": "招待リンクの発行・確認"
+    },
+    {
+      "name": "password-resets",
+      "description": "パスワードリセットリンクの確認・実行"
     }
   ],
   "components": {
@@ -154,6 +162,337 @@
         },
         "required": [
           "success"
+        ]
+      },
+      "InviteCreated": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "山田 太郎（仮）"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "token",
+          "name",
+          "role",
+          "expiresAt"
+        ]
+      },
+      "InviteListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "invite-1"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "山田 太郎（仮）"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "USED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "status",
+          "expiresAt",
+          "createdAt"
+        ]
+      },
+      "PasswordResetCreated": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt"
+        ]
+      },
+      "Badge": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "badge-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "初投稿"
+          },
+          "description": {
+            "type": "string",
+            "example": "初めて投稿を作成した"
+          },
+          "icon": {
+            "type": "string",
+            "example": "Medal"
+          },
+          "rarity": {
+            "type": "string",
+            "enum": [
+              "BRONZE",
+              "SILVER",
+              "GOLD",
+              "PLATINUM"
+            ],
+            "example": "BRONZE"
+          },
+          "earnedCount": {
+            "type": "number",
+            "example": 842
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "icon",
+          "rarity",
+          "earnedCount",
+          "createdAt"
+        ]
+      },
+      "Mission": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "mission-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "週に5件投稿"
+          },
+          "description": {
+            "type": "string",
+            "example": "1週間で5件の投稿を作成する"
+          },
+          "durationLabel": {
+            "type": "string",
+            "example": "1週間"
+          },
+          "targetCount": {
+            "type": "number",
+            "example": 5
+          },
+          "active": {
+            "type": "boolean",
+            "example": true
+          },
+          "participantsCount": {
+            "type": "number",
+            "example": 189
+          },
+          "progressPercent": {
+            "type": "number",
+            "example": 62
+          },
+          "rewardBadgeId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "badge-1"
+          },
+          "rewardBadge": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Badge"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "durationLabel",
+          "targetCount",
+          "active",
+          "participantsCount",
+          "progressPercent",
+          "rewardBadgeId",
+          "createdAt"
+        ]
+      },
+      "AiFlag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "flag-1"
+          },
+          "title": {
+            "type": "string",
+            "example": "攻撃的な表現を検出"
+          },
+          "detail": {
+            "type": "string",
+            "example": "投稿内に攻撃的な表現が含まれています"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "LOW",
+              "MEDIUM",
+              "HIGH"
+            ],
+            "example": "HIGH"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "UNREAD",
+              "CONFIRMED"
+            ],
+            "example": "UNREAD"
+          },
+          "targetUserId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "user-1"
+          },
+          "targetUser": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "postId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "post-1"
+          },
+          "post": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Post"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "detail",
+          "severity",
+          "status",
+          "targetUserId",
+          "postId",
+          "createdAt"
+        ]
+      },
+      "Invite": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "山田 太郎（仮）"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          }
+        },
+        "required": [
+          "name",
+          "role"
         ]
       }
     },
@@ -416,6 +755,215 @@
         }
       }
     },
+    "/api/admin/invites": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "招待リンクを発行（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "USER",
+                      "ADMIN"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "role"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "発行された招待",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invite": {
+                      "$ref": "#/components/schemas/InviteCreated"
+                    }
+                  },
+                  "required": [
+                    "invite"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "招待一覧を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "招待一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invites": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InviteListItem"
+                      }
+                    }
+                  },
+                  "required": [
+                    "invites"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/users/{id}/password-resets": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "ユーザーのパスワードリセットリンクを発行（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "発行されたリセットリンク",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "passwordReset": {
+                      "$ref": "#/components/schemas/PasswordResetCreated"
+                    }
+                  },
+                  "required": [
+                    "passwordReset"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ユーザーが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/posts": {
       "get": {
         "tags": [
@@ -633,12 +1181,66 @@
         }
       }
     },
-    "/api/users": {
+    "/api/admin/badges": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "バッジ一覧を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "バッジ一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "badges": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Badge"
+                      }
+                    }
+                  },
+                  "required": [
+                    "badges"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
-          "users"
+          "admin"
         ],
-        "summary": "サインアップ直後にPrisma上のUserを作成（Supabaseセッション必須）",
+        "summary": "バッジを作成（管理者専用）",
         "security": [
           {
             "supabaseSession": []
@@ -655,8 +1257,388 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 100
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "icon": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "rarity": {
+                    "type": "string",
+                    "enum": [
+                      "BRONZE",
+                      "SILVER",
+                      "GOLD",
+                      "PLATINUM"
+                    ]
                   }
+                },
+                "required": [
+                  "name",
+                  "description",
+                  "icon",
+                  "rarity"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作成されたバッジ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "badge": {
+                      "$ref": "#/components/schemas/Badge"
+                    }
+                  },
+                  "required": [
+                    "badge"
+                  ]
                 }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/missions": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "ミッション一覧を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ミッション一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "missions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Mission"
+                      }
+                    }
+                  },
+                  "required": [
+                    "missions"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "ミッションを作成（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 300
+                  },
+                  "durationLabel": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "targetCount": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "rewardBadgeId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "name",
+                  "description",
+                  "durationLabel",
+                  "targetCount"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作成されたミッション",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mission": {
+                      "$ref": "#/components/schemas/Mission"
+                    }
+                  },
+                  "required": [
+                    "mission"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ai-flags": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "AIフラグ一覧を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AIフラグ一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "flags": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AiFlag"
+                      }
+                    }
+                  },
+                  "required": [
+                    "flags"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/ai-flags/{id}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "AIフラグを確認済みにする（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後のフラグ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "flag": {
+                      "$ref": "#/components/schemas/AiFlag"
+                    }
+                  },
+                  "required": [
+                    "flag"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "フラグが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "サインアップ直後にPrisma上のUserを作成（招待リンク必須、Supabaseセッション必須）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "inviteToken": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "inviteToken"
+                ]
               }
             }
           }
@@ -699,7 +1681,7 @@
             }
           },
           "400": {
-            "description": "メールアドレスが取得できない、またはリクエストが不正",
+            "description": "招待リンクが無効・期限切れ、またはメールアドレスが取得できない",
             "content": {
               "application/json": {
                 "schema": {
@@ -753,6 +1735,165 @@
           },
           "401": {
             "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/invites/{token}": {
+      "get": {
+        "tags": [
+          "invites"
+        ],
+        "summary": "招待リンクの有効性を確認",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3"
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "有効な招待",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "invite": {
+                      "$ref": "#/components/schemas/Invite"
+                    }
+                  },
+                  "required": [
+                    "invite"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "招待が見つからない、期限切れ、または使用済み",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/password-resets/{token}": {
+      "get": {
+        "tags": [
+          "password-resets"
+        ],
+        "summary": "パスワードリセットリンクの有効性を確認",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3"
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "有効なリセットリンク",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "valid": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  },
+                  "required": [
+                    "valid"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "リンクが見つからない、期限切れ、または使用済み",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "password-resets"
+        ],
+        "summary": "新しいパスワードを設定",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3"
+            },
+            "required": true,
+            "name": "token",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "minLength": 8
+                  }
+                },
+                "required": [
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "リンクが見つからない、期限切れ、または使用済み",
             "content": {
               "application/json": {
                 "schema": {
