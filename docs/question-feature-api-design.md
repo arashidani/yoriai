@@ -1,156 +1,100 @@
-# 質問機能 API 設計メモ
+# 質問機能：API設計メモ
 
-## このドキュメントの目的
+## この資料の目的
 
-質問機能 MVP の API について、先に「どのエンドポイントが必要か」と「何に使うか」を整理するためのメモ。
+質問機能MVPに必要になりそうなAPIの役割を整理する。詳細なrequest/response仕様を確定する資料ではなく、画面・機能から見たAPIの分け方を確認するためのメモとする。
 
-今回は詳細な request / response schema を詰め切ることは目的にせず、`OpenAPI` と `Swagger` で会話しやすい最小単位に留める。
+## 現在の確度
 
----
+- OpenAPI定義とモックAPIは存在する。
+- 質問機能用のDBモデルと実処理は未実装。
+- 以下のエンドポイント、認可、レスポンスは設計仮説であり、要件合意後に確定する。
 
-## 今回含める API
+## Questions
 
-今回は、質問機能 MVP を一通り回せるところまで OpenAPI に含める。
+### `GET /api/questions`
 
----
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | 新着一覧、キーワード検索、未回答・解決済みの絞り込み |
+| 想定クエリ | `q`、`status`、`unansweredOnly` |
+| 方針 | 検索専用APIは作らず、一覧APIに検索条件を渡す |
 
-## API 一覧
+### `POST /api/questions`
 
-### Questions
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | タイトルと本文を受け取り、質問スレッドを作成する |
+| 認証 | 必要 |
 
-#### `GET /api/questions`
+### `GET /api/questions/{questionId}`
 
-質問一覧を取得する。
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | 質問本文、状態、回答一覧を取得する |
+| 利用画面 | 質問詳細の初期表示 |
 
-用途:
-- 新着質問一覧の表示
-- キーワード検索結果の表示
-- 未回答フィルター
-- 解決済みフィルター
+### `POST /api/questions/{questionId}/answers`
 
-今回は、検索専用 API を分けずに、一覧 API にクエリを付けて検索する前提で考える。
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | 質問へ回答を追加する |
+| 認証 | 必要 |
+| 制約案 | 解決済み・非表示の質問には投稿できない |
 
-想定クエリ例:
-- `q`
-- `status`
-- `unansweredOnly`
+### `POST /api/questions/{questionId}/resolve`
 
-#### `POST /api/questions`
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | 質問者が回答受付を終了し、解決済みにする |
+| 認証 | 必要。質問者のみ操作可能とする案 |
 
-新しい質問を投稿する。
+## Reports
 
-用途:
-- 質問投稿フォームからタイトルと本文を送信する
-- 質問スレッドを新規作成する
+### `POST /api/questions/{questionId}/reports`
 
-認証ありの API とする。
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | 不適切な質問を通報する |
+| 認証 | 必要 |
 
-#### `GET /api/questions/{questionId}`
+### `POST /api/answers/{answerId}/reports`
 
-質問詳細を取得する。
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | 不適切な回答を通報する |
+| 認証 | 必要 |
 
-用途:
-- 質問本文の表示
-- 質問ステータスの表示
-- 回答一覧の表示
+## Admin
 
-質問詳細画面の初期表示に使う。
+### `GET /api/admin/reports`
 
-#### `POST /api/questions/{questionId}/answers`
+| 項目 | 内容 |
+| --- | --- |
+| 用途 | 未対応の通報を確認する |
+| 認可 | 管理者のみ |
 
-対象質問に回答を追加する。
+### 非表示にするAPI
 
-用途:
-- 質問詳細画面から回答を投稿する
+| エンドポイント | 用途 |
+| --- | --- |
+| `POST /api/admin/questions/{questionId}/hide` | 質問を非表示にする |
+| `POST /api/admin/answers/{answerId}/hide` | 回答を非表示にする |
 
-認証ありの API とする。
+いずれも管理者のみが操作する。
 
-#### `POST /api/questions/{questionId}/resolve`
+### 実ユーザーを確認するAPI
 
-質問を解決済みにする。
+| エンドポイント | 用途 |
+| --- | --- |
+| `GET /api/admin/questions/{questionId}/identity` | 質問者の実ユーザーを確認する |
+| `GET /api/admin/answers/{answerId}/identity` | 回答者の実ユーザーを確認する |
 
-用途:
-- 質問者が回答受付を終了する
+いずれも管理者のみが操作する。
 
-認証ありの API とする。
+## MTGで確認したいこと
 
-### Reports
-
-#### `POST /api/questions/{questionId}/reports`
-
-質問を通報する。
-
-用途:
-- 不適切な質問を通報する
-
-認証ありの API とする。
-
-#### `POST /api/answers/{answerId}/reports`
-
-回答を通報する。
-
-用途:
-- 不適切な回答を通報する
-
-認証ありの API とする。
-
-### Admin
-
-#### `GET /api/admin/reports`
-
-通報一覧を取得する。
-
-用途:
-- 管理者が未対応通報を確認する
-
-管理者専用の API とする。
-
-#### `POST /api/admin/questions/{questionId}/hide`
-
-質問を非表示にする。
-
-用途:
-- 管理者が不適切な質問に対応する
-
-管理者専用の API とする。
-
-#### `POST /api/admin/answers/{answerId}/hide`
-
-回答を非表示にする。
-
-用途:
-- 管理者が不適切な回答に対応する
-
-管理者専用の API とする。
-
-#### `GET /api/admin/questions/{questionId}/identity`
-
-質問者の実ユーザー情報を確認する。
-
-用途:
-- 匿名表示の裏側を管理者だけ確認する
-
-管理者専用の API とする。
-
-#### `GET /api/admin/answers/{answerId}/identity`
-
-回答者の実ユーザー情報を確認する。
-
-用途:
-- 匿名表示の裏側を管理者だけ確認する
-
-管理者専用の API とする。
-
----
-
-## OpenAPI 上の扱い
-
-Swagger で会話できるように、今回の API は `questions`、`reports`、`admin` タグで公開する。
-
-ただし、現時点では実処理まで確定していないため、OpenAPI に最低限の request / response 例だけを置き、サーバー実装は未実装レスポンスを返す段階に留めてもよい。
-
-この方針にすると、以下を分離できる。
-
-1. API の役割を先に合意する
-2. request / response schema をあとから精密化する
-3. DB 実装や検索 SQL をあとからつなぐ
+1. 一覧取得と検索を同じAPIにまとめる方針でよいか。
+2. 解決済み後に回答受付を終了する仕様でよいか。
+3. 通報・非表示・実ユーザー確認をMVPからAPIとして用意する範囲でよいか。
+4. 認可やエラー仕様を、どの段階で詳細化するか。

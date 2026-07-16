@@ -1,417 +1,228 @@
-# 質問機能 MVP DB設計プラン（posts採用案）
+# 質問機能：DB設計仮説（`posts` 採用案）
 
-## このドキュメントの位置づけ
+## この資料の目的
 
-`docs/question-feature-mvp-plan.md` の MVP 対象機能に限定し、質問・回答を共通の「投稿」として扱う `posts` テーブル採用方針で DB 設計を整理する。
+質問・回答・匿名表示・通報を扱うためのデータ構造を、実装前の設計仮説として整理する。次回MTGでは、細かなカラムを確定するのではなく、`posts` を中心にしたテーブル分割と匿名性の扱いが妥当かを相談したい。
 
-検索は、MVP初期では質問タイトル・質問本文を対象にする。回答本文を検索対象に含める場合も、基本スキーマは変えずに、検索API、SQLクエリ、レスポンス、検索結果UIを調整する。
+## 現在の確度
 
-検索専用テーブルを使う将来拡張案は、別紙 `docs/question-feature-search-document-design.md` にまとめる。
+| 項目 | 状態 |
+| --- | --- |
+| この資料 | 実装前の設計案。テーブル名・カラム・制約は未確定 |
+| 現行DB | 汎用の `Post` モデルのみが存在する |
+| 質問機能用モデル | 未実装。現行の `Post` との統合・移行方法も未決定 |
+| 検索 | MVPでは通常テーブルから質問タイトル・本文を検索する案 |
 
----
+## 設計の考え方
 
-## MVPで扱う範囲
+### 質問と回答の共通部分を `posts` にまとめる
 
-MVPで扱う機能は、質問投稿、質問一覧、質問詳細、回答投稿、全社員回答、匿名キャラ表示、管理者による実ユーザー確認、質問ステータス、解決済みにする機能、キーワード検索、未回答フィルター、解決済みフィルター、通報、管理者非表示とする。
+質問本文と回答本文は、どちらもユーザーが投稿する本文である。本文、実投稿者、匿名表示、非表示状態、作成・更新日時は共通の `posts` にまとめる。
 
-MVPでは、カテゴリ、タグ、参考になった、いいね、人気表示、ベストアンサー、通知、メンション、ランキング、部署限定公開、回答者指名、AI回答は扱わない。
+質問だけに必要なタイトル、状態、回答数、解決日時は `questions` に置く。
 
----
+**この構成にする理由**
 
-## 設計方針
+- 質問・回答の投稿情報を同じ考え方で扱える。
+- 匿名表示と非表示の処理を投稿単位でそろえられる。
+- 将来、回答本文も検索対象にしやすい。
+- 管理画面で質問・回答を横断して扱いやすい。
 
-### `posts` を作る理由
+### 匿名キャラは質問スレッドごとに割り当てる
 
-質問本文と回答本文は、どちらも「ユーザーが投稿した本文」である。
+同じ質問の中では、同じユーザーを同じ匿名キャラとして表示する。別の質問では別の匿名キャラになってよい。
 
-そのため、本文、投稿者、匿名表示、非表示状態、作成日時、更新日時などの共通情報を `posts` に集約する。
+**この構成にする理由**
 
-`posts` 側に `body` を持つ理由は以下。
+- スレッド内では誰がどの回答をしたかを追える。
+- 質問をまたいで同一人物を特定しにくくできる。
+- 実ユーザー情報は投稿に保持し、管理者だけが確認できる。
 
-1. 質問本文と回答本文を同じ「投稿本文」として扱える。
-2. 匿名プロフィール割り当てを投稿単位で一貫して参照できる。
-3. 管理画面で質問本文・回答本文を横断して検索しやすい。
-4. 将来、回答本文も検索対象に拡張しやすい。
-5. 質問・回答の非表示処理を投稿単位に寄せられる。
-
-一方で、質問特有の `title`、`status`、`answer_count`、`resolved_at` は `questions` に置く。
-
-### 匿名プロフィール割り当て
-
-匿名プロフィールは、質問スレッドごとに割り当てる。
-
-同じ質問スレッド内では、同じユーザーに同じ `anonymous_profiles` を表示する。別の質問スレッドでは、同じユーザーでも別の匿名プロフィールになってよい。
-
-このために `question_anonymous_profiles` を用意する。
-
-### 解決済み後の回答
-
-`questions.status = resolved` になった質問には、追加回答できない。
-
-Yahoo知恵袋の回答締め切りに近い考え方として、質問者が手動で解決済みにした時点で回答受付を終了する。
-
-### `status` はDBに保存する
-
-`questions.status` はDBに保存する。
-
-質問者が手動で設定する状態であり、未回答・回答あり・解決済み・非表示のフィルターにも使うため、都度計算ではなく永続化する。
-
----
-
-## 推奨テーブル構成
+## テーブル案
 
 ### `users`
 
-既存ユーザーテーブルを参照する想定。
+既存ユーザーを参照する。質問機能のために新設するテーブルではない。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | ユーザーID |
-| `role` | 管理者判定に利用 |
+| `id` | 実ユーザーを識別する |
+| `role` | 管理者かどうかを判定する |
+
+**関係：** 質問の投稿者、回答の投稿者、通報者、非表示操作を行う管理者を表す。
 
 ### `anonymous_profiles`
 
-匿名キャラのマスタ。
+匿名キャラのマスタを持つ。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | 匿名プロフィールID |
-| `display_name` | 匿名表示名 |
-| `avatar_url` | 匿名サムネイルURL |
-| `is_active` | 新規割り当て対象にするか |
-| `created_at` | 作成日時 |
-| `updated_at` | 更新日時 |
+| `id` | 匿名プロフィールを識別する |
+| `display_name` | 画面に表示する匿名名 |
+| `avatar_url` | 画面に表示するアイコン |
+| `is_active` | 新しい割り当ての候補にするか |
+
+**このテーブルを分ける理由：** 匿名名やアイコンを投稿ごとに保存せず、表示用のキャラを管理しやすくするため。
 
 ### `questions`
 
-質問スレッドを表すテーブル。
+質問スレッドそのものを表す。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | 質問ID |
-| `author_user_id` | 質問者。解決済み操作の権限確認に利用 |
-| `root_post_id` | 質問本文を持つ `posts.id`。作成直後に設定する |
+| `id` | 質問を識別する |
+| `author_user_id` | 質問者。解決済み操作の権限確認に使う |
+| `root_post_id` | 質問本文を持つ `posts` を指す |
 | `title` | 質問タイトル |
-| `status` | `open`, `answered`, `resolved`, `hidden` |
+| `status` | 質問の状態 |
 | `answer_count` | 表示中の回答数 |
 | `resolved_at` | 解決済みにした日時 |
-| `created_at` | 作成日時 |
-| `updated_at` | 更新日時 |
 
-#### `questions.status`
+**このテーブルを分ける理由：** タイトルや解決状態は質問だけの属性であり、回答には持たせないため。
+
+#### `status` の案
 
 | 値 | 意味 |
 | --- | --- |
-| `open` | 未回答 |
-| `answered` | 回答あり |
-| `resolved` | 解決済み。追加回答不可 |
-| `hidden` | 管理者非表示 |
+| `open` | 未回答。回答を受け付ける |
+| `answered` | 回答あり。回答を受け付ける |
+| `resolved` | 解決済み。追加回答を受け付けない |
+| `hidden` | 管理者により非表示 |
 
 ### `posts`
 
-質問本文・回答本文を共通で管理する投稿テーブル。
+質問本文・回答本文に共通する投稿情報を持つ。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | 投稿ID |
-| `question_id` | 所属する質問スレッドID |
+| `id` | 投稿を識別する |
+| `question_id` | 所属する質問スレッド |
 | `author_user_id` | 実投稿者。一般ユーザーには表示しない |
-| `question_anonymous_profile_id` | スレッド内匿名プロフィール割り当てID |
+| `question_anonymous_profile_id` | スレッド内で表示する匿名キャラ |
 | `type` | `question` または `answer` |
-| `body` | 投稿本文 |
-| `is_hidden` | 投稿単位の非表示フラグ |
-| `hidden_at` | 非表示日時 |
-| `hidden_by_user_id` | 非表示にした管理者 |
-| `hidden_reason` | 非表示理由 |
-| `created_at` | 作成日時 |
-| `updated_at` | 更新日時 |
+| `body` | 質問本文または回答本文 |
+| `is_hidden` | 投稿単位の非表示状態 |
+| `hidden_at` / `hidden_by_user_id` / `hidden_reason` | 非表示の監査情報 |
 
-`posts.body` に質問本文と回答本文を置くことで、質問・回答を横断した投稿管理と検索拡張がしやすくなる。
+**このテーブルを置く理由：** 質問と回答に重なる情報を一か所で管理し、匿名表示・通報対応・検索の拡張をそろえるため。
 
 ### `answers`
 
-回答であることを表すテーブル。
+ある投稿が「回答」であることを表す薄いテーブルとする。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | 回答ID |
-| `question_id` | 対象質問ID |
-| `post_id` | 回答本文を持つ `posts.id` |
-| `created_at` | 作成日時 |
-| `updated_at` | 更新日時 |
+| `id` | 回答を識別する |
+| `question_id` | 対象質問 |
+| `post_id` | 回答本文を持つ `posts` |
 
-回答本文や投稿者は `posts` に持たせるため、`answers` は薄いテーブルにする。
+**このテーブルを置く理由：** 回答をIDで参照しやすくし、回答向けの通報や将来の回答固有機能を追加しやすくするため。回答本文・投稿者は `posts` に持たせる。
 
 ### `question_anonymous_profiles`
 
-質問スレッド内で、実ユーザーと匿名プロフィールの対応を管理するテーブル。
+質問スレッドごとの「実ユーザーと匿名キャラ」の対応を持つ。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | 主キー。`posts.question_anonymous_profile_id` から参照される |
-| `question_id` | 質問スレッドID |
-| `user_id` | 実ユーザーID |
-| `anonymous_profile_id` | 匿名プロフィールID |
-| `created_at` | 作成日時 |
-| `updated_at` | 更新日時 |
+| `id` | 割り当てを識別する。`posts` から参照する |
+| `question_id` | 質問スレッド |
+| `user_id` | 実ユーザー |
+| `anonymous_profile_id` | 表示する匿名キャラ |
 
-#### 主キーと制約
+**必要な制約案**
 
-- 主キーは `id` とする。
-- `posts.question_anonymous_profile_id` は、この `id` を外部キーとして参照する。
-- `unique(question_id, user_id)` を付ける。
-- `unique(question_id, anonymous_profile_id)` を付ける。
-
-`unique(question_id, user_id)` により、同じ質問スレッド内では同じユーザーに同じ匿名プロフィールだけが割り当たる。
-
-`unique(question_id, anonymous_profile_id)` により、同じ質問スレッド内で複数ユーザーが同じ匿名プロフィールになることを避ける。
+| 制約 | 守りたいこと |
+| --- | --- |
+| `unique(question_id, user_id)` | 同じ質問内で同じユーザーには同じ匿名キャラを表示する |
+| `unique(question_id, anonymous_profile_id)` | 同じ質問内で複数ユーザーが同じ匿名キャラにならないようにする |
 
 ### `question_reports`
 
-質問への通報。
+質問への通報を持つ。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | 通報ID |
-| `question_id` | 通報対象質問ID |
-| `reporter_user_id` | 通報者 |
-| `reason` | 通報理由 |
-| `detail` | 補足説明 |
-| `status` | `pending`, `reviewing`, `resolved`, `rejected` |
-| `handled_by_user_id` | 対応した管理者 |
-| `handled_at` | 対応日時 |
-| `created_at` | 通報日時 |
-| `updated_at` | 更新日時 |
+| `question_id` | 通報対象の質問 |
+| `reporter_user_id` | 通報したユーザー |
+| `reason` / `detail` | 通報理由と補足 |
+| `status` | `pending`、`reviewing`、`resolved`、`rejected` の対応状況 |
+| `handled_by_user_id` / `handled_at` | 対応した管理者と日時 |
 
 ### `answer_reports`
 
-回答への通報。
+回答への通報を持つ。
 
-| カラム | 用途 |
+| 主な項目 | 用途 |
 | --- | --- |
-| `id` | 通報ID |
-| `answer_id` | 通報対象回答ID |
-| `reporter_user_id` | 通報者 |
-| `reason` | 通報理由 |
-| `detail` | 補足説明 |
-| `status` | `pending`, `reviewing`, `resolved`, `rejected` |
-| `handled_by_user_id` | 対応した管理者 |
-| `handled_at` | 対応日時 |
-| `created_at` | 通報日時 |
-| `updated_at` | 更新日時 |
+| `answer_id` | 通報対象の回答 |
+| `reporter_user_id` | 通報したユーザー |
+| `reason` / `detail` | 通報理由と補足 |
+| `status` | 対応状況 |
+| `handled_by_user_id` / `handled_at` | 対応した管理者と日時 |
 
----
+**通報テーブルを分ける理由：** MVPでは質問と回答の対象を明示して管理したい。将来、共通の通報テーブルに統合するかは実装・運用の複雑さを見て判断する。
 
-## ER図
+## テーブル間の関係
 
 ```mermaid
 erDiagram
+  USERS ||--o{ QUESTIONS : asks
   USERS ||--o{ POSTS : writes
   USERS ||--o{ QUESTION_ANONYMOUS_PROFILES : assigned
   USERS ||--o{ QUESTION_REPORTS : reports
   USERS ||--o{ ANSWER_REPORTS : reports
-  USERS ||--o{ POSTS : hides
-
   ANONYMOUS_PROFILES ||--o{ QUESTION_ANONYMOUS_PROFILES : used_as
-
   QUESTIONS ||--|| POSTS : root_post
   QUESTIONS ||--o{ POSTS : contains
   QUESTIONS ||--o{ ANSWERS : has
   QUESTIONS ||--o{ QUESTION_ANONYMOUS_PROFILES : has
-  QUESTIONS ||--o{ QUESTION_REPORTS : reported_by
-
   QUESTION_ANONYMOUS_PROFILES ||--o{ POSTS : displayed_as
-
   POSTS ||--o| ANSWERS : answer_post
-
-  ANSWERS ||--o{ ANSWER_REPORTS : reported_by
-
-  USERS {
-    uuid id PK
-    string role
-  }
-
-  ANONYMOUS_PROFILES {
-    uuid id PK
-    string display_name
-    string avatar_url
-    boolean is_active
-    datetime created_at
-    datetime updated_at
-  }
-
-  QUESTIONS {
-    uuid id PK
-    uuid author_user_id FK
-    uuid root_post_id FK
-    string title
-    string status
-    int answer_count
-    datetime resolved_at
-    datetime created_at
-    datetime updated_at
-  }
-
-  POSTS {
-    uuid id PK
-    uuid question_id FK
-    uuid author_user_id FK
-    uuid question_anonymous_profile_id FK
-    string type
-    text body
-    boolean is_hidden
-    datetime hidden_at
-    uuid hidden_by_user_id FK
-    text hidden_reason
-    datetime created_at
-    datetime updated_at
-  }
-
-  ANSWERS {
-    uuid id PK
-    uuid question_id FK
-    uuid post_id FK
-    datetime created_at
-    datetime updated_at
-  }
-
-  QUESTION_ANONYMOUS_PROFILES {
-    uuid id PK
-    uuid question_id FK
-    uuid user_id FK
-    uuid anonymous_profile_id FK
-    datetime created_at
-    datetime updated_at
-  }
-
-  QUESTION_REPORTS {
-    uuid id PK
-    uuid question_id FK
-    uuid reporter_user_id FK
-    string reason
-    text detail
-    string status
-    uuid handled_by_user_id FK
-    datetime handled_at
-    datetime created_at
-    datetime updated_at
-  }
-
-  ANSWER_REPORTS {
-    uuid id PK
-    uuid answer_id FK
-    uuid reporter_user_id FK
-    string reason
-    text detail
-    string status
-    uuid handled_by_user_id FK
-    datetime handled_at
-    datetime created_at
-    datetime updated_at
-  }
+  QUESTIONS ||--o{ QUESTION_REPORTS : receives
+  ANSWERS ||--o{ ANSWER_REPORTS : receives
 ```
 
----
+## 主な処理とデータの動き
 
-## 検索方針
+### 質問を投稿する
 
-### MVP初期の検索対象
+1. `questions` に質問スレッドを作る。
+2. 質問者の `question_anonymous_profiles` を作る、または取得する。
+3. `posts` に質問本文を作る。
+4. `questions.root_post_id` に質問本文を設定する。
+5. 質問の状態を `open` にする。
 
-MVP初期の検索対象は以下にする。
+### 回答を投稿する
 
-- `questions.title`
-- `posts.body` のうち `posts.type = question` のもの
+1. 質問が `open` または `answered` か確認する。
+2. 回答者の匿名キャラをスレッド内で取得または割り当てる。
+3. `posts` に回答本文を作る。
+4. `answers` に回答としての参照を作る。
+5. 回答数を増やし、必要に応じて状態を `answered` にする。
 
-つまり、質問タイトルと質問本文を検索する。
+### 質問を解決済みにする
 
-回答本文も `posts.body` に保存されるため、将来的に回答本文を検索対象へ含める場合でも、`questions`、`posts`、`answers`、`question_anonymous_profiles` の基本スキーマは変えずに済む。
-
-### 回答本文検索へ広げる場合
-
-回答本文も検索対象にする場合は、検索APIの実装を変更する。
-
-主な変更点は以下。
-
-1. SQLクエリで `posts.type = answer` も検索対象に含める。
-2. 回答本文がヒットしたときのレスポンス形式を決める。
-3. 検索結果に質問を出すのか、回答の抜粋も出すのかを決める。
-4. 必要に応じて、回答本文検索用のインデックスを調整する。
-
-このため、検索対象を広げるとAPI実装やSQLクエリは変わる。ただし、本文を `posts.body` に集約しているため、DBの基本スキーマは変えない前提で拡張できる。
-
-### インデックス方針
-
-| テーブル | インデックス | 目的 |
-| --- | --- | --- |
-| `questions` | `(status, updated_at)` | 未回答・解決済みフィルターと一覧 |
-| `questions` | full-text index on `title` | タイトル検索 |
-| `posts` | `(question_id, type, created_at)` | 質問詳細・回答一覧 |
-| `posts` | full-text index on `body` | 質問本文検索。将来の回答本文検索にも利用可能 |
-| `question_anonymous_profiles` | unique `(question_id, user_id)` | スレッド内の同一ユーザー同一匿名表示 |
-| `question_anonymous_profiles` | unique `(question_id, anonymous_profile_id)` | スレッド内の匿名プロフィール重複防止 |
-| `question_reports` | `(status, created_at)` | 管理画面の通報一覧 |
-| `answer_reports` | `(status, created_at)` | 管理画面の通報一覧 |
-
-### 検索設計のまとめ
-
-MVP初期では、質問タイトル・質問本文検索から始める。
-
-回答本文検索は、基本スキーマを変えずに後から追加できる。ただし、API、SQL、レスポンス、検索結果UIは変わるため、利用状況を見てから具体化する。
-
-検索専用テーブルは、質問数・回答数・検索要件が増えてから追加検討する。
-
----
-
-## 主要ユースケース
-
-### 質問投稿
-
-1. `questions.author_user_id` に質問者を入れて `questions` を作成する。
-2. 質問者用の `question_anonymous_profiles` を作成する。
-3. `posts.type = question`、`posts.body = 質問本文` の投稿を作成する。
-4. `questions.root_post_id` に質問本文投稿の `posts.id` を設定する。
-
-`questions.root_post_id` と `posts.question_id` は相互参照になるため、実装時は `questions` 作成後に `posts` を作り、最後に `questions.root_post_id` を更新する流れにする。
-5. `questions.status = open` にする。
-
-### 回答投稿
-
-1. 対象質問の `questions.status` を確認する。
-2. `resolved` または `hidden` の場合は回答不可にする。
-3. 回答者の `question_anonymous_profiles` がなければ作成する。
-4. `posts.type = answer` の投稿を作成する。
-5. `answers` を作成して `post_id` を紐づける。
-6. `questions.answer_count` を増やす。
-7. `questions.status = open` であれば `answered` に更新する。
-
-### 解決済みにする
-
-1. 操作ユーザーが質問者であることを確認する。
-2. `questions.status = resolved` に更新する。
-3. `questions.resolved_at = now()` に更新する。
-4. 以後、回答投稿を不可にする。
+1. 操作ユーザーが質問者かを確認する。
+2. `questions.status` を `resolved` にする。
+3. `resolved_at` を記録する。
+4. 以後の回答投稿を受け付けない。
 
 ### 管理者が非表示にする
 
-質問を非表示にする場合は、`questions.status = hidden` にする。質問本文の `posts.is_hidden` も `true` にする。
+質問を非表示にする場合は質問の状態と質問本文の投稿を非表示にする。回答を非表示にする場合は対象の投稿を非表示にし、回答数と質問状態を必要に応じて再計算する。
 
-回答を非表示にする場合は、回答に紐づく `posts.is_hidden = true` にする。必要に応じて `questions.answer_count` と `questions.status` を再計算する。
+## 検索の考え方
 
-### 通報する
+MVPでは `questions.title` と質問本文の `posts.body` を対象にする。回答本文検索は、検索結果に何を表示するかを決めてから追加する。
 
-質問への通報は `question_reports` に作成する。
+想定するインデックスは、質問状態・更新日時、質問タイトル、質問IDと投稿種別・作成日時、投稿本文、匿名キャラ割り当ての一意制約、通報の状態・作成日時である。DB製品に合わせた具体的な方式は実装時に決める。
 
-回答への通報は `answer_reports` に作成する。
+検索専用テーブルはMVPで作らない。詳細は[検索専用テーブル拡張案](./question-feature-search-document-design.md)を参照する。
 
----
+## MTGで確認したいこと
 
-## 現時点の推奨
-
-MVP初期は、質問タイトル・質問本文検索から始めるのがよい。
-
-理由は以下。
-
-1. MVP要件のキーワード検索は、質問タイトル・本文検索で満たせる。
-2. `posts.body` に本文を集約しておけば、後から回答本文検索に広げやすい。
-3. 回答本文検索のレスポンスや検索結果UIは、利用状況を見てから設計した方がよい。
-4. 検索専用テーブルは後から追加できる。
+1. 質問・回答の共通部分を `posts` にまとめる構成でよいか。
+2. 匿名キャラを質問スレッドごとに固定するルールでよいか。
+3. `answers` を薄いテーブルとして分ける必要があるか。
+4. 解決済み後は追加回答を受け付けないルールでよいか。
+5. 現行の汎用 `Post` モデルをどのように質問機能へ統合するかは、要件合意後に検討する方針でよいか。
