@@ -184,6 +184,10 @@ posts（質問本文・回答本文） ── question_anonymous_profile_id ─�
 
 ## テーブル間の関係
 
+大きな図を1枚にまとめると追いにくいため、ここでは全体像と関心ごとの詳細に分ける。
+
+### 全体像
+
 ```mermaid
 erDiagram
   USERS ||--o{ POSTS : writes
@@ -201,23 +205,24 @@ erDiagram
   QUESTIONS ||--o{ QUESTION_REPORTS : reported_by
 
   QUESTION_ANONYMOUS_PROFILES ||--o{ POSTS : displayed_as
-
   POSTS ||--o| ANSWERS : answer_post
-
   ANSWERS ||--o{ ANSWER_REPORTS : reported_by
+```
+
+### 質問・投稿・回答
+
+```mermaid
+erDiagram
+  USERS ||--o{ POSTS : writes
+  USERS ||--o{ POSTS : hides
+  QUESTIONS ||--|| POSTS : root_post
+  QUESTIONS ||--o{ POSTS : contains
+  QUESTIONS ||--o{ ANSWERS : has
+  POSTS ||--o| ANSWERS : answer_post
 
   USERS {
     uuid id PK
     string role
-  }
-
-  ANONYMOUS_PROFILES {
-    uuid id PK
-    string display_name
-    string avatar_url
-    boolean is_active
-    datetime created_at
-    datetime updated_at
   }
 
   QUESTIONS {
@@ -228,8 +233,6 @@ erDiagram
     string status
     int answer_count
     datetime resolved_at
-    datetime created_at
-    datetime updated_at
   }
 
   POSTS {
@@ -240,19 +243,38 @@ erDiagram
     string type
     text body
     boolean is_hidden
-    datetime hidden_at
     uuid hidden_by_user_id FK
-    text hidden_reason
-    datetime created_at
-    datetime updated_at
   }
 
   ANSWERS {
     uuid id PK
     uuid question_id FK
     uuid post_id FK
-    datetime created_at
-    datetime updated_at
+  }
+```
+
+### 匿名表示
+
+```mermaid
+erDiagram
+  USERS ||--o{ QUESTION_ANONYMOUS_PROFILES : assigned
+  QUESTIONS ||--o{ QUESTION_ANONYMOUS_PROFILES : has
+  ANONYMOUS_PROFILES ||--o{ QUESTION_ANONYMOUS_PROFILES : used_as
+  QUESTION_ANONYMOUS_PROFILES ||--o{ POSTS : displayed_as
+
+  USERS {
+    uuid id PK
+  }
+
+  QUESTIONS {
+    uuid id PK
+  }
+
+  ANONYMOUS_PROFILES {
+    uuid id PK
+    string display_name
+    string avatar_url
+    boolean is_active
   }
 
   QUESTION_ANONYMOUS_PROFILES {
@@ -260,8 +282,33 @@ erDiagram
     uuid question_id FK
     uuid user_id FK
     uuid anonymous_profile_id FK
-    datetime created_at
-    datetime updated_at
+  }
+
+  POSTS {
+    uuid id PK
+    uuid question_anonymous_profile_id FK
+  }
+```
+
+### 通報
+
+```mermaid
+erDiagram
+  USERS ||--o{ QUESTION_REPORTS : reports
+  USERS ||--o{ ANSWER_REPORTS : reports
+  QUESTIONS ||--o{ QUESTION_REPORTS : reported_by
+  ANSWERS ||--o{ ANSWER_REPORTS : reported_by
+
+  USERS {
+    uuid id PK
+  }
+
+  QUESTIONS {
+    uuid id PK
+  }
+
+  ANSWERS {
+    uuid id PK
   }
 
   QUESTION_REPORTS {
@@ -273,8 +320,6 @@ erDiagram
     string status
     uuid handled_by_user_id FK
     datetime handled_at
-    datetime created_at
-    datetime updated_at
   }
 
   ANSWER_REPORTS {
@@ -286,8 +331,6 @@ erDiagram
     string status
     uuid handled_by_user_id FK
     datetime handled_at
-    datetime created_at
-    datetime updated_at
   }
 ```
 
