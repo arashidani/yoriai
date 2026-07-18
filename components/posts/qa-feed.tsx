@@ -3,16 +3,17 @@
 import { Search } from 'lucide-react'
 import { useState } from 'react'
 import { Input } from '@/components/ui/input'
+import type { Post } from './post-list'
+import { PostList } from './post-list'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import type { Post } from './post-list'
-import { PostList } from './post-list'
+  ToggleGroup,
+  ToggleGroupItem,
+} from './qa-feed-controls'
 
 // TODO: カテゴリー・ステータスは仮データ。バックエンド実装後に posts のフィールドへ接続する
 const CATEGORIES = ['総務・労務', '経理', 'IT・システム', 'その他']
