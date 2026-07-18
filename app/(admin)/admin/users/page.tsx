@@ -8,22 +8,17 @@ async function getUsers() {
   return prisma.user.findMany({ orderBy: { createdAt: 'desc' } })
 }
 
-export default async function AdminUsersPage() {
+export default async function UsersPage() {
   const [users, currentUser] = await Promise.all([getUsers(), getCurrentUser()])
 
-  if (!currentUser) {
-    return (
-      <div>
-        <h1 className="text-2xl font-bold mb-6">ユーザー管理</h1>
-        <p className="text-muted-foreground">ログインが必要です。</p>
-      </div>
-    )
-  }
-
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">ユーザー管理</h1>
-      <UserTable users={users} currentUserId={currentUser.id} />
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-semibold">ユーザー管理</h2>
+        <p className="text-sm text-muted-foreground mt-1">登録済みユーザーの一覧</p>
+      </div>
+
+      <UserTable users={users} currentUserId={currentUser?.id ?? ''} />
     </div>
   )
 }

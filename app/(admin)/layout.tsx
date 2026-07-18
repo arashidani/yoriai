@@ -1,81 +1,65 @@
-import { ArrowLeft, FileText, LayoutDashboard, Users } from 'lucide-react'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { Role } from '@/app/generated/prisma/enums'
-import { SidebarNavLink } from '@/components/admin/sidebar-nav-link'
-import { Logo } from '@/components/brand/logo'
-import { LogoutButton } from '@/components/logout-button'
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from '@/components/ui/sidebar'
-import { getCurrentUser } from '@/lib/auth/current-user'
+'use client'
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser()
-  if (!user || user.role !== Role.ADMIN) redirect('/')
+import { LogOut } from 'lucide-react'
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
+
+const tabs = [
+  { href: '/admin/dashboard', label: 'ダッシュボード' },
+  { href: '/admin/users/create', label: 'ユーザー作成' },
+  { href: '/admin/users', label: 'ユーザー管理' },
+  { href: '/admin/ai-flags', label: 'AIフラグ' },
+  { href: '/admin/badge', label: 'バッジ管理' },
+  { href: '/admin/badge/create', label: 'バッジ作成' },
+  { href: '/admin/mission', label: 'ミッション管理' },
+  { href: '/admin/mission/create', label: 'ミッション作成' },
+]
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Link href="/" className="px-2 py-1.5">
-            <Logo variant="full" preload className="h-7 w-auto" />
-          </Link>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/admin">
-                    <LayoutDashboard />
-                    <span>ダッシュボード</span>
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/admin/posts">
-                    <FileText />
-                    <span>投稿管理</span>
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/admin/users">
-                    <Users />
-                    <span>ユーザー管理</span>
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarNavLink href="/">
-                <ArrowLeft />
-                <span>ユーザー画面へ戻る</span>
-              </SidebarNavLink>
-            </SidebarMenuItem>
-          </SidebarMenu>
-          <LogoutButton />
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b px-4">
-          <SidebarTrigger />
-        </header>
-        <main className="flex-1 p-8">{children}</main>
-      </SidebarInset>
-    </SidebarProvider>
+    <div className="min-h-screen">
+      <header className="border-b px-8 py-4">
+        <h1 className="text-xl font-bold">管理パネル</h1>
+      </header>
+      <nav className="flex items-center justify-between border-b px-8">
+        <div className="flex gap-2">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={cn(
+                'px-4 py-2 text-sm border-b-2 -mb-px transition-colors',
+                pathname === tab.href
+                  ? 'border-primary text-primary font-medium'
+                  : 'border-transparent text-muted-foreground hover:text-foreground',
+              )}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <LogOut className="h-4 w-4" />
+          ログアウト
+        </button>
+      </nav>
+      <main className="p-8">{children}</main>
+    </div>
   )
 }
