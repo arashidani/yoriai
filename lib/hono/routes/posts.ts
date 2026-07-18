@@ -1,5 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
-import { Role } from '@/app/generated/prisma/enums'
+import { FlagSeverity, Role } from '@/app/generated/prisma/enums'
+import { moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, IdParamSchema, PostSchema, SuccessSchema } from '@/lib/hono/openapi/schemas'
@@ -117,6 +118,20 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       data: { ...data, authorId: user.id },
       include: { author: true },
     })
+
+    const moderation = await moderatePost(post.title, post.body)
+    if (moderation?.flagged) {
+      await prisma.aiFlag.create({
+        data: {
+          title: `不適切な投稿の可能性: ${post.title}`,
+          detail: moderation.reason,
+          severity: FlagSeverity[moderation.severity],
+          targetUserId: user.id,
+          postId: post.id,
+        },
+      })
+    }
+
     return c.json({ post }, 201)
   })
   .openapi(deleteRoute, async (c) => {

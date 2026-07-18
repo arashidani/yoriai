@@ -66,10 +66,7 @@ export default function LoginPage() {
           </Button>
         </form>
         <p className="text-center text-sm text-muted-foreground">
-          アカウントをお持ちでない方は{' '}
-          <a href="/register" className="underline underline-offset-4 hover:text-primary">
-            ユーザー登録はこちら
-          </a>
+          アカウントをお持ちでない方は管理者にお問い合わせください。
         </p>
       </div>
     </div>

@@ -18,7 +18,12 @@ const preview: Preview = {
   ],
   parameters: {
     msw: {
-      handlers: [...mswHandlers.posts, ...mswHandlers.admin],
+      handlers: [
+        ...mswHandlers.posts,
+        ...mswHandlers.admin,
+        ...mswHandlers.invites,
+        ...mswHandlers.passwordResets,
+      ],
     },
     controls: {
       matchers: {

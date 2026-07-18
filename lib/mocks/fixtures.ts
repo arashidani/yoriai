@@ -1,4 +1,4 @@
-import { Role } from '@/app/generated/prisma/enums'
+import { BadgeRarity, FlagSeverity, FlagStatus, Role } from '@/app/generated/prisma/enums'
 
 export const MOCK_USERS = [
   {
@@ -55,5 +55,173 @@ export const MOCK_POSTS = [
     author: MOCK_USERS[0],
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
+  },
+]
+
+export const MOCK_BADGES = [
+  {
+    id: 'badge-1',
+    name: '初投稿',
+    description: '初めて投稿を作成した',
+    icon: 'Medal',
+    rarity: BadgeRarity.BRONZE,
+    earnedCount: 842,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'badge-2',
+    name: '質問マスター',
+    description: '質問を50件投稿した',
+    icon: 'Award',
+    rarity: BadgeRarity.SILVER,
+    earnedCount: 213,
+    createdAt: new Date('2024-01-02'),
+  },
+  {
+    id: 'badge-3',
+    name: 'ベストアンサー王',
+    description: 'ベストアンサーを100件獲得した',
+    icon: 'Crown',
+    rarity: BadgeRarity.GOLD,
+    earnedCount: 34,
+    createdAt: new Date('2024-01-03'),
+  },
+  {
+    id: 'badge-4',
+    name: '伝説の回答者',
+    description: '累計いいねを1000件獲得した',
+    icon: 'Sparkles',
+    rarity: BadgeRarity.PLATINUM,
+    earnedCount: 5,
+    createdAt: new Date('2024-01-04'),
+  },
+]
+
+export const MOCK_MISSIONS = [
+  {
+    id: 'mission-1',
+    name: '3日連続ログイン',
+    description: '3日間連続でログインする',
+    durationLabel: '3日間',
+    targetCount: 3,
+    active: true,
+    participantsCount: 421,
+    progressPercent: 100,
+    rewardBadgeId: 'badge-1',
+    rewardBadge: MOCK_BADGES[0],
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'mission-2',
+    name: '週に5件投稿',
+    description: '1週間で5件の投稿を作成する',
+    durationLabel: '1週間',
+    targetCount: 5,
+    active: true,
+    participantsCount: 189,
+    progressPercent: 62,
+    rewardBadgeId: 'badge-2',
+    rewardBadge: MOCK_BADGES[1],
+    createdAt: new Date('2024-01-02'),
+  },
+  {
+    id: 'mission-3',
+    name: 'コメントを10件つける',
+    description: '他のユーザーの投稿にコメントする',
+    durationLabel: '1週間',
+    targetCount: 10,
+    active: true,
+    participantsCount: 97,
+    progressPercent: 34,
+    rewardBadgeId: null,
+    rewardBadge: null,
+    createdAt: new Date('2024-01-03'),
+  },
+  {
+    id: 'mission-4',
+    name: '月間トップ回答者',
+    description: '月内で最も多くベストアンサーを獲得する',
+    durationLabel: '1ヶ月',
+    targetCount: 1,
+    active: false,
+    participantsCount: 26,
+    progressPercent: 8,
+    rewardBadgeId: 'badge-3',
+    rewardBadge: MOCK_BADGES[2],
+    createdAt: new Date('2024-01-04'),
+  },
+]
+
+export const MOCK_AI_FLAGS = [
+  {
+    id: 'flag-1',
+    title: '不適切な投稿の可能性: Next.js App Routerの使い方を教えてください',
+    detail: '投稿内に、脅迫・ハラスメントとみられる表現が含まれています',
+    severity: FlagSeverity.HIGH,
+    status: FlagStatus.UNREAD,
+    targetUserId: 'user-1',
+    targetUser: MOCK_USERS[0],
+    postId: 'post-1',
+    post: MOCK_POSTS[0],
+    createdAt: new Date('2024-01-10'),
+  },
+  {
+    id: 'flag-2',
+    title: '個人情報の投稿を検出',
+    detail: 'コメント内に電話番号のようなパターンが含まれています',
+    severity: FlagSeverity.MEDIUM,
+    status: FlagStatus.UNREAD,
+    targetUserId: 'user-2',
+    targetUser: MOCK_USERS[1],
+    postId: null,
+    post: null,
+    createdAt: new Date('2024-01-11'),
+  },
+  {
+    id: 'flag-3',
+    title: '短時間での連続投稿',
+    detail: '5分間に8件の投稿を検出しました。スパムの可能性があります',
+    severity: FlagSeverity.MEDIUM,
+    status: FlagStatus.CONFIRMED,
+    targetUserId: 'user-2',
+    targetUser: MOCK_USERS[1],
+    postId: null,
+    post: null,
+    createdAt: new Date('2024-01-12'),
+  },
+  {
+    id: 'flag-4',
+    title: '不審なログイン試行',
+    detail: '通常と異なる地域からのログインを検出しました',
+    severity: FlagSeverity.HIGH,
+    status: FlagStatus.CONFIRMED,
+    targetUserId: 'user-1',
+    targetUser: MOCK_USERS[0],
+    postId: null,
+    post: null,
+    createdAt: new Date('2024-01-13'),
+  },
+]
+
+export const MOCK_INVITES = [
+  {
+    id: 'invite-1',
+    token: 'mock-invite-token',
+    name: '招待ユーザー（仮）',
+    role: Role.USER,
+    expiresAt: new Date('2099-01-01'),
+    usedAt: null,
+    createdAt: new Date('2024-01-01'),
+  },
+]
+
+export const MOCK_PASSWORD_RESETS = [
+  {
+    id: 'password-reset-1',
+    token: 'mock-password-reset-token',
+    userId: 'user-2',
+    expiresAt: new Date('2099-01-01'),
+    usedAt: null,
+    createdAt: new Date('2024-01-01'),
   },
 ]
