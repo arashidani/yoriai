@@ -65,9 +65,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
               key={href}
               href={href}
               className={cn(
-                // text-neutral-800: Figma の ghost-foreground。対応する意味トークンがないため
-                // ブランド独自 neutral スケールを意図して使用
-                'flex items-center gap-2 rounded-full px-6 py-4 text-paragraph font-bold text-neutral-800 transition-colors hover:bg-muted',
+                'flex items-center gap-2 rounded-full px-6 py-4 text-paragraph font-bold text-sidebar-foreground transition-colors hover:bg-muted',
                 isActive(href) && 'bg-muted',
               )}
             >
