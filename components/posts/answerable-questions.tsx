@@ -14,7 +14,7 @@ export function AnswerableQuestions({ posts }: AnswerableQuestionsProps) {
   const items = posts.slice(0, 3)
 
   return (
-    <aside className="hidden w-72 shrink-0 border-l border-input bg-background xl:block">
+    <aside className="hidden w-72 shrink-0 border-l border-input bg-background xl:sticky xl:top-0 xl:block xl:h-svh xl:self-start">
       <div className="p-5">
         <h2 className="border-b border-input pb-3 font-heading text-paragraph-small font-bold">
           あなたが回答できそうな質問
