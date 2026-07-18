@@ -399,27 +399,15 @@
 
 /* ── タイポグラフィ / スペーシング / シャドウ ── */
 @theme {
-  /* Spacing: absolute スケールは 0.25rem 刻みで Tailwind 既定と完全一致。
-     基準値を明示（p-4=1rem, gap-2=0.5rem … 全ステップがこの倍数で生成される）。 */
+  /* Spacing: semantic スケール（3xs=2px 〜 10xl=144px）は 0.25rem 刻みの
+     Tailwind 既定スケールと完全一致するため、named alias は追加しない
+     （p-0.5, p-1, p-2, p-3, p-4, p-5, p-6, p-8, p-10, p-12, p-16, p-20,
+     p-24, p-28, p-32, p-36 がそのまま semantic 値に対応する）。
+     NOTE: --spacing-sm / -md / -lg / -xl / -2xl 等の named alias は
+     過去に追加していたが、Tailwind v4 の max-w-* / w-* / h-* が参照する
+     --container-* 名前付きスケール（sm=24rem, lg=32rem, 2xl=42rem…）と
+     キー名が衝突し、アプリ全体のレイアウトが崩壊したため削除。 */
   --spacing: 0.25rem;
-
-  /* Spacing semantic: p-md / gap-xl / space-y-2xs などで利用可能 */
-  --spacing-3xs: 0.125rem; /* 2px */
-  --spacing-2xs: 0.25rem; /* 4px */
-  --spacing-xs: 0.5rem; /* 8px */
-  --spacing-sm: 0.75rem; /* 12px */
-  --spacing-md: 1rem; /* 16px */
-  --spacing-lg: 1.25rem; /* 20px */
-  --spacing-xl: 1.5rem; /* 24px */
-  --spacing-2xl: 2rem; /* 32px */
-  --spacing-3xl: 2.5rem; /* 40px */
-  --spacing-4xl: 3rem; /* 48px */
-  --spacing-5xl: 4rem; /* 64px */
-  --spacing-6xl: 5rem; /* 80px */
-  --spacing-7xl: 6rem; /* 96px */
-  --spacing-8xl: 7rem; /* 112px */
-  --spacing-9xl: 8rem; /* 128px */
-  --spacing-10xl: 9rem; /* 144px */
 
   /* Typography: デザインシステムスケール
      （size / line-height / letter-spacing / weight 同梱）
