@@ -1,34 +1,14 @@
-import Link from 'next/link'
 import { Role } from '@/app/generated/prisma/enums'
-import { Logo } from '@/components/brand/logo'
-import { LogoutButton } from '@/components/logout-button'
-import { Button } from '@/components/ui/button'
+import { Sidebar } from '@/components/layout/sidebar'
 import { getCurrentUser } from '@/lib/auth/current-user'
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser()
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/">
-            <Logo variant="full" preload className="h-7 w-auto" />
-          </Link>
-          <nav className="flex items-center gap-4">
-            {user?.role === Role.ADMIN && (
-              <Link href="/admin" className="text-sm text-muted-foreground hover:text-foreground">
-                管理者画面へ
-              </Link>
-            )}
-            <Link href="/posts/new">
-              <Button size="sm">質問する</Button>
-            </Link>
-            <LogoutButton />
-          </nav>
-        </div>
-      </header>
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-8">{children}</main>
+    <div className="flex min-h-screen flex-col lg:flex-row">
+      <Sidebar isAdmin={user?.role === Role.ADMIN} />
+      <main className="flex min-w-0 flex-1 flex-col bg-background">{children}</main>
     </div>
   )
 }
