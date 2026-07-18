@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect } from 'storybook/test'
+import { expect, userEvent } from 'storybook/test'
 import { QaFeed } from './qa-feed'
 
 const meta = {
@@ -44,7 +44,7 @@ export const Default: Story = {
 
 export const StatusFilter: Story = {
   args: { posts: basePosts, isAdmin: false },
-  play: async ({ canvas, userEvent }) => {
+  play: async ({ canvas }) => {
     const resolved = canvas.getByRole('button', { name: '解決済み' })
     await userEvent.click(resolved)
     await expect(resolved).toHaveAttribute('aria-pressed', 'true')
@@ -57,7 +57,7 @@ export const StatusFilter: Story = {
 
 export const KeywordFilter: Story = {
   args: { posts: basePosts, isAdmin: false },
-  play: async ({ canvas, userEvent }) => {
+  play: async ({ canvas }) => {
     await userEvent.type(canvas.getByPlaceholderText('キーワードを入力'), 'TypeScript')
     await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
     await expect(canvas.getByText(/TypeScriptの型エラー/)).toBeVisible()
@@ -66,7 +66,7 @@ export const KeywordFilter: Story = {
 
 export const NoMatch: Story = {
   args: { posts: basePosts, isAdmin: false },
-  play: async ({ canvas, userEvent }) => {
+  play: async ({ canvas }) => {
     await userEvent.type(canvas.getByPlaceholderText('キーワードを入力'), '存在しないキーワード')
     await expect(canvas.getByText('まだ質問がありません。')).toBeVisible()
   },
