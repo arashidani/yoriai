@@ -96,6 +96,7 @@ function QaFeedStatusFilter({ filters, value, onValueChange }: QaFeedStatusFilte
       data-slot="toggle-group"
       data-spacing={0}
       data-orientation="horizontal"
+      orientation="horizontal"
       aria-label="ステータスで絞り込み"
       className="group/toggle-group grid h-10 w-full grid-cols-3 rounded-lg border-2 border-input bg-background sm:flex sm:w-fit sm:shrink-0"
     >
