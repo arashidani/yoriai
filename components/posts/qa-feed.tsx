@@ -5,15 +5,7 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import type { Post } from './post-list'
 import { PostList } from './post-list'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  ToggleGroup,
-  ToggleGroupItem,
-} from './qa-feed-controls'
+import { QaFeedCategorySelect, QaFeedStatusFilter } from './qa-feed-controls'
 
 // TODO: カテゴリー・ステータスは仮データ。バックエンド実装後に posts のフィールドへ接続する
 const CATEGORIES = ['総務・労務', '経理', 'IT・システム', 'その他']
@@ -53,38 +45,8 @@ export function QaFeed({ posts, isAdmin }: QaFeedProps) {
               className="h-10 bg-background pl-9"
             />
           </div>
-          <Select>
-            <SelectTrigger className="h-10 w-full bg-background data-[size=default]:h-10 sm:flex-1">
-              <SelectValue placeholder="カテゴリーを選択" />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category}>
-                  {category}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <ToggleGroup
-            value={[status]}
-            onValueChange={(value) => {
-              const next = value.at(-1)
-              if (typeof next === 'string') setStatus(next)
-            }}
-            spacing={0}
-            aria-label="ステータスで絞り込み"
-            className="grid h-10 w-full grid-cols-3 rounded-lg border-2 border-input bg-background sm:flex sm:w-fit sm:shrink-0"
-          >
-            {STATUS_FILTERS.map(({ id, label }) => (
-              <ToggleGroupItem
-                key={id}
-                value={id}
-                className="h-full min-w-0 px-2 text-paragraph-small font-medium whitespace-nowrap text-secondary-foreground not-last:border-r-2 not-last:border-input aria-pressed:bg-secondary-hover aria-pressed:font-bold sm:px-3"
-              >
-                {label}
-              </ToggleGroupItem>
-            ))}
-          </ToggleGroup>
+          <QaFeedCategorySelect categories={CATEGORIES} />
+          <QaFeedStatusFilter filters={STATUS_FILTERS} value={status} onValueChange={setStatus} />
         </div>
       </div>
       <div className="flex-1 px-8 py-6">
