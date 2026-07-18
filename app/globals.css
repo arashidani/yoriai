@@ -5,19 +5,20 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ============================================================
-   Obra shadcn/ui kit (community edition 1.6.0) 準拠トークン
+   yoriai デザインシステム (Figma variables) 準拠トークン
    ------------------------------------------------------------
-   - 色プリミティブ（blue/neutral/red… 50-950）は Tailwind v4 の
-     組み込みパレットと同一値のため再定義せず、そのまま利用する
-     （bg-blue-500 等のユーティリティは標準で使える）。
-   - ここでは Obra の「意味トークン（semantic）」を shadcn の
-     CSS 変数へ 1:1 で対応させる。値は Obra のエイリアスを解決した
-     具体値（hex）。Light = Obra "shadcn" / Dark = "shadcn-dark"。
+   - Figma の variables コレクション（semantic colors / chart colors /
+     brand colors / typography / border radii / spacing / shadows /
+     color / alpha）を移植したもの。
+   - 意味トークン（semantic）は shadcn の CSS 変数へ 1:1 で対応させ、
+     Light = :root / Dark = .dark で値だけを切り替える。
+   - Figma からの意図的な逸脱は各箇所に NOTE として明記する。
    ============================================================ */
 
 /* ── shadcn トークン → Tailwind ユーティリティ ブリッジ ── */
 @theme inline {
   --color-background: var(--background);
+  --color-background-subtle: var(--background-subtle);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -25,22 +26,31 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-hover: var(--secondary-hover);
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-border: var(--destructive-border);
+  --color-destructive-text: var(--destructive-text);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-success: var(--success);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-error: var(--ring-error);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -49,22 +59,312 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-muted: var(--sidebar-muted);
 
-  /* Fonts（主フォント = Kosugi Maru（丸ゴシック）、Geist / Noto Sans JP をフォールバック。next/font 読み込み済み） */
-  --font-sans: var(--font-kosugi-maru), var(--font-geist-sans), "Noto Sans JP", sans-serif;
+  /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
+     3種類に限定し、独自の font-* ユーティリティは増やさない。
+     デザインシステム: sans=Inter＋Noto Sans JP フォールバック /
+     headings=Noto Sans JP / mono=Geist Mono。next/font 読み込み済み） */
+  --font-sans: var(--font-inter), var(--font-noto-sans-jp), sans-serif;
+  --font-heading: var(--font-noto-sans-jp), sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-  /* 見出しは可変ウェイトの Geist Sans を優先し、Kosugi Maru（400固定）による合成太字を避ける */
-  --font-heading: var(--font-geist-sans), var(--font-kosugi-maru), "Noto Sans JP", sans-serif;
-
-  /* Radius（Obra: --radius = 0.625rem を基準に shadcn 標準の段階派生） */
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ── Obra アルファ系プリミティブ（Tailwind 標準に無いので定義） ──
-   overlay / ghost / outline 等で利用。bg-black-alpha-50 等のユーティリティにもなる。 */
+/* ── Border radii ──
+   デザインシステムの semantic 値
+   （xs=2 / sm=4 / md=6 / lg=8 / xl=12 / 2xl=16 / 3xl=24 / 4xl=32）は
+   Tailwind v4 既定スケールと完全一致のため再定義しない。
+   独立トークン radius=10px は :root の --radius で定義し、
+   プレーンな `rounded` がこの値になる。 */
+
+/* ── 色プリミティブ ──
+   デザインシステムの color コレクション。Tailwind v4 の既定パレット
+   （OKLCH ベースで hex が異なる）を Figma の具体値で上書きする。
+   neutral / orange / sky は完全独自（50-900、950 なし）。
+   ※ コンポーネントでは原則、意味トークンを使うこと。 */
+@theme {
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  /* neutral: ウォームトーン独自スケール（= brand-neutrals） */
+  --color-neutral-50: #fffefc;
+  --color-neutral-100: #fdfbf7;
+  --color-neutral-200: #f6f3ed;
+  --color-neutral-300: #ece7df;
+  --color-neutral-400: #ddd6cc;
+  --color-neutral-500: #c9c0b5;
+  --color-neutral-600: #a59a8d;
+  --color-neutral-700: #7d746a;
+  --color-neutral-800: #544d46;
+  --color-neutral-900: #2f2b27;
+
+  /* orange: ブランドカラー独自スケール（= brand-shades） */
+  --color-orange-50: #fff4f1;
+  --color-orange-100: #ffe7df;
+  --color-orange-200: #ffd0c2;
+  --color-orange-300: #ffb19a;
+  --color-orange-400: #ff9778;
+  --color-orange-500: #ff8560;
+  --color-orange-600: #f36e49;
+  --color-orange-700: #db5631;
+  --color-orange-800: #b84221;
+  --color-orange-900: #7d2a15;
+
+  --color-red-50: #fef2f2;
+  --color-red-100: #ffe2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+  --color-red-950: #450a0a;
+
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-blue-200: #bfdbfe;
+  --color-blue-300: #93c5fd;
+  --color-blue-400: #60a5fa;
+  --color-blue-500: #3b82f6;
+  --color-blue-600: #2563eb;
+  --color-blue-700: #1d4ed8;
+  --color-blue-800: #1e40af;
+  --color-blue-900: #1e3a8a;
+  --color-blue-950: #172554;
+
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-300: #cbd5e1;
+  --color-slate-400: #94a3b8;
+  --color-slate-500: #64748b;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
+
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+  --color-gray-950: #030712;
+
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
+
+  --color-stone-50: #fafaf9;
+  --color-stone-100: #f5f5f4;
+  --color-stone-200: #e7e5e4;
+  --color-stone-300: #d6d3d1;
+  --color-stone-400: #a8a29e;
+  --color-stone-500: #78716c;
+  --color-stone-600: #57534e;
+  --color-stone-700: #44403c;
+  --color-stone-800: #292524;
+  --color-stone-900: #1c1917;
+  --color-stone-950: #0c0a09;
+
+  --color-amber-50: #fffbeb;
+  --color-amber-100: #fef3c7;
+  --color-amber-200: #fde68a;
+  --color-amber-300: #fcd34d;
+  --color-amber-400: #fbbf24;
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-amber-700: #b45309;
+  --color-amber-800: #92400e;
+  --color-amber-900: #78350f;
+  --color-amber-950: #451a03;
+
+  --color-yellow-50: #fefce8;
+  --color-yellow-100: #fef9c3;
+  --color-yellow-200: #fef08a;
+  --color-yellow-300: #fde047;
+  --color-yellow-400: #facc15;
+  --color-yellow-500: #eab308;
+  --color-yellow-600: #ca8a04;
+  --color-yellow-700: #a16207;
+  --color-yellow-800: #854d0e;
+  --color-yellow-900: #713f12;
+  --color-yellow-950: #422006;
+
+  --color-lime-50: #f7fee7;
+  --color-lime-100: #ecfccb;
+  --color-lime-200: #d9f99d;
+  --color-lime-300: #bef264;
+  --color-lime-400: #a3e635;
+  --color-lime-500: #84cc16;
+  --color-lime-600: #65a30d;
+  --color-lime-700: #4d7c0f;
+  --color-lime-800: #3f6212;
+  --color-lime-900: #365314;
+  --color-lime-950: #1a2e05;
+
+  --color-green-50: #f0fdf4;
+  --color-green-100: #dcfce7;
+  --color-green-200: #bbf7d0;
+  --color-green-300: #86efac;
+  --color-green-400: #4ade80;
+  --color-green-500: #22c55e;
+  --color-green-600: #16a34a;
+  --color-green-700: #15803d;
+  --color-green-800: #166534;
+  --color-green-900: #14532d;
+  --color-green-950: #052e16;
+
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-200: #a7f3d0;
+  --color-emerald-300: #6ee7b7;
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-emerald-800: #065f46;
+  --color-emerald-900: #064e3b;
+  --color-emerald-950: #022c22;
+
+  --color-teal-50: #f0fdfa;
+  --color-teal-100: #ccfbf1;
+  --color-teal-200: #99f6e4;
+  --color-teal-300: #5eead4;
+  --color-teal-400: #2dd4bf;
+  --color-teal-500: #14b8a6;
+  --color-teal-600: #0d9488;
+  --color-teal-700: #0f766e;
+  --color-teal-800: #115e59;
+  --color-teal-900: #134e4a;
+  --color-teal-950: #042f2e;
+
+  --color-cyan-50: #ecfeff;
+  --color-cyan-100: #cffafe;
+  --color-cyan-200: #a5f3fc;
+  --color-cyan-300: #67e8f9;
+  --color-cyan-400: #22d3ee;
+  --color-cyan-500: #06b6d4;
+  --color-cyan-600: #0891b2;
+  --color-cyan-700: #0e7490;
+  --color-cyan-800: #155e75;
+  --color-cyan-900: #164e63;
+  --color-cyan-950: #083344;
+
+  /* sky: 独自スケール（50-900、950 なし） */
+  --color-sky-50: #f0fcff;
+  --color-sky-100: #ddf7fd;
+  --color-sky-200: #b8edf9;
+  --color-sky-300: #82dff4;
+  --color-sky-400: #58d0f0;
+  --color-sky-500: #33c1ed;
+  --color-sky-600: #1ea9d3;
+  --color-sky-700: #148cb1;
+  --color-sky-800: #106f8d;
+  --color-sky-900: #0a4a5e;
+
+  --color-indigo-50: #eef2ff;
+  --color-indigo-100: #e0e7ff;
+  --color-indigo-200: #c7d2fe;
+  --color-indigo-300: #a5b4fc;
+  --color-indigo-400: #818cf8;
+  --color-indigo-500: #6366f1;
+  --color-indigo-600: #4f46e5;
+  --color-indigo-700: #4338ca;
+  --color-indigo-800: #3730a3;
+  --color-indigo-900: #312e81;
+  --color-indigo-950: #1e1b4b;
+
+  --color-violet-50: #f5f3ff;
+  --color-violet-100: #ede9fe;
+  --color-violet-200: #ddd6fe;
+  --color-violet-300: #c4b5fd;
+  --color-violet-400: #a78bfa;
+  --color-violet-500: #8b5cf6;
+  --color-violet-600: #7c3aed;
+  --color-violet-700: #6d28d9;
+  --color-violet-800: #5b21b6;
+  --color-violet-900: #4c1d95;
+  --color-violet-950: #2e1065;
+
+  --color-purple-50: #faf5ff;
+  --color-purple-100: #f3e8ff;
+  --color-purple-200: #e9d5ff;
+  --color-purple-300: #d8b4fe;
+  --color-purple-400: #c084fc;
+  --color-purple-500: #a855f7;
+  --color-purple-600: #9333ea;
+  --color-purple-700: #7e22ce;
+  --color-purple-800: #6b21a8;
+  --color-purple-900: #581c87;
+  --color-purple-950: #3b0764;
+
+  --color-fuchsia-50: #fdf4ff;
+  --color-fuchsia-100: #fae8ff;
+  --color-fuchsia-200: #f5d0fe;
+  --color-fuchsia-300: #f0abfc;
+  --color-fuchsia-400: #e879f9;
+  --color-fuchsia-500: #d946ef;
+  --color-fuchsia-600: #c026d3;
+  --color-fuchsia-700: #a21caf;
+  --color-fuchsia-800: #86198f;
+  --color-fuchsia-900: #701a75;
+  --color-fuchsia-950: #4a044e;
+
+  --color-pink-50: #fdf2f8;
+  --color-pink-100: #fce7f3;
+  --color-pink-200: #fbcfe8;
+  --color-pink-300: #f9a8d4;
+  --color-pink-400: #f472b6;
+  --color-pink-500: #ec4899;
+  --color-pink-600: #db2777;
+  --color-pink-700: #be185d;
+  --color-pink-800: #9d174d;
+  --color-pink-900: #831843;
+  --color-pink-950: #500724;
+
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-200: #fecdd3;
+  --color-rose-300: #fda4af;
+  --color-rose-400: #fb7185;
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+  --color-rose-700: #be123c;
+  --color-rose-800: #9f1239;
+  --color-rose-900: #881337;
+  --color-rose-950: #4c0519;
+}
+
+/* ── brand combinations（ブランド × 前景のペア。モード共通） ── */
+@theme {
+  --color-brand-1: #f36e49;
+  --color-brand-1-foreground: #ffffff;
+  --color-brand-2: #ffe7df;
+  --color-brand-2-foreground: #b84221;
+  --color-brand-3: #7d2a15;
+  --color-brand-3-foreground: #ffb19a;
+}
+
+/* ── alpha プリミティブ ──
+   overlay / ghost / outline 等で利用。bg-black-alpha-50 等になる。
+   ※ Figma の alpha-0 / alpha-001 / alpha-333 は Figma 上の
+     ワークアラウンド用のため CSS には持ち込まない（0 は transparent）。 */
 @theme {
   --color-black-alpha-5: #0000000d;
   --color-black-alpha-10: #0000001a;
@@ -76,7 +376,9 @@
   --color-black-alpha-60: #00000099;
   --color-black-alpha-70: #000000b2;
   --color-black-alpha-80: #000000cc;
+  --color-black-alpha-85: #000000d9;
   --color-black-alpha-90: #000000e5;
+  --color-black-alpha-95: #000000f2;
   --color-black-alpha-100: #000000;
   --color-white-alpha-5: #ffffff0d;
   --color-white-alpha-10: #ffffff1a;
@@ -88,34 +390,46 @@
   --color-white-alpha-60: #ffffff99;
   --color-white-alpha-70: #ffffffb2;
   --color-white-alpha-80: #ffffffcc;
+  --color-white-alpha-85: #ffffffd9;
   --color-white-alpha-90: #ffffffe5;
+  --color-white-alpha-95: #fffffff2;
   --color-white-alpha-100: #ffffff;
 }
 
-/* ── Obra タイポグラフィ / スペーシング / シャドウ ── */
+/* ── タイポグラフィ / スペーシング / シャドウ ── */
 @theme {
-  /* Spacing: Obra の --0〜--96 は 0.25rem 刻みで Tailwind 既定と完全一致。
-     基準値を明示（p-4=1rem, gap-2=0.5rem … 全ステップがこの倍数で生成される）。 */
+  /* Spacing: semantic スケール（3xs=2px 〜 10xl=144px）は 0.25rem 刻みの
+     Tailwind 既定スケールと完全一致するため、named alias は追加しない
+     （p-0.5, p-1, p-2, p-3, p-4, p-5, p-6, p-8, p-10, p-12, p-16, p-20,
+     p-24, p-28, p-32, p-36 がそのまま semantic 値に対応する）。
+     NOTE: --spacing-sm / -md / -lg / -xl / -2xl 等の named alias は
+     過去に追加していたが、Tailwind v4 の max-w-* / w-* / h-* が参照する
+     --container-* 名前付きスケール（sm=24rem, lg=32rem, 2xl=42rem…）と
+     キー名が衝突し、アプリ全体のレイアウトが崩壊したため削除。 */
   --spacing: 0.25rem;
 
-  /* Typography: Obra 独自スケール（size / line-height / letter-spacing / weight 同梱）
-     利用例: text-heading-1, text-paragraph, text-caption, font は font-heading/-sans/-mono */
+  /* Typography: デザインシステムスケール
+     （size / line-height / letter-spacing / weight 同梱）
+     利用例: text-heading-1, text-paragraph, text-caption。
+     paragraph の weight バリエーションは font-medium(500) /
+     font-semibold(600) を併用する。
+     フォントは見出しに font-heading、本文は html 既定の font-sans を使う。 */
   --text-heading-1: 3rem;
   --text-heading-1--line-height: 3rem;
-  --text-heading-1--letter-spacing: -0.0938rem;
-  --text-heading-1--font-weight: 600;
+  --text-heading-1--letter-spacing: 0.5px;
+  --text-heading-1--font-weight: 700;
   --text-heading-2: 1.875rem;
   --text-heading-2--line-height: 1.875rem;
-  --text-heading-2--letter-spacing: -0.0625rem;
-  --text-heading-2--font-weight: 600;
+  --text-heading-2--letter-spacing: 0.5px;
+  --text-heading-2--font-weight: 700;
   --text-heading-3: 1.5rem;
   --text-heading-3--line-height: 1.8rem;
-  --text-heading-3--letter-spacing: -0.0625rem;
-  --text-heading-3--font-weight: 600;
+  --text-heading-3--letter-spacing: 0.5px;
+  --text-heading-3--font-weight: 700;
   --text-heading-4: 1.25rem;
   --text-heading-4--line-height: 1.5rem;
-  --text-heading-4--letter-spacing: 0rem;
-  --text-heading-4--font-weight: 600;
+  --text-heading-4--letter-spacing: 0.5px;
+  --text-heading-4--font-weight: 700;
   --text-paragraph-large: 1.125rem;
   --text-paragraph-large--line-height: 1.6875rem;
   --text-paragraph-large--font-weight: 400;
@@ -130,14 +444,15 @@
   --text-paragraph-mini--font-weight: 400;
   --text-caption: 0.875rem;
   --text-caption--line-height: 1.3125rem;
-  --text-caption--letter-spacing: 0.0938rem;
+  --text-caption--letter-spacing: 1.5px;
   --text-caption--font-weight: 400;
   --text-monospaced: 1rem;
   --text-monospaced--line-height: 1.5rem;
+  --text-monospaced--letter-spacing: 0.5px;
   --text-monospaced--font-weight: 400;
 
-  /* Shadow: Obra スケール。2xs〜xl は Tailwind 既定と同値、2xl のみ不透明度が
-     Obra 準拠（0.1）で既定（0.25）を上書き。 */
+  /* Shadow: デザインシステムスケール。2xs〜xl は Tailwind 既定と同値、
+     2xl のみ不透明度がデザインシステム準拠（0.1）で既定（0.25）を上書き。 */
   --shadow-2xs: 0 1px 0 0 rgb(0 0 0 / 0.05);
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
@@ -147,86 +462,109 @@
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.1);
 }
 
-/* ── Light（Obra "shadcn"） ── */
+/* ── Light ── */
 :root {
-  --radius: 0.625rem; /* Obra --radius-10 */
+  --radius: 0.625rem; /* デザインシステム radius=10px */
 
-  --background: #ffffff;
-  --foreground: #0a0a0a; /* neutral-950 */
+  --background: #fffefc; /* neutral-50 */
+  --background-subtle: #fdfbf7; /* neutral-100 */
+  --foreground: #2f2b27; /* neutral-900 */
   --card: #ffffff;
-  --card-foreground: #0a0a0a;
-  /* NOTE: Obra は popover を反転（黒地に白文字）で定義しているが、
+  --card-foreground: #2f2b27;
+  /* NOTE: Figma は popover を反転（黒地に白文字）で定義しているが、
      shadcn では popover を DropdownMenu / Select 等の多くのフローティング
-     UI で使う。反転させると light で真っ黒・dark で真っ白になり UX を
-     損ねるため、shadcn 標準に合わせて card と同値（明色）にする。 */
+     UI で使うため card 準拠（明色）にする（ユーザー確認済み）。 */
   --popover: #ffffff;
-  --popover-foreground: #0a0a0a;
-  --primary: #171717; /* neutral-900 */
-  --primary-foreground: #fafafa; /* neutral-50 */
-  --secondary: #f5f5f5; /* neutral-100 */
-  --secondary-foreground: #171717;
-  --muted: #f5f5f5;
-  --muted-foreground: #737373; /* neutral-500 */
-  --accent: #f5f5f5;
-  --accent-foreground: #171717;
-  --destructive: #dc2626; /* red-600 */
+  --popover-foreground: #2f2b27;
+  --primary: #ff8560; /* orange-500 */
+  --primary-foreground: #fffefc;
+  --primary-hover: #f36e49; /* orange-600 */
+  --secondary: #fffefc;
+  --secondary-foreground: #a59a8d; /* neutral-600 */
+  --secondary-hover: #ece7df; /* neutral-300 */
+  --muted: #f6f3ed; /* neutral-200 */
+  --muted-foreground: #ddd6cc; /* neutral-400 */
+  --accent: #fdfbf7;
+  --accent-foreground: #2f2b27;
+  --destructive: #f87171; /* red-400 */
   --destructive-foreground: #ffffff;
-  --border: #e5e5e5; /* neutral-200 */
-  --input: #e5e5e5; /* neutral-200 (境界線として視認可能に。白背景で消えないよう border と同値) */
-  --ring: #0a0a0a; /* neutral-950 (focus-ring: WCAG 3:1 を満たすよう高コントラスト化) */
+  --destructive-border: #fca5a5; /* red-300 */
+  --destructive-text: #f87171;
+  --destructive-subtle: #fef2f2; /* red-50 */
+  --success: #34d399; /* emerald-400 */
+  --border: #f6f3ed; /* neutral-200 */
+  /* NOTE: Figma は input=#ffffff（背景色定義）だが、shadcn の border-input
+     は入力欄の枠線色のため視認できる値にする（ユーザー確認済み）。 */
+  --input: #ece7df; /* neutral-300 */
+  --ring: #ece7df; /* neutral-300 */
+  --ring-error: #fecaca; /* red-200 */
 
   --chart-1: #f54a00;
   --chart-2: #009689;
   --chart-3: #104e64;
   --chart-4: #ffb900;
   --chart-5: #fe9a00;
+  --positive: #009689;
+  --negative: #f54a00;
 
-  --sidebar: #fafafa; /* neutral-50 */
-  --sidebar-foreground: #404040; /* neutral-700 */
-  --sidebar-primary: #171717;
-  --sidebar-primary-foreground: #fafafa;
-  --sidebar-accent: #f5f5f5;
-  --sidebar-accent-foreground: #171717;
-  --sidebar-border: #e5e5e5;
-  --sidebar-ring: #d4d4d4;
+  --sidebar: #fffefc;
+  --sidebar-foreground: #7d746a; /* neutral-700 */
+  --sidebar-primary: #2f2b27;
+  --sidebar-primary-foreground: #fffefc;
+  --sidebar-accent: #fdfbf7;
+  --sidebar-accent-foreground: #2f2b27;
+  --sidebar-border: #f6f3ed;
+  --sidebar-ring: #ece7df;
+  --sidebar-muted: #ddd6cc;
 }
 
-/* ── Dark（Obra "shadcn-dark"） ── */
+/* ── Dark ── */
 .dark {
-  --background: #0a0a0a; /* neutral-950 */
-  --foreground: #fafafa; /* neutral-50 */
-  --card: #171717; /* neutral-900 */
+  --background: #2f2b27; /* neutral-900 */
+  --background-subtle: #544d46; /* neutral-800 */
+  --foreground: #fffefc; /* neutral-50 */
+  --card: #2f2b27;
   --card-foreground: #ffffff;
-  --popover: #171717; /* neutral-900 (dark で真っ白になり眩しくならないよう card と同値) */
+  --popover: #2f2b27; /* card 準拠（Figma は #ffffff 反転。light 側の NOTE 参照） */
   --popover-foreground: #ffffff;
-  --primary: #f5f5f5; /* neutral-100 */
-  --primary-foreground: #0a0a0a;
-  --secondary: #262626; /* neutral-800 */
-  --secondary-foreground: #f5f5f5;
-  --muted: #171717;
-  --muted-foreground: #a3a3a3; /* neutral-400 */
-  --accent: #171717;
-  --accent-foreground: #f5f5f5;
-  --destructive: #9e4042;
+  --primary: #fff4f1; /* orange-50 */
+  --primary-foreground: #2f2b27;
+  --primary-hover: #ffe7df; /* orange-100 */
+  --secondary: #544d46;
+  --secondary-foreground: #fdfbf7;
+  --secondary-hover: #ece7df;
+  --muted: #544d46;
+  --muted-foreground: #c9c0b5; /* neutral-500 */
+  --accent: #2f2b27;
+  --accent-foreground: #fdfbf7;
+  --destructive: #ffe2e2; /* red-100 */
   --destructive-foreground: #ffffff;
-  --border: #404040; /* neutral-700 */
-  --input: #404040; /* neutral-700 (dark:bg-input/30 併用時に消えないソリッド値。border と同値) */
-  --ring: #d4d4d4; /* neutral-300 (focus-ring dark: 視認できるよう高コントラスト化) */
+  --destructive-border: #ef4444; /* red-500 */
+  --destructive-text: #f87171; /* red-400 */
+  --destructive-subtle: #450a0a; /* red-950 */
+  --success: #d1fae5; /* emerald-100 */
+  --border: #7d746a; /* neutral-700 */
+  --input: #7d746a; /* neutral-700（Figma は 白5%。light 側の NOTE 参照） */
+  --ring: #7d746a;
+  --ring-error: #6d2e2f;
 
   --chart-1: #1447e6;
   --chart-2: #00bc7d;
   --chart-3: #fd9a00;
   --chart-4: #ad46ff;
   --chart-5: #ff2056;
+  --positive: #00bc7d;
+  --negative: #ff2056;
 
-  --sidebar: #0a0a0a;
-  --sidebar-foreground: #d4d4d4; /* neutral-300 */
-  --sidebar-primary: #fafafa;
-  --sidebar-primary-foreground: #171717;
-  --sidebar-accent: #171717;
-  --sidebar-accent-foreground: #f5f5f5;
-  --sidebar-border: #262626; /* neutral-800 */
-  --sidebar-ring: #404040;
+  --sidebar: #7d2a15; /* orange-900 */
+  --sidebar-foreground: #ece7df; /* neutral-300 */
+  --sidebar-primary: #fffefc;
+  --sidebar-primary-foreground: #2f2b27;
+  --sidebar-accent: #2f2b27;
+  --sidebar-accent-foreground: #fdfbf7;
+  --sidebar-border: #544d46; /* neutral-800 */
+  --sidebar-ring: #7d746a;
+  --sidebar-muted: #c9c0b5;
 }
 
 @layer base {
@@ -237,6 +575,7 @@
     @apply bg-background text-foreground;
   }
   html {
+    /* 本文フォント。font-sans は Inter → Noto Sans JP の順にフォールバックする */
     @apply font-sans;
   }
 }
