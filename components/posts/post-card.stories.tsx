@@ -36,11 +36,12 @@ export const Default: Story = {
 export const CssCheck: Story = {
   args: { post: basePost },
   play: async ({ canvas }) => {
-    const card = canvas.getByText(/Next\.js App Router/).closest('a')
-    await expect(card).toBeVisible()
-    // Card uses border — verify global CSS loaded
-    const cardEl = canvas.getByText(/Next\.js App Router/).closest('[class*="card"]') as HTMLElement
+    const link = canvas.getByText(/Next\.js App Router/).closest('a')
+    await expect(link).toBeVisible()
+    // カードは article 要素 + border — グローバルCSSの読み込みを確認
+    const cardEl = canvas.getByText(/Next\.js App Router/).closest('article') as HTMLElement
     await expect(cardEl).toBeVisible()
+    await expect(cardEl).toHaveClass(/border/)
   },
 }
 
