@@ -31,16 +31,33 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
+  const publicPaths = ['/login', '/register', '/reset-password']
+  const isPublicPath = publicPaths.includes(pathname)
 
-  // 未認証ユーザーを /login にリダイレクト（/login と /api は除外）
-  const publicPaths = ['/login', '/register']
-  if (!user && !publicPaths.includes(pathname) && !pathname.startsWith('/api')) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // 未認証ユーザーを /login にリダイレクト（/login・/register・/reset-password・/api は除外）
+  if (!user) {
+    if (!isPublicPath && !pathname.startsWith('/api')) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+    return supabaseResponse
+  }
+
+  const role = (user.app_metadata?.role as string) ?? 'USER'
+  const homePath = role === 'ADMIN' ? '/admin' : '/'
+
+  // ログイン済みユーザーが /login・/register・/reset-password にアクセスしたら自分のホームへ
+  if (isPublicPath) {
+    return NextResponse.redirect(new URL(homePath, request.url))
+  }
+
+  // 管理者以外の /admin へのアクセスを拒否
+  if (pathname.startsWith('/admin') && role !== 'ADMIN') {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return supabaseResponse
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }
