@@ -61,13 +61,12 @@
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-muted: var(--sidebar-muted);
 
-  /* Fonts（デザインシステム: sans=Inter / headings・body=Noto Sans JP /
-     serif=Geist / mono=Geist Mono。next/font 読み込み済み） */
+  /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
+     3種類に限定し、独自の font-* ユーティリティは増やさない。
+     デザインシステム: sans=Inter＋Noto Sans JP フォールバック /
+     headings=Noto Sans JP / mono=Geist Mono。next/font 読み込み済み） */
   --font-sans: var(--font-inter), var(--font-noto-sans-jp), sans-serif;
   --font-heading: var(--font-noto-sans-jp), sans-serif;
-  --font-body: var(--font-noto-sans-jp), sans-serif;
-  --font-japanese: var(--font-noto-sans-jp), sans-serif;
-  --font-serif: var(--font-geist-sans), serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -414,7 +413,7 @@
      利用例: text-heading-1, text-paragraph, text-caption。
      paragraph の weight バリエーションは font-medium(500) /
      font-semibold(600) を併用する。
-     フォントは font-heading / font-body（= Noto Sans JP）を使う。 */
+     フォントは見出しに font-heading、本文は html 既定の font-sans を使う。 */
   --text-heading-1: 3rem;
   --text-heading-1--line-height: 3rem;
   --text-heading-1--letter-spacing: 0.5px;
@@ -576,7 +575,7 @@
     @apply bg-background text-foreground;
   }
   html {
-    /* 本文フォント = Noto Sans JP（デザインシステム font-family-body） */
-    @apply font-body;
+    /* 本文フォント。font-sans は Inter → Noto Sans JP の順にフォールバックする */
+    @apply font-sans;
   }
 }
