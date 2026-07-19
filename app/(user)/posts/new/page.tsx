@@ -16,7 +16,7 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="mx-auto w-full max-w-2xl px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">質問を投稿する</h1>
       <PostForm onSubmit={handleSubmit} />
     </div>

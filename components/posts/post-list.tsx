@@ -3,13 +3,13 @@
 import { useState } from 'react'
 import { PostCard } from './post-card'
 
-type Author = {
+export type Author = {
   id: string
   name: string | null
   email: string
 }
 
-type Post = {
+export type Post = {
   id: string
   title: string
   body: string
@@ -22,21 +22,22 @@ type PostListProps = {
   isAdmin: boolean
 }
 
-export function PostList({ posts: initialPosts, isAdmin }: PostListProps) {
-  const [posts, setPosts] = useState(initialPosts)
+export function PostList({ posts, isAdmin }: PostListProps) {
+  const [deletedIds, setDeletedIds] = useState<string[]>([])
+  const visiblePosts = posts.filter((post) => !deletedIds.includes(post.id))
 
-  if (posts.length === 0) {
-    return <p className="text-muted-foreground">まだ質問がありません。</p>
+  if (visiblePosts.length === 0) {
+    return <p className="text-secondary-foreground">まだ質問がありません。</p>
   }
 
   return (
     <div className="grid gap-4">
-      {posts.map((post) => (
+      {visiblePosts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
           isAdmin={isAdmin}
-          onDeleted={(id) => setPosts((prev) => prev.filter((p) => p.id !== id))}
+          onDeleted={(id) => setDeletedIds((prev) => [...prev, id])}
         />
       ))}
     </div>
