@@ -1,19 +1,37 @@
+'use client'
+
+import { useQuery } from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
 import { AiFlagList } from '@/components/admin/ai-flag-list'
-import { MOCK_AI_FLAGS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
 
-export const dynamic = 'force-dynamic'
-
-async function getAiFlags() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_AI_FLAGS
-  return prisma.aiFlag.findMany({
-    include: { targetUser: true, post: true },
-    orderBy: { createdAt: 'desc' },
-  })
+async function fetchFlags() {
+  const res = await fetch('/api/admin/ai-flags')
+  if (!res.ok) throw new Error('Failed to fetch flags')
+  const data = await res.json()
+  return data.flags
 }
 
-export default async function AiFlagsPage() {
-  const flags = await getAiFlags()
+export default function AiFlagsPage() {
+  const {
+    data: flags = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['aiFlags'],
+    queryFn: fetchFlags,
+  })
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return <div className="text-sm text-destructive">AIフラグの取得に失敗しました</div>
+  }
 
   return (
     <div className="space-y-6">
