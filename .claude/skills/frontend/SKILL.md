@@ -285,54 +285,56 @@ export const ServerError: Story = {
 
 ---
 
-## 7. デザインシステム（globals.css / Obra デザイントークン）
+## 7. デザインシステム（globals.css / Figma variables デザイントークン）
 
 **ルール: スタイルは必ず `app/globals.css` のデザイントークンを使う。生のカラースケール（`blue-500` など）や任意値（`bg-[#3b82f6]`）を直接書かない。**
 
-トークンは Figma の **Obra shadcn/ui kit (community edition 1.6.0)** の variables を移植したもので、shadcn の意味トークンへ 1:1 で対応している。Light/Dark は `:root` / `.dark` で値だけを切り替えるため、コンポーネント側のクラス指定は同じでよい。
+トークンは Figma の **variables コレクション**（semantic colors / chart colors / brand colors / typography / border radii / spacing / shadows / color / alpha）を移植したもので、shadcn の意味トークンへ 1:1 で対応している。Light/Dark は `:root` / `.dark` で値だけを切り替えるため、コンポーネント側のクラス指定は同じでよい。Figma からの意図的な逸脱（popover / input の反転色など）は `globals.css` 内に NOTE として明記されている。
 
-### 使うトークン（意味トークン = shadcn 準拠）
+### 使うトークン（意味トークン = shadcn 準拠 + 拡張）
 
 | 用途 | ユーティリティ |
 |---|---|
-| 背景 / 文字 | `bg-background` `text-foreground` |
+| 背景 / 文字 | `bg-background` `text-foreground`（控えめな背景は `bg-background-subtle`） |
 | カード | `bg-card` `text-card-foreground` |
 | ポップオーバー | `bg-popover` `text-popover-foreground` |
-| 主要アクション | `bg-primary` `text-primary-foreground` |
-| 副次アクション | `bg-secondary` `text-secondary-foreground` |
+| 主要アクション | `bg-primary` `text-primary-foreground`（hover は `hover:bg-primary-hover`） |
+| 副次アクション | `bg-secondary` `text-secondary-foreground`（hover は `hover:bg-secondary-hover`） |
 | 補助 / 控えめ | `bg-muted` `text-muted-foreground` |
 | アクセント | `bg-accent` `text-accent-foreground` |
-| 破壊的操作 | `bg-destructive` `text-destructive-foreground`（テキストは `text-destructive`） |
-| 罫線 / 入力枠 / フォーカス | `border-border` `border-input` `ring-ring` |
+| 破壊的操作 | `bg-destructive` `text-destructive-foreground`。枠線 `border-destructive-border`、テキスト `text-destructive-text`、控えめ背景 `bg-destructive-subtle` |
+| 成功 / 増減 | `bg-success`、グラフ・数値の増減表現は `text-positive` / `text-negative` |
+| 罫線 / 入力枠 / フォーカス | `border-border` `border-input` `ring-ring`（エラー時は `ring-ring-error`） |
 | グラフ | `text-chart-1` 〜 `text-chart-5`（`fill-*` / `stroke-*` も可） |
-| サイドバー | `bg-sidebar` `text-sidebar-foreground` `bg-sidebar-accent` … |
+| サイドバー | `bg-sidebar` `text-sidebar-foreground` `bg-sidebar-accent` `bg-sidebar-muted` … |
+| ブランド組み合わせ | `bg-brand-1` `text-brand-1-foreground`（brand-1〜3、Light/Dark 共通・固定色） |
 
-### タイポグラフィ（Obra スケール）
+### タイポグラフィ
 
-見出し・本文は Obra のテキストトークンを使う（size / line-height / letter-spacing / weight が同梱される）。
+見出し・本文はデザインシステムのテキストトークンを使う（size / line-height / letter-spacing / weight が同梱される）。
 
 ```tsx
-<h1 className="text-heading-1">見出し</h1>       {/* heading-1〜4 */}
+<h1 className="text-heading-1">見出し</h1>       {/* heading-1〜4（font-weight 700） */}
 <p className="text-paragraph">本文</p>            {/* paragraph-large / paragraph / -small / -mini */}
 <span className="text-caption">キャプション</span> {/* caption / monospaced */}
 ```
 
-フォントファミリは `font-sans`（= Geist）/ `font-heading` / `font-mono`（= Geist Mono）。個別の `text-[15px]` などは使わない。
+フォントファミリは `font-sans`（= Inter → Noto Sans JP フォールバック、本文用。`html` に既定適用済みなので明示不要）/ `font-heading`（= Noto Sans JP、見出し用）/ `font-mono`（= Geist Mono）の3種類のみを使う。独自の `font-*` ユーティリティを増やさない。個別の `text-[15px]` などは使わない。
 
 ### 角丸・シャドウ・余白
 
-- 角丸: `rounded-sm` / `-md` / `-lg` / `-xl`（`--radius` 基準で派生）
-- シャドウ: `shadow-2xs` 〜 `shadow-2xl`（Obra 準拠）
-- 余白: `--spacing`（`0.25rem` = 4px）基準で `p-4` `gap-2` などが生成される。Figma 側も「4px の倍数」に揃える
+- 角丸: `rounded`（無印、`--radius` = 10px 基準）。`rounded-sm` / `-md` / `-lg` / `-xl` などの named suffix は Tailwind v4 既定スケール値がそのまま使われる（`--radius` からの派生ではない）
+- シャドウ: `shadow-2xs` 〜 `shadow-2xl`（デザインシステム準拠）
+- 余白: `--spacing`（`0.25rem` = 4px）基準で `p-4` `gap-2` などが生成される。Figma 側も「4px の倍数」に揃える。**`--spacing-sm` 等の named alias は追加しない**（`--container-*` の名前付きスケールと衝突してレイアウトが壊れた前例があるため、数値クラスのみを使う）
 
 ### 注意
 
 - **Tailwind v4 では `theme()` 関数は使わない。** 素の値参照が必要なときだけ `var(--…)` を使う（`theme('colors.blue.500')` は書かない）。
-- 生のプリミティブ（`blue-500` `neutral-900` や `black-alpha-*`）は原則使わない。オーバーレイ等でどうしても必要な場合のみ `bg-black-alpha-50` などを使う。
+- 生のプリミティブ（`blue-500` `neutral-900` や `black-alpha-*`）は原則使わない。オーバーレイ等でどうしても必要な場合のみ `bg-black-alpha-50` などを使う。`neutral` / `orange` / `sky` はブランド独自スケール（Tailwind 既定値ではない）のため、意図せず使うと配色がずれる。
 - 新しい役割の色が必要になったら、その場で任意値を書かず **`globals.css` にトークンを追加**してから使う。
 
 ```tsx
-// ✅ Good: 意味トークン + Obra タイポトークン
+// ✅ Good: 意味トークン + タイポトークン
 <div className="bg-card text-card-foreground rounded-lg border-border shadow-md">
   <h2 className="text-heading-3">タイトル</h2>
   <p className="text-paragraph text-muted-foreground">説明</p>
