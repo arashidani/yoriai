@@ -1,4 +1,5 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { type Post, Prisma, type User } from '@/app/generated/prisma/client'
 import { FlagSeverity, Role } from '@/app/generated/prisma/enums'
 import { moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
@@ -7,6 +8,8 @@ import { errorResponse, IdParamSchema, PostSchema, SuccessSchema } from '@/lib/h
 import { MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { createPostSchema } from '@/lib/schemas/post'
+
+type PostWithAuthor = Post & { author: User | null }
 
 const listRoute = createRoute({
   method: 'get',
@@ -44,6 +47,12 @@ const createPostRoute = createRoute({
   security: [{ supabaseSession: [] }],
   middleware: [authMiddleware] as const,
   request: {
+    headers: z.object({
+      'idempotency-key': z.string().uuid().openapi({
+        description: '同じ投稿操作の再送を識別するUUID',
+        example: '550e8400-e29b-41d4-a716-446655440000',
+      }),
+    }),
     body: { required: true, content: { 'application/json': { schema: createPostSchema } } },
   },
   responses: {
@@ -51,7 +60,12 @@ const createPostRoute = createRoute({
       description: '作成された投稿',
       content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
     },
+    200: {
+      description: '同じ冪等性キーで作成済みの投稿',
+      content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
+    },
     401: errorResponse('未認証'),
+    409: errorResponse('同じ冪等性キーに異なる投稿内容が指定された'),
   },
 })
 
@@ -98,6 +112,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
   .openapi(createPostRoute, async (c) => {
     const user = c.get('user')
     const data = c.req.valid('json')
+    const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
 
     if (process.env.MOCK_MODE === 'true') {
       return c.json(
@@ -114,10 +129,29 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
         201,
       )
     }
-    const post = await prisma.post.create({
-      data: { ...data, authorId: user.id },
-      include: { author: true },
-    })
+    let post: PostWithAuthor
+    try {
+      post = await prisma.post.create({
+        data: { ...data, authorId: user.id, idempotencyKey },
+        include: { author: true },
+      })
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        throw error
+      }
+
+      const existingPost = await prisma.post.findUnique({
+        where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
+        include: { author: true },
+      })
+
+      if (!existingPost) throw error
+      if (existingPost.title !== data.title || existingPost.body !== data.body) {
+        return c.json({ error: 'Idempotency key is already used for a different request' }, 409)
+      }
+
+      return c.json({ post: existingPost }, 200)
+    }
 
     const moderation = await moderatePost(post.title, post.body)
     if (moderation?.flagged) {

@@ -1,24 +1,46 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useRef, useState } from 'react'
 import { PostForm } from '@/components/posts/post-form'
 import { client } from '@/lib/hono/client'
 import type { CreatePostInput } from '@/lib/schemas/post'
 
 export default function NewPostPage() {
   const router = useRouter()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
+  const idempotencyKeyRef = useRef<{ key: string; requestBody: string } | null>(null)
 
   async function handleSubmit(data: CreatePostInput) {
-    const res = await client.api.posts.$post({ json: data })
-    if (res.ok) {
-      router.push('/')
+    if (isSubmittingRef.current) return
+
+    isSubmittingRef.current = true
+    setIsSubmitting(true)
+
+    const requestBody = JSON.stringify(data)
+    if (idempotencyKeyRef.current?.requestBody !== requestBody) {
+      idempotencyKeyRef.current = { key: crypto.randomUUID(), requestBody }
+    }
+
+    try {
+      const res = await client.api.posts.$post({
+        header: { 'idempotency-key': idempotencyKeyRef.current.key },
+        json: data,
+      })
+      if (res.ok) {
+        router.push('/')
+      }
+    } finally {
+      isSubmittingRef.current = false
+      setIsSubmitting(false)
     }
   }
 
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-6">質問を投稿する</h1>
-      <PostForm onSubmit={handleSubmit} />
+      <PostForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
     </div>
   )
 }
