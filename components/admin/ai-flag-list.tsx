@@ -1,5 +1,6 @@
 'use client'
 
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, MessageSquareWarning, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -45,22 +46,28 @@ function StatusBadge({ status }: { status: AiFlag['status'] }) {
 }
 
 export function AiFlagList({ flags: initialFlags }: { flags: AiFlag[] }) {
+  const queryClient = useQueryClient()
   const [flags, setFlags] = useState(initialFlags)
-  const [pendingId, setPendingId] = useState<string | null>(null)
   const unreadCount = flags.filter((f) => f.status === 'UNREAD').length
 
-  async function handleConfirm(id: string) {
-    setPendingId(id)
-    const res = await client.api.admin['ai-flags'][':id'].$patch({ param: { id } })
-    setPendingId(null)
-
-    if (!res.ok) {
+  const confirmMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await client.api.admin['ai-flags'][':id'].$patch({ param: { id } })
+      if (!res.ok) throw new Error('Failed to confirm flag')
+      return res.json()
+    },
+    onSuccess: (_data, id) => {
+      setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, status: 'CONFIRMED' } : f)))
+      queryClient.invalidateQueries({ queryKey: ['aiFlags'] })
+      toast.success('確認済みにしました')
+    },
+    onError: () => {
       toast.error('更新に失敗しました')
-      return
-    }
+    },
+  })
 
-    setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, status: 'CONFIRMED' } : f)))
-    toast.success('確認済みにしました')
+  async function handleConfirm(id: string) {
+    confirmMutation.mutate(id)
   }
 
   return (
@@ -114,7 +121,7 @@ export function AiFlagList({ flags: initialFlags }: { flags: AiFlag[] }) {
                 )}
                 <button
                   type="button"
-                  disabled={flag.status === 'CONFIRMED' || pendingId === flag.id}
+                  disabled={flag.status === 'CONFIRMED' || confirmMutation.isPending}
                   onClick={() => handleConfirm(flag.id)}
                   className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md border text-muted-foreground disabled:opacity-50"
                 >
