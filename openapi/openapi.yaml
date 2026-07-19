@@ -380,6 +380,16 @@ paths:
       summary: 投稿を作成
       security:
         - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            format: uuid
+            description: 同じ投稿操作の再送を識別するUUID
+            example: 550e8400-e29b-41d4-a716-446655440000
+          required: true
+          description: 同じ投稿操作の再送を識別するUUID
+          name: idempotency-key
+          in: header
       requestBody:
         required: true
         content:
@@ -398,6 +408,17 @@ paths:
                 - title
                 - body
       responses:
+        "200":
+          description: 同じ冪等性キーで作成済みの投稿
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+                required:
+                  - post
         "201":
           description: 作成された投稿
           content:
@@ -411,6 +432,12 @@ paths:
                   - post
         "401":
           description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: 同じ冪等性キーに異なる投稿内容が指定された
           content:
             application/json:
               schema:
@@ -1194,6 +1221,12 @@ paths:
                 $ref: "#/components/schemas/Success"
         "404":
           description: リンクが見つからない、期限切れ、または使用済み
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: パスワード更新に失敗した
           content:
             application/json:
               schema:

@@ -19,14 +19,17 @@ model User {
 }
 
 model Post {
-  id        String   @id @default(cuid())
-  title     String
-  body      String
-  authorId  String?
-  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  aiFlags   AiFlag[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             String   @id @default(cuid())
+  title          String
+  body           String
+  authorId       String?
+  author         User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  idempotencyKey String?
+  aiFlags        AiFlag[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([authorId, idempotencyKey])
 }
 
 model Badge {
