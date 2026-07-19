@@ -24,7 +24,7 @@ export default async function PostDetailPage({ params }: Props) {
   if (!post) notFound()
 
   return (
-    <article>
+    <article className="mx-auto w-full max-w-4xl px-4 py-8">
       <div className="mb-6">
         <Link href="/">
           <Button variant="ghost" size="sm">
