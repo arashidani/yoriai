@@ -3,12 +3,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { AiFlagList } from '@/components/admin/ai-flag-list'
+import { client } from '@/lib/hono/client'
 
 async function fetchFlags() {
-  const res = await fetch('/api/admin/ai-flags')
+  const res = await client.api.admin['ai-flags'].$get()
   if (!res.ok) throw new Error('Failed to fetch flags')
   const data = await res.json()
-  return data.flags
+  return data.flags.map((flag) => ({
+    ...flag,
+    targetUser: flag.targetUser ?? null,
+    post: flag.post ?? null,
+  }))
 }
 
 export default function AiFlagsPage() {
