@@ -61,8 +61,8 @@ const listUsersRoute = createRoute({
       description: 'ユーザー一覧',
       content: { 'application/json': { schema: z.object({ users: z.array(UserSchema) }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -80,8 +80,8 @@ const createInviteRoute = createRoute({
       description: '発行された招待',
       content: { 'application/json': { schema: z.object({ invite: InviteCreatedSchema }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -98,8 +98,8 @@ const listInvitesRoute = createRoute({
         'application/json': { schema: z.object({ invites: z.array(InviteListItemSchema) }) },
       },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -117,9 +117,9 @@ const createPasswordResetRoute = createRoute({
         'application/json': { schema: z.object({ passwordReset: PasswordResetCreatedSchema }) },
       },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
-    404: errorResponse('ユーザーが見つからない'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('ユーザーが見つからない', 'Not found'),
   },
 })
 
@@ -134,8 +134,8 @@ const listPostsRoute = createRoute({
       description: '投稿一覧',
       content: { 'application/json': { schema: z.object({ posts: z.array(PostSchema) }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -154,9 +154,9 @@ const patchUserRoute = createRoute({
       description: '更新後のユーザー',
       content: { 'application/json': { schema: z.object({ user: UserSchema }) } },
     },
-    400: errorResponse('自分自身のロールは変更できないなど'),
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    400: errorResponse('自分自身のロールは変更できないなど', '自分自身のロールは変更できません'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -169,9 +169,9 @@ const deleteUserRoute = createRoute({
   request: { params: IdParamSchema },
   responses: {
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
-    400: errorResponse('自分自身は削除できない'),
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    400: errorResponse('自分自身は削除できない', '自分自身は削除できません'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -186,8 +186,8 @@ const listBadgesRoute = createRoute({
       description: 'バッジ一覧',
       content: { 'application/json': { schema: z.object({ badges: z.array(BadgeSchema) }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -205,8 +205,8 @@ const createBadgeRoute = createRoute({
       description: '作成されたバッジ',
       content: { 'application/json': { schema: z.object({ badge: BadgeSchema }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -221,8 +221,8 @@ const listMissionsRoute = createRoute({
       description: 'ミッション一覧',
       content: { 'application/json': { schema: z.object({ missions: z.array(MissionSchema) }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -240,8 +240,8 @@ const createMissionRoute = createRoute({
       description: '作成されたミッション',
       content: { 'application/json': { schema: z.object({ mission: MissionSchema }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -256,8 +256,8 @@ const listAiFlagsRoute = createRoute({
       description: 'AIフラグ一覧',
       content: { 'application/json': { schema: z.object({ flags: z.array(AiFlagSchema) }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -273,9 +273,9 @@ const confirmAiFlagRoute = createRoute({
       description: '更新後のフラグ',
       content: { 'application/json': { schema: z.object({ flag: AiFlagSchema }) } },
     },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
-    404: errorResponse('フラグが見つからない'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('フラグが見つからない', 'Not found'),
   },
 })
 

@@ -27,8 +27,11 @@ const createRoute_ = createRoute({
       description: '既に存在するユーザー',
       content: { 'application/json': { schema: z.object({ user: UserSchema }) } },
     },
-    400: errorResponse('招待リンクが無効・期限切れ、またはメールアドレスが取得できない'),
-    401: errorResponse('未認証'),
+    400: errorResponse(
+      '招待リンクが無効・期限切れ、またはメールアドレスが取得できない',
+      '招待リンクが無効です',
+    ),
+    401: errorResponse('未認証', 'Unauthorized'),
   },
 })
 
@@ -44,7 +47,7 @@ const meRoute = createRoute({
       description: '自分のユーザー情報',
       content: { 'application/json': { schema: z.object({ user: UserSchema }) } },
     },
-    401: errorResponse('未認証'),
+    401: errorResponse('未認証', 'Unauthorized'),
   },
 })
 
