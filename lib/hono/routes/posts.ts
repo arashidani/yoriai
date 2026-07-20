@@ -114,11 +114,10 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     return c.json({ post }, 200)
   })
   .openapi(createPostRoute, async (c) => {
-    const user = c.get('user')
-    const data = c.req.valid('json')
-    const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
-
     if (process.env.MOCK_MODE === 'true') {
+      const user = c.get('user')
+      const data = c.req.valid('json')
+
       return c.json(
         {
           post: {
@@ -133,6 +132,11 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
         201,
       )
     }
+
+    const user = c.get('user')
+    const data = c.req.valid('json')
+    const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
+
     let post: PostWithAuthor
     try {
       post = await prisma.post.create({
@@ -162,9 +166,9 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       return c.json({ post: existingPost }, 200)
     }
 
-    try {
-      const moderation = await moderatePost(post.title, post.body)
-      if (moderation?.flagged) {
+    const moderation = await moderatePost(post.title, post.body)
+    if (moderation?.flagged) {
+      try {
         await prisma.aiFlag.create({
           data: {
             title: `不適切な投稿の可能性: ${post.title}`,
@@ -174,12 +178,12 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
             postId: post.id,
           },
         })
+      } catch (error) {
+        console.error('Failed to create AI flag', { postId: post.id, error })
       }
-
-      return c.json({ post }, 201)
-    } catch {
-      return c.json({ error: '投稿の作成に失敗しました' }, 500)
     }
+
+    return c.json({ post }, 201)
   })
   .openapi(deleteRoute, async (c) => {
     const user = c.get('user')
