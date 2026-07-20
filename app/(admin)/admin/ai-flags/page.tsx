@@ -1,20 +1,6 @@
 import { AiFlagList } from '@/components/admin/ai-flag-list'
-import { MOCK_AI_FLAGS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
 
-export const dynamic = 'force-dynamic'
-
-async function getAiFlags() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_AI_FLAGS
-  return prisma.aiFlag.findMany({
-    include: { targetUser: true, post: true },
-    orderBy: { createdAt: 'desc' },
-  })
-}
-
-export default async function AiFlagsPage() {
-  const flags = await getAiFlags()
-
+export default function AiFlagsPage() {
   return (
     <div className="space-y-6">
       <div>
@@ -22,7 +8,7 @@ export default async function AiFlagsPage() {
         <p className="text-sm text-muted-foreground mt-1">AIが検出した不審なアクティビティ</p>
       </div>
 
-      <AiFlagList flags={flags} />
+      <AiFlagList />
     </div>
   )
 }
