@@ -49,7 +49,7 @@ const createPostRoute = createRoute({
   request: {
     headers: z.object({
       'idempotency-key': z.string().uuid().openapi({
-        description: '同じ投稿操作の再送を識別するUUID',
+        description: '通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID',
         example: '550e8400-e29b-41d4-a716-446655440000',
       }),
     }),
@@ -61,11 +61,12 @@ const createPostRoute = createRoute({
       content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
     },
     200: {
-      description: '同じ冪等性キーで作成済みの投稿',
+      description: '再送された投稿（すでに作成済みの投稿）',
       content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
     },
     401: errorResponse('未認証'),
-    409: errorResponse('同じ冪等性キーに異なる投稿内容が指定された'),
+    409: errorResponse('同じキーで、前回とは異なる投稿内容が送信された'),
+    500: errorResponse('投稿の作成に失敗した'),
   },
 })
 
@@ -137,36 +138,45 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       })
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
-        throw error
+        return c.json({ error: '投稿の作成に失敗しました' }, 500)
       }
 
-      const existingPost = await prisma.post.findUnique({
-        where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
-        include: { author: true },
-      })
+      let existingPost: PostWithAuthor | null
+      try {
+        existingPost = await prisma.post.findUnique({
+          where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
+          include: { author: true },
+        })
+      } catch {
+        return c.json({ error: '投稿の作成に失敗しました' }, 500)
+      }
 
-      if (!existingPost) throw error
+      if (!existingPost) return c.json({ error: '投稿の作成に失敗しました' }, 500)
       if (existingPost.title !== data.title || existingPost.body !== data.body) {
-        return c.json({ error: 'Idempotency key is already used for a different request' }, 409)
+        return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
       }
 
       return c.json({ post: existingPost }, 200)
     }
 
-    const moderation = await moderatePost(post.title, post.body)
-    if (moderation?.flagged) {
-      await prisma.aiFlag.create({
-        data: {
-          title: `不適切な投稿の可能性: ${post.title}`,
-          detail: moderation.reason,
-          severity: FlagSeverity[moderation.severity],
-          targetUserId: user.id,
-          postId: post.id,
-        },
-      })
-    }
+    try {
+      const moderation = await moderatePost(post.title, post.body)
+      if (moderation?.flagged) {
+        await prisma.aiFlag.create({
+          data: {
+            title: `不適切な投稿の可能性: ${post.title}`,
+            detail: moderation.reason,
+            severity: FlagSeverity[moderation.severity],
+            targetUserId: user.id,
+            postId: post.id,
+          },
+        })
+      }
 
-    return c.json({ post }, 201)
+      return c.json({ post }, 201)
+    } catch {
+      return c.json({ error: '投稿の作成に失敗しました' }, 500)
+    }
   })
   .openapi(deleteRoute, async (c) => {
     const user = c.get('user')

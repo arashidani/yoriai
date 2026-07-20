@@ -544,11 +544,11 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "同じ投稿操作の再送を識別するUUID",
+              "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
               "example": "550e8400-e29b-41d4-a716-446655440000"
             },
             "required": true,
-            "description": "同じ投稿操作の再送を識別するUUID",
+            "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
             "name": "idempotency-key",
             "in": "header"
           }
@@ -580,7 +580,7 @@
         },
         "responses": {
           "200": {
-            "description": "同じ冪等性キーで作成済みの投稿",
+            "description": "再送された投稿（すでに作成済みの投稿）",
             "content": {
               "application/json": {
                 "schema": {
@@ -626,7 +626,17 @@
             }
           },
           "409": {
-            "description": "同じ冪等性キーに異なる投稿内容が指定された",
+            "description": "同じキーで、前回とは異なる投稿内容が送信された",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "投稿の作成に失敗した",
             "content": {
               "application/json": {
                 "schema": {
