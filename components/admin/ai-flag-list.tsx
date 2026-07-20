@@ -1,9 +1,8 @@
 'use client'
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, MessageSquareWarning, ShieldAlert } from 'lucide-react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { AlertTriangle, Loader2, MessageSquareWarning, ShieldAlert } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
 import { toast } from 'sonner'
 import { DeletePostButton } from '@/components/posts/delete-post-button'
 import { client } from '@/lib/hono/client'
@@ -45,9 +44,27 @@ function StatusBadge({ status }: { status: AiFlag['status'] }) {
   )
 }
 
-export function AiFlagList({ flags: initialFlags }: { flags: AiFlag[] }) {
+async function fetchFlags(): Promise<AiFlag[]> {
+  const res = await client.api.admin['ai-flags'].$get()
+  if (!res.ok) throw new Error('Failed to fetch flags')
+  const data = await res.json()
+  return data.flags.map((flag) => ({
+    ...flag,
+    targetUser: flag.targetUser ?? null,
+    post: flag.post ?? null,
+  }))
+}
+
+export function AiFlagList() {
   const queryClient = useQueryClient()
-  const [flags, setFlags] = useState(initialFlags)
+  const {
+    data: flags = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['aiFlags'],
+    queryFn: fetchFlags,
+  })
   const unreadCount = flags.filter((f) => f.status === 'UNREAD').length
 
   const confirmMutation = useMutation({
@@ -56,8 +73,7 @@ export function AiFlagList({ flags: initialFlags }: { flags: AiFlag[] }) {
       if (!res.ok) throw new Error('Failed to confirm flag')
       return res.json()
     },
-    onSuccess: (_data, id) => {
-      setFlags((prev) => prev.map((f) => (f.id === id ? { ...f, status: 'CONFIRMED' } : f)))
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['aiFlags'] })
       toast.success('確認済みにしました')
     },
@@ -66,8 +82,24 @@ export function AiFlagList({ flags: initialFlags }: { flags: AiFlag[] }) {
     },
   })
 
-  async function handleConfirm(id: string) {
+  function handleConfirm(id: string) {
     confirmMutation.mutate(id)
+  }
+
+  function handleDeleted() {
+    queryClient.invalidateQueries({ queryKey: ['aiFlags'] })
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return <div className="text-sm text-destructive">AIフラグの取得に失敗しました</div>
   }
 
   return (
@@ -116,7 +148,7 @@ export function AiFlagList({ flags: initialFlags }: { flags: AiFlag[] }) {
                   <DeletePostButton
                     postId={flag.post.id}
                     postTitle={flag.post.title}
-                    onDeleted={() => setFlags((prev) => prev.filter((f) => f.id !== flag.id))}
+                    onDeleted={handleDeleted}
                   />
                 )}
                 <button
