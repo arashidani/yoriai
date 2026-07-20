@@ -27,7 +27,7 @@ async function fetchBadges(): Promise<BadgeOption[]> {
 
 export default function CreateMissionPage() {
   const router = useRouter()
-  const { data: badges = [] } = useQuery({
+  const { data: badges = [], error: badgesError } = useQuery({
     queryKey: ['badges'],
     queryFn: fetchBadges,
   })
@@ -140,7 +140,11 @@ export default function CreateMissionPage() {
             <Gift className="h-3.5 w-3.5" />
             報酬バッジ
           </Label>
-          {badges.length === 0 ? (
+          {badgesError ? (
+            <div className="rounded-lg border border-dashed p-3 text-xs text-destructive text-center">
+              バッジの取得に失敗しました
+            </div>
+          ) : badges.length === 0 ? (
             <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground text-center">
               バッジがありません
             </div>
