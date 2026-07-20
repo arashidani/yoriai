@@ -35,7 +35,7 @@ const getRoute = createRoute({
       description: '投稿詳細',
       content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
     },
-    404: errorResponse('投稿が見つからない'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
   },
 })
 
@@ -64,9 +64,12 @@ const createPostRoute = createRoute({
       description: '再送された投稿（すでに作成済みの投稿）',
       content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
     },
-    401: errorResponse('未認証'),
-    409: errorResponse('同じキーで、前回とは異なる投稿内容が送信された'),
-    500: errorResponse('投稿の作成に失敗した'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    409: errorResponse(
+      '同じキーで、前回とは異なる投稿内容が送信された',
+      '同じ投稿操作に異なる内容が指定されています',
+    ),
+    500: errorResponse('投稿の作成に失敗した', '投稿の作成に失敗しました'),
   },
 })
 
@@ -80,8 +83,8 @@ const deleteRoute = createRoute({
   request: { params: IdParamSchema },
   responses: {
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
-    401: errorResponse('未認証'),
-    403: errorResponse('権限不足（管理者専用）'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 

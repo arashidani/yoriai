@@ -102,7 +102,6 @@ components:
       properties:
         error:
           type: string
-          example: Not found
       required:
         - error
     Success:
@@ -436,18 +435,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "409":
           description: 同じキーで、前回とは異なる投稿内容が送信された
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: 同じ投稿操作に異なる内容が指定されています
         "500":
           description: 投稿の作成に失敗した
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: 投稿の作成に失敗しました
   /api/posts/{id}:
     get:
       tags:
@@ -478,6 +483,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
     delete:
       tags:
         - posts
@@ -504,12 +511,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/users:
     get:
       tags:
@@ -537,12 +548,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/invites:
     post:
       tags:
@@ -586,12 +601,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
     get:
       tags:
         - admin
@@ -617,12 +636,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/users/{id}/password-resets:
     post:
       tags:
@@ -654,18 +677,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
         "404":
           description: ユーザーが見つからない
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
   /api/admin/posts:
     get:
       tags:
@@ -692,12 +721,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/users/{id}:
     patch:
       tags:
@@ -744,18 +777,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: 自分自身のロールは変更できません
         "401":
           description: 未認証
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
     delete:
       tags:
         - admin
@@ -781,18 +820,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: 自分自身は削除できません
         "401":
           description: 未認証
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/badges:
     get:
       tags:
@@ -819,12 +864,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
     post:
       tags:
         - admin
@@ -878,12 +927,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/missions:
     get:
       tags:
@@ -910,12 +963,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
     post:
       tags:
         - admin
@@ -969,12 +1026,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/ai-flags:
     get:
       tags:
@@ -1001,12 +1062,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/ai-flags/{id}:
     patch:
       tags:
@@ -1038,18 +1103,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "403":
           description: 権限不足（管理者専用）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
         "404":
           description: フラグが見つからない
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
   /api/users:
     post:
       tags:
@@ -1102,12 +1173,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: 招待リンクが無効です
         "401":
           description: 未認証
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
   /api/users/me:
     get:
       tags:
@@ -1133,6 +1208,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
   /api/invites/{token}:
     get:
       tags:
@@ -1163,6 +1240,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: 招待が見つかりません
   /api/password-resets/{token}:
     get:
       tags:
@@ -1195,6 +1274,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: リンクが見つかりません
     post:
       tags:
         - password-resets
@@ -1231,10 +1312,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: リンクが見つかりません
         "500":
           description: パスワード更新に失敗した
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+              example:
+                error: パスワード更新に失敗しました
 webhooks: {}

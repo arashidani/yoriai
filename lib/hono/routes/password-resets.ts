@@ -21,7 +21,7 @@ const getPasswordResetRoute = createRoute({
       description: '有効なリセットリンク',
       content: { 'application/json': { schema: z.object({ valid: z.literal(true) }) } },
     },
-    404: errorResponse('リンクが見つからない、期限切れ、または使用済み'),
+    404: errorResponse('リンクが見つからない、期限切れ、または使用済み', 'リンクが見つかりません'),
   },
 })
 
@@ -42,8 +42,8 @@ const completePasswordResetRoute = createRoute({
       description: '更新成功',
       content: { 'application/json': { schema: SuccessSchema } },
     },
-    404: errorResponse('リンクが見つからない、期限切れ、または使用済み'),
-    500: errorResponse('パスワード更新に失敗した'),
+    404: errorResponse('リンクが見つからない、期限切れ、または使用済み', 'リンクが見つかりません'),
+    500: errorResponse('パスワード更新に失敗した', 'パスワード更新に失敗しました'),
   },
 })
 
