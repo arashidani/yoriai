@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Inter, Noto_Sans_JP } from 'next/font/google'
+import { Providers } from '@/app/providers'
 import { Toaster } from '@/components/ui/sonner'
 import './globals.css'
 
@@ -45,7 +46,7 @@ export default function RootLayout({
       className={`${notoSansJP.variable} ${inter.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        {children}
+        <Providers>{children}</Providers>
         <Toaster />
       </body>
     </html>

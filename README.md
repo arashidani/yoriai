@@ -10,6 +10,7 @@
 ![Storybook](https://img.shields.io/badge/Storybook-10.4.6-ff4785?logo=storybook)
 ![Zustand](https://img.shields.io/badge/Zustand-5.0.14-brown?logo=zustand)
 ![Zod](https://img.shields.io/badge/Zod-4.4.3-3068b7?logo=zod)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-5.101.2-ff4154?logo=reactquery)
 
 社内向け交流&質問共有プラットフォーム
 
@@ -21,6 +22,7 @@
 - **認証**: Supabase Auth
 - **UI**: Tailwind CSS + shadcn/ui
 - **状態管理**: Zustand
+- **サーバー状態管理**: TanStack Query
 - **バリデーション**: Zod + react-hook-form
 - **コンポーネント開発**: Storybook 10
 
@@ -48,6 +50,7 @@ yoriai/
 │   │   └── route.ts              # Hono を Next.js Route Handler にマウント
 │   ├── generated/prisma/         # `npx prisma generate` で自動生成
 │   ├── layout.tsx                # ルートレイアウト
+│   ├── providers.tsx             # TanStack Query の QueryClientProvider
 │   └── globals.css
 ├── components/
 │   ├── admin/

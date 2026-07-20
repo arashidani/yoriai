@@ -1,9 +1,10 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useQuery } from '@tanstack/react-query'
 import { Calendar, Gift, Target } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -17,9 +18,19 @@ const durations = ['1日間', '3日間', '1週間', '1ヶ月']
 
 type BadgeOption = { id: string; name: string }
 
+async function fetchBadges(): Promise<BadgeOption[]> {
+  const res = await client.api.admin.badges.$get()
+  if (!res.ok) throw new Error('Failed to fetch badges')
+  const data = await res.json()
+  return data.badges
+}
+
 export default function CreateMissionPage() {
   const router = useRouter()
-  const [badges, setBadges] = useState<BadgeOption[]>([])
+  const { data: badges = [], error: badgesError } = useQuery({
+    queryKey: ['badges'],
+    queryFn: fetchBadges,
+  })
   const [selectedDuration, setSelectedDuration] = useState(durations[2])
   const [rewardBadgeId, setRewardBadgeId] = useState<string | null>(null)
   const {
@@ -29,14 +40,6 @@ export default function CreateMissionPage() {
   } = useForm<CreateMissionInput>({
     resolver: zodResolver(createMissionSchema),
   })
-
-  useEffect(() => {
-    client.api.admin.badges.$get().then(async (res) => {
-      if (!res.ok) return
-      const { badges } = await res.json()
-      setBadges(badges)
-    })
-  }, [])
 
   async function onSubmit(data: CreateMissionInput) {
     const res = await client.api.admin.missions.$post({
@@ -137,7 +140,11 @@ export default function CreateMissionPage() {
             <Gift className="h-3.5 w-3.5" />
             報酬バッジ
           </Label>
-          {badges.length === 0 ? (
+          {badgesError ? (
+            <div className="rounded-lg border border-dashed p-3 text-xs text-destructive text-center">
+              バッジの取得に失敗しました
+            </div>
+          ) : badges.length === 0 ? (
             <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground text-center">
               バッジがありません
             </div>

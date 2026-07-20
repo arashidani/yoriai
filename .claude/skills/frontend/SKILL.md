@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: yoriai のフロントエンド実装スキル。Next.js 16 App Router の Server/Client Component、Route Groups、Hono RPCクライアント、MOCK_MODE、react-hook-form + Zod、shadcn/ui、Storybookの実装パターンとルールをまとめる。app/, components/, lib/stores/, lib/schemas/ 配下の実装時に使う。
+description: yoriai のフロントエンド実装スキル。Next.js 16 App Router の Server/Client Component、Route Groups、Hono RPCクライアント、MOCK_MODE、react-hook-form + Zod、shadcn/ui、TanStack Query、Storybookの実装パターンとルールをまとめる。app/, components/, lib/stores/, lib/schemas/ 配下の実装時に使う。
 paths:
   - "app/**/*.tsx"
   - "app/**/*.ts"
@@ -165,7 +165,81 @@ export function PostForm({ onSubmit }: { onSubmit: (data: CreatePostInput) => Pr
 
 ---
 
-## 6. コンポーネント設計
+## 6. TanStack Query
+
+**ルール: `useQuery` / `useMutation` は Client Component 専用。まず「本当に Client Component 化してまで使う価値があるか」を判断してから導入する。**
+
+`app/providers.tsx` の `QueryClientProvider` でアプリ全体に配線済みなので、Client Component であれば追加設定なしで使える。
+
+### 導入するかどうかの判断基準
+
+| 状況 | 選択 |
+|---|---|
+| ページ読み込み時に1回だけデータ取得すればいい、更新後は別ページに遷移する | **Server Component のまま**（`prisma` / MOCK_MODE 分岐で直接取得） |
+| フォーム送信後に `router.push()` で画面遷移する | **TanStack Query 不要**（`isSubmitting` で十分） |
+| 招待・パスワードリセットトークンの検証など、使い捨てで再利用されないデータ | **TanStack Query 不要**（`useEffect` + 手動 fetch のままでよい） |
+| ボタン操作の結果を**同じ画面内で即座に反映**したい（一覧の一部を更新、ステータス変更など） | **Client Component + `useMutation`** |
+| 複数コンポーネント/ページ間で同じデータをキャッシュ共有したい | **Client Component + `useQuery`** |
+
+安易に全ページを Client Component 化しない。Server Component で完結するページの方が初回表示は速い。
+
+### 一覧取得の例（`useQuery`）
+
+```tsx
+// app/(admin)/admin/ai-flags/page.tsx
+'use client'
+
+import { useQuery } from '@tanstack/react-query'
+import { client } from '@/lib/hono/client'
+
+async function fetchFlags() {
+  const res = await client.api.admin['ai-flags'].$get()
+  if (!res.ok) throw new Error('Failed to fetch flags')
+  const data = await res.json()
+  return data.flags
+}
+
+export default function AiFlagsPage() {
+  const { data: flags = [], isLoading, error } = useQuery({
+    queryKey: ['aiFlags'],
+    queryFn: fetchFlags,
+  })
+
+  if (isLoading) return <Loader2 className="h-6 w-6 animate-spin" />
+  if (error) return <p className="text-sm text-destructive">取得に失敗しました</p>
+  return <AiFlagList flags={flags} />
+}
+```
+
+**`fetch('/api/...')` を直接書かない。** ルール3（Hono RPC クライアント）と同様、`queryFn` の中でも必ず `client.api...` を使う。
+
+### 更新して即座に反映する例（`useMutation`）
+
+```tsx
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
+const queryClient = useQueryClient()
+
+const confirmMutation = useMutation({
+  mutationFn: async (id: string) => {
+    const res = await client.api.admin['ai-flags'][':id'].$patch({ param: { id } })
+    if (!res.ok) throw new Error('Failed to confirm flag')
+    return res.json()
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['aiFlags'] })
+    toast.success('確認済みにしました')
+  },
+  onError: () => toast.error('更新に失敗しました'),
+})
+```
+
+- `queryKey` はドメイン名の単数形キャメルケース（`['aiFlags']` `['badges']` など）で統一し、関連する `useQuery` と `invalidateQueries` で一致させる。
+- `useEffect` + 手動 `.then()` でのフェッチ（例: セレクトボックスの選択肢取得）は `useQuery` に置き換えるとキャッシュが効き、同じデータを複数ページで再取得しなくなる。
+
+---
+
+## 7. コンポーネント設計
 
 **ルール: UIコンポーネントは shadcn/ui を使う。クラス結合は `cn()` を使う。新しいコンポーネントにはストーリーを書く。**
 
@@ -285,7 +359,7 @@ export const ServerError: Story = {
 
 ---
 
-## 7. デザインシステム（globals.css / Figma variables デザイントークン）
+## 8. デザインシステム（globals.css / Figma variables デザイントークン）
 
 **ルール: スタイルは必ず `app/globals.css` のデザイントークンを使う。生のカラースケール（`blue-500` など）や任意値（`bg-[#3b82f6]`）を直接書かない。**
 
@@ -347,7 +421,7 @@ export const ServerError: Story = {
 
 ---
 
-## 8. ページ追加チェックリスト
+## 9. ページ追加チェックリスト
 
 新しいページを追加するとき、この順番で進める:
 
@@ -359,10 +433,11 @@ export const ServerError: Story = {
 
 ---
 
-## 9. やってはいけないこと
+## 10. やってはいけないこと
 
-- `fetch('/api/...')` を直接書く → `client.api...` を使う
+- `fetch('/api/...')` を直接書く → `client.api...` を使う（`useQuery` / `useMutation` の `queryFn` / `mutationFn` の中でも同様）
 - Server Component に `'use client'` を付ける → 必要なときだけ付ける
+- 1回限りのデータ取得・フォーム送信のためだけに Client Component 化して `useQuery` / `useMutation` を導入する → Server Component や素の `useEffect` で十分な場面まで TanStack Query 化しない
 - `middleware.ts` を作る → Next.js 16 では `proxy.ts` に `export function proxy()`
 - `components/ui/` を直接編集する → shadcn が再生成すると上書きされる
 - フォームスキーマをコンポーネント内にインラインで書く → `lib/schemas/` に置く
