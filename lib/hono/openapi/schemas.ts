@@ -113,7 +113,7 @@ export const PasswordResetCreatedSchema = z
 
 export const ErrorSchema = z
   .object({
-    error: z.string().openapi({ example: 'Not found' }),
+    error: z.string(),
   })
   .openapi('Error')
 
@@ -129,7 +129,12 @@ export const IdParamSchema = z.object({
 })
 
 /** よく使うエラーレスポンス定義 */
-export const errorResponse = (description: string) => ({
+export const errorResponse = (description: string, example: string) => ({
   description,
-  content: { 'application/json': { schema: ErrorSchema } },
+  content: {
+    'application/json': {
+      schema: ErrorSchema,
+      example: { error: example },
+    },
+  },
 })

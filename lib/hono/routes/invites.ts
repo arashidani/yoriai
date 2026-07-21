@@ -19,7 +19,7 @@ const getInviteRoute = createRoute({
       description: '有効な招待',
       content: { 'application/json': { schema: z.object({ invite: InviteSchema }) } },
     },
-    404: errorResponse('招待が見つからない、期限切れ、または使用済み'),
+    404: errorResponse('招待が見つからない、期限切れ、または使用済み', '招待が見つかりません'),
   },
 })
 
