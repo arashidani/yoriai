@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Merge Request"
+  short_description: "確認用の丁寧なMRレビューとコメント下書きを作成する"
+  default_prompt: "Use $review-merge-request to review this merge request and draft comments for my confirmation."
