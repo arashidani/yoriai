@@ -144,8 +144,7 @@
         "type": "object",
         "properties": {
           "error": {
-            "type": "string",
-            "example": "Not found"
+            "type": "string"
           }
         },
         "required": [
@@ -539,6 +538,20 @@
             "supabaseSession": []
           }
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            },
+            "required": true,
+            "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
+            "name": "idempotency-key",
+            "in": "header"
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -565,6 +578,24 @@
           }
         },
         "responses": {
+          "200": {
+            "description": "再送された投稿（すでに作成済みの投稿）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "post": {
+                      "$ref": "#/components/schemas/Post"
+                    }
+                  },
+                  "required": [
+                    "post"
+                  ]
+                }
+              }
+            }
+          },
           "201": {
             "description": "作成された投稿",
             "content": {
@@ -589,6 +620,35 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "同じキーで、前回とは異なる投稿内容が送信された",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "同じ投稿操作に異なる内容が指定されています"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "投稿の作成に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "投稿の作成に失敗しました"
                 }
               }
             }
@@ -638,6 +698,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
                 }
               }
             }
@@ -682,6 +745,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -692,6 +758,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -738,6 +807,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -748,6 +820,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -819,6 +894,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -829,6 +907,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -873,6 +954,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -883,6 +967,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -937,6 +1024,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -947,6 +1037,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -957,6 +1050,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
                 }
               }
             }
@@ -1003,6 +1099,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1013,6 +1112,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1090,6 +1192,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "自分自身のロールは変更できません"
                 }
               }
             }
@@ -1100,6 +1205,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1110,6 +1218,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1154,6 +1265,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "自分自身は削除できません"
                 }
               }
             }
@@ -1164,6 +1278,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1174,6 +1291,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1220,6 +1340,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1230,6 +1353,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1312,6 +1438,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1322,6 +1451,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1368,6 +1500,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1378,6 +1513,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1461,6 +1599,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1471,6 +1612,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1517,6 +1661,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1527,6 +1674,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1581,6 +1731,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1591,6 +1744,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
                 }
               }
             }
@@ -1601,6 +1757,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
                 }
               }
             }
@@ -1686,6 +1845,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "招待リンクが無効です"
                 }
               }
             }
@@ -1696,6 +1858,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1739,6 +1904,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1788,6 +1956,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "招待が見つかりません"
                 }
               }
             }
@@ -1840,6 +2011,9 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "リンクが見つかりません"
                 }
               }
             }
@@ -1898,6 +2072,22 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "リンクが見つかりません"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "パスワード更新に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "パスワード更新に失敗しました"
                 }
               }
             }

@@ -17,7 +17,7 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting: isFormSubmitting },
   } = useForm<CreatePostInput>({
     resolver: zodResolver(createPostSchema),
   })
@@ -45,8 +45,8 @@ export function PostForm({ onSubmit, isSubmitting = false }: PostFormProps) {
         />
         {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
       </div>
-      <Button type="submit" disabled={isSubmitting}>
-        {isSubmitting ? '送信中...' : '投稿する'}
+      <Button type="submit" disabled={isSubmitting || isFormSubmitting}>
+        {isSubmitting || isFormSubmitting ? '送信中...' : '投稿する'}
       </Button>
     </form>
   )

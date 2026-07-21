@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Request"
+  short_description: "確認用の丁寧なレビュー依頼文とMR下書きを作成する"
+  default_prompt: "Use $request-review to draft a respectful review request for my confirmation before posting."
