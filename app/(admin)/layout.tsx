@@ -11,6 +11,7 @@ const tabs = [
   { href: '/admin/users/create', label: 'ユーザー作成' },
   { href: '/admin/users', label: 'ユーザー管理' },
   { href: '/admin/ai-flags', label: 'AIフラグ' },
+  { href: '/admin/anonymous-profiles', label: '匿名キャラ管理' },
   { href: '/admin/badge', label: 'バッジ管理' },
   { href: '/admin/badge/create', label: 'バッジ作成' },
   { href: '/admin/mission', label: 'ミッション管理' },

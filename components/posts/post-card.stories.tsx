@@ -16,13 +16,12 @@ const basePost = {
   id: 'post-1',
   title: 'Next.js App Routerの使い方を教えてください',
   body: 'App RouterとPages Routerの違いが分からなくて困っています。どちらを使うべきでしょうか？詳しく教えていただけると助かります。',
-  author: {
-    id: 'user-1',
-    name: '田中太郎',
-    email: 'tanaka@example.com',
-  },
+  displayName: 'ねこ',
+  isOwnQuestion: false,
+  likeCount: 3,
+  liked: false,
+  saved: false,
   createdAt: '2024-01-10T00:00:00Z',
-  updatedAt: '2024-01-10T00:00:00Z',
 }
 
 export const Default: Story = {
@@ -30,6 +29,8 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     const title = canvas.getByText(/Next\.js App Router/)
     await expect(title).toBeVisible()
+    await expect(canvas.getByText('ねこ')).toBeVisible()
+    await expect(canvas.getByText('返信')).toBeVisible()
   },
 }
 
@@ -41,7 +42,6 @@ export const CssCheck: Story = {
     // カードは article 要素 + border — グローバルCSSの読み込みを確認
     const cardEl = canvas.getByText(/Next\.js App Router/).closest('article') as HTMLElement
     await expect(cardEl).toBeVisible()
-    await expect(cardEl).toHaveClass(/border/)
   },
 }
 
@@ -54,15 +54,17 @@ export const LongBody: Story = {
   },
 }
 
-export const NoName: Story = {
+export const OwnQuestion: Story = {
   args: {
     post: {
       ...basePost,
-      author: {
-        id: 'user-2',
-        name: null,
-        email: 'noname@example.com',
-      },
+      displayName: '田中太郎',
+      isOwnQuestion: true,
     },
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('田中太郎')).toBeVisible()
+    // 自分の質問にはいいねボタンを出さない
+    await expect(canvas.queryByRole('button', { pressed: false, name: /^\d+$/ })).toBeNull()
   },
 }

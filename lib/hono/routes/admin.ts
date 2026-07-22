@@ -1,11 +1,13 @@
 import { randomBytes } from 'node:crypto'
 import { $, createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { createMiddleware } from 'hono/factory'
+import { Prisma } from '@/app/generated/prisma/client'
 import { FlagStatus, Role } from '@/app/generated/prisma/enums'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
   AiFlagSchema,
+  AnonymousProfileSchema,
   BadgeSchema,
   errorResponse,
   IdParamSchema,
@@ -19,6 +21,7 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import {
   MOCK_AI_FLAGS,
+  MOCK_ANONYMOUS_PROFILES,
   MOCK_BADGES,
   MOCK_INVITES,
   MOCK_MISSIONS,
@@ -26,6 +29,10 @@ import {
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import {
+  createAnonymousProfileSchema,
+  updateAnonymousProfileSchema,
+} from '@/lib/schemas/anonymous-profile'
 import { createBadgeSchema } from '@/lib/schemas/badge'
 import { createInviteSchema } from '@/lib/schemas/invite'
 import { createMissionSchema } from '@/lib/schemas/mission'
@@ -279,6 +286,89 @@ const confirmAiFlagRoute = createRoute({
   },
 })
 
+const listAnonymousProfilesRoute = createRoute({
+  method: 'get',
+  path: '/anonymous-profiles',
+  tags: ['admin'],
+  summary: '匿名キャラ一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: '匿名キャラ一覧',
+      content: {
+        'application/json': { schema: z.object({ profiles: z.array(AnonymousProfileSchema) }) },
+      },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const createAnonymousProfileRoute = createRoute({
+  method: 'post',
+  path: '/anonymous-profiles',
+  tags: ['admin'],
+  summary: '匿名キャラを追加（管理者専用）',
+  security,
+  request: {
+    body: {
+      required: true,
+      content: { 'application/json': { schema: createAnonymousProfileSchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: '追加された匿名キャラ',
+      content: { 'application/json': { schema: z.object({ profile: AnonymousProfileSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const updateAnonymousProfileRoute = createRoute({
+  method: 'patch',
+  path: '/anonymous-profiles/{id}',
+  tags: ['admin'],
+  summary: '匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）',
+  security,
+  request: {
+    params: IdParamSchema,
+    body: {
+      required: true,
+      content: { 'application/json': { schema: updateAnonymousProfileSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: '更新後の匿名キャラ',
+      content: { 'application/json': { schema: z.object({ profile: AnonymousProfileSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('匿名キャラが見つからない', 'Not found'),
+  },
+})
+
+const deleteAnonymousProfileRoute = createRoute({
+  method: 'delete',
+  path: '/anonymous-profiles/{id}',
+  tags: ['admin'],
+  summary: '匿名キャラを削除（管理者専用、割り当て済みのキャラは削除不可）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('匿名キャラが見つからない', 'Not found'),
+    409: errorResponse(
+      'すでに質問スレッドで使われているため削除できない',
+      'すでに使われている匿名キャラは削除できません。候補から外すには無効化してください',
+    ),
+  },
+})
+
 export const adminRoute = $(
   new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
     .use(authMiddleware)
@@ -481,4 +571,73 @@ export const adminRoute = $(
       include: { targetUser: true, post: true },
     })
     return c.json({ flag }, 200)
+  })
+  .openapi(listAnonymousProfilesRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ profiles: MOCK_ANONYMOUS_PROFILES }, 200)
+    }
+    const profiles = await prisma.anonymousProfile.findMany({ orderBy: { createdAt: 'asc' } })
+    return c.json({ profiles }, 200)
+  })
+  .openapi(createAnonymousProfileRoute, async (c) => {
+    const data = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json(
+        {
+          profile: {
+            id: `anon-${MOCK_ANONYMOUS_PROFILES.length + 1}`,
+            ...data,
+            isActive: true,
+            createdAt: new Date(),
+          },
+        },
+        201,
+      )
+    }
+
+    const profile = await prisma.anonymousProfile.create({ data })
+    return c.json({ profile }, 201)
+  })
+  .openapi(updateAnonymousProfileRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const { isActive } = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const profile = MOCK_ANONYMOUS_PROFILES.find((p) => p.id === id)
+      if (!profile) return c.json({ error: 'Not found' }, 404)
+      return c.json({ profile: { ...profile, isActive } }, 200)
+    }
+
+    const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    const profile = await prisma.anonymousProfile.update({ where: { id }, data: { isActive } })
+    return c.json({ profile }, 200)
+  })
+  .openapi(deleteAnonymousProfileRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    try {
+      await prisma.anonymousProfile.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json(
+          {
+            error:
+              'すでに使われている匿名キャラは削除できません。候補から外すには無効化してください',
+          },
+          409,
+        )
+      }
+      throw error
+    }
+    return c.json({ success: true }, 200)
   })
