@@ -1,10 +1,4 @@
-import { config } from 'dotenv'
-
-config({ path: '.env.local' })
-config()
-
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../app/generated/prisma/client'
+import { prisma } from '@/lib/prisma/client'
 
 /**
  * 仮の匿名キャラ一覧。実際の表示名・アイコンは未確定なのでプレースホルダー。
@@ -20,9 +14,6 @@ const ANONYMOUS_PROFILES = [
 ]
 
 async function main() {
-  const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL })
-  const prisma = new PrismaClient({ adapter })
-
   for (const profile of ANONYMOUS_PROFILES) {
     await prisma.anonymousProfile.upsert({
       where: { displayName: profile.displayName },
@@ -30,11 +21,13 @@ async function main() {
       create: profile,
     })
   }
-
-  await prisma.$disconnect()
 }
 
-main().catch((error) => {
-  console.error(error)
-  process.exit(1)
-})
+main()
+  .catch((error) => {
+    console.error(error)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
