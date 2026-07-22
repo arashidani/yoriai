@@ -1,6 +1,7 @@
 import { HttpResponse, http } from 'msw'
 import {
   MOCK_AI_FLAGS,
+  MOCK_ANONYMOUS_PROFILES,
   MOCK_BADGES,
   MOCK_INVITES,
   MOCK_MISSIONS,
@@ -35,6 +36,14 @@ export const mswHandlers = {
       )
     }),
     http.delete('/api/posts/:id', () => HttpResponse.json({ success: true })),
+    http.post('/api/posts/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
+    http.delete('/api/posts/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
+    http.post('/api/posts/:id/bookmarks', () => HttpResponse.json({ saved: true })),
+    http.delete('/api/posts/:id/bookmarks', () => HttpResponse.json({ saved: false })),
+  ],
+  answers: [
+    http.post('/api/answers/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
+    http.delete('/api/answers/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
   ],
   admin: [
     http.get('/api/admin/users', () => HttpResponse.json({ users: MOCK_USERS })),
@@ -70,6 +79,31 @@ export const mswHandlers = {
         })),
       }),
     ),
+    http.get('/api/admin/anonymous-profiles', () =>
+      HttpResponse.json({ profiles: MOCK_ANONYMOUS_PROFILES }),
+    ),
+    http.post('/api/admin/anonymous-profiles', async ({ request }) => {
+      const body = (await request.json()) as { displayName: string; avatarUrl: string }
+      return HttpResponse.json(
+        {
+          profile: {
+            id: 'anon-new',
+            displayName: body.displayName,
+            avatarUrl: body.avatarUrl,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.patch('/api/admin/anonymous-profiles/:id', async ({ params, request }) => {
+      const profile = MOCK_ANONYMOUS_PROFILES.find((p) => p.id === params.id)
+      if (!profile) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      const body = (await request.json()) as { isActive: boolean }
+      return HttpResponse.json({ profile: { ...profile, isActive: body.isActive } })
+    }),
+    http.delete('/api/admin/anonymous-profiles/:id', () => HttpResponse.json({ success: true })),
     http.post('/api/admin/users/:id/password-resets', () =>
       HttpResponse.json(
         {

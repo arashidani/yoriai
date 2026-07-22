@@ -1,15 +1,52 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
-import { type Post, Prisma, type User } from '@/app/generated/prisma/client'
-import { FlagSeverity, Role } from '@/app/generated/prisma/enums'
-import { moderatePost } from '@/lib/ai/moderate-post'
+import type {
+  AnonymousProfile,
+  Answer,
+  Post,
+  PostAnonymousProfile,
+  User,
+} from '@/app/generated/prisma/client'
+import { Prisma } from '@/app/generated/prisma/client'
+import { FlagSeverity, QuestionStatus, Role } from '@/app/generated/prisma/enums'
+import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
-import { errorResponse, IdParamSchema, PostSchema, SuccessSchema } from '@/lib/hono/openapi/schemas'
-import { MOCK_POSTS } from '@/lib/mocks/fixtures'
+import {
+  AnswerSchema,
+  errorResponse,
+  IdParamSchema,
+  LikeStatusSchema,
+  PostSchema,
+  SavedStatusSchema,
+  SuccessSchema,
+} from '@/lib/hono/openapi/schemas'
+import { MOCK_ANSWERS, MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { getOrAssignAnonymousProfile } from '@/lib/questions/assign-anonymous-profile'
+import { createAnswerSchema } from '@/lib/schemas/answer'
 import { createPostSchema } from '@/lib/schemas/post'
 
 type PostWithAuthor = Post & { author: User | null }
+type AnswerWithAnonymousProfile = Answer & {
+  postAnonymousProfile: PostAnonymousProfile & { anonymousProfile: AnonymousProfile }
+}
+
+function toAnswerResponse(answer: AnswerWithAnonymousProfile) {
+  return {
+    id: answer.id,
+    postId: answer.postId,
+    body: answer.body,
+    isHidden: answer.isHidden,
+    likeCount: answer.likeCount,
+    anonymousProfile: {
+      id: answer.postAnonymousProfile.anonymousProfile.id,
+      displayName: answer.postAnonymousProfile.anonymousProfile.displayName,
+      avatarUrl: answer.postAnonymousProfile.anonymousProfile.avatarUrl,
+    },
+    createdAt: answer.createdAt,
+    updatedAt: answer.updatedAt,
+  }
+}
 
 const listRoute = createRoute({
   method: 'get',
@@ -73,6 +110,151 @@ const createPostRoute = createRoute({
   },
 })
 
+const listAnswersRoute = createRoute({
+  method: 'get',
+  path: '/{id}/answers',
+  tags: ['posts'],
+  summary: '質問への回答一覧を取得（いいね数の多い順、同数なら投稿順）',
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '回答一覧',
+      content: { 'application/json': { schema: z.object({ answers: z.array(AnswerSchema) }) } },
+    },
+    404: errorResponse('質問が見つからない', 'Not found'),
+  },
+})
+
+const createAnswerRoute = createRoute({
+  method: 'post',
+  path: '/{id}/answers',
+  tags: ['posts'],
+  summary: '質問に回答を投稿',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: {
+    params: IdParamSchema,
+    headers: z.object({
+      'idempotency-key': z.string().uuid().openapi({
+        description: '通信失敗後に同じ回答を再送しても、重複作成しないためのUUID',
+        example: '550e8400-e29b-41d4-a716-446655440000',
+      }),
+    }),
+    body: { required: true, content: { 'application/json': { schema: createAnswerSchema } } },
+  },
+  responses: {
+    201: {
+      description: '作成された回答',
+      content: { 'application/json': { schema: z.object({ answer: AnswerSchema }) } },
+    },
+    200: {
+      description: '再送された回答（すでに作成済みの回答）',
+      content: { 'application/json': { schema: z.object({ answer: AnswerSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    409: errorResponse('解決済み・非表示の質問には回答できない', '回答を受け付けていない質問です'),
+    500: errorResponse('回答の作成に失敗した', '回答の作成に失敗しました'),
+  },
+})
+
+const resolveRoute = createRoute({
+  method: 'post',
+  path: '/{id}/resolve',
+  tags: ['posts'],
+  summary: '質問を解決済みにする（質問者のみ）',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '解決済みにした質問',
+      content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('質問者以外による操作', 'Forbidden'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    409: errorResponse('非表示の質問は解決済みにできない', '操作できない質問の状態です'),
+  },
+})
+
+const likeRoute = createRoute({
+  method: 'post',
+  path: '/{id}/likes',
+  tags: ['posts'],
+  summary: '質問にいいねする',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: 'いいね後の状態',
+      content: { 'application/json': { schema: LikeStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('自分の質問にはいいねできない', '自分の質問にはいいねできません'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    500: errorResponse('いいねの処理に失敗した', 'いいねの処理に失敗しました'),
+  },
+})
+
+const unlikeRoute = createRoute({
+  method: 'delete',
+  path: '/{id}/likes',
+  tags: ['posts'],
+  summary: '質問へのいいねを取り消す',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: 'いいね取り消し後の状態',
+      content: { 'application/json': { schema: LikeStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    500: errorResponse('いいね取り消しの処理に失敗した', 'いいね取り消しの処理に失敗しました'),
+  },
+})
+
+const bookmarkRoute = createRoute({
+  method: 'post',
+  path: '/{id}/bookmarks',
+  tags: ['posts'],
+  summary: '質問を保存する',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '保存後の状態',
+      content: { 'application/json': { schema: SavedStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    500: errorResponse('保存の処理に失敗した', '保存の処理に失敗しました'),
+  },
+})
+
+const unbookmarkRoute = createRoute({
+  method: 'delete',
+  path: '/{id}/bookmarks',
+  tags: ['posts'],
+  summary: '質問の保存を取り消す',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '保存取り消し後の状態',
+      content: { 'application/json': { schema: SavedStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    500: errorResponse('保存取り消しの処理に失敗した', '保存取り消しの処理に失敗しました'),
+  },
+})
+
 const deleteRoute = createRoute({
   method: 'delete',
   path: '/{id}',
@@ -125,6 +307,10 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
             ...data,
             authorId: user.id,
             author: user,
+            status: QuestionStatus.OPEN,
+            answerCount: 0,
+            likeCount: 0,
+            resolvedAt: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -166,6 +352,17 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       return c.json({ post: existingPost }, 200)
     }
 
+    try {
+      const assignment = await getOrAssignAnonymousProfile(post.id, user.id)
+      post = await prisma.post.update({
+        where: { id: post.id },
+        data: { postAnonymousProfileId: assignment.id },
+        include: { author: true },
+      })
+    } catch (error) {
+      console.error('Failed to assign anonymous profile', { postId: post.id, error })
+    }
+
     const moderation = await moderatePost(post.title, post.body)
     if (moderation?.flagged) {
       try {
@@ -184,6 +381,254 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
 
     return c.json({ post }, 201)
+  })
+  .openapi(listAnswersRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      const answers = MOCK_ANSWERS.filter((a) => a.postId === id)
+      return c.json({ answers }, 200)
+    }
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    const answers = await prisma.answer.findMany({
+      where: { postId: id },
+      include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+      orderBy: [{ likeCount: 'desc' }, { createdAt: 'asc' }],
+    })
+    return c.json({ answers: answers.map(toAnswerResponse) }, 200)
+  })
+  .openapi(createAnswerRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      const data = c.req.valid('json')
+      return c.json(
+        {
+          answer: {
+            id: `answer-${Date.now()}`,
+            postId: id,
+            body: data.body,
+            isHidden: false,
+            likeCount: 0,
+            anonymousProfile: MOCK_ANSWERS[0].anonymousProfile,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        201,
+      )
+    }
+
+    const user = c.get('user')
+    const data = c.req.valid('json')
+    const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+    if (post.status !== QuestionStatus.OPEN && post.status !== QuestionStatus.ANSWERED) {
+      return c.json({ error: '回答を受け付けていない質問です' }, 409)
+    }
+
+    let assignment: PostAnonymousProfile
+    try {
+      assignment = await getOrAssignAnonymousProfile(id, user.id)
+    } catch (error) {
+      console.error('Failed to assign anonymous profile', { postId: id, error })
+      return c.json({ error: '回答の作成に失敗しました' }, 500)
+    }
+
+    let answer: AnswerWithAnonymousProfile
+    try {
+      answer = await prisma.answer.create({
+        data: {
+          postId: id,
+          authorId: user.id,
+          postAnonymousProfileId: assignment.id,
+          body: data.body,
+          idempotencyKey,
+        },
+        include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+      })
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        return c.json({ error: '回答の作成に失敗しました' }, 500)
+      }
+
+      let existingAnswer: AnswerWithAnonymousProfile | null
+      try {
+        existingAnswer = await prisma.answer.findUnique({
+          where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
+          include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+        })
+      } catch {
+        return c.json({ error: '回答の作成に失敗しました' }, 500)
+      }
+
+      if (!existingAnswer) return c.json({ error: '回答の作成に失敗しました' }, 500)
+      if (existingAnswer.body !== data.body) {
+        return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
+      }
+
+      return c.json({ answer: toAnswerResponse(existingAnswer) }, 200)
+    }
+
+    try {
+      await prisma.post.update({
+        where: { id },
+        data: {
+          answerCount: { increment: 1 },
+          status: post.status === QuestionStatus.OPEN ? QuestionStatus.ANSWERED : post.status,
+        },
+      })
+    } catch (error) {
+      console.error('Failed to update post answer count', { postId: id, error })
+    }
+
+    const moderation = await moderateAnswer(answer.body)
+    if (moderation?.flagged) {
+      try {
+        await prisma.aiFlag.create({
+          data: {
+            title: '不適切な回答の可能性',
+            detail: moderation.reason,
+            severity: FlagSeverity[moderation.severity],
+            targetUserId: user.id,
+            answerId: answer.id,
+          },
+        })
+      } catch (error) {
+        console.error('Failed to create AI flag', { answerId: answer.id, error })
+      }
+    }
+
+    return c.json({ answer: toAnswerResponse(answer) }, 201)
+  })
+  .openapi(resolveRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+      return c.json(
+        { post: { ...post, status: QuestionStatus.RESOLVED, resolvedAt: new Date() } },
+        200,
+      )
+    }
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+    if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+    if (post.status === QuestionStatus.HIDDEN) {
+      return c.json({ error: '操作できない質問の状態です' }, 409)
+    }
+
+    const resolved = await prisma.post.update({
+      where: { id },
+      data: { status: QuestionStatus.RESOLVED, resolvedAt: new Date() },
+      include: { author: true },
+    })
+    return c.json({ post: resolved }, 200)
+  })
+  .openapi(likeRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      if (post.authorId === user.id) return c.json({ error: '自分の質問にはいいねできません' }, 403)
+      return c.json({ liked: true, likeCount: post.likeCount + 1 }, 200)
+    }
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+    if (post.authorId === user.id) return c.json({ error: '自分の質問にはいいねできません' }, 403)
+
+    try {
+      await prisma.questionLike.create({ data: { postId: id, userId: user.id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ liked: true, likeCount: post.likeCount }, 200)
+      }
+      return c.json({ error: 'いいねの処理に失敗しました' }, 500)
+    }
+
+    const updated = await prisma.post.update({
+      where: { id },
+      data: { likeCount: { increment: 1 } },
+    })
+    return c.json({ liked: true, likeCount: updated.likeCount }, 200)
+  })
+  .openapi(unlikeRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ liked: false, likeCount: Math.max(0, post.likeCount - 1) }, 200)
+    }
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    const deleted = await prisma.questionLike.deleteMany({ where: { postId: id, userId: user.id } })
+    if (deleted.count === 0) {
+      return c.json({ liked: false, likeCount: post.likeCount }, 200)
+    }
+
+    const updated = await prisma.post.update({
+      where: { id },
+      data: { likeCount: { decrement: 1 } },
+    })
+    return c.json({ liked: false, likeCount: updated.likeCount }, 200)
+  })
+  .openapi(bookmarkRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ saved: true }, 200)
+    }
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    try {
+      await prisma.postBookmark.create({ data: { postId: id, userId: user.id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ saved: true }, 200)
+      }
+      return c.json({ error: '保存の処理に失敗しました' }, 500)
+    }
+    return c.json({ saved: true }, 200)
+  })
+  .openapi(unbookmarkRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ saved: false }, 200)
+    }
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    await prisma.postBookmark.deleteMany({ where: { postId: id, userId: user.id } })
+    return c.json({ saved: false }, 200)
   })
   .openapi(deleteRoute, async (c) => {
     const user = c.get('user')
