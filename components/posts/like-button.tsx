@@ -1,8 +1,8 @@
 'use client'
 
-import { Heart } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { AshiatoIcon } from '@/components/icons/ashiato-icon'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -56,7 +56,7 @@ export function LikeButton({
         liked && 'border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20',
       )}
     >
-      <Heart className={cn('size-3.5', liked && 'fill-current')} />
+      <AshiatoIcon className="size-3.5" />
       {likeCount}
     </Button>
   )

@@ -21,6 +21,8 @@ const basePost = {
   likeCount: 3,
   liked: false,
   saved: false,
+  status: 'OPEN' as const,
+  answerCount: 0,
   createdAt: '2024-01-10T00:00:00Z',
 }
 

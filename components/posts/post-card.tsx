@@ -28,10 +28,11 @@ const actionChipClass =
 
 export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
   const excerpt = post.body.length > 100 ? `${post.body.slice(0, 100)}…` : post.body
+  const canDelete = isAdmin || (post.isOwnQuestion && post.answerCount === 0)
 
   return (
     <div className="relative rounded-xl border border-input bg-background shadow-xs transition-shadow hover:shadow-md">
-      {isAdmin && onDeleted && (
+      {canDelete && onDeleted && (
         <div className="absolute top-3 right-3 z-10">
           <DeletePostButton postId={post.id} postTitle={post.title} onDeleted={onDeleted} />
         </div>

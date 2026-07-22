@@ -12,6 +12,8 @@ export type Post = {
   likeCount: number
   liked: boolean
   saved: boolean
+  status: 'OPEN' | 'ANSWERED' | 'RESOLVED' | 'HIDDEN'
+  answerCount: number
   createdAt: Date | string
 }
 

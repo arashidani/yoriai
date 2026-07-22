@@ -110,6 +110,19 @@
             ],
             "example": null
           },
+          "deletedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-01-01T00:00:00.000Z"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -130,6 +143,7 @@
           "answerCount",
           "likeCount",
           "resolvedAt",
+          "deletedAt",
           "createdAt",
           "updatedAt"
         ]
@@ -600,6 +614,23 @@
               }
             ]
           },
+          "answerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Answer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -614,6 +645,7 @@
           "status",
           "targetUserId",
           "postId",
+          "answerId",
           "createdAt"
         ]
       },
@@ -858,7 +890,7 @@
         "tags": [
           "posts"
         ],
-        "summary": "投稿を削除（管理者のみ）",
+        "summary": "投稿を削除（管理者、または回答が付く前の質問者本人）",
         "security": [
           {
             "supabaseSession": []
@@ -900,7 +932,7 @@
             }
           },
           "403": {
-            "description": "権限不足（管理者専用）",
+            "description": "権限不足（管理者・質問者本人以外）",
             "content": {
               "application/json": {
                 "schema": {
@@ -908,6 +940,32 @@
                 },
                 "example": {
                   "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "質問が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "回答が付いている質問は質問者本人には削除できない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "回答がある質問は削除できません"
                 }
               }
             }
@@ -2026,6 +2084,172 @@
                 },
                 "example": {
                   "error": "Forbidden"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/posts/{id}/restore": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "ソフトデリートされた投稿を復元（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "復元後の投稿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "post": {
+                      "$ref": "#/components/schemas/Post"
+                    }
+                  },
+                  "required": [
+                    "post"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/answers/{id}/restore": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "非表示にされた回答を復元（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "復元後の回答",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": {
+                      "$ref": "#/components/schemas/Answer"
+                    }
+                  },
+                  "required": [
+                    "answer"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "回答が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
                 }
               }
             }

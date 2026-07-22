@@ -34,7 +34,8 @@ export function DeletePostButton({ postId, postTitle, onDeleted }: DeletePostBut
     setOpen(false)
 
     if (!res.ok) {
-      toast.error('削除に失敗しました')
+      const data = await res.json().catch(() => null)
+      toast.error(data && 'error' in data ? data.error : '削除に失敗しました')
       return
     }
     onDeleted(postId)

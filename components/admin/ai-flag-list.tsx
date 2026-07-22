@@ -27,7 +27,8 @@ type AiFlag = {
   severity: keyof typeof SEVERITY_ICONS
   status: 'UNREAD' | 'CONFIRMED'
   targetUser: { name: string | null } | null
-  post: { id: string; title: string } | null
+  post: { id: string; title: string; deletedAt: Date | string | null } | null
+  answer: { id: string; body: string; isHidden: boolean } | null
   createdAt: Date | string
 }
 
@@ -52,6 +53,7 @@ async function fetchFlags(): Promise<AiFlag[]> {
     ...flag,
     targetUser: flag.targetUser ?? null,
     post: flag.post ?? null,
+    answer: flag.answer ?? null,
   }))
 }
 
@@ -79,6 +81,36 @@ export function AiFlagList() {
     },
     onError: () => {
       toast.error('更新に失敗しました')
+    },
+  })
+
+  const restorePostMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await client.api.admin.posts[':id'].restore.$patch({ param: { id } })
+      if (!res.ok) throw new Error('Failed to restore post')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aiFlags'] })
+      toast.success('投稿を復元しました')
+    },
+    onError: () => {
+      toast.error('復元に失敗しました')
+    },
+  })
+
+  const restoreAnswerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await client.api.admin.answers[':id'].restore.$patch({ param: { id } })
+      if (!res.ok) throw new Error('Failed to restore answer')
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['aiFlags'] })
+      toast.success('回答を復元しました')
+    },
+    onError: () => {
+      toast.error('復元に失敗しました')
     },
   })
 
@@ -142,8 +174,39 @@ export function AiFlagList() {
                     該当の投稿を見る: {flag.post.title}
                   </Link>
                 )}
+                {flag.post?.deletedAt && (
+                  <p className="text-xs text-destructive">この投稿は自動的に非表示になっています</p>
+                )}
+                {flag.answer && (
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    該当の回答: {flag.answer.body}
+                  </p>
+                )}
+                {flag.answer?.isHidden && (
+                  <p className="text-xs text-destructive">この回答は自動的に非表示になっています</p>
+                )}
               </div>
               <div className="shrink-0 flex items-center gap-2">
+                {flag.post?.deletedAt && (
+                  <button
+                    type="button"
+                    disabled={restorePostMutation.isPending}
+                    onClick={() => flag.post && restorePostMutation.mutate(flag.post.id)}
+                    className="text-xs px-3 py-1.5 rounded-md border text-muted-foreground disabled:opacity-50"
+                  >
+                    投稿を復元する
+                  </button>
+                )}
+                {flag.answer?.isHidden && (
+                  <button
+                    type="button"
+                    disabled={restoreAnswerMutation.isPending}
+                    onClick={() => flag.answer && restoreAnswerMutation.mutate(flag.answer.id)}
+                    className="text-xs px-3 py-1.5 rounded-md border text-muted-foreground disabled:opacity-50"
+                  >
+                    回答を復元する
+                  </button>
+                )}
                 {flag.post && (
                   <DeletePostButton
                     postId={flag.post.id}

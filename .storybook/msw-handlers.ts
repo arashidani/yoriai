@@ -2,6 +2,7 @@ import { HttpResponse, http } from 'msw'
 import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
+  MOCK_ANSWERS,
   MOCK_BADGES,
   MOCK_INVITES,
   MOCK_MISSIONS,
@@ -63,6 +64,16 @@ export const mswHandlers = {
       const flag = MOCK_AI_FLAGS.find((f) => f.id === params.id)
       if (!flag) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
       return HttpResponse.json({ flag: { ...flag, status: 'CONFIRMED' } })
+    }),
+    http.patch('/api/admin/posts/:id/restore', ({ params }) => {
+      const post = MOCK_POSTS.find((p) => p.id === params.id)
+      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      return HttpResponse.json({ post: { ...post, deletedAt: null } })
+    }),
+    http.patch('/api/admin/answers/:id/restore', ({ params }) => {
+      const answer = MOCK_ANSWERS.find((a) => a.id === params.id)
+      if (!answer) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      return HttpResponse.json({ answer: { ...answer, isHidden: false } })
     }),
     http.post('/api/admin/invites', () =>
       HttpResponse.json(

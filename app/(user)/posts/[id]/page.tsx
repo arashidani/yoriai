@@ -26,8 +26,8 @@ async function getPost(id: string) {
   if (process.env.MOCK_MODE === 'true') {
     return MOCK_POSTS.find((p) => p.id === id) ?? null
   }
-  return prisma.post.findUnique({
-    where: { id },
+  return prisma.post.findFirst({
+    where: { id, deletedAt: null },
     include: {
       author: true,
       postAnonymousProfile: { include: { anonymousProfile: true } },
@@ -49,7 +49,7 @@ async function getAnswers(postId: string, currentUserId: string | undefined) {
       }))
   }
   const answers = await prisma.answer.findMany({
-    where: { postId },
+    where: { postId, isHidden: false },
     include: {
       author: true,
       postAnonymousProfile: { include: { anonymousProfile: true } },
