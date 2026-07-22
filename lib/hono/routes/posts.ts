@@ -460,18 +460,31 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
 
     let answer: AnswerWithAnonymousProfile
     try {
-      answer = await prisma.answer.create({
-        data: {
-          postId: id,
-          authorId: user.id,
-          postAnonymousProfileId: assignment.id,
-          body: data.body,
-          idempotencyKey,
-        },
-        include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+      answer = await prisma.$transaction(async (tx) => {
+        const created = await tx.answer.create({
+          data: {
+            postId: id,
+            authorId: user.id,
+            postAnonymousProfileId: assignment.id,
+            body: data.body,
+            idempotencyKey,
+          },
+          include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+        })
+
+        await tx.post.update({
+          where: { id },
+          data: {
+            answerCount: { increment: 1 },
+            status: post.status === QuestionStatus.OPEN ? QuestionStatus.ANSWERED : post.status,
+          },
+        })
+
+        return created
       })
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        console.error('Failed to create answer', { postId: id, error })
         return c.json({ error: '回答の作成に失敗しました' }, 500)
       }
 
@@ -491,18 +504,6 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       }
 
       return c.json({ answer: toAnswerResponse(existingAnswer) }, 200)
-    }
-
-    try {
-      await prisma.post.update({
-        where: { id },
-        data: {
-          answerCount: { increment: 1 },
-          status: post.status === QuestionStatus.OPEN ? QuestionStatus.ANSWERED : post.status,
-        },
-      })
-    } catch (error) {
-      console.error('Failed to update post answer count', { postId: id, error })
     }
 
     const moderation = await moderateAnswer(answer.body)
@@ -575,20 +576,16 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (post.authorId === user.id) return c.json({ error: '自分の質問にはいいねできません' }, 403)
 
-    try {
-      await prisma.questionLike.create({ data: { postId: id, userId: user.id } })
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        return c.json({ liked: true, likeCount: post.likeCount }, 200)
-      }
-      return c.json({ error: 'いいねの処理に失敗しました' }, 500)
-    }
-
-    const updated = await prisma.post.update({
-      where: { id },
-      data: { likeCount: { increment: 1 } },
+    const likeCount = await prisma.$transaction(async (tx) => {
+      await tx.questionLike.createMany({
+        data: [{ postId: id, userId: user.id }],
+        skipDuplicates: true,
+      })
+      const likeCount = await tx.questionLike.count({ where: { postId: id } })
+      await tx.post.update({ where: { id }, data: { likeCount } })
+      return likeCount
     })
-    return c.json({ liked: true, likeCount: updated.likeCount }, 200)
+    return c.json({ liked: true, likeCount }, 200)
   })
   .openapi(unlikeRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -603,16 +600,13 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     const post = await prisma.post.findUnique({ where: { id } })
     if (!post) return c.json({ error: 'Not found' }, 404)
 
-    const deleted = await prisma.questionLike.deleteMany({ where: { postId: id, userId: user.id } })
-    if (deleted.count === 0) {
-      return c.json({ liked: false, likeCount: post.likeCount }, 200)
-    }
-
-    const updated = await prisma.post.update({
-      where: { id },
-      data: { likeCount: { decrement: 1 } },
+    const likeCount = await prisma.$transaction(async (tx) => {
+      await tx.questionLike.deleteMany({ where: { postId: id, userId: user.id } })
+      const likeCount = await tx.questionLike.count({ where: { postId: id } })
+      await tx.post.update({ where: { id }, data: { likeCount } })
+      return likeCount
     })
-    return c.json({ liked: false, likeCount: updated.likeCount }, 200)
+    return c.json({ liked: false, likeCount }, 200)
   })
   .openapi(bookmarkRoute, async (c) => {
     const { id } = c.req.valid('param')

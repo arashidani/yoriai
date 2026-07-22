@@ -1,5 +1,4 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
-import { Prisma } from '@/app/generated/prisma/client'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, IdParamSchema, LikeStatusSchema } from '@/lib/hono/openapi/schemas'
@@ -62,20 +61,16 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
     if (!answer) return c.json({ error: 'Not found' }, 404)
     if (answer.authorId === user.id) return c.json({ error: '自分の回答にはいいねできません' }, 403)
 
-    try {
-      await prisma.answerLike.create({ data: { answerId: id, userId: user.id } })
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        return c.json({ liked: true, likeCount: answer.likeCount }, 200)
-      }
-      return c.json({ error: 'いいねの処理に失敗しました' }, 500)
-    }
-
-    const updated = await prisma.answer.update({
-      where: { id },
-      data: { likeCount: { increment: 1 } },
+    const likeCount = await prisma.$transaction(async (tx) => {
+      await tx.answerLike.createMany({
+        data: [{ answerId: id, userId: user.id }],
+        skipDuplicates: true,
+      })
+      const likeCount = await tx.answerLike.count({ where: { answerId: id } })
+      await tx.answer.update({ where: { id }, data: { likeCount } })
+      return likeCount
     })
-    return c.json({ liked: true, likeCount: updated.likeCount }, 200)
+    return c.json({ liked: true, likeCount }, 200)
   })
   .openapi(unlikeRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -90,14 +85,11 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
     const answer = await prisma.answer.findUnique({ where: { id } })
     if (!answer) return c.json({ error: 'Not found' }, 404)
 
-    const deleted = await prisma.answerLike.deleteMany({ where: { answerId: id, userId: user.id } })
-    if (deleted.count === 0) {
-      return c.json({ liked: false, likeCount: answer.likeCount }, 200)
-    }
-
-    const updated = await prisma.answer.update({
-      where: { id },
-      data: { likeCount: { decrement: 1 } },
+    const likeCount = await prisma.$transaction(async (tx) => {
+      await tx.answerLike.deleteMany({ where: { answerId: id, userId: user.id } })
+      const likeCount = await tx.answerLike.count({ where: { answerId: id } })
+      await tx.answer.update({ where: { id }, data: { likeCount } })
+      return likeCount
     })
-    return c.json({ liked: false, likeCount: updated.likeCount }, 200)
+    return c.json({ liked: false, likeCount }, 200)
   })
