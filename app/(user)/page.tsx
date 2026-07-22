@@ -11,11 +11,12 @@ import { prisma } from '@/lib/prisma/client'
 async function getRawPosts() {
   if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
   return prisma.post.findMany({
+    where: { deletedAt: null },
     include: {
       author: true,
       postAnonymousProfile: { include: { anonymousProfile: true } },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { updatedAt: 'desc' },
   })
 }
 
@@ -61,6 +62,8 @@ async function getPosts(currentUserId: string | undefined) {
       likeCount: post.likeCount,
       liked: likedPostIds.has(post.id),
       saved: savedPostIds.has(post.id),
+      status: post.status,
+      answerCount: post.answerCount,
       createdAt: post.createdAt,
     }
   })

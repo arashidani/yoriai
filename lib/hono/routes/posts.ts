@@ -31,7 +31,7 @@ type AnswerWithAnonymousProfile = Answer & {
   postAnonymousProfile: PostAnonymousProfile & { anonymousProfile: AnonymousProfile }
 }
 
-function toAnswerResponse(answer: AnswerWithAnonymousProfile) {
+export function toAnswerResponse(answer: AnswerWithAnonymousProfile) {
   return {
     id: answer.id,
     postId: answer.postId,
@@ -259,14 +259,19 @@ const deleteRoute = createRoute({
   method: 'delete',
   path: '/{id}',
   tags: ['posts'],
-  summary: '投稿を削除（管理者のみ）',
+  summary: '投稿を削除（管理者、または回答が付く前の質問者本人）',
   security: [{ supabaseSession: [] }],
   middleware: [authMiddleware] as const,
   request: { params: IdParamSchema },
   responses: {
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    403: errorResponse('権限不足（管理者・質問者本人以外）', 'Forbidden'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    409: errorResponse(
+      '回答が付いている質問は質問者本人には削除できない',
+      '回答がある質問は削除できません',
+    ),
   },
 })
 
@@ -276,8 +281,9 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       return c.json({ posts: MOCK_POSTS }, 200)
     }
     const posts = await prisma.post.findMany({
+      where: { deletedAt: null },
       include: { author: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     })
     return c.json({ posts }, 200)
   })
@@ -288,8 +294,8 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       if (!post) return c.json({ error: 'Not found' }, 404)
       return c.json({ post }, 200)
     }
-    const post = await prisma.post.findUnique({
-      where: { id },
+    const post = await prisma.post.findFirst({
+      where: { id, deletedAt: null },
       include: { author: true },
     })
     if (!post) return c.json({ error: 'Not found' }, 404)
@@ -311,6 +317,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
             answerCount: 0,
             likeCount: 0,
             resolvedAt: null,
+            deletedAt: null,
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -366,15 +373,23 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     const moderation = await moderatePost(post.title, post.body)
     if (moderation?.flagged) {
       try {
-        await prisma.aiFlag.create({
-          data: {
-            title: `不適切な投稿の可能性: ${post.title}`,
-            detail: moderation.reason,
-            severity: FlagSeverity[moderation.severity],
-            targetUserId: user.id,
-            postId: post.id,
-          },
-        })
+        const [, flaggedPost] = await prisma.$transaction([
+          prisma.aiFlag.create({
+            data: {
+              title: `不適切な投稿の可能性: ${post.title}`,
+              detail: moderation.reason,
+              severity: FlagSeverity[moderation.severity],
+              targetUserId: user.id,
+              postId: post.id,
+            },
+          }),
+          prisma.post.update({
+            where: { id: post.id },
+            data: { deletedAt: new Date() },
+            include: { author: true },
+          }),
+        ])
+        post = flaggedPost
       } catch (error) {
         console.error('Failed to create AI flag', { postId: post.id, error })
       }
@@ -391,11 +406,11 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       return c.json({ answers }, 200)
     }
 
-    const post = await prisma.post.findUnique({ where: { id } })
+    const post = await prisma.post.findFirst({ where: { id, deletedAt: null } })
     if (!post) return c.json({ error: 'Not found' }, 404)
 
     const answers = await prisma.answer.findMany({
-      where: { postId: id },
+      where: { postId: id, isHidden: false },
       include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
       orderBy: [{ likeCount: 'desc' }, { createdAt: 'asc' }],
     })
@@ -429,7 +444,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     const data = c.req.valid('json')
     const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
 
-    const post = await prisma.post.findUnique({ where: { id } })
+    const post = await prisma.post.findFirst({ where: { id, deletedAt: null } })
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (post.status !== QuestionStatus.OPEN && post.status !== QuestionStatus.ANSWERED) {
       return c.json({ error: '回答を受け付けていない質問です' }, 409)
@@ -493,15 +508,23 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     const moderation = await moderateAnswer(answer.body)
     if (moderation?.flagged) {
       try {
-        await prisma.aiFlag.create({
-          data: {
-            title: '不適切な回答の可能性',
-            detail: moderation.reason,
-            severity: FlagSeverity[moderation.severity],
-            targetUserId: user.id,
-            answerId: answer.id,
-          },
-        })
+        const [, hiddenAnswer] = await prisma.$transaction([
+          prisma.aiFlag.create({
+            data: {
+              title: '不適切な回答の可能性',
+              detail: moderation.reason,
+              severity: FlagSeverity[moderation.severity],
+              targetUserId: user.id,
+              answerId: answer.id,
+            },
+          }),
+          prisma.answer.update({
+            where: { id: answer.id },
+            data: { isHidden: true, hiddenAt: new Date(), hiddenReason: 'AIによる自動検出' },
+            include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+          }),
+        ])
+        answer = hiddenAnswer
       } catch (error) {
         console.error('Failed to create AI flag', { answerId: answer.id, error })
       }
@@ -526,7 +549,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     const post = await prisma.post.findUnique({ where: { id } })
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
-    if (post.status === QuestionStatus.HIDDEN) {
+    if (post.status === QuestionStatus.HIDDEN || post.deletedAt) {
       return c.json({ error: '操作できない質問の状態です' }, 409)
     }
 
@@ -632,12 +655,20 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
   })
   .openapi(deleteRoute, async (c) => {
     const user = c.get('user')
-    if (user.role !== Role.ADMIN) return c.json({ error: 'Forbidden' }, 403)
-
     const { id } = c.req.valid('param')
+
     if (process.env.MOCK_MODE === 'true') {
       return c.json({ success: true }, 200)
     }
+
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    if (user.role !== Role.ADMIN) {
+      if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+      if (post.answerCount > 0) return c.json({ error: '回答がある質問は削除できません' }, 409)
+    }
+
     await prisma.post.delete({ where: { id } })
     return c.json({ success: true }, 200)
   })

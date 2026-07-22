@@ -22,6 +22,8 @@ const basePosts = [
     likeCount: 3,
     liked: false,
     saved: false,
+    status: 'RESOLVED' as const,
+    answerCount: 1,
     createdAt: '2024-01-10T00:00:00Z',
   },
   {
@@ -33,6 +35,8 @@ const basePosts = [
     likeCount: 0,
     liked: false,
     saved: false,
+    status: 'OPEN' as const,
+    answerCount: 0,
     createdAt: '2024-01-11T00:00:00Z',
   },
 ]
@@ -60,6 +64,13 @@ export const StatusFilter: Story = {
       'aria-pressed',
       'false',
     )
+    await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
+    await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
+
+    const unanswered = canvas.getByRole('button', { name: '未回答' })
+    await userEvent.click(unanswered)
+    await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
+    await expect(canvas.getByText(/TypeScriptの型エラー/)).toBeVisible()
   },
 }
 

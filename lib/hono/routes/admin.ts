@@ -8,6 +8,7 @@ import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
   AiFlagSchema,
   AnonymousProfileSchema,
+  AnswerSchema,
   BadgeSchema,
   errorResponse,
   IdParamSchema,
@@ -19,9 +20,11 @@ import {
   SuccessSchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
+import { toAnswerResponse } from '@/lib/hono/routes/posts'
 import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
+  MOCK_ANSWERS,
   MOCK_BADGES,
   MOCK_INVITES,
   MOCK_MISSIONS,
@@ -143,6 +146,42 @@ const listPostsRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const restorePostRoute = createRoute({
+  method: 'patch',
+  path: '/posts/{id}/restore',
+  tags: ['admin'],
+  summary: 'ソフトデリートされた投稿を復元（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '復元後の投稿',
+      content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+  },
+})
+
+const restoreAnswerRoute = createRoute({
+  method: 'patch',
+  path: '/answers/{id}/restore',
+  tags: ['admin'],
+  summary: '非表示にされた回答を復元（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '復元後の回答',
+      content: { 'application/json': { schema: z.object({ answer: AnswerSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('回答が見つからない', 'Not found'),
   },
 })
 
@@ -423,9 +462,47 @@ export const adminRoute = $(
     }
     const posts = await prisma.post.findMany({
       include: { author: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     })
     return c.json({ posts }, 200)
+  })
+  .openapi(restorePostRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ post: { ...post, deletedAt: null } }, 200)
+    }
+
+    const existing = await prisma.post.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    const post = await prisma.post.update({
+      where: { id },
+      data: { deletedAt: null },
+      include: { author: true },
+    })
+    return c.json({ post }, 200)
+  })
+  .openapi(restoreAnswerRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const answer = MOCK_ANSWERS.find((a) => a.id === id)
+      if (!answer) return c.json({ error: 'Not found' }, 404)
+      return c.json({ answer: { ...answer, isHidden: false } }, 200)
+    }
+
+    const existing = await prisma.answer.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    const answer = await prisma.answer.update({
+      where: { id },
+      data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
+      include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+    })
+    return c.json({ answer: toAnswerResponse(answer) }, 200)
   })
   .openapi(patchUserRoute, async (c) => {
     const currentUser = c.get('user')
@@ -551,10 +628,17 @@ export const adminRoute = $(
       return c.json({ flags: MOCK_AI_FLAGS }, 200)
     }
     const flags = await prisma.aiFlag.findMany({
-      include: { targetUser: true, post: true },
+      include: {
+        targetUser: true,
+        post: true,
+        answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
+      },
       orderBy: { createdAt: 'desc' },
     })
-    return c.json({ flags }, 200)
+    return c.json(
+      { flags: flags.map((f) => ({ ...f, answer: f.answer ? toAnswerResponse(f.answer) : null })) },
+      200,
+    )
   })
   .openapi(confirmAiFlagRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -568,9 +652,16 @@ export const adminRoute = $(
     const flag = await prisma.aiFlag.update({
       where: { id },
       data: { status: FlagStatus.CONFIRMED },
-      include: { targetUser: true, post: true },
+      include: {
+        targetUser: true,
+        post: true,
+        answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
+      },
     })
-    return c.json({ flag }, 200)
+    return c.json(
+      { flag: { ...flag, answer: flag.answer ? toAnswerResponse(flag.answer) : null } },
+      200,
+    )
   })
   .openapi(listAnonymousProfilesRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {

@@ -33,6 +33,7 @@ export const PostSchema = z
     answerCount: z.number().openapi({ example: 0 }),
     likeCount: z.number().openapi({ example: 0 }),
     resolvedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
+    deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
     createdAt: dateTime(),
     updatedAt: dateTime(),
   })
@@ -114,6 +115,8 @@ export const AiFlagSchema = z
     targetUser: z.union([UserSchema, z.null()]).optional(),
     postId: z.string().nullable().openapi({ example: 'post-1' }),
     post: z.union([PostSchema, z.null()]).optional(),
+    answerId: z.string().nullable().openapi({ example: null }),
+    answer: z.union([AnswerSchema, z.null()]).optional(),
     createdAt: dateTime(),
   })
   .openapi('AiFlag')

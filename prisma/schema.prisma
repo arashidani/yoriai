@@ -49,6 +49,9 @@ model Post {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
+  /// AIフラグによる自動ソフトデリート日時（管理者が復元するとnullに戻る）
+  deletedAt DateTime?
+
   @@unique([authorId, idempotencyKey])
 }
 
