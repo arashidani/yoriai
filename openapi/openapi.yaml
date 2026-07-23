@@ -9,7 +9,9 @@ servers:
     description: デフォルト
 tags:
   - name: posts
-    description: 投稿の閲覧・作成・削除
+    description: 質問（投稿）の閲覧・作成・削除、回答の投稿・一覧取得、解決済み操作
+  - name: answers
+    description: 回答へのいいね
   - name: users
     description: ユーザー登録・自分のプロフィール取得
   - name: admin
@@ -48,6 +50,34 @@ components:
           anyOf:
             - $ref: "#/components/schemas/User"
             - type: "null"
+        status:
+          type: string
+          enum:
+            - OPEN
+            - ANSWERED
+            - RESOLVED
+            - HIDDEN
+          example: OPEN
+        answerCount:
+          type: number
+          example: 0
+        likeCount:
+          type: number
+          example: 0
+        resolvedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              example: 2024-01-01T00:00:00.000Z
+            - type: "null"
+          example: null
+        deletedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              example: 2024-01-01T00:00:00.000Z
+            - type: "null"
+          example: null
         createdAt:
           type: string
           format: date-time
@@ -61,6 +91,11 @@ components:
         - title
         - body
         - authorId
+        - status
+        - answerCount
+        - likeCount
+        - resolvedAt
+        - deletedAt
         - createdAt
         - updatedAt
     User:
@@ -104,6 +139,86 @@ components:
           type: string
       required:
         - error
+    Answer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: answer-1
+        postId:
+          type: string
+          example: post-1
+        body:
+          type: string
+          example: App Router を使うのがおすすめです。
+        anonymousProfile:
+          $ref: "#/components/schemas/AnonymousProfile"
+        isHidden:
+          type: boolean
+          example: false
+        likeCount:
+          type: number
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - postId
+        - body
+        - anonymousProfile
+        - isHidden
+        - likeCount
+        - createdAt
+        - updatedAt
+    AnonymousProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: anon-1
+        displayName:
+          type: string
+          example: ねこ
+        avatarUrl:
+          type: string
+          example: /anonymous-profiles/cat.svg
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - displayName
+        - avatarUrl
+    LikeStatus:
+      type: object
+      properties:
+        liked:
+          type: boolean
+          example: true
+        likeCount:
+          type: number
+          example: 1
+      required:
+        - liked
+        - likeCount
+    SavedStatus:
+      type: object
+      properties:
+        saved:
+          type: boolean
+          example: true
+      required:
+        - saved
     Success:
       type: object
       properties:
@@ -322,6 +437,15 @@ components:
           anyOf:
             - $ref: "#/components/schemas/Post"
             - type: "null"
+        answerId:
+          type:
+            - string
+            - "null"
+          example: null
+        answer:
+          anyOf:
+            - $ref: "#/components/schemas/Answer"
+            - type: "null"
         createdAt:
           type: string
           format: date-time
@@ -334,6 +458,7 @@ components:
         - status
         - targetUserId
         - postId
+        - answerId
         - createdAt
     Invite:
       type: object
@@ -488,7 +613,7 @@ paths:
     delete:
       tags:
         - posts
-      summary: 投稿を削除（管理者のみ）
+      summary: 投稿を削除（管理者、または回答が付く前の質問者本人）
       security:
         - supabaseSession: []
       parameters:
@@ -514,13 +639,493 @@ paths:
               example:
                 error: Unauthorized
         "403":
-          description: 権限不足（管理者専用）
+          description: 権限不足（管理者・質問者本人以外）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 回答が付いている質問は質問者本人には削除できない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 回答がある質問は削除できません
+  /api/posts/{id}/answers:
+    get:
+      tags:
+        - posts
+      summary: 質問への回答一覧を取得（いいね数の多い順、同数なら投稿順）
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 回答一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Answer"
+                required:
+                  - answers
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+    post:
+      tags:
+        - posts
+      summary: 質問に回答を投稿
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+        - schema:
+            type: string
+            format: uuid
+            description: 通信失敗後に同じ回答を再送しても、重複作成しないためのUUID
+            example: 550e8400-e29b-41d4-a716-446655440000
+          required: true
+          description: 通信失敗後に同じ回答を再送しても、重複作成しないためのUUID
+          name: idempotency-key
+          in: header
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  minLength: 1
+              required:
+                - body
+      responses:
+        "200":
+          description: 再送された回答（すでに作成済みの回答）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    $ref: "#/components/schemas/Answer"
+                required:
+                  - answer
+        "201":
+          description: 作成された回答
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    $ref: "#/components/schemas/Answer"
+                required:
+                  - answer
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 解決済み・非表示の質問には回答できない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 回答を受け付けていない質問です
+        "500":
+          description: 回答の作成に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 回答の作成に失敗しました
+  /api/posts/{id}/resolve:
+    post:
+      tags:
+        - posts
+      summary: 質問を解決済みにする（質問者のみ）
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 解決済みにした質問
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+                required:
+                  - post
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 質問者以外による操作
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 非表示の質問は解決済みにできない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 操作できない質問の状態です
+  /api/posts/{id}/likes:
+    post:
+      tags:
+        - posts
+      summary: 質問にいいねする
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 自分の質問にはいいねできない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 自分の質問にはいいねできません
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいねの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいねの処理に失敗しました
+    delete:
+      tags:
+        - posts
+      summary: 質問へのいいねを取り消す
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね取り消し後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいね取り消しの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいね取り消しの処理に失敗しました
+  /api/posts/{id}/bookmarks:
+    post:
+      tags:
+        - posts
+      summary: 質問を保存する
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 保存後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: 保存の処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 保存の処理に失敗しました
+    delete:
+      tags:
+        - posts
+      summary: 質問の保存を取り消す
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 保存取り消し後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: 保存取り消しの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 保存取り消しの処理に失敗しました
+  /api/answers/{id}/likes:
+    post:
+      tags:
+        - answers
+      summary: 回答にいいねする
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 自分の回答にはいいねできない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 自分の回答にはいいねできません
+        "404":
+          description: 回答が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいねの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいねの処理に失敗しました
+    delete:
+      tags:
+        - answers
+      summary: 回答へのいいねを取り消す
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね取り消し後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 回答が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいね取り消しの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいね取り消しの処理に失敗しました
   /api/admin/users:
     get:
       tags:
@@ -731,6 +1336,104 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
+  /api/admin/posts/{id}/restore:
+    patch:
+      tags:
+        - admin
+      summary: ソフトデリートされた投稿を復元（管理者専用）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 復元後の投稿
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+                required:
+                  - post
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+  /api/admin/answers/{id}/restore:
+    patch:
+      tags:
+        - admin
+      summary: 非表示にされた回答を復元（管理者専用）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 復元後の回答
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    $ref: "#/components/schemas/Answer"
+                required:
+                  - answer
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 回答が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
   /api/admin/users/{id}:
     patch:
       tags:
@@ -1121,6 +1824,203 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Not found
+  /api/admin/anonymous-profiles:
+    get:
+      tags:
+        - admin
+      summary: 匿名キャラ一覧を取得（管理者専用）
+      security: *a1
+      responses:
+        "200":
+          description: 匿名キャラ一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profiles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AnonymousProfile"
+                required:
+                  - profiles
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+    post:
+      tags:
+        - admin
+      summary: 匿名キャラを追加（管理者専用）
+      security: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                avatarUrl:
+                  type: string
+                  minLength: 1
+              required:
+                - displayName
+                - avatarUrl
+      responses:
+        "201":
+          description: 追加された匿名キャラ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: "#/components/schemas/AnonymousProfile"
+                required:
+                  - profile
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+  /api/admin/anonymous-profiles/{id}:
+    patch:
+      tags:
+        - admin
+      summary: 匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isActive:
+                  type: boolean
+              required:
+                - isActive
+      responses:
+        "200":
+          description: 更新後の匿名キャラ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: "#/components/schemas/AnonymousProfile"
+                required:
+                  - profile
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 匿名キャラが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+    delete:
+      tags:
+        - admin
+      summary: 匿名キャラを削除（管理者専用、割り当て済みのキャラは削除不可）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 匿名キャラが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: すでに質問スレッドで使われているため削除できない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: すでに使われている匿名キャラは削除できません。候補から外すには無効化してください
   /api/users:
     post:
       tags:
