@@ -2,6 +2,7 @@ import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { openApiConfig } from './openapi/config'
 import { adminRoute } from './routes/admin'
+import { answersRoute } from './routes/answers'
 import { invitesRoute } from './routes/invites'
 import { passwordResetsRoute } from './routes/password-resets'
 import { postsRoute } from './routes/posts'
@@ -10,6 +11,7 @@ import { usersRoute } from './routes/users'
 const app = new OpenAPIHono()
   .basePath('/api')
   .route('/posts', postsRoute)
+  .route('/answers', answersRoute)
   .route('/admin', adminRoute)
   .route('/users', usersRoute)
   .route('/invites', invitesRoute)

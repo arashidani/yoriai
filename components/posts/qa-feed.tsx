@@ -7,29 +7,34 @@ import type { Post } from './post-list'
 import { PostList } from './post-list'
 import { QaFeedCategorySelect, QaFeedStatusFilter } from './qa-feed-controls'
 
-// TODO: カテゴリー・ステータスは仮データ。バックエンド実装後に posts のフィールドへ接続する
+// TODO: カテゴリーは仮データ。バックエンド実装後に posts のフィールドへ接続する
 const CATEGORIES = ['総務・労務', '経理', 'IT・システム', 'その他']
 
-// TODO: ステータスでの絞り込みはバックエンド実装後に posts のフィールドへ接続する
 const STATUS_FILTERS = [
   { id: 'all', label: 'すべて' },
   { id: 'resolved', label: '解決済み' },
   { id: 'unanswered', label: '未回答' },
 ]
 
+const STATUS_PREDICATES: Record<string, (post: Post) => boolean> = {
+  all: () => true,
+  resolved: (post) => post.status === 'RESOLVED',
+  unanswered: (post) => post.status === 'OPEN',
+}
+
 type QaFeedProps = {
   posts: Post[]
   isAdmin: boolean
 }
 
-/** 検索・フィルタ行と質問一覧。キーワードはタイトル・本文に対する部分一致。 */
+/** 検索・フィルタ行と質問一覧。キーワードはタイトル・本文に対する部分一致、ステータスは post.status との一致で絞り込む。 */
 export function QaFeed({ posts, isAdmin }: QaFeedProps) {
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState('all')
 
-  const filteredPosts = keyword
-    ? posts.filter((post) => post.title.includes(keyword) || post.body.includes(keyword))
-    : posts
+  const filteredPosts = posts
+    .filter(STATUS_PREDICATES[status] ?? STATUS_PREDICATES.all)
+    .filter((post) => !keyword || post.title.includes(keyword) || post.body.includes(keyword))
 
   return (
     <>

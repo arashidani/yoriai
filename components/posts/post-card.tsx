@@ -1,5 +1,7 @@
-import { Bookmark, MessageCircle } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 import Link from 'next/link'
+import { QuestionLikeButton } from '@/components/posts/question-like-button'
+import { SaveButton } from '@/components/posts/save-button'
 import { DeletePostButton } from './delete-post-button'
 import type { Post } from './post-list'
 
@@ -26,18 +28,22 @@ const actionChipClass =
 
 export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
   const excerpt = post.body.length > 100 ? `${post.body.slice(0, 100)}…` : post.body
+  const canDelete = isAdmin || (post.isOwnQuestion && post.answerCount === 0)
 
   return (
-    <div className="relative">
-      <Link href={`/posts/${post.id}`} className="block">
-        <article className="rounded-xl border border-input bg-background p-5 shadow-xs transition-shadow hover:shadow-md">
+    <div className="relative rounded-xl border border-input bg-background shadow-xs transition-shadow hover:shadow-md">
+      {canDelete && onDeleted && (
+        <div className="absolute top-3 right-3 z-10">
+          <DeletePostButton postId={post.id} postTitle={post.title} onDeleted={onDeleted} />
+        </div>
+      )}
+      <Link href={`/posts/${post.id}`} className="block p-5 pb-0">
+        <article>
           <div className="flex gap-3">
             <div className="size-10 shrink-0 rounded-full bg-muted" aria-hidden />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-paragraph-small font-bold">
-                  {post.author ? (post.author.name ?? post.author.email) : '退会したユーザー'}
-                </span>
+                <span className="text-paragraph-small font-bold">{post.displayName}</span>
                 <span
                   className="text-paragraph-mini text-secondary-foreground"
                   suppressHydrationWarning
@@ -49,26 +55,24 @@ export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
               <p className="line-clamp-2 text-paragraph-small text-secondary-foreground">
                 {excerpt}
               </p>
-              {/* 返信・保存は未実装のため装飾のみ(a 内に button を置けない) */}
-              <div className="flex items-center gap-3 pt-3">
-                <span className={actionChipClass}>
-                  <MessageCircle className="size-3" />
-                  返信
-                </span>
-                <span className={actionChipClass}>
-                  <Bookmark className="size-3" />
-                  保存
-                </span>
-              </div>
             </div>
           </div>
         </article>
       </Link>
-      {isAdmin && onDeleted && (
-        <div className="absolute right-3 bottom-3">
-          <DeletePostButton postId={post.id} postTitle={post.title} onDeleted={onDeleted} />
-        </div>
-      )}
+      <div className="flex items-center gap-3 px-5 pt-3 pb-5 pl-[3.25rem]">
+        <Link href={`/posts/${post.id}#answer-form`} className={actionChipClass}>
+          <MessageCircle className="size-3" />
+          返信
+        </Link>
+        <SaveButton postId={post.id} initialSaved={post.saved} />
+        {!post.isOwnQuestion && (
+          <QuestionLikeButton
+            postId={post.id}
+            initialLiked={post.liked}
+            initialLikeCount={post.likeCount}
+          />
+        )}
+      </div>
     </div>
   )
 }

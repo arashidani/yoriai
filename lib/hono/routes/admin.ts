@@ -1,11 +1,14 @@
 import { randomBytes } from 'node:crypto'
 import { $, createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { createMiddleware } from 'hono/factory'
+import { Prisma } from '@/app/generated/prisma/client'
 import { FlagStatus, Role } from '@/app/generated/prisma/enums'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
   AiFlagSchema,
+  AnonymousProfileSchema,
+  AnswerSchema,
   BadgeSchema,
   errorResponse,
   IdParamSchema,
@@ -17,8 +20,11 @@ import {
   SuccessSchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
+import { toAnswerResponse } from '@/lib/hono/routes/posts'
 import {
   MOCK_AI_FLAGS,
+  MOCK_ANONYMOUS_PROFILES,
+  MOCK_ANSWERS,
   MOCK_BADGES,
   MOCK_INVITES,
   MOCK_MISSIONS,
@@ -26,6 +32,10 @@ import {
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import {
+  createAnonymousProfileSchema,
+  updateAnonymousProfileSchema,
+} from '@/lib/schemas/anonymous-profile'
 import { createBadgeSchema } from '@/lib/schemas/badge'
 import { createInviteSchema } from '@/lib/schemas/invite'
 import { createMissionSchema } from '@/lib/schemas/mission'
@@ -136,6 +146,42 @@ const listPostsRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const restorePostRoute = createRoute({
+  method: 'patch',
+  path: '/posts/{id}/restore',
+  tags: ['admin'],
+  summary: 'ソフトデリートされた投稿を復元（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '復元後の投稿',
+      content: { 'application/json': { schema: z.object({ post: PostSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+  },
+})
+
+const restoreAnswerRoute = createRoute({
+  method: 'patch',
+  path: '/answers/{id}/restore',
+  tags: ['admin'],
+  summary: '非表示にされた回答を復元（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '復元後の回答',
+      content: { 'application/json': { schema: z.object({ answer: AnswerSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('回答が見つからない', 'Not found'),
   },
 })
 
@@ -279,6 +325,89 @@ const confirmAiFlagRoute = createRoute({
   },
 })
 
+const listAnonymousProfilesRoute = createRoute({
+  method: 'get',
+  path: '/anonymous-profiles',
+  tags: ['admin'],
+  summary: '匿名キャラ一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: '匿名キャラ一覧',
+      content: {
+        'application/json': { schema: z.object({ profiles: z.array(AnonymousProfileSchema) }) },
+      },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const createAnonymousProfileRoute = createRoute({
+  method: 'post',
+  path: '/anonymous-profiles',
+  tags: ['admin'],
+  summary: '匿名キャラを追加（管理者専用）',
+  security,
+  request: {
+    body: {
+      required: true,
+      content: { 'application/json': { schema: createAnonymousProfileSchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: '追加された匿名キャラ',
+      content: { 'application/json': { schema: z.object({ profile: AnonymousProfileSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const updateAnonymousProfileRoute = createRoute({
+  method: 'patch',
+  path: '/anonymous-profiles/{id}',
+  tags: ['admin'],
+  summary: '匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）',
+  security,
+  request: {
+    params: IdParamSchema,
+    body: {
+      required: true,
+      content: { 'application/json': { schema: updateAnonymousProfileSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description: '更新後の匿名キャラ',
+      content: { 'application/json': { schema: z.object({ profile: AnonymousProfileSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('匿名キャラが見つからない', 'Not found'),
+  },
+})
+
+const deleteAnonymousProfileRoute = createRoute({
+  method: 'delete',
+  path: '/anonymous-profiles/{id}',
+  tags: ['admin'],
+  summary: '匿名キャラを削除（管理者専用、割り当て済みのキャラは削除不可）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('匿名キャラが見つからない', 'Not found'),
+    409: errorResponse(
+      'すでに質問スレッドで使われているため削除できない',
+      'すでに使われている匿名キャラは削除できません。候補から外すには無効化してください',
+    ),
+  },
+})
+
 export const adminRoute = $(
   new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
     .use(authMiddleware)
@@ -333,9 +462,47 @@ export const adminRoute = $(
     }
     const posts = await prisma.post.findMany({
       include: { author: true },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' },
     })
     return c.json({ posts }, 200)
+  })
+  .openapi(restorePostRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ post: { ...post, deletedAt: null } }, 200)
+    }
+
+    const existing = await prisma.post.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    const post = await prisma.post.update({
+      where: { id },
+      data: { deletedAt: null },
+      include: { author: true },
+    })
+    return c.json({ post }, 200)
+  })
+  .openapi(restoreAnswerRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const answer = MOCK_ANSWERS.find((a) => a.id === id)
+      if (!answer) return c.json({ error: 'Not found' }, 404)
+      return c.json({ answer: { ...answer, isHidden: false } }, 200)
+    }
+
+    const existing = await prisma.answer.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    const answer = await prisma.answer.update({
+      where: { id },
+      data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
+      include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+    })
+    return c.json({ answer: toAnswerResponse(answer) }, 200)
   })
   .openapi(patchUserRoute, async (c) => {
     const currentUser = c.get('user')
@@ -461,10 +628,17 @@ export const adminRoute = $(
       return c.json({ flags: MOCK_AI_FLAGS }, 200)
     }
     const flags = await prisma.aiFlag.findMany({
-      include: { targetUser: true, post: true },
+      include: {
+        targetUser: true,
+        post: true,
+        answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
+      },
       orderBy: { createdAt: 'desc' },
     })
-    return c.json({ flags }, 200)
+    return c.json(
+      { flags: flags.map((f) => ({ ...f, answer: f.answer ? toAnswerResponse(f.answer) : null })) },
+      200,
+    )
   })
   .openapi(confirmAiFlagRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -478,7 +652,83 @@ export const adminRoute = $(
     const flag = await prisma.aiFlag.update({
       where: { id },
       data: { status: FlagStatus.CONFIRMED },
-      include: { targetUser: true, post: true },
+      include: {
+        targetUser: true,
+        post: true,
+        answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
+      },
     })
-    return c.json({ flag }, 200)
+    return c.json(
+      { flag: { ...flag, answer: flag.answer ? toAnswerResponse(flag.answer) : null } },
+      200,
+    )
+  })
+  .openapi(listAnonymousProfilesRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ profiles: MOCK_ANONYMOUS_PROFILES }, 200)
+    }
+    const profiles = await prisma.anonymousProfile.findMany({ orderBy: { createdAt: 'asc' } })
+    return c.json({ profiles }, 200)
+  })
+  .openapi(createAnonymousProfileRoute, async (c) => {
+    const data = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json(
+        {
+          profile: {
+            id: `anon-${MOCK_ANONYMOUS_PROFILES.length + 1}`,
+            ...data,
+            isActive: true,
+            createdAt: new Date(),
+          },
+        },
+        201,
+      )
+    }
+
+    const profile = await prisma.anonymousProfile.create({ data })
+    return c.json({ profile }, 201)
+  })
+  .openapi(updateAnonymousProfileRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const { isActive } = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const profile = MOCK_ANONYMOUS_PROFILES.find((p) => p.id === id)
+      if (!profile) return c.json({ error: 'Not found' }, 404)
+      return c.json({ profile: { ...profile, isActive } }, 200)
+    }
+
+    const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    const profile = await prisma.anonymousProfile.update({ where: { id }, data: { isActive } })
+    return c.json({ profile }, 200)
+  })
+  .openapi(deleteAnonymousProfileRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    try {
+      await prisma.anonymousProfile.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json(
+          {
+            error:
+              'すでに使われている匿名キャラは削除できません。候補から外すには無効化してください',
+          },
+          409,
+        )
+      }
+      throw error
+    }
+    return c.json({ success: true }, 200)
   })

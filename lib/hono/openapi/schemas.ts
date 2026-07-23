@@ -29,10 +29,52 @@ export const PostSchema = z
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
     // .nullable() だと登録済みコンポーネント User 自体が nullable になるため union で書く
     author: z.union([UserSchema, z.null()]).optional(),
+    status: z.enum(['OPEN', 'ANSWERED', 'RESOLVED', 'HIDDEN']).openapi({ example: 'OPEN' }),
+    answerCount: z.number().openapi({ example: 0 }),
+    likeCount: z.number().openapi({ example: 0 }),
+    resolvedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
+    deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
     createdAt: dateTime(),
     updatedAt: dateTime(),
   })
   .openapi('Post')
+
+export const AnonymousProfileSchema = z
+  .object({
+    id: z.string().openapi({ example: 'anon-1' }),
+    displayName: z.string().openapi({ example: 'ねこ' }),
+    avatarUrl: z.string().openapi({ example: '/anonymous-profiles/cat.svg' }),
+    // 質問・回答の公開レスポンス（Answer.anonymousProfile等）では省略される。管理画面の一覧でのみ使う
+    isActive: z.boolean().optional().openapi({ example: true }),
+    createdAt: dateTime().optional(),
+  })
+  .openapi('AnonymousProfile')
+
+export const AnswerSchema = z
+  .object({
+    id: z.string().openapi({ example: 'answer-1' }),
+    postId: z.string().openapi({ example: 'post-1' }),
+    body: z.string().openapi({ example: 'App Router を使うのがおすすめです。' }),
+    anonymousProfile: AnonymousProfileSchema,
+    isHidden: z.boolean().openapi({ example: false }),
+    likeCount: z.number().openapi({ example: 0 }),
+    createdAt: dateTime(),
+    updatedAt: dateTime(),
+  })
+  .openapi('Answer')
+
+export const LikeStatusSchema = z
+  .object({
+    liked: z.boolean().openapi({ example: true }),
+    likeCount: z.number().openapi({ example: 1 }),
+  })
+  .openapi('LikeStatus')
+
+export const SavedStatusSchema = z
+  .object({
+    saved: z.boolean().openapi({ example: true }),
+  })
+  .openapi('SavedStatus')
 
 export const BadgeSchema = z
   .object({
@@ -73,6 +115,8 @@ export const AiFlagSchema = z
     targetUser: z.union([UserSchema, z.null()]).optional(),
     postId: z.string().nullable().openapi({ example: 'post-1' }),
     post: z.union([PostSchema, z.null()]).optional(),
+    answerId: z.string().nullable().openapi({ example: null }),
+    answer: z.union([AnswerSchema, z.null()]).optional(),
     createdAt: dateTime(),
   })
   .openapi('AiFlag')
