@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id                    String                 @id @default(cuid())
+  id                    String                 @id @default(uuid(7))
   supabaseId            String                 @unique
   email                 String                 @unique
   name                  String?
@@ -25,7 +25,7 @@ model User {
 }
 
 model Post {
-  id             String         @id @default(cuid())
+  id             String         @id @default(uuid(7))
   title          String
   body           String
   authorId       String?
@@ -57,7 +57,7 @@ model Post {
 
 /// 質問スレッドごとの「実ユーザー ⇔ 匿名キャラ」の対応
 model PostAnonymousProfile {
-  id                 String           @id @default(cuid())
+  id                 String           @id @default(uuid(7))
   postId             String
   post               Post             @relation("PostAssignments", fields: [postId], references: [id], onDelete: Cascade)
   userId             String
@@ -75,7 +75,7 @@ model PostAnonymousProfile {
 
 /// 匿名キャラのマスタ（表示名・アイコン）
 model AnonymousProfile {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid(7))
   displayName String   @unique
   avatarUrl   String
   isActive    Boolean  @default(true)
@@ -86,7 +86,7 @@ model AnonymousProfile {
 
 /// 質問（Post）に対する回答
 model Answer {
-  id     String @id @default(cuid())
+  id     String @id @default(uuid(7))
   postId String
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
@@ -118,7 +118,7 @@ model Answer {
 }
 
 model QuestionLike {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid(7))
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
@@ -129,7 +129,7 @@ model QuestionLike {
 }
 
 model AnswerLike {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid(7))
   answerId  String
   answer    Answer   @relation(fields: [answerId], references: [id], onDelete: Cascade)
   userId    String
@@ -140,7 +140,7 @@ model AnswerLike {
 }
 
 model PostBookmark {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid(7))
   postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId    String
@@ -151,7 +151,7 @@ model PostBookmark {
 }
 
 model Badge {
-  id          String      @id @default(cuid())
+  id          String      @id @default(uuid(7))
   name        String
   description String
   icon        String
@@ -162,7 +162,7 @@ model Badge {
 }
 
 model Mission {
-  id                String   @id @default(cuid())
+  id                String   @id @default(uuid(7))
   name              String
   description       String
   durationLabel     String
@@ -176,7 +176,7 @@ model Mission {
 }
 
 model AiFlag {
-  id           String       @id @default(cuid())
+  id           String       @id @default(uuid(7))
   title        String
   detail       String
   severity     FlagSeverity
@@ -191,7 +191,7 @@ model AiFlag {
 }
 
 model Invite {
-  id        String    @id @default(cuid())
+  id        String    @id @default(uuid(7))
   token     String    @unique
   name      String?
   role      Role      @default(USER)
@@ -201,7 +201,7 @@ model Invite {
 }
 
 model PasswordReset {
-  id        String    @id @default(cuid())
+  id        String    @id @default(uuid(7))
   token     String    @unique
   userId    String
   expiresAt DateTime
