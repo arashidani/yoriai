@@ -237,6 +237,25 @@ const confirmMutation = useMutation({
 - `queryKey` はドメイン名の単数形キャメルケース（`['aiFlags']` `['badges']` など）で統一し、関連する `useQuery` と `invalidateQueries` で一致させる。
 - `useEffect` + 手動 `.then()` でのフェッチ（例: セレクトボックスの選択肢取得）は `useQuery` に置き換えるとキャッシュが効き、同じデータを複数ページで再取得しなくなる。
 
+**地雷: `app/providers.tsx` の `QueryClientProvider` は本番アプリのルートにしか配線されておらず、Storybook（`.storybook/preview.tsx`）には無い。** propsを取らず内部で`useQuery`/`useMutation`を直接呼ぶコンポーネント（`TagList`など）のStoryを書くときは、そのStoryファイルの`meta.decorators`で個別に`QueryClientProvider`を被せないと`"No QueryClientProvider set"`で全Storyが落ちる。`new QueryClient()`はrender毎に作り直すデコレータ関数の中で生成する（モジュールスコープで1個だけ作るとStory間でキャッシュが共有され汚染される）:
+
+```tsx
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const meta = {
+  component: TagList,
+  decorators: [
+    (Story) => (
+      <QueryClientProvider client={new QueryClient()}>
+        <Story />
+      </QueryClientProvider>
+    ),
+  ],
+} satisfies Meta<typeof TagList>
+```
+
+`npx vitest run --project=storybook <file>`で`play`を実際に実行するまで、この種の失敗は`tsc`/`biome`は検知できない（コンパイルは通る）。新しいuseQuery専用コンポーネントのStoryを書いたら、公開前に一度このコマンドで走らせて確認する。
+
 ---
 
 ## 7. コンポーネント設計
@@ -260,6 +279,39 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 2. `view_items_in_registries` で依存関係・ファイル内容を確認する
 3. `get_add_command_for_items` で追加コマンドを取得し、それを実行する
 4. `get_audit_checklist` で追加後に確認すべき項目を取得し、チェックする
+
+### ドロップダウンのチェックリスト（複数選択フィルタ）
+
+**ルール: 単一選択のセレクトは `@base-ui/react/select`、複数選択のチェックリスト（絞り込みUIなど）は `@base-ui/react/menu` の `Menu.CheckboxItem` を使う。** `components/ui/` にshadcnのdropdown-menu/selectラッパーは無く、`components/posts/qa-feed-controls.tsx`のように`@base-ui/react`のプリミティブを直接スタイリングして使うのがこのリポジトリの流儀。
+
+```tsx
+import { Menu as MenuPrimitive } from '@base-ui/react/menu'
+
+<MenuPrimitive.Root>
+  <MenuPrimitive.Trigger>...</MenuPrimitive.Trigger>
+  <MenuPrimitive.Portal>
+    <MenuPrimitive.Positioner side="bottom" sideOffset={4}>
+      <MenuPrimitive.Popup>
+        {items.map((item) => (
+          <MenuPrimitive.CheckboxItem
+            key={item.id}
+            checked={selectedIds.includes(item.id)}
+            onCheckedChange={(checked) => toggle(item.id, checked)}
+          >
+            {item.name}
+            <MenuPrimitive.CheckboxItemIndicator>
+              <CheckIcon />
+            </MenuPrimitive.CheckboxItemIndicator>
+          </MenuPrimitive.CheckboxItem>
+        ))}
+      </MenuPrimitive.Popup>
+    </MenuPrimitive.Positioner>
+  </MenuPrimitive.Portal>
+</MenuPrimitive.Root>
+```
+
+- `MenuCheckboxItem`の`closeOnClick`は既定で`false`——複数チェックしてもポップアップが閉じないので、そのまま複数選択チェックリストに使える（`false`に明示する必要はない）。
+- Storybookの`play`から操作・検証するときのアクセシブルロールは`menuitemcheckbox`。例: `screen.findByRole('menuitemcheckbox', { name: 'タグ名' })`（`getByRole('checkbox', ...)`ではヒットしない）。
 
 ### Storybook ストーリーの書き方
 

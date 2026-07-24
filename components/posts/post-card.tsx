@@ -55,6 +55,18 @@ export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
               <p className="line-clamp-2 text-paragraph-small text-secondary-foreground">
                 {excerpt}
               </p>
+              {post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pt-2">
+                  {post.tags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="rounded-full bg-muted px-2 py-0.5 text-paragraph-mini text-muted-foreground"
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </article>

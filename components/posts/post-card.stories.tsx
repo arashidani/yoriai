@@ -23,6 +23,7 @@ const basePost = {
   saved: false,
   status: 'OPEN' as const,
   answerCount: 0,
+  tags: [{ id: 'tag-1', name: 'Next.js' }],
   createdAt: '2024-01-10T00:00:00Z',
 }
 
