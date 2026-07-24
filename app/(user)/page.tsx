@@ -5,19 +5,26 @@ import { AnswerableQuestions } from '@/components/posts/answerable-questions'
 import { QaFeed } from '@/components/posts/qa-feed'
 import { buttonVariants } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_POSTS } from '@/lib/mocks/fixtures'
+import { MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
 async function getRawPosts() {
   if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
-  return prisma.post.findMany({
+  const posts = await prisma.post.findMany({
     where: { deletedAt: null },
     include: {
       author: true,
       postAnonymousProfile: { include: { anonymousProfile: true } },
+      tags: { include: { tag: true } },
     },
     orderBy: { updatedAt: 'desc' },
   })
+  return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
+}
+
+async function getAllTags() {
+  if (process.env.MOCK_MODE === 'true') return MOCK_TAGS
+  return prisma.tag.findMany({ orderBy: { name: 'asc' } })
 }
 
 async function getViewerState(userId: string | undefined, postIds: string[]) {
@@ -64,6 +71,7 @@ async function getPosts(currentUserId: string | undefined) {
       saved: savedPostIds.has(post.id),
       status: post.status,
       answerCount: post.answerCount,
+      tags: post.tags.map((tag) => ({ id: tag.id, name: tag.name })),
       createdAt: post.createdAt,
     }
   })
@@ -72,6 +80,7 @@ async function getPosts(currentUserId: string | undefined) {
 export default async function HomePage() {
   const user = await getCurrentUser()
   const posts = await getPosts(user?.id)
+  const allTags = await getAllTags()
   const isAdmin = user?.role === Role.ADMIN
 
   return (
@@ -87,7 +96,7 @@ export default async function HomePage() {
             質問する
           </Link>
         </header>
-        <QaFeed posts={posts} isAdmin={isAdmin} />
+        <QaFeed posts={posts} isAdmin={isAdmin} allTags={allTags} />
       </div>
       <AnswerableQuestions posts={posts} />
     </div>

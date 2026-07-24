@@ -8,6 +8,7 @@ import type {
 } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, QuestionStatus, Role } from '@/app/generated/prisma/enums'
+import { assignTags } from '@/lib/ai/assign-tags'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -282,10 +283,10 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
     const posts = await prisma.post.findMany({
       where: { deletedAt: null },
-      include: { author: true },
+      include: { author: true, tags: { include: { tag: true } } },
       orderBy: { updatedAt: 'desc' },
     })
-    return c.json({ posts }, 200)
+    return c.json({ posts: posts.map((p) => ({ ...p, tags: p.tags.map((pt) => pt.tag) })) }, 200)
   })
   .openapi(getRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -296,10 +297,10 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
     const post = await prisma.post.findFirst({
       where: { id, deletedAt: null },
-      include: { author: true },
+      include: { author: true, tags: { include: { tag: true } } },
     })
     if (!post) return c.json({ error: 'Not found' }, 404)
-    return c.json({ post }, 200)
+    return c.json({ post: { ...post, tags: post.tags.map((pt) => pt.tag) } }, 200)
   })
   .openapi(createPostRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
@@ -318,6 +319,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
             likeCount: 0,
             resolvedAt: null,
             deletedAt: null,
+            tags: [],
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -395,7 +397,28 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       }
     }
 
-    return c.json({ post }, 201)
+    let tags: { id: string; name: string }[] = []
+    if (!post.deletedAt) {
+      try {
+        const allTags = await prisma.tag.findMany({ select: { id: true, name: true } })
+        const selectedNames = await assignTags(
+          post.title,
+          post.body,
+          allTags.map((t) => t.name),
+        )
+        const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 3)
+        if (selectedTags.length > 0) {
+          await prisma.postTag.createMany({
+            data: selectedTags.map((t) => ({ postId: post.id, tagId: t.id })),
+          })
+          tags = selectedTags
+        }
+      } catch (error) {
+        console.error('Failed to assign tags', { postId: post.id, error })
+      }
+    }
+
+    return c.json({ post: { ...post, tags } }, 201)
   })
   .openapi(listAnswersRoute, async (c) => {
     const { id } = c.req.valid('param')

@@ -18,6 +18,7 @@ import {
   PasswordResetCreatedSchema,
   PostSchema,
   SuccessSchema,
+  TagSchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
 import { toAnswerResponse } from '@/lib/hono/routes/posts'
@@ -29,6 +30,7 @@ import {
   MOCK_INVITES,
   MOCK_MISSIONS,
   MOCK_POSTS,
+  MOCK_TAGS,
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
@@ -39,6 +41,7 @@ import {
 import { createBadgeSchema } from '@/lib/schemas/badge'
 import { createInviteSchema } from '@/lib/schemas/invite'
 import { createMissionSchema } from '@/lib/schemas/mission'
+import { createTagSchema } from '@/lib/schemas/tag'
 import { updateUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
@@ -408,6 +411,57 @@ const deleteAnonymousProfileRoute = createRoute({
   },
 })
 
+const listTagsRoute = createRoute({
+  method: 'get',
+  path: '/tags',
+  tags: ['admin'],
+  summary: 'タグ一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: 'タグ一覧',
+      content: { 'application/json': { schema: z.object({ tags: z.array(TagSchema) }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const createTagRoute = createRoute({
+  method: 'post',
+  path: '/tags',
+  tags: ['admin'],
+  summary: 'タグを作成（管理者専用）',
+  security,
+  request: {
+    body: { required: true, content: { 'application/json': { schema: createTagSchema } } },
+  },
+  responses: {
+    201: {
+      description: '作成されたタグ',
+      content: { 'application/json': { schema: z.object({ tag: TagSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    409: errorResponse('同名のタグがすでに存在する', '同じ名前のタグがすでに存在します'),
+  },
+})
+
+const deleteTagRoute = createRoute({
+  method: 'delete',
+  path: '/tags/{id}',
+  tags: ['admin'],
+  summary: 'タグを削除（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('タグが見つからない', 'Not found'),
+  },
+})
+
 export const adminRoute = $(
   new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
     .use(authMiddleware)
@@ -730,5 +784,45 @@ export const adminRoute = $(
       }
       throw error
     }
+    return c.json({ success: true }, 200)
+  })
+  .openapi(listTagsRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ tags: MOCK_TAGS }, 200)
+    }
+    const tags = await prisma.tag.findMany({ orderBy: { createdAt: 'desc' } })
+    return c.json({ tags }, 200)
+  })
+  .openapi(createTagRoute, async (c) => {
+    const data = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json(
+        { tag: { id: `tag-${MOCK_TAGS.length + 1}`, ...data, createdAt: new Date() } },
+        201,
+      )
+    }
+
+    try {
+      const tag = await prisma.tag.create({ data })
+      return c.json({ tag }, 201)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ error: '同じ名前のタグがすでに存在します' }, 409)
+      }
+      throw error
+    }
+  })
+  .openapi(deleteTagRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const existing = await prisma.tag.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    await prisma.tag.delete({ where: { id } })
     return c.json({ success: true }, 200)
   })

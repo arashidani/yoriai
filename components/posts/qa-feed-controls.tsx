@@ -1,76 +1,73 @@
 'use client'
 
-import { Select as SelectPrimitive } from '@base-ui/react/select'
+import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 import { Toggle as TogglePrimitive } from '@base-ui/react/toggle'
 import { ToggleGroup as ToggleGroupPrimitive } from '@base-ui/react/toggle-group'
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
+import { CheckIcon, ChevronDownIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-type QaFeedCategorySelectProps = {
-  categories: string[]
+type Tag = {
+  id: string
+  name: string
 }
 
-function QaFeedCategorySelect({ categories }: QaFeedCategorySelectProps) {
+type QaFeedTagFilterProps = {
+  tags: Tag[]
+  selectedTagIds: string[]
+  onChange: (tagIds: string[]) => void
+}
+
+/** タグのドロップダウンチェックリスト。複数選択した場合はAND条件（すべてのタグを含む投稿のみ）で絞り込む。 */
+function QaFeedTagFilter({ tags, selectedTagIds, onChange }: QaFeedTagFilterProps) {
+  function toggleTag(tagId: string, checked: boolean) {
+    onChange(checked ? [...selectedTagIds, tagId] : selectedTagIds.filter((id) => id !== tagId))
+  }
+
   return (
-    <SelectPrimitive.Root>
-      <SelectPrimitive.Trigger
-        data-size="default"
+    <MenuPrimitive.Root>
+      <MenuPrimitive.Trigger
         className={cn(
-          "flex h-10 w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-background py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-placeholder:text-muted-foreground *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 sm:flex-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+          "flex h-10 w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-background py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         )}
       >
-        <SelectPrimitive.Value
-          data-slot="select-value"
-          className="flex flex-1 text-left"
-          placeholder="カテゴリーを選択"
-        />
-        <SelectPrimitive.Icon
-          render={<ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />}
-        />
-      </SelectPrimitive.Trigger>
-      <SelectPrimitive.Portal>
-        <SelectPrimitive.Positioner
+        <span className="flex flex-1 text-left">
+          {selectedTagIds.length > 0 ? `タグ (${selectedTagIds.length})` : 'タグで絞り込み'}
+        </span>
+        <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
+      </MenuPrimitive.Trigger>
+      <MenuPrimitive.Portal>
+        <MenuPrimitive.Positioner
           side="bottom"
           sideOffset={4}
           align="center"
           alignOffset={0}
-          alignItemWithTrigger
           className="isolate z-50"
         >
-          <SelectPrimitive.Popup
-            data-align-trigger
-            className="relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95"
-          >
-            <SelectPrimitive.ScrollUpArrow className="top-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4">
-              <ChevronUpIcon />
-            </SelectPrimitive.ScrollUpArrow>
-            <SelectPrimitive.List>
-              {categories.map((category) => (
-                <SelectPrimitive.Item
-                  key={category}
-                  value={category}
-                  className="relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-                >
-                  <SelectPrimitive.ItemText className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">
-                    {category}
-                  </SelectPrimitive.ItemText>
-                  <SelectPrimitive.ItemIndicator
-                    render={
-                      <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center" />
-                    }
+          <MenuPrimitive.Popup className="relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
+            {tags.length === 0 ? (
+              <div className="px-2 py-1.5 text-sm text-muted-foreground">タグがありません</div>
+            ) : (
+              tags.map((tag) => {
+                const checked = selectedTagIds.includes(tag.id)
+                return (
+                  <MenuPrimitive.CheckboxItem
+                    key={tag.id}
+                    checked={checked}
+                    onCheckedChange={(nextChecked) => toggleTag(tag.id, nextChecked)}
+                    className="relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
                   >
-                    <CheckIcon className="pointer-events-none" />
-                  </SelectPrimitive.ItemIndicator>
-                </SelectPrimitive.Item>
-              ))}
-            </SelectPrimitive.List>
-            <SelectPrimitive.ScrollDownArrow className="bottom-0 z-10 flex w-full cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4">
-              <ChevronDownIcon />
-            </SelectPrimitive.ScrollDownArrow>
-          </SelectPrimitive.Popup>
-        </SelectPrimitive.Positioner>
-      </SelectPrimitive.Portal>
-    </SelectPrimitive.Root>
+                    <span className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">{tag.name}</span>
+                    <MenuPrimitive.CheckboxItemIndicator className="pointer-events-none absolute right-2 flex size-4 items-center justify-center">
+                      <CheckIcon className="pointer-events-none" />
+                    </MenuPrimitive.CheckboxItemIndicator>
+                  </MenuPrimitive.CheckboxItem>
+                )
+              })
+            )}
+          </MenuPrimitive.Popup>
+        </MenuPrimitive.Positioner>
+      </MenuPrimitive.Portal>
+    </MenuPrimitive.Root>
   )
 }
 
@@ -118,4 +115,4 @@ function QaFeedStatusFilter({ filters, value, onValueChange }: QaFeedStatusFilte
   )
 }
 
-export { QaFeedCategorySelect, QaFeedStatusFilter }
+export { QaFeedStatusFilter, QaFeedTagFilter }
