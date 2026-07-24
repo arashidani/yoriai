@@ -13,7 +13,7 @@ import { type CreateTagInput, createTagSchema } from '@/lib/schemas/tag'
 type Tag = {
   id: string
   name: string
-  createdAt?: Date | string
+  createdAt: Date | string
 }
 
 async function fetchTags(): Promise<Tag[]> {

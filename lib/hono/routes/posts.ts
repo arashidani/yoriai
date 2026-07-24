@@ -397,10 +397,12 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       }
     }
 
-    let tags: { id: string; name: string }[] = []
+    let tags: { id: string; name: string; createdAt: Date }[] = []
     if (!post.deletedAt) {
       try {
-        const allTags = await prisma.tag.findMany({ select: { id: true, name: true } })
+        const allTags = await prisma.tag.findMany({
+          select: { id: true, name: true, createdAt: true },
+        })
         const selectedNames = await assignTags(
           post.title,
           post.body,

@@ -25,7 +25,7 @@ export const TagSchema = z
   .object({
     id: z.string().openapi({ example: 'tag-1' }),
     name: z.string().openapi({ example: '経理' }),
-    createdAt: dateTime().optional(),
+    createdAt: dateTime(),
   })
   .openapi('Tag')
 

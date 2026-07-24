@@ -219,7 +219,8 @@
         },
         "required": [
           "id",
-          "name"
+          "name",
+          "createdAt"
         ]
       },
       "Error": {
