@@ -21,6 +21,14 @@ export const UserSchema = z
   })
   .openapi('User')
 
+export const TagSchema = z
+  .object({
+    id: z.string().openapi({ example: 'tag-1' }),
+    name: z.string().openapi({ example: '経理' }),
+    createdAt: dateTime().optional(),
+  })
+  .openapi('Tag')
+
 export const PostSchema = z
   .object({
     id: z.string().openapi({ example: 'post-1' }),
@@ -34,6 +42,8 @@ export const PostSchema = z
     likeCount: z.number().openapi({ example: 0 }),
     resolvedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
     deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
+    /** AIが投稿作成時に最大3件自動付与するタグ（ユーザーは付与・変更不可） */
+    tags: z.array(TagSchema).optional().openapi({ example: [] }),
     createdAt: dateTime(),
     updatedAt: dateTime(),
   })

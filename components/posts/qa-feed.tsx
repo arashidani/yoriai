@@ -5,10 +5,7 @@ import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import type { Post } from './post-list'
 import { PostList } from './post-list'
-import { QaFeedCategorySelect, QaFeedStatusFilter } from './qa-feed-controls'
-
-// TODO: カテゴリーは仮データ。バックエンド実装後に posts のフィールドへ接続する
-const CATEGORIES = ['総務・労務', '経理', 'IT・システム', 'その他']
+import { QaFeedStatusFilter, QaFeedTagFilter } from './qa-feed-controls'
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'すべて' },
@@ -25,16 +22,19 @@ const STATUS_PREDICATES: Record<string, (post: Post) => boolean> = {
 type QaFeedProps = {
   posts: Post[]
   isAdmin: boolean
+  allTags: { id: string; name: string }[]
 }
 
-/** 検索・フィルタ行と質問一覧。キーワードはタイトル・本文に対する部分一致、ステータスは post.status との一致で絞り込む。 */
-export function QaFeed({ posts, isAdmin }: QaFeedProps) {
+/** 検索・フィルタ行と質問一覧。キーワードはタイトル・本文に対する部分一致、ステータスは post.status との一致、タグはAND条件（選択した全タグを持つ投稿のみ）で絞り込む。 */
+export function QaFeed({ posts, isAdmin, allTags }: QaFeedProps) {
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState('all')
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
 
   const filteredPosts = posts
     .filter(STATUS_PREDICATES[status] ?? STATUS_PREDICATES.all)
     .filter((post) => !keyword || post.title.includes(keyword) || post.body.includes(keyword))
+    .filter((post) => selectedTagIds.every((id) => post.tags.some((tag) => tag.id === id)))
 
   return (
     <>
@@ -50,7 +50,11 @@ export function QaFeed({ posts, isAdmin }: QaFeedProps) {
               className="h-10 bg-background pl-9"
             />
           </div>
-          <QaFeedCategorySelect categories={CATEGORIES} />
+          <QaFeedTagFilter
+            tags={allTags}
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+          />
           <QaFeedStatusFilter filters={STATUS_FILTERS} value={status} onValueChange={setStatus} />
         </div>
       </div>
