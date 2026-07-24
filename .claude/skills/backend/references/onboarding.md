@@ -93,7 +93,7 @@ const app = new Hono()
 ```prisma
 // prisma/schema.prisma
 model Comment {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid(7))
   body      String
   postId    String
   post      Post     @relation(fields: [postId], references: [id])
