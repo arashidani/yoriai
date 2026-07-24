@@ -17,14 +17,26 @@ const basePosts = [
     id: 'post-1',
     title: 'Next.js App Routerの使い方を教えてください',
     body: 'App RouterとPages Routerの違いが分からなくて困っています。',
-    author: { id: 'user-1', name: '田中太郎', email: 'tanaka@example.com' },
+    displayName: 'ねこ',
+    isOwnQuestion: false,
+    likeCount: 3,
+    liked: false,
+    saved: false,
+    status: 'RESOLVED' as const,
+    answerCount: 1,
     createdAt: '2024-01-10T00:00:00Z',
   },
   {
     id: 'post-2',
     title: 'TypeScriptの型エラーを解決したい',
     body: '`Type string is not assignable to type number` というエラーが出ます。',
-    author: { id: 'user-2', name: '山田花子', email: 'yamada@example.com' },
+    displayName: 'いぬ',
+    isOwnQuestion: false,
+    likeCount: 0,
+    liked: false,
+    saved: false,
+    status: 'OPEN' as const,
+    answerCount: 0,
     createdAt: '2024-01-11T00:00:00Z',
   },
 ]
@@ -52,6 +64,13 @@ export const StatusFilter: Story = {
       'aria-pressed',
       'false',
     )
+    await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
+    await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
+
+    const unanswered = canvas.getByRole('button', { name: '未回答' })
+    await userEvent.click(unanswered)
+    await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
+    await expect(canvas.getByText(/TypeScriptの型エラー/)).toBeVisible()
   },
 }
 

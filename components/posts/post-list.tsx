@@ -3,17 +3,17 @@
 import { useState } from 'react'
 import { PostCard } from './post-card'
 
-export type Author = {
-  id: string
-  name: string | null
-  email: string
-}
-
 export type Post = {
   id: string
   title: string
   body: string
-  author: Author | null
+  displayName: string
+  isOwnQuestion: boolean
+  likeCount: number
+  liked: boolean
+  saved: boolean
+  status: 'OPEN' | 'ANSWERED' | 'RESOLVED' | 'HIDDEN'
+  answerCount: number
   createdAt: Date | string
 }
 

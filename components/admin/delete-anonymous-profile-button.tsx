@@ -17,54 +17,54 @@ import {
 import { Button } from '@/components/ui/button'
 import { client } from '@/lib/hono/client'
 
-type DeletePostButtonProps = {
-  postId: string
-  postTitle: string
-  onDeleted: (postId: string) => void
+type DeleteAnonymousProfileButtonProps = {
+  profileId: string
+  displayName: string
+  onDeleted: (profileId: string) => void
 }
 
-export function DeletePostButton({ postId, postTitle, onDeleted }: DeletePostButtonProps) {
+export function DeleteAnonymousProfileButton({
+  profileId,
+  displayName,
+  onDeleted,
+}: DeleteAnonymousProfileButtonProps) {
   const [open, setOpen] = useState(false)
   const [pending, setPending] = useState(false)
 
   async function handleConfirm() {
     setPending(true)
-    const res = await client.api.posts[':id'].$delete({ param: { id: postId } })
+    const res = await client.api.admin['anonymous-profiles'][':id'].$delete({
+      param: { id: profileId },
+    })
     setPending(false)
     setOpen(false)
 
     if (!res.ok) {
-      const data = await res.json().catch(() => null)
-      toast.error(data && 'error' in data ? data.error : '削除に失敗しました')
+      const body = await res.json()
+      const message =
+        'error' in body && typeof body.error === 'string' ? body.error : '削除に失敗しました'
+      toast.error(message)
       return
     }
-    onDeleted(postId)
-    toast.success('投稿を削除しました')
+    onDeleted(profileId)
+    toast.success('匿名キャラを削除しました')
   }
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="投稿を削除"
-            className="bg-background/90 shadow-sm hover:bg-background"
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-            }}
-          >
+          <Button variant="ghost" size="icon" aria-label="匿名キャラを削除">
             <Trash2 />
           </Button>
         }
       />
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>投稿を削除しますか？</AlertDialogTitle>
+          <AlertDialogTitle>匿名キャラを削除しますか？</AlertDialogTitle>
           <AlertDialogDescription>
-            「{postTitle}」を削除します。この操作は取り消せません。
+            「{displayName}
+            」を削除します。すでにいずれかの質問スレッドで使われている場合は削除できません（先に無効化してください）。
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
