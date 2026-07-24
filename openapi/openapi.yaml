@@ -153,6 +153,7 @@ components:
       required:
         - id
         - name
+        - createdAt
     Error:
       type: object
       properties:
