@@ -553,7 +553,14 @@ export const adminRoute = $(
       return c.json({ success: true }, 200)
     }
 
-    await prisma.user.delete({ where: { id: targetId } })
+    try {
+      await prisma.user.delete({ where: { id: targetId } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
     return c.json({ success: true }, 200)
   })
   .openapi(listBadgesRoute, async (c) => {
@@ -719,6 +726,9 @@ export const adminRoute = $(
     try {
       await prisma.anonymousProfile.delete({ where: { id } })
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
         return c.json(
           {
