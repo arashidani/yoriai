@@ -59,6 +59,15 @@ describe('削除APIの同時操作', () => {
     expect(await response.json()).toEqual({ success: true })
   })
 
+  it('投稿が既に存在しない場合も成功扱いにする', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(null)
+
+    const response = await app.request('/api/posts/post-1', { method: 'DELETE' })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ success: true })
+  })
+
   it('ユーザーが先に削除された場合も成功扱いにする', async () => {
     prismaMock.user.delete.mockRejectedValue(p2025Error())
 
@@ -71,6 +80,17 @@ describe('削除APIの同時操作', () => {
   it('匿名キャラが先に削除された場合も成功扱いにする', async () => {
     prismaMock.anonymousProfile.findUnique.mockResolvedValue({ id: 'profile-1' })
     prismaMock.anonymousProfile.delete.mockRejectedValue(p2025Error())
+
+    const response = await app.request('/api/admin/anonymous-profiles/profile-1', {
+      method: 'DELETE',
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ success: true })
+  })
+
+  it('匿名キャラが既に存在しない場合も成功扱いにする', async () => {
+    prismaMock.anonymousProfile.findUnique.mockResolvedValue(null)
 
     const response = await app.request('/api/admin/anonymous-profiles/profile-1', {
       method: 'DELETE',

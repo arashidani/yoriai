@@ -267,7 +267,6 @@ const deleteRoute = createRoute({
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者・質問者本人以外）', 'Forbidden'),
-    404: errorResponse('質問が見つからない', 'Not found'),
     409: errorResponse(
       '回答が付いている質問は質問者本人には削除できない',
       '回答がある質問は削除できません',
@@ -656,7 +655,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
 
     const post = await prisma.post.findUnique({ where: { id } })
-    if (!post) return c.json({ error: 'Not found' }, 404)
+    if (!post) return c.json({ success: true }, 200)
 
     if (user.role !== Role.ADMIN) {
       if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
