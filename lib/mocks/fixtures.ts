@@ -1,4 +1,10 @@
-import { BadgeRarity, FlagSeverity, FlagStatus, Role } from '@/app/generated/prisma/enums'
+import {
+  BadgeRarity,
+  FlagSeverity,
+  FlagStatus,
+  QuestionStatus,
+  Role,
+} from '@/app/generated/prisma/enums'
 
 export const MOCK_USERS = [
   {
@@ -19,6 +25,30 @@ export const MOCK_USERS = [
   },
 ]
 
+export const MOCK_ANONYMOUS_PROFILES = [
+  {
+    id: 'anon-1',
+    displayName: 'ねこ',
+    avatarUrl: '/anonymous-profiles/cat.svg',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'anon-2',
+    displayName: 'いぬ',
+    avatarUrl: '/anonymous-profiles/dog.svg',
+    isActive: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'anon-3',
+    displayName: 'うさぎ',
+    avatarUrl: '/anonymous-profiles/rabbit.svg',
+    isActive: false,
+    createdAt: new Date('2024-01-02'),
+  },
+]
+
 export const MOCK_POSTS = [
   {
     id: 'post-1',
@@ -26,6 +56,12 @@ export const MOCK_POSTS = [
     body: 'App RouterとPages Routerの違いが分からなくて困っています。どちらを使うべきでしょうか？',
     authorId: 'user-2',
     author: MOCK_USERS[1],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
+    status: QuestionStatus.ANSWERED,
+    answerCount: 1,
+    likeCount: 5,
+    resolvedAt: null,
+    deletedAt: null,
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-10'),
   },
@@ -35,6 +71,12 @@ export const MOCK_POSTS = [
     body: '`Type string is not assignable to type number` というエラーが出て困っています。',
     authorId: 'user-1',
     author: MOCK_USERS[0],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[1] },
+    status: QuestionStatus.OPEN,
+    answerCount: 0,
+    likeCount: 0,
+    resolvedAt: null,
+    deletedAt: null,
     createdAt: new Date('2024-01-11'),
     updatedAt: new Date('2024-01-11'),
   },
@@ -44,8 +86,14 @@ export const MOCK_POSTS = [
     body: '1対多のリレーションをPrismaで定義する方法を知りたいです。',
     authorId: 'user-2',
     author: MOCK_USERS[1],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
+    status: QuestionStatus.RESOLVED,
+    answerCount: 1,
+    likeCount: 2,
+    resolvedAt: new Date('2024-01-15'),
+    deletedAt: null,
     createdAt: new Date('2024-01-12'),
-    updatedAt: new Date('2024-01-12'),
+    updatedAt: new Date('2024-01-15'),
   },
   {
     id: 'post-4',
@@ -53,8 +101,39 @@ export const MOCK_POSTS = [
     body: '`Error: Invalid hook call. Hooks can only be called inside of the body of a function component.` というエラーが出て困っています。',
     authorId: 'user-1',
     author: MOCK_USERS[0],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[1] },
+    status: QuestionStatus.OPEN,
+    answerCount: 0,
+    likeCount: 0,
+    resolvedAt: null,
+    deletedAt: null,
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
+  },
+]
+
+export const MOCK_ANSWERS = [
+  {
+    id: 'answer-1',
+    postId: 'post-1',
+    authorId: 'user-2',
+    body: 'App Router を使うのがおすすめです。今後の新機能は App Router 中心に追加されます。',
+    anonymousProfile: MOCK_ANONYMOUS_PROFILES[0],
+    isHidden: false,
+    likeCount: 3,
+    createdAt: new Date('2024-01-10T01:00:00Z'),
+    updatedAt: new Date('2024-01-10T01:00:00Z'),
+  },
+  {
+    id: 'answer-2',
+    postId: 'post-3',
+    authorId: 'user-1',
+    body: '`relation` フィールドと外部キーを使えば1対多を表現できます。',
+    anonymousProfile: MOCK_ANONYMOUS_PROFILES[1],
+    isHidden: false,
+    likeCount: 1,
+    createdAt: new Date('2024-01-12T02:00:00Z'),
+    updatedAt: new Date('2024-01-12T02:00:00Z'),
   },
 ]
 
@@ -163,6 +242,8 @@ export const MOCK_AI_FLAGS = [
     targetUser: MOCK_USERS[0],
     postId: 'post-1',
     post: MOCK_POSTS[0],
+    answerId: null,
+    answer: null,
     createdAt: new Date('2024-01-10'),
   },
   {
@@ -175,6 +256,8 @@ export const MOCK_AI_FLAGS = [
     targetUser: MOCK_USERS[1],
     postId: null,
     post: null,
+    answerId: null,
+    answer: null,
     createdAt: new Date('2024-01-11'),
   },
   {
@@ -187,6 +270,8 @@ export const MOCK_AI_FLAGS = [
     targetUser: MOCK_USERS[1],
     postId: null,
     post: null,
+    answerId: null,
+    answer: null,
     createdAt: new Date('2024-01-12'),
   },
   {
@@ -199,6 +284,8 @@ export const MOCK_AI_FLAGS = [
     targetUser: MOCK_USERS[0],
     postId: null,
     post: null,
+    answerId: null,
+    answer: null,
     createdAt: new Date('2024-01-13'),
   },
 ]

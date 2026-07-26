@@ -8,43 +8,161 @@ datasource db {
 }
 
 model User {
-  id         String   @id @default(cuid())
-  supabaseId String   @unique
-  email      String   @unique
-  name       String?
-  role       Role     @default(USER)
-  posts      Post[]
-  aiFlags    AiFlag[]
-  createdAt  DateTime @default(now())
+  id                    String                 @id @default(uuid(7))
+  supabaseId            String                 @unique
+  email                 String                 @unique
+  name                  String?
+  role                  Role                   @default(USER)
+  posts                 Post[]
+  answers               Answer[]               @relation("AnswerAuthor")
+  hiddenAnswers         Answer[]               @relation("AnswerHiddenBy")
+  postAnonymousProfiles PostAnonymousProfile[]
+  questionLikes         QuestionLike[]
+  answerLikes           AnswerLike[]
+  postBookmarks         PostBookmark[]
+  aiFlags               AiFlag[]
+  createdAt             DateTime               @default(now())
 }
 
 model Post {
-  id             String   @id @default(cuid())
+  id             String         @id @default(uuid(7))
   title          String
   body           String
   authorId       String?
-  author         User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  author         User?          @relation(fields: [authorId], references: [id], onDelete: SetNull)
   idempotencyKey String?
-  aiFlags        AiFlag[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  status         QuestionStatus @default(OPEN)
+  answerCount    Int            @default(0)
+  likeCount      Int            @default(0)
+  resolvedAt     DateTime?
+
+  /// このスレッド内で質問者本人に表示する匿名キャラの割り当て（作成直後は未設定のためnullable）
+  postAnonymousProfileId      String?
+  postAnonymousProfile        PostAnonymousProfile?  @relation("PostAuthorAssignment", fields: [postAnonymousProfileId], references: [id])
+  /// このスレッドに紐づく全ユーザー分の匿名キャラ割り当て
+  anonymousProfileAssignments PostAnonymousProfile[] @relation("PostAssignments")
+
+  answers   Answer[]
+  likes     QuestionLike[]
+  bookmarks PostBookmark[]
+  aiFlags   AiFlag[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  /// AIフラグによる自動ソフトデリート日時（管理者が復元するとnullに戻る）
+  deletedAt DateTime?
 
   @@unique([authorId, idempotencyKey])
 }
 
+/// 質問スレッドごとの「実ユーザー ⇔ 匿名キャラ」の対応
+model PostAnonymousProfile {
+  id                 String           @id @default(uuid(7))
+  postId             String
+  post               Post             @relation("PostAssignments", fields: [postId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  anonymousProfileId String
+  anonymousProfile   AnonymousProfile @relation(fields: [anonymousProfileId], references: [id])
+  createdAt          DateTime         @default(now())
+
+  assignedAsAuthorOfPosts Post[]   @relation("PostAuthorAssignment")
+  answers                 Answer[]
+
+  @@unique([postId, userId])
+  @@unique([postId, anonymousProfileId])
+}
+
+/// 匿名キャラのマスタ（表示名・アイコン）
+model AnonymousProfile {
+  id          String   @id @default(uuid(7))
+  displayName String   @unique
+  avatarUrl   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  assignments PostAnonymousProfile[]
+}
+
+/// 質問（Post）に対する回答
+model Answer {
+  id     String @id @default(uuid(7))
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("AnswerAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  /// スレッド内で表示する匿名キャラの割り当て
+  postAnonymousProfileId String
+  postAnonymousProfile   PostAnonymousProfile @relation(fields: [postAnonymousProfileId], references: [id])
+
+  body String
+
+  isHidden       Boolean   @default(false)
+  hiddenAt       DateTime?
+  hiddenByUserId String?
+  hiddenByUser   User?     @relation("AnswerHiddenBy", fields: [hiddenByUserId], references: [id], onDelete: SetNull)
+  hiddenReason   String?
+
+  likeCount Int @default(0)
+
+  idempotencyKey String?
+
+  likes     AnswerLike[]
+  aiFlags   AiFlag[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([authorId, idempotencyKey])
+}
+
+model QuestionLike {
+  id        String   @id @default(uuid(7))
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model AnswerLike {
+  id        String   @id @default(uuid(7))
+  answerId  String
+  answer    Answer   @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([answerId, userId])
+}
+
+model PostBookmark {
+  id        String   @id @default(uuid(7))
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
 model Badge {
-  id          String       @id @default(cuid())
+  id          String      @id @default(uuid(7))
   name        String
   description String
   icon        String
   rarity      BadgeRarity
-  earnedCount Int          @default(0)
+  earnedCount Int         @default(0)
   missions    Mission[]
-  createdAt   DateTime     @default(now())
+  createdAt   DateTime    @default(now())
 }
 
 model Mission {
-  id                String   @id @default(cuid())
+  id                String   @id @default(uuid(7))
   name              String
   description       String
   durationLabel     String
@@ -58,7 +176,7 @@ model Mission {
 }
 
 model AiFlag {
-  id           String       @id @default(cuid())
+  id           String       @id @default(uuid(7))
   title        String
   detail       String
   severity     FlagSeverity
@@ -67,11 +185,13 @@ model AiFlag {
   targetUser   User?        @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
   postId       String?
   post         Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  answerId     String?
+  answer       Answer?      @relation(fields: [answerId], references: [id], onDelete: Cascade)
   createdAt    DateTime     @default(now())
 }
 
 model Invite {
-  id        String    @id @default(cuid())
+  id        String    @id @default(uuid(7))
   token     String    @unique
   name      String?
   role      Role      @default(USER)
@@ -81,7 +201,7 @@ model Invite {
 }
 
 model PasswordReset {
-  id        String    @id @default(cuid())
+  id        String    @id @default(uuid(7))
   token     String    @unique
   userId    String
   expiresAt DateTime
@@ -110,4 +230,11 @@ enum FlagSeverity {
 enum FlagStatus {
   UNREAD
   CONFIRMED
+}
+
+enum QuestionStatus {
+  OPEN
+  ANSWERED
+  RESOLVED
+  HIDDEN
 }
