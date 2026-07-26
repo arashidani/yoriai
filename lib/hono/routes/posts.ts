@@ -663,6 +663,13 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       if (post.answerCount > 0) return c.json({ error: '回答がある質問は削除できません' }, 409)
     }
 
-    await prisma.post.delete({ where: { id } })
+    try {
+      await prisma.post.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
     return c.json({ success: true }, 200)
   })
