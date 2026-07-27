@@ -49,6 +49,13 @@ export const MOCK_ANONYMOUS_PROFILES = [
   },
 ]
 
+export const MOCK_TAGS = [
+  { id: 'tag-1', name: 'Next.js', createdAt: new Date('2024-01-01') },
+  { id: 'tag-2', name: 'TypeScript', createdAt: new Date('2024-01-01') },
+  { id: 'tag-3', name: 'Prisma', createdAt: new Date('2024-01-01') },
+  { id: 'tag-4', name: 'React', createdAt: new Date('2024-01-01') },
+]
+
 export const MOCK_POSTS = [
   {
     id: 'post-1',
@@ -62,6 +69,7 @@ export const MOCK_POSTS = [
     likeCount: 5,
     resolvedAt: null,
     deletedAt: null,
+    tags: [MOCK_TAGS[0]],
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-10'),
   },
@@ -77,6 +85,7 @@ export const MOCK_POSTS = [
     likeCount: 0,
     resolvedAt: null,
     deletedAt: null,
+    tags: [MOCK_TAGS[1]],
     createdAt: new Date('2024-01-11'),
     updatedAt: new Date('2024-01-11'),
   },
@@ -92,6 +101,7 @@ export const MOCK_POSTS = [
     likeCount: 2,
     resolvedAt: new Date('2024-01-15'),
     deletedAt: null,
+    tags: [MOCK_TAGS[2], MOCK_TAGS[1]],
     createdAt: new Date('2024-01-12'),
     updatedAt: new Date('2024-01-15'),
   },
@@ -107,6 +117,7 @@ export const MOCK_POSTS = [
     likeCount: 0,
     resolvedAt: null,
     deletedAt: null,
+    tags: [MOCK_TAGS[0], MOCK_TAGS[3]],
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
   },

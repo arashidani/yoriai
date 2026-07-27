@@ -8,6 +8,7 @@ import type {
 } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, QuestionStatus, Role } from '@/app/generated/prisma/enums'
+import { assignTags } from '@/lib/ai/assign-tags'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -267,7 +268,6 @@ const deleteRoute = createRoute({
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者・質問者本人以外）', 'Forbidden'),
-    404: errorResponse('質問が見つからない', 'Not found'),
     409: errorResponse(
       '回答が付いている質問は質問者本人には削除できない',
       '回答がある質問は削除できません',
@@ -282,10 +282,10 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
     const posts = await prisma.post.findMany({
       where: { deletedAt: null },
-      include: { author: true },
+      include: { author: true, tags: { include: { tag: true } } },
       orderBy: { updatedAt: 'desc' },
     })
-    return c.json({ posts }, 200)
+    return c.json({ posts: posts.map((p) => ({ ...p, tags: p.tags.map((pt) => pt.tag) })) }, 200)
   })
   .openapi(getRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -296,10 +296,10 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
     const post = await prisma.post.findFirst({
       where: { id, deletedAt: null },
-      include: { author: true },
+      include: { author: true, tags: { include: { tag: true } } },
     })
     if (!post) return c.json({ error: 'Not found' }, 404)
-    return c.json({ post }, 200)
+    return c.json({ post: { ...post, tags: post.tags.map((pt) => pt.tag) } }, 200)
   })
   .openapi(createPostRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
@@ -318,6 +318,7 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
             likeCount: 0,
             resolvedAt: null,
             deletedAt: null,
+            tags: [],
             createdAt: new Date(),
             updatedAt: new Date(),
           },
@@ -395,7 +396,30 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
       }
     }
 
-    return c.json({ post }, 201)
+    let tags: { id: string; name: string; createdAt: Date }[] = []
+    if (!post.deletedAt) {
+      try {
+        const allTags = await prisma.tag.findMany({
+          select: { id: true, name: true, createdAt: true },
+        })
+        const selectedNames = await assignTags(
+          post.title,
+          post.body,
+          allTags.map((t) => t.name),
+        )
+        const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 3)
+        if (selectedTags.length > 0) {
+          await prisma.postTag.createMany({
+            data: selectedTags.map((t) => ({ postId: post.id, tagId: t.id })),
+          })
+          tags = selectedTags
+        }
+      } catch (error) {
+        console.error('Failed to assign tags', { postId: post.id, error })
+      }
+    }
+
+    return c.json({ post: { ...post, tags } }, 201)
   })
   .openapi(listAnswersRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -656,13 +680,20 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
 
     const post = await prisma.post.findUnique({ where: { id } })
-    if (!post) return c.json({ error: 'Not found' }, 404)
+    if (!post) return c.json({ success: true }, 200)
 
     if (user.role !== Role.ADMIN) {
       if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
       if (post.answerCount > 0) return c.json({ error: '回答がある質問は削除できません' }, 409)
     }
 
-    await prisma.post.delete({ where: { id } })
+    try {
+      await prisma.post.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
     return c.json({ success: true }, 200)
   })
