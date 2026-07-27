@@ -46,6 +46,7 @@ model Post {
   likes     QuestionLike[]
   bookmarks PostBookmark[]
   aiFlags   AiFlag[]
+  tags      PostTag[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
@@ -188,6 +189,26 @@ model AiFlag {
   answerId     String?
   answer       Answer?      @relation(fields: [answerId], references: [id], onDelete: Cascade)
   createdAt    DateTime     @default(now())
+}
+
+/// タグのマスタ（管理者が管理パネルで維持し、投稿にはAIが自動付与する。ユーザーは付与・変更不可）
+model Tag {
+  id        String    @id @default(uuid(7))
+  name      String    @unique
+  posts     PostTag[]
+  createdAt DateTime  @default(now())
+}
+
+/// 投稿とタグの中間テーブル（AI自動付与、1投稿あたり最大3件）
+model PostTag {
+  id        String   @id @default(uuid(7))
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, tagId])
 }
 
 model Invite {
