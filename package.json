@@ -9,6 +9,7 @@
     "start": "next start",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check .",

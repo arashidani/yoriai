@@ -400,7 +400,6 @@ const deleteAnonymousProfileRoute = createRoute({
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-    404: errorResponse('匿名キャラが見つからない', 'Not found'),
     409: errorResponse(
       'すでに質問スレッドで使われているため削除できない',
       'すでに使われている匿名キャラは削除できません。候補から外すには無効化してください',
@@ -553,7 +552,14 @@ export const adminRoute = $(
       return c.json({ success: true }, 200)
     }
 
-    await prisma.user.delete({ where: { id: targetId } })
+    try {
+      await prisma.user.delete({ where: { id: targetId } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
     return c.json({ success: true }, 200)
   })
   .openapi(listBadgesRoute, async (c) => {
@@ -714,11 +720,14 @@ export const adminRoute = $(
     }
 
     const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
-    if (!existing) return c.json({ error: 'Not found' }, 404)
+    if (!existing) return c.json({ success: true }, 200)
 
     try {
       await prisma.anonymousProfile.delete({ where: { id } })
     } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
         return c.json(
           {
