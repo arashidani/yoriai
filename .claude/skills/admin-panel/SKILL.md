@@ -13,7 +13,9 @@ paths:
   - "lib/schemas/password-reset.ts"
   - "lib/schemas/badge.ts"
   - "lib/schemas/mission.ts"
+  - "lib/schemas/tag.ts"
   - "lib/schemas/user.ts"
+  - "lib/ai/assign-tags.ts"
   - "proxy.ts"
   - "app/(auth)/register/page.tsx"
   - "app/(auth)/reset-password/page.tsx"
@@ -35,10 +37,11 @@ app/(admin)/admin/
 ├── users/create/page.tsx  → 招待リンク発行 + 保留中招待の一覧（ポップアップ方式）
 ├── badge/page.tsx, badge/create/page.tsx
 ├── mission/page.tsx, mission/create/page.tsx
-└── ai-flags/page.tsx      → AiFlagList（確認済みにするボタン付き）
+├── ai-flags/page.tsx      → AiFlagList（確認済みにするボタン付き）
+└── tags/page.tsx          → TagList（作成・削除、Gemini自動付与の対象マスタ）
 ```
 
-Prisma モデル: `User` `Post` `Badge` `Mission` `AiFlag` `Invite` `PasswordReset`。`Badge`/`Mission`/`AiFlag` は管理パネル専用の実データモデルで、実際に付与・参加・検知する仕組み（ゲーミフィケーション/AI検知エンジン）はまだ存在しない。**admin側のCRUDだけを実装する範囲**であり、参加者集計やAI検知ロジックを勝手に作り込まない（YAGNI）。
+Prisma モデル: `User` `Post` `Badge` `Mission` `AiFlag` `Tag` `PostTag` `Invite` `PasswordReset`。`Badge`/`Mission`/`AiFlag` は管理パネル専用の実データモデルで、実際に付与・参加・検知する仕組み（ゲーミフィケーション/AI検知エンジン）はまだ存在しない。**admin側のCRUDだけを実装する範囲**であり、参加者集計やAI検知ロジックを勝手に作り込まない（YAGNI）。`Tag`は例外で、§6.6の通り投稿作成時に実際にGeminiで自動付与される（付与ロジックまで実装済み）。
 
 ---
 
@@ -126,6 +129,8 @@ POST /api/admin/users/{id}/password-resets（管理者専用）
 6. `.storybook/msw-handlers.ts` にモックハンドラー追加、`.storybook/preview.tsx` の配列に追加し忘れない
 7. ページ側は Server Component で直接 `prisma.<model>.findMany` を呼ぶ（一覧表示のみなら Hono 経由にしない。ミューテーションが要るページだけ Client Component + `client.api...` を使う）
 
+Badge/Missionは一覧・作成のみ（更新・削除は無い、リネームはYAGNI）。一覧から個別に削除できるリソース（`Tag`など）を足す場合は`deleteXxxRoute`（`DELETE /admin/xxx/{id}`, `IdParamSchema`）も同じ並びに追加し、`anonymous-profiles`の削除ハンドラ（`existing`を`findUnique`で確認してから`delete`、FK制約違反は`P2002`/`P2003`で個別に`errorResponse`を返す）をコピーする。
+
 ---
 
 ## 6. Geminiによる投稿モデレーション → AiFlag
@@ -148,6 +153,16 @@ POST /api/admin/users/{id}/password-resets（管理者専用）
 - `components/posts/post-card.tsx` は `isAdmin` / `onDeleted` を受け取ったときだけ `DeletePostButton` を絶対配置で表示する（`Card` を包む `Link` の外側の `relative` な `div` に重ねる形。ボタン自身の `onClick` で `preventDefault`/`stopPropagation` して `Link` の遷移を止める）。
 - 一覧の状態管理は `components/posts/post-list.tsx`（Client Component）に集約し、削除成功時にローカル配列から取り除く（`ai-flag-list.tsx` の楽観的更新パターンと同じ考え方）。
 - `admin` は `/admin` 専用ロールではなく一般ページも閲覧できる（§2 参照）ため、この削除アイコンは通常の `/`（`app/(user)/page.tsx`）でも表示される。
+
+## 6.6 Geminiによる投稿分類 → タグ自動付与
+
+**ルール: 管理者が`/admin/tags`で維持する`Tag`マスタから、投稿作成時にGeminiが最も適切なものを最大3件選び`PostTag`として自動付与する。ユーザー自身はタグを付与・変更できない（`/admin/tags`のCRUDのみで、投稿側に手動割り当てUIは無い）。** 判定ロジックは`lib/ai/assign-tags.ts`の`assignTags()`に集約。§6のモデレーションとは別のGemini呼び出し（同じ`gemini-flash-latest`、同じtry/catchで失敗時は投稿作成を失敗させない設計）。
+
+- **既存の固定リストから選ばせる分類タスクでは、IDではなく名前で答えさせてからコード側で実在チェックする。** `assignTags()`はプロンプトに候補タグ名の一覧を渡し、Geminiには`{ tagNames: string[] }`で名前を返させる。レスポンスの`tagNames`を`new Set(availableTagNames)`との突き合わせでフィルタしてから使う（`.filter((name) => availableSet.has(name))`）。IDを返させるとハルシネーションで存在しないIDを渡されるリスクがあるが、名前は文字列の完全一致チェックで機械的に弾ける。この完全一致は大文字小文字・表記ゆれで意図せず弾かれる可能性があるが、「フォールバックは空配列（タグ無し）」で安全に倒れるため許容している。
+- **候補が0件なら即座に空配列を返しGemini自体を呼ばない**（`availableTagNames.length === 0`で早期return）。タグが1つも登録されていない初期状態でAPIコストを無駄にしない。
+- モデレーションでフラグが立ち`deletedAt`が設定された投稿にはタグ付けをスキップする（`posts.ts`の`createPostRoute`内、`if (!post.deletedAt)`で分岐）。非表示になる投稿にAI呼び出しする意味が無いため。
+- 投稿レスポンスの`tags`フィールド（`PostSchema.tags`）は`Tag`と同じ形（`id`/`name`/`createdAt`）で統一する。作成直後のレスポンスだけ選択的なフィールドで`select`すると、一覧・詳細取得時のレスポンスと形が食い違う（実際に一度`createdAt`を取り忘れて発覚した）。新しい`select`を書くときは、そのレスポンスが他のエンドポイントの同名オブジェクトと完全に同じ形になっているか確認する。
+- スタンドアロンで動作確認したいときは`npx tsx -r dotenv/config <script>.ts dotenv_config_path=.env.local`で`assignTags()`を直接呼ぶ（§7の地雷と同じ理由で`.env.local`の明示読み込みが要る）。
 
 ## 7. このセッションで踏んだ地雷（再発防止）
 

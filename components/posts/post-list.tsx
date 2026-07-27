@@ -14,6 +14,7 @@ export type Post = {
   saved: boolean
   status: 'OPEN' | 'ANSWERED' | 'RESOLVED' | 'HIDDEN'
   answerCount: number
+  tags: { id: string; name: string }[]
   createdAt: Date | string
 }
 
