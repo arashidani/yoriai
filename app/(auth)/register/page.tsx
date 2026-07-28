@@ -115,7 +115,14 @@ function RegisterForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">メールアドレス</Label>
-            <Input id="email" type="email" {...register('email')} aria-invalid={!!errors.email} />
+            <Input
+              id="email"
+              type="email"
+              placeholder="name@ibjapan.jp"
+              autoComplete="email"
+              {...register('email')}
+              aria-invalid={!!errors.email}
+            />
             {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
           <div className="space-y-2">
