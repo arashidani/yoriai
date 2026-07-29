@@ -7,7 +7,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?logo=tailwindcss)
 ![Supabase](https://img.shields.io/badge/Supabase-2.110.0-3ecf8e?logo=supabase)
 ![Prisma](https://img.shields.io/badge/Prisma-7.8.0-2d3748?logo=prisma)
-![Storybook](https://img.shields.io/badge/Storybook-10.4.6-ff4785?logo=storybook)
+![Storybook](https://img.shields.io/badge/Storybook-10.5.5-ff4785?logo=storybook)
 ![Zustand](https://img.shields.io/badge/Zustand-5.0.14-brown?logo=zustand)
 ![Zod](https://img.shields.io/badge/Zod-4.4.3-3068b7?logo=zod)
 ![TanStack Query](https://img.shields.io/badge/TanStack_Query-5.101.2-ff4154?logo=reactquery)
