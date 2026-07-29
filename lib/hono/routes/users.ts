@@ -6,6 +6,7 @@ import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, UserSchema } from '@/lib/hono/openapi/schemas'
 import { MOCK_INVITES, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { COMPANY_EMAIL_ERROR, companyEmailSchema } from '@/lib/schemas/register'
 import { createUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
@@ -94,6 +95,9 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
 
     if (!authUser.email) {
       return c.json({ error: 'Email not found' }, 400)
+    }
+    if (!companyEmailSchema.safeParse(authUser.email).success) {
+      return c.json({ error: COMPANY_EMAIL_ERROR }, 400)
     }
 
     const now = new Date()
