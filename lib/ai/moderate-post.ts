@@ -20,13 +20,12 @@ export type ModerationResult = {
   reason: string
 }
 
-/** Gemini呼び出しに失敗した場合はnullを返す（投稿作成自体は失敗させない） */
-export async function moderatePost(title: string, body: string): Promise<ModerationResult | null> {
+async function moderate(contents: string): Promise<ModerationResult | null> {
   try {
     const ai = new GoogleGenAI({ apiKey: requireEnv('GEMINI_API_KEY') })
     const response = await ai.models.generateContent({
       model: 'gemini-flash-latest',
-      contents: `タイトル: ${title}\n本文: ${body}`,
+      contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: 'application/json',
@@ -41,4 +40,14 @@ export async function moderatePost(title: string, body: string): Promise<Moderat
     console.error('Gemini moderation failed', error)
     return null
   }
+}
+
+/** Gemini呼び出しに失敗した場合はnullを返す（投稿作成自体は失敗させない） */
+export async function moderatePost(title: string, body: string): Promise<ModerationResult | null> {
+  return moderate(`タイトル: ${title}\n本文: ${body}`)
+}
+
+/** Gemini呼び出しに失敗した場合はnullを返す（回答作成自体は失敗させない） */
+export async function moderateAnswer(body: string): Promise<ModerationResult | null> {
+  return moderate(`本文: ${body}`)
 }

@@ -5,19 +5,82 @@ import { AnswerableQuestions } from '@/components/posts/answerable-questions'
 import { QaFeed } from '@/components/posts/qa-feed'
 import { buttonVariants } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_POSTS } from '@/lib/mocks/fixtures'
+import { MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
-async function getPosts() {
+async function getRawPosts() {
   if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
-  return prisma.post.findMany({
-    include: { author: true },
-    orderBy: { createdAt: 'desc' },
+  const posts = await prisma.post.findMany({
+    where: { deletedAt: null },
+    include: {
+      author: true,
+      postAnonymousProfile: { include: { anonymousProfile: true } },
+      tags: { include: { tag: true } },
+    },
+    orderBy: { updatedAt: 'desc' },
+  })
+  return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
+}
+
+async function getAllTags() {
+  if (process.env.MOCK_MODE === 'true') return MOCK_TAGS
+  return prisma.tag.findMany({ orderBy: { name: 'asc' } })
+}
+
+async function getViewerState(userId: string | undefined, postIds: string[]) {
+  if (!userId || process.env.MOCK_MODE === 'true' || postIds.length === 0) {
+    return { likedPostIds: new Set<string>(), savedPostIds: new Set<string>() }
+  }
+  const [likes, bookmarks] = await Promise.all([
+    prisma.questionLike.findMany({
+      where: { userId, postId: { in: postIds } },
+      select: { postId: true },
+    }),
+    prisma.postBookmark.findMany({
+      where: { userId, postId: { in: postIds } },
+      select: { postId: true },
+    }),
+  ])
+  return {
+    likedPostIds: new Set(likes.map((l) => l.postId)),
+    savedPostIds: new Set(bookmarks.map((b) => b.postId)),
+  }
+}
+
+async function getPosts(currentUserId: string | undefined) {
+  const rawPosts = await getRawPosts()
+  const { likedPostIds, savedPostIds } = await getViewerState(
+    currentUserId,
+    rawPosts.map((p) => p.id),
+  )
+
+  return rawPosts.map((post) => {
+    const isOwnQuestion = !!currentUserId && post.authorId === currentUserId
+    const displayName = isOwnQuestion
+      ? (post.author?.name ?? post.author?.email ?? '自分')
+      : (post.postAnonymousProfile?.anonymousProfile.displayName ?? '匿名')
+
+    return {
+      id: post.id,
+      title: post.title,
+      body: post.body,
+      displayName,
+      isOwnQuestion,
+      likeCount: post.likeCount,
+      liked: likedPostIds.has(post.id),
+      saved: savedPostIds.has(post.id),
+      status: post.status,
+      answerCount: post.answerCount,
+      tags: post.tags.map((tag) => ({ id: tag.id, name: tag.name })),
+      createdAt: post.createdAt,
+    }
   })
 }
 
 export default async function HomePage() {
-  const [posts, user] = await Promise.all([getPosts(), getCurrentUser()])
+  const user = await getCurrentUser()
+  const posts = await getPosts(user?.id)
+  const allTags = await getAllTags()
   const isAdmin = user?.role === Role.ADMIN
 
   return (
@@ -33,7 +96,7 @@ export default async function HomePage() {
             質問する
           </Link>
         </header>
-        <QaFeed posts={posts} isAdmin={isAdmin} />
+        <QaFeed posts={posts} isAdmin={isAdmin} allTags={allTags} />
       </div>
       <AnswerableQuestions posts={posts} />
     </div>

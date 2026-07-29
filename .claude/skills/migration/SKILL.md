@@ -59,6 +59,19 @@ npx prisma generate
 - 命名は `snake_case` でこれまでの変更を踏襲（例: `prisma/migrations/20260705051059_post_author_nullable_set_null/`）。
 - `migrate dev` は内部で shadow database を使ってドリフト検知をする（開発時のみ。本番では使われない）。
 
+**ルール: 新規モデルの `id` は `cuid()` ではなく `@default(uuid(7))` を使う。**
+
+```prisma
+model NewModel {
+  id String @id @default(uuid(7))
+  // ...
+}
+```
+
+- 2026-07-24 に既存全モデルの `id` を `cuid()` → `uuid(7)` に統一済み。以降の新規モデル・新規テーブルもこれに合わせる。
+- `uuid()`（v4・完全ランダム）ではなく `uuid(7)` を使うこと。UUID v7 はタイムスタンプを含むため作成順にソート可能で、cuid と同様にB-treeインデックスの局所性を保てる。ランダムなv4はインデックスの断片化を招く。
+- `cuid()`/`uuid()`/`uuid(7)` はいずれも Prisma ORM レベルの関数で、値はアプリ（Prisma Client）側で生成される。DBカラムには `DEFAULT` が付かず `TEXT NOT NULL` のまま。つまりこの手の変更は生成関数を変えるだけで、`migrate dev --create-only` で見ても空のマイグレーションになるのが正常（DBスキーマ的な差分は無い）。
+
 ---
 
 ## 3. コマンド早見表
@@ -137,3 +150,4 @@ npx prisma migrate deploy
 - 大きいテーブルのカラム削除を1マイグレーションで完結させる → expand/contractで分割する（§5）
 - ローカルで `migrate reset` した後にシードを忘れる → `prisma db seed` を明示的に実行する
 - `prisma/migrations/` 配下の適用済みファイルを直接書き換える → ドリフトの原因になる。新しいマイグレーションを追加する
+- 新規モデルの `id` に `cuid()` を使う → `@default(uuid(7))` を使う（全モデル統一済み）
