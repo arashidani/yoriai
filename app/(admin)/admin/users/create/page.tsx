@@ -5,7 +5,10 @@ import { prisma } from '@/lib/prisma/client'
 
 export const dynamic = 'force-dynamic'
 
-function inviteStatus(invite: { usedAt: Date | null; expiresAt: Date }) {
+function inviteStatus(invite: {
+  usedAt: Date | null
+  expiresAt: Date
+}): 'USED' | 'EXPIRED' | 'PENDING' {
   if (invite.usedAt) return 'USED'
   if (invite.expiresAt < new Date()) return 'EXPIRED'
   return 'PENDING'
