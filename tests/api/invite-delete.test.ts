@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { authState, prismaMock } = vi.hoisted(() => ({
-  authState: { userIndex: 0 },
+  authState: { userIndex: 0 as number | null },
   prismaMock: {
     invite: {
       delete: vi.fn(),
@@ -17,6 +17,9 @@ vi.mock('@/lib/hono/middleware/auth', async () => {
 
   return {
     authMiddleware: createMiddleware(async (c, next) => {
+      if (authState.userIndex === null) {
+        return c.json({ error: 'Unauthorized' }, 401)
+      }
       c.set('user', MOCK_USERS[authState.userIndex])
       await next()
     }),
@@ -71,6 +74,16 @@ describe('招待リンク削除API', () => {
 
     expect(response.status).toBe(403)
     expect(await response.json()).toEqual({ error: 'Forbidden' })
+    expect(prismaMock.invite.delete).not.toHaveBeenCalled()
+  })
+
+  it('未認証ユーザーによる削除を拒否する', async () => {
+    authState.userIndex = null
+
+    const response = await app.request('/api/admin/invites/invite-test', { method: 'DELETE' })
+
+    expect(response.status).toBe(401)
+    expect(await response.json()).toEqual({ error: 'Unauthorized' })
     expect(prismaMock.invite.delete).not.toHaveBeenCalled()
   })
 })
