@@ -17,6 +17,7 @@ const tabs = [
   { href: '/admin/mission', label: 'ミッション管理' },
   { href: '/admin/mission/create', label: 'ミッション作成' },
   { href: '/admin/tags', label: 'タグ管理' },
+  { href: '/admin/hiroba', label: 'ひろば管理' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

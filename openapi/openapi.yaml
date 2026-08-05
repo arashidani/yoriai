@@ -12,6 +12,12 @@ tags:
     description: 質問（投稿）の閲覧・作成・削除、回答の投稿・一覧取得、解決済み操作
   - name: answers
     description: 回答へのいいね
+  - name: hiroba
+    description: ひろば（サブフォーラム）の一覧・詳細取得、投稿の作成（実名表示）
+  - name: hiroba-posts
+    description: ひろば投稿の取得・回答・いいね・保存・削除
+  - name: hiroba-answers
+    description: ひろば回答へのいいね
   - name: users
     description: ユーザー登録・自分のプロフィール取得
   - name: admin
@@ -249,6 +255,136 @@ components:
           example: true
       required:
         - success
+    Hiroba:
+      type: object
+      properties:
+        id:
+          type: string
+          example: hiroba-1
+        slug:
+          type: string
+          example: hiroba-1
+        name:
+          type: string
+          example: 広場１
+        description:
+          type: string
+          example: みんなで気軽に話せる広場です。
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - slug
+        - name
+        - description
+        - createdAt
+    HirobaPost:
+      type: object
+      properties:
+        id:
+          type: string
+          example: hiroba-post-1
+        hirobaId:
+          type: string
+          example: hiroba-1
+        title:
+          type: string
+          example: 今日のランチどこ行きました？
+        body:
+          type: string
+          example: 近くに新しくできたお店に行ってみました。
+        authorId:
+          type:
+            - string
+            - "null"
+          example: user-2
+        author:
+          anyOf:
+            - $ref: "#/components/schemas/User"
+            - type: "null"
+        answerCount:
+          type: number
+          example: 0
+        likeCount:
+          type: number
+          example: 0
+        deletedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              example: 2024-01-01T00:00:00.000Z
+            - type: "null"
+          example: null
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+          example: []
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - hirobaId
+        - title
+        - body
+        - authorId
+        - answerCount
+        - likeCount
+        - deletedAt
+        - createdAt
+        - updatedAt
+    HirobaAnswer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: hiroba-answer-1
+        hirobaPostId:
+          type: string
+          example: hiroba-post-1
+        body:
+          type: string
+          example: いいですね、今度行ってみます！
+        authorId:
+          type:
+            - string
+            - "null"
+          example: user-1
+        author:
+          anyOf:
+            - $ref: "#/components/schemas/User"
+            - type: "null"
+        isHidden:
+          type: boolean
+          example: false
+        likeCount:
+          type: number
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - hirobaPostId
+        - body
+        - authorId
+        - isHidden
+        - likeCount
+        - createdAt
+        - updatedAt
     InviteCreated:
       type: object
       properties:
@@ -668,14 +804,6 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
-        "404":
-          description: 質問が見つからない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Not found
         "409":
           description: 回答が付いている質問は質問者本人には削除できない
           content:
@@ -1107,6 +1235,639 @@ paths:
     delete:
       tags:
         - answers
+      summary: 回答へのいいねを取り消す
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね取り消し後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 回答が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいね取り消しの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいね取り消しの処理に失敗しました
+  /api/hiroba:
+    get:
+      tags:
+        - hiroba
+      summary: ひろば一覧を取得
+      responses:
+        "200":
+          description: ひろば一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hirobas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Hiroba"
+                required:
+                  - hirobas
+  /api/hiroba/{slug}:
+    get:
+      tags:
+        - hiroba
+      summary: ひろば詳細と投稿一覧を取得
+      parameters:
+        - schema:
+            type: string
+            example: hiroba-1
+          required: true
+          name: slug
+          in: path
+      responses:
+        "200":
+          description: ひろば詳細
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hiroba:
+                    $ref: "#/components/schemas/Hiroba"
+                  posts:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HirobaPost"
+                required:
+                  - hiroba
+                  - posts
+        "404":
+          description: ひろばが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+  /api/hiroba/{slug}/posts:
+    post:
+      tags:
+        - hiroba
+      summary: ひろばに投稿を作成
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: hiroba-1
+          required: true
+          name: slug
+          in: path
+        - schema:
+            type: string
+            format: uuid
+            description: 通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID
+            example: 550e8400-e29b-41d4-a716-446655440000
+          required: true
+          description: 通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID
+          name: idempotency-key
+          in: header
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                body:
+                  type: string
+                  minLength: 1
+              required:
+                - title
+                - body
+      responses:
+        "200":
+          description: 再送された投稿（すでに作成済みの投稿）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/HirobaPost"
+                required:
+                  - post
+        "201":
+          description: 作成された投稿
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/HirobaPost"
+                required:
+                  - post
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: ひろばが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 同じキーで、前回とは異なる投稿内容が送信された
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 同じ投稿操作に異なる内容が指定されています
+        "500":
+          description: 投稿の作成に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 投稿の作成に失敗しました
+  /api/hiroba-posts/{id}:
+    get:
+      tags:
+        - hiroba-posts
+      summary: ひろば投稿を1件取得
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 投稿詳細
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/HirobaPost"
+                required:
+                  - post
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+    delete:
+      tags:
+        - hiroba-posts
+      summary: 投稿を削除（管理者、または回答が付く前の投稿者本人）
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者・投稿者本人以外）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "409":
+          description: 回答が付いている投稿は投稿者本人には削除できない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 回答がある投稿は削除できません
+  /api/hiroba-posts/{id}/answers:
+    get:
+      tags:
+        - hiroba-posts
+      summary: 投稿への回答一覧を取得（いいね数の多い順、同数なら投稿順）
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 回答一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answers:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HirobaAnswer"
+                required:
+                  - answers
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+    post:
+      tags:
+        - hiroba-posts
+      summary: 投稿に回答を投稿
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+        - schema:
+            type: string
+            format: uuid
+            description: 通信失敗後に同じ回答を再送しても、重複作成しないためのUUID
+            example: 550e8400-e29b-41d4-a716-446655440000
+          required: true
+          description: 通信失敗後に同じ回答を再送しても、重複作成しないためのUUID
+          name: idempotency-key
+          in: header
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                body:
+                  type: string
+                  minLength: 1
+              required:
+                - body
+      responses:
+        "200":
+          description: 再送された回答（すでに作成済みの回答）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    $ref: "#/components/schemas/HirobaAnswer"
+                required:
+                  - answer
+        "201":
+          description: 作成された回答
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer:
+                    $ref: "#/components/schemas/HirobaAnswer"
+                required:
+                  - answer
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 同じキーで、前回とは異なる回答内容が送信された
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 同じ投稿操作に異なる内容が指定されています
+        "500":
+          description: 回答の作成に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 回答の作成に失敗しました
+  /api/hiroba-posts/{id}/likes:
+    post:
+      tags:
+        - hiroba-posts
+      summary: 投稿にいいねする
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 自分の投稿にはいいねできない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 自分の投稿にはいいねできません
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいねの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいねの処理に失敗しました
+    delete:
+      tags:
+        - hiroba-posts
+      summary: 投稿へのいいねを取り消す
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね取り消し後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいね取り消しの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいね取り消しの処理に失敗しました
+  /api/hiroba-posts/{id}/bookmarks:
+    post:
+      tags:
+        - hiroba-posts
+      summary: 投稿を保存する
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 保存後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: 保存の処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 保存の処理に失敗しました
+    delete:
+      tags:
+        - hiroba-posts
+      summary: 投稿の保存を取り消す
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 保存取り消し後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: 保存取り消しの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 保存取り消しの処理に失敗しました
+  /api/hiroba-answers/{id}/likes:
+    post:
+      tags:
+        - hiroba-answers
+      summary: 回答にいいねする
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: いいね後の状態
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatus"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 自分の回答にはいいねできない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 自分の回答にはいいねできません
+        "404":
+          description: 回答が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "500":
+          description: いいねの処理に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: いいねの処理に失敗しました
+    delete:
+      tags:
+        - hiroba-answers
       summary: 回答へのいいねを取り消す
       security:
         - supabaseSession: []
@@ -2027,14 +2788,6 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
-        "404":
-          description: 匿名キャラが見つからない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Not found
         "409":
           description: すでに質問スレッドで使われているため削除できない
           content:
@@ -2171,6 +2924,145 @@ paths:
                 error: Forbidden
         "404":
           description: タグが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+  /api/admin/hiroba:
+    get:
+      tags:
+        - admin
+      summary: ひろば一覧を取得（管理者専用）
+      security: *a1
+      responses:
+        "200":
+          description: ひろば一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hirobas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Hiroba"
+                required:
+                  - hirobas
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+    post:
+      tags:
+        - admin
+      summary: ひろばを作成（管理者専用）
+      security: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                description:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+              required:
+                - name
+                - description
+      responses:
+        "201":
+          description: 作成されたひろば
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hiroba:
+                    $ref: "#/components/schemas/Hiroba"
+                required:
+                  - hiroba
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "500":
+          description: ひろばの作成に失敗した
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: ひろばの作成に失敗しました
+  /api/admin/hiroba/{id}:
+    delete:
+      tags:
+        - admin
+      summary: ひろばを削除（管理者専用、配下の投稿・回答も削除される）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: ひろばが見つからない
           content:
             application/json:
               schema:

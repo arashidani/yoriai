@@ -4,6 +4,9 @@ import {
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
   MOCK_BADGES,
+  MOCK_HIROBA_ANSWERS,
+  MOCK_HIROBA_POSTS,
+  MOCK_HIROBAS,
   MOCK_INVITES,
   MOCK_MISSIONS,
   MOCK_PASSWORD_RESETS,
@@ -46,6 +49,62 @@ export const mswHandlers = {
   answers: [
     http.post('/api/answers/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
     http.delete('/api/answers/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
+  ],
+  hiroba: [
+    http.get('/api/hiroba', () => HttpResponse.json({ hirobas: MOCK_HIROBAS })),
+    http.get('/api/hiroba/:slug', ({ params }) => {
+      const hiroba = MOCK_HIROBAS.find((h) => h.slug === params.slug)
+      if (!hiroba) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      const posts = MOCK_HIROBA_POSTS.filter((p) => p.hirobaId === hiroba.id)
+      return HttpResponse.json({ hiroba, posts })
+    }),
+    http.post('/api/hiroba/:slug/posts', async ({ request }) => {
+      const body = (await request.json()) as { title: string; body: string }
+      return HttpResponse.json(
+        {
+          post: {
+            id: 'hiroba-post-new',
+            hirobaId: 'hiroba-1',
+            title: body.title,
+            body: body.body,
+            authorId: 'user-1',
+            author: MOCK_USERS[0],
+            answerCount: 0,
+            likeCount: 0,
+            deletedAt: null,
+            tags: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.get('/api/hiroba-posts/:id', ({ params }) => {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === params.id)
+      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      return HttpResponse.json({ post })
+    }),
+    http.get('/api/hiroba-posts/:id/answers', ({ params }) =>
+      HttpResponse.json({
+        answers: MOCK_HIROBA_ANSWERS.filter((a) => a.hirobaPostId === params.id),
+      }),
+    ),
+    http.delete('/api/hiroba-posts/:id', () => HttpResponse.json({ success: true })),
+    http.post('/api/hiroba-posts/:id/likes', () =>
+      HttpResponse.json({ liked: true, likeCount: 1 }),
+    ),
+    http.delete('/api/hiroba-posts/:id/likes', () =>
+      HttpResponse.json({ liked: false, likeCount: 0 }),
+    ),
+    http.post('/api/hiroba-posts/:id/bookmarks', () => HttpResponse.json({ saved: true })),
+    http.delete('/api/hiroba-posts/:id/bookmarks', () => HttpResponse.json({ saved: false })),
+    http.post('/api/hiroba-answers/:id/likes', () =>
+      HttpResponse.json({ liked: true, likeCount: 1 }),
+    ),
+    http.delete('/api/hiroba-answers/:id/likes', () =>
+      HttpResponse.json({ liked: false, likeCount: 0 }),
+    ),
   ],
   admin: [
     http.get('/api/admin/users', () => HttpResponse.json({ users: MOCK_USERS })),
@@ -125,6 +184,23 @@ export const mswHandlers = {
       )
     }),
     http.delete('/api/admin/tags/:id', () => HttpResponse.json({ success: true })),
+    http.get('/api/admin/hiroba', () => HttpResponse.json({ hirobas: MOCK_HIROBAS })),
+    http.post('/api/admin/hiroba', async ({ request }) => {
+      const body = (await request.json()) as { name: string; description: string }
+      return HttpResponse.json(
+        {
+          hiroba: {
+            id: 'hiroba-new',
+            slug: 'hiroba-new',
+            name: body.name,
+            description: body.description,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.delete('/api/admin/hiroba/:id', () => HttpResponse.json({ success: true })),
     http.post('/api/admin/users/:id/password-resets', () =>
       HttpResponse.json(
         {

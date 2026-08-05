@@ -123,6 +123,68 @@ export const MOCK_POSTS = [
   },
 ]
 
+export const MOCK_HIROBAS = [
+  {
+    id: 'hiroba-1',
+    slug: 'hiroba-1',
+    name: '広場１',
+    description: 'みんなで気軽に話せる広場です。',
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'hiroba-2',
+    slug: 'hiroba-2',
+    name: '広場２',
+    description: 'みんなで気軽に話せる広場です。',
+    createdAt: new Date('2024-01-01'),
+  },
+]
+
+export const MOCK_HIROBA_POSTS = [
+  {
+    id: 'hiroba-post-1',
+    hirobaId: 'hiroba-1',
+    title: '今日のランチどこ行きました？',
+    body: '近くに新しくできたお店に行ってみたら、とても美味しかったです。',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
+    answerCount: 1,
+    likeCount: 2,
+    deletedAt: null,
+    tags: [MOCK_TAGS[0]],
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-01-20'),
+  },
+  {
+    id: 'hiroba-post-2',
+    hirobaId: 'hiroba-1',
+    title: 'おすすめの本を教えてください',
+    body: '最近読んで面白かった本があれば教えてほしいです。',
+    authorId: 'user-1',
+    author: MOCK_USERS[0],
+    answerCount: 0,
+    likeCount: 0,
+    deletedAt: null,
+    tags: [],
+    createdAt: new Date('2024-01-21'),
+    updatedAt: new Date('2024-01-21'),
+  },
+]
+
+export const MOCK_HIROBA_ANSWERS = [
+  {
+    id: 'hiroba-answer-1',
+    hirobaPostId: 'hiroba-post-1',
+    authorId: 'user-1',
+    author: MOCK_USERS[0],
+    body: 'いいですね、今度行ってみます！',
+    isHidden: false,
+    likeCount: 1,
+    createdAt: new Date('2024-01-20T01:00:00Z'),
+    updatedAt: new Date('2024-01-20T01:00:00Z'),
+  },
+]
+
 export const MOCK_ANSWERS = [
   {
     id: 'answer-1',

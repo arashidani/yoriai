@@ -11,6 +11,7 @@ import {
   AnswerSchema,
   BadgeSchema,
   errorResponse,
+  HirobaSchema,
   IdParamSchema,
   InviteCreatedSchema,
   InviteListItemSchema,
@@ -27,6 +28,7 @@ import {
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
   MOCK_BADGES,
+  MOCK_HIROBAS,
   MOCK_INVITES,
   MOCK_MISSIONS,
   MOCK_POSTS,
@@ -39,6 +41,7 @@ import {
   updateAnonymousProfileSchema,
 } from '@/lib/schemas/anonymous-profile'
 import { createBadgeSchema } from '@/lib/schemas/badge'
+import { createHirobaSchema } from '@/lib/schemas/hiroba'
 import { createInviteSchema } from '@/lib/schemas/invite'
 import { createMissionSchema } from '@/lib/schemas/mission'
 import { createTagSchema } from '@/lib/schemas/tag'
@@ -461,6 +464,57 @@ const deleteTagRoute = createRoute({
   },
 })
 
+const listHirobasRoute = createRoute({
+  method: 'get',
+  path: '/hiroba',
+  tags: ['admin'],
+  summary: 'ひろば一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: 'ひろば一覧',
+      content: { 'application/json': { schema: z.object({ hirobas: z.array(HirobaSchema) }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const createHirobaRoute = createRoute({
+  method: 'post',
+  path: '/hiroba',
+  tags: ['admin'],
+  summary: 'ひろばを作成（管理者専用）',
+  security,
+  request: {
+    body: { required: true, content: { 'application/json': { schema: createHirobaSchema } } },
+  },
+  responses: {
+    201: {
+      description: '作成されたひろば',
+      content: { 'application/json': { schema: z.object({ hiroba: HirobaSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    500: errorResponse('ひろばの作成に失敗した', 'ひろばの作成に失敗しました'),
+  },
+})
+
+const deleteHirobaRoute = createRoute({
+  method: 'delete',
+  path: '/hiroba/{id}',
+  tags: ['admin'],
+  summary: 'ひろばを削除（管理者専用、配下の投稿・回答も削除される）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('ひろばが見つからない', 'Not found'),
+  },
+})
+
 export const adminRoute = $(
   new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
     .use(authMiddleware)
@@ -833,5 +887,51 @@ export const adminRoute = $(
     if (!existing) return c.json({ error: 'Not found' }, 404)
 
     await prisma.tag.delete({ where: { id } })
+    return c.json({ success: true }, 200)
+  })
+  .openapi(listHirobasRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ hirobas: MOCK_HIROBAS }, 200)
+    }
+    const hirobas = await prisma.hiroba.findMany({ orderBy: { createdAt: 'desc' } })
+    return c.json({ hirobas }, 200)
+  })
+  .openapi(createHirobaRoute, async (c) => {
+    const data = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json(
+        {
+          hiroba: {
+            id: `hiroba-${MOCK_HIROBAS.length + 1}`,
+            slug: randomBytes(4).toString('hex'),
+            ...data,
+            createdAt: new Date(),
+          },
+        },
+        201,
+      )
+    }
+
+    try {
+      const hiroba = await prisma.hiroba.create({
+        data: { ...data, slug: randomBytes(4).toString('hex') },
+      })
+      return c.json({ hiroba }, 201)
+    } catch {
+      return c.json({ error: 'ひろばの作成に失敗しました' }, 500)
+    }
+  })
+  .openapi(deleteHirobaRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const existing = await prisma.hiroba.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    await prisma.hiroba.delete({ where: { id } })
     return c.json({ success: true }, 200)
   })
