@@ -64,6 +64,47 @@ export const PostSchema = z
   })
   .openapi('Post')
 
+export const HirobaSchema = z
+  .object({
+    id: z.string().openapi({ example: 'hiroba-1' }),
+    slug: z.string().openapi({ example: 'hiroba-1' }),
+    name: z.string().openapi({ example: '広場１' }),
+    description: z.string().openapi({ example: 'みんなで気軽に話せる広場です。' }),
+    createdAt: dateTime(),
+  })
+  .openapi('Hiroba')
+
+export const HirobaPostSchema = z
+  .object({
+    id: z.string().openapi({ example: 'hiroba-post-1' }),
+    hirobaId: z.string().openapi({ example: 'hiroba-1' }),
+    title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
+    body: z.string().openapi({ example: '近くに新しくできたお店に行ってみました。' }),
+    authorId: z.string().nullable().openapi({ example: 'user-2' }),
+    author: z.union([UserSchema, z.null()]).optional(),
+    answerCount: z.number().openapi({ example: 0 }),
+    likeCount: z.number().openapi({ example: 0 }),
+    deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
+    tags: z.array(TagSchema).optional().openapi({ example: [] }),
+    createdAt: dateTime(),
+    updatedAt: dateTime(),
+  })
+  .openapi('HirobaPost')
+
+export const HirobaAnswerSchema = z
+  .object({
+    id: z.string().openapi({ example: 'hiroba-answer-1' }),
+    hirobaPostId: z.string().openapi({ example: 'hiroba-post-1' }),
+    body: z.string().openapi({ example: 'いいですね、今度行ってみます！' }),
+    authorId: z.string().nullable().openapi({ example: 'user-1' }),
+    author: z.union([UserSchema, z.null()]).optional(),
+    isHidden: z.boolean().openapi({ example: false }),
+    likeCount: z.number().openapi({ example: 0 }),
+    createdAt: dateTime(),
+    updatedAt: dateTime(),
+  })
+  .openapi('HirobaAnswer')
+
 export const AnonymousProfileSchema = z
   .object({
     id: z.string().openapi({ example: 'anon-1' }),
@@ -195,6 +236,11 @@ export const SuccessSchema = z
 /** パスパラメータ :id */
 export const IdParamSchema = z.object({
   id: z.string().openapi({ param: { name: 'id', in: 'path' }, example: 'post-1' }),
+})
+
+/** パスパラメータ :slug */
+export const SlugParamSchema = z.object({
+  slug: z.string().openapi({ param: { name: 'slug', in: 'path' }, example: 'hiroba-1' }),
 })
 
 /** よく使うエラーレスポンス定義 */
