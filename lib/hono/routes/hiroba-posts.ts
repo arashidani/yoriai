@@ -1,0 +1,443 @@
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import type { HirobaAnswer, User } from '@/app/generated/prisma/client'
+import { Prisma } from '@/app/generated/prisma/client'
+import { FlagSeverity, Role } from '@/app/generated/prisma/enums'
+import { moderateAnswer } from '@/lib/ai/moderate-post'
+import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
+import { defaultHook } from '@/lib/hono/openapi/hook'
+import {
+  errorResponse,
+  HirobaAnswerSchema,
+  HirobaPostSchema,
+  IdParamSchema,
+  LikeStatusSchema,
+  SavedStatusSchema,
+  SuccessSchema,
+} from '@/lib/hono/openapi/schemas'
+import { MOCK_HIROBA_ANSWERS, MOCK_HIROBA_POSTS } from '@/lib/mocks/fixtures'
+import { prisma } from '@/lib/prisma/client'
+import { createHirobaAnswerSchema } from '@/lib/schemas/hiroba'
+
+type HirobaAnswerWithAuthor = HirobaAnswer & { author: User | null }
+
+function toAnswerResponse(answer: HirobaAnswerWithAuthor) {
+  return {
+    id: answer.id,
+    hirobaPostId: answer.hirobaPostId,
+    body: answer.body,
+    authorId: answer.authorId,
+    author: answer.author,
+    isHidden: answer.isHidden,
+    likeCount: answer.likeCount,
+    createdAt: answer.createdAt,
+    updatedAt: answer.updatedAt,
+  }
+}
+
+const getRoute = createRoute({
+  method: 'get',
+  path: '/{id}',
+  tags: ['hiroba-posts'],
+  summary: 'ひろば投稿を1件取得',
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '投稿詳細',
+      content: { 'application/json': { schema: z.object({ post: HirobaPostSchema }) } },
+    },
+    404: errorResponse('投稿が見つからない', 'Not found'),
+  },
+})
+
+const listAnswersRoute = createRoute({
+  method: 'get',
+  path: '/{id}/answers',
+  tags: ['hiroba-posts'],
+  summary: '投稿への回答一覧を取得（いいね数の多い順、同数なら投稿順）',
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '回答一覧',
+      content: {
+        'application/json': { schema: z.object({ answers: z.array(HirobaAnswerSchema) }) },
+      },
+    },
+    404: errorResponse('投稿が見つからない', 'Not found'),
+  },
+})
+
+const createAnswerRoute = createRoute({
+  method: 'post',
+  path: '/{id}/answers',
+  tags: ['hiroba-posts'],
+  summary: '投稿に回答を投稿',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: {
+    params: IdParamSchema,
+    headers: z.object({
+      'idempotency-key': z.string().uuid().openapi({
+        description: '通信失敗後に同じ回答を再送しても、重複作成しないためのUUID',
+        example: '550e8400-e29b-41d4-a716-446655440000',
+      }),
+    }),
+    body: {
+      required: true,
+      content: { 'application/json': { schema: createHirobaAnswerSchema } },
+    },
+  },
+  responses: {
+    201: {
+      description: '作成された回答',
+      content: { 'application/json': { schema: z.object({ answer: HirobaAnswerSchema }) } },
+    },
+    200: {
+      description: '再送された回答（すでに作成済みの回答）',
+      content: { 'application/json': { schema: z.object({ answer: HirobaAnswerSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+    409: errorResponse(
+      '同じキーで、前回とは異なる回答内容が送信された',
+      '同じ投稿操作に異なる内容が指定されています',
+    ),
+    500: errorResponse('回答の作成に失敗した', '回答の作成に失敗しました'),
+  },
+})
+
+const likeRoute = createRoute({
+  method: 'post',
+  path: '/{id}/likes',
+  tags: ['hiroba-posts'],
+  summary: '投稿にいいねする',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: 'いいね後の状態',
+      content: { 'application/json': { schema: LikeStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('自分の投稿にはいいねできない', '自分の投稿にはいいねできません'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+    500: errorResponse('いいねの処理に失敗した', 'いいねの処理に失敗しました'),
+  },
+})
+
+const unlikeRoute = createRoute({
+  method: 'delete',
+  path: '/{id}/likes',
+  tags: ['hiroba-posts'],
+  summary: '投稿へのいいねを取り消す',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: 'いいね取り消し後の状態',
+      content: { 'application/json': { schema: LikeStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+    500: errorResponse('いいね取り消しの処理に失敗した', 'いいね取り消しの処理に失敗しました'),
+  },
+})
+
+const bookmarkRoute = createRoute({
+  method: 'post',
+  path: '/{id}/bookmarks',
+  tags: ['hiroba-posts'],
+  summary: '投稿を保存する',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '保存後の状態',
+      content: { 'application/json': { schema: SavedStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+    500: errorResponse('保存の処理に失敗した', '保存の処理に失敗しました'),
+  },
+})
+
+const unbookmarkRoute = createRoute({
+  method: 'delete',
+  path: '/{id}/bookmarks',
+  tags: ['hiroba-posts'],
+  summary: '投稿の保存を取り消す',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '保存取り消し後の状態',
+      content: { 'application/json': { schema: SavedStatusSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+    500: errorResponse('保存取り消しの処理に失敗した', '保存取り消しの処理に失敗しました'),
+  },
+})
+
+const deleteRoute = createRoute({
+  method: 'delete',
+  path: '/{id}',
+  tags: ['hiroba-posts'],
+  summary: '投稿を削除（管理者、または回答が付く前の投稿者本人）',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者・投稿者本人以外）', 'Forbidden'),
+    409: errorResponse(
+      '回答が付いている投稿は投稿者本人には削除できない',
+      '回答がある投稿は削除できません',
+    ),
+  },
+})
+
+export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
+  .openapi(getRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ post }, 200)
+    }
+    const post = await prisma.hirobaPost.findFirst({
+      where: { id, deletedAt: null },
+      include: { author: true, tags: { include: { tag: true } } },
+    })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+    return c.json({ post: { ...post, tags: post.tags.map((pt) => pt.tag) } }, 200)
+  })
+  .openapi(listAnswersRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      const answers = MOCK_HIROBA_ANSWERS.filter((a) => a.hirobaPostId === id)
+      return c.json({ answers }, 200)
+    }
+
+    const post = await prisma.hirobaPost.findFirst({ where: { id, deletedAt: null } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    const answers = await prisma.hirobaAnswer.findMany({
+      where: { hirobaPostId: id, isHidden: false },
+      include: { author: true },
+      orderBy: [{ likeCount: 'desc' }, { createdAt: 'asc' }],
+    })
+    return c.json({ answers: answers.map(toAnswerResponse) }, 200)
+  })
+  .openapi(createAnswerRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      const user = c.get('user')
+      const data = c.req.valid('json')
+      return c.json(
+        {
+          answer: {
+            id: `hiroba-answer-${Date.now()}`,
+            hirobaPostId: id,
+            body: data.body,
+            authorId: user.id,
+            author: user,
+            isHidden: false,
+            likeCount: 0,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        201,
+      )
+    }
+
+    const user = c.get('user')
+    const data = c.req.valid('json')
+    const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
+
+    const post = await prisma.hirobaPost.findFirst({ where: { id, deletedAt: null } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    let answer: HirobaAnswerWithAuthor
+    try {
+      answer = await prisma.$transaction(async (tx) => {
+        const created = await tx.hirobaAnswer.create({
+          data: { hirobaPostId: id, authorId: user.id, body: data.body, idempotencyKey },
+          include: { author: true },
+        })
+        await tx.hirobaPost.update({ where: { id }, data: { answerCount: { increment: 1 } } })
+        return created
+      })
+    } catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+        console.error('Failed to create hiroba answer', { hirobaPostId: id, error })
+        return c.json({ error: '回答の作成に失敗しました' }, 500)
+      }
+
+      let existingAnswer: HirobaAnswerWithAuthor | null
+      try {
+        existingAnswer = await prisma.hirobaAnswer.findUnique({
+          where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
+          include: { author: true },
+        })
+      } catch {
+        return c.json({ error: '回答の作成に失敗しました' }, 500)
+      }
+
+      if (!existingAnswer) return c.json({ error: '回答の作成に失敗しました' }, 500)
+      if (existingAnswer.body !== data.body) {
+        return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
+      }
+
+      return c.json({ answer: toAnswerResponse(existingAnswer) }, 200)
+    }
+
+    const moderation = await moderateAnswer(answer.body)
+    if (moderation?.flagged) {
+      try {
+        const [, hiddenAnswer] = await prisma.$transaction([
+          prisma.aiFlag.create({
+            data: {
+              title: '不適切な回答の可能性',
+              detail: moderation.reason,
+              severity: FlagSeverity[moderation.severity],
+              targetUserId: user.id,
+              hirobaAnswerId: answer.id,
+            },
+          }),
+          prisma.hirobaAnswer.update({
+            where: { id: answer.id },
+            data: { isHidden: true, hiddenAt: new Date(), hiddenReason: 'AIによる自動検出' },
+            include: { author: true },
+          }),
+        ])
+        answer = hiddenAnswer
+      } catch (error) {
+        console.error('Failed to create AI flag', { hirobaAnswerId: answer.id, error })
+      }
+    }
+
+    return c.json({ answer: toAnswerResponse(answer) }, 201)
+  })
+  .openapi(likeRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      if (post.authorId === user.id) return c.json({ error: '自分の投稿にはいいねできません' }, 403)
+      return c.json({ liked: true, likeCount: post.likeCount + 1 }, 200)
+    }
+
+    const post = await prisma.hirobaPost.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+    if (post.authorId === user.id) return c.json({ error: '自分の投稿にはいいねできません' }, 403)
+
+    const likeCount = await prisma.$transaction(async (tx) => {
+      await tx.hirobaPostLike.createMany({
+        data: [{ hirobaPostId: id, userId: user.id }],
+        skipDuplicates: true,
+      })
+      const likeCount = await tx.hirobaPostLike.count({ where: { hirobaPostId: id } })
+      await tx.hirobaPost.update({ where: { id }, data: { likeCount } })
+      return likeCount
+    })
+    return c.json({ liked: true, likeCount }, 200)
+  })
+  .openapi(unlikeRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ liked: false, likeCount: Math.max(0, post.likeCount - 1) }, 200)
+    }
+
+    const post = await prisma.hirobaPost.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    const likeCount = await prisma.$transaction(async (tx) => {
+      await tx.hirobaPostLike.deleteMany({ where: { hirobaPostId: id, userId: user.id } })
+      const likeCount = await tx.hirobaPostLike.count({ where: { hirobaPostId: id } })
+      await tx.hirobaPost.update({ where: { id }, data: { likeCount } })
+      return likeCount
+    })
+    return c.json({ liked: false, likeCount }, 200)
+  })
+  .openapi(bookmarkRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ saved: true }, 200)
+    }
+
+    const post = await prisma.hirobaPost.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    try {
+      await prisma.hirobaPostBookmark.create({ data: { hirobaPostId: id, userId: user.id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ saved: true }, 200)
+      }
+      return c.json({ error: '保存の処理に失敗しました' }, 500)
+    }
+    return c.json({ saved: true }, 200)
+  })
+  .openapi(unbookmarkRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      return c.json({ saved: false }, 200)
+    }
+
+    const post = await prisma.hirobaPost.findUnique({ where: { id } })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    await prisma.hirobaPostBookmark.deleteMany({ where: { hirobaPostId: id, userId: user.id } })
+    return c.json({ saved: false }, 200)
+  })
+  .openapi(deleteRoute, async (c) => {
+    const user = c.get('user')
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const post = await prisma.hirobaPost.findUnique({ where: { id } })
+    if (!post) return c.json({ success: true }, 200)
+
+    if (user.role !== Role.ADMIN) {
+      if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+      if (post.answerCount > 0) return c.json({ error: '回答がある投稿は削除できません' }, 409)
+    }
+
+    try {
+      await prisma.hirobaPost.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
+    return c.json({ success: true }, 200)
+  })

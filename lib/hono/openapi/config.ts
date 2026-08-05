@@ -16,6 +16,12 @@ export const openApiConfig = {
       description: '質問（投稿）の閲覧・作成・削除、回答の投稿・一覧取得、解決済み操作',
     },
     { name: 'answers', description: '回答へのいいね' },
+    {
+      name: 'hiroba',
+      description: 'ひろば（サブフォーラム）の一覧・詳細取得、投稿の作成（実名表示）',
+    },
+    { name: 'hiroba-posts', description: 'ひろば投稿の取得・回答・いいね・保存・削除' },
+    { name: 'hiroba-answers', description: 'ひろば回答へのいいね' },
     { name: 'users', description: 'ユーザー登録・自分のプロフィール取得' },
     { name: 'onboarding', description: '初回プロフィール登録' },
     { name: 'admin', description: '管理者専用のユーザー・投稿管理' },
