@@ -29,6 +29,20 @@ export const TagSchema = z
   })
   .openapi('Tag')
 
+export const AdminTagSchema = z
+  .object({
+    id: z.string().openapi({ example: 'tag-1' }),
+    name: z.string().openapi({ example: '給与' }),
+    category: z.string().openapi({ example: '人事' }),
+    description: z
+      .string()
+      .nullable()
+      .openapi({ example: '給与計算、給与明細、控除に関する投稿に使用します。' }),
+    isWorkTag: z.boolean().openapi({ example: true }),
+    createdAt: dateTime(),
+  })
+  .openapi('AdminTag')
+
 export const PostSchema = z
   .object({
     id: z.string().openapi({ example: 'post-1' }),

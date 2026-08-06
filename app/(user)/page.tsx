@@ -7,6 +7,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/auth/current-user'
 import { MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { publicTagSelect } from '@/lib/prisma/selects'
 
 async function getRawPosts() {
   if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
@@ -15,7 +16,10 @@ async function getRawPosts() {
     include: {
       author: true,
       postAnonymousProfile: { include: { anonymousProfile: true } },
-      tags: { include: { tag: true } },
+      tags: {
+        where: { tag: { isWorkTag: true } },
+        include: { tag: { select: publicTagSelect } },
+      },
     },
     orderBy: { updatedAt: 'desc' },
   })
@@ -23,8 +27,14 @@ async function getRawPosts() {
 }
 
 async function getAllTags() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_TAGS
-  return prisma.tag.findMany({ orderBy: { name: 'asc' } })
+  if (process.env.MOCK_MODE === 'true') {
+    return MOCK_TAGS.filter((tag) => tag.isWorkTag).map(({ id, name }) => ({ id, name }))
+  }
+  return prisma.tag.findMany({
+    where: { isWorkTag: true },
+    select: { id: true, name: true },
+    orderBy: { name: 'asc' },
+  })
 }
 
 async function getViewerState(userId: string | undefined, postIds: string[]) {

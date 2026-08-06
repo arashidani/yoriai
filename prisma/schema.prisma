@@ -204,6 +204,9 @@ model AiFlag {
 model Tag {
   id          String          @id @default(uuid(7))
   name        String          @unique
+  category    String
+  description String?
+  isWorkTag   Boolean         @default(false)
   posts       PostTag[]
   hirobaPosts HirobaPostTag[]
   createdAt   DateTime        @default(now())

@@ -156,10 +156,12 @@ Badge/Missionは一覧・作成のみ（更新・削除は無い、リネーム�
 
 ## 6.6 Geminiによる投稿分類 → タグ自動付与
 
-**ルール: 管理者が`/admin/tags`で維持する`Tag`マスタから、投稿作成時にGeminiが最も適切なものを最大3件選び`PostTag`として自動付与する。ユーザー自身はタグを付与・変更できない（`/admin/tags`のCRUDのみで、投稿側に手動割り当てUIは無い）。** 判定ロジックは`lib/ai/assign-tags.ts`の`assignTags()`に集約。§6のモデレーションとは別のGemini呼び出し（同じ`gemini-flash-latest`、同じtry/catchで失敗時は投稿作成を失敗させない設計）。
+**ルール: 管理者が`/admin/tags`で維持する`Tag`マスタから、投稿作成時にGeminiが最も適切なものを最大3件、同じカテゴリーから最大1件選び自動付与する。** `Tag`はname/category/description/isWorkTagを持つ。descriptionは管理画面とAIだけで使い公開レスポンスへ出さない。QAはisWorkTag=trueのみ、ひろばは全タグを候補にする。ユーザー自身はタグを付与・変更できない。判定は`lib/ai/assign-tags.ts`へ集約し、失敗時も投稿作成を失敗させない。
 
-- **既存の固定リストから選ばせる分類タスクでは、IDではなく名前で答えさせてからコード側で実在チェックする。** `assignTags()`はプロンプトに候補タグ名の一覧を渡し、Geminiには`{ tagNames: string[] }`で名前を返させる。レスポンスの`tagNames`を`new Set(availableTagNames)`との突き合わせでフィルタしてから使う（`.filter((name) => availableSet.has(name))`）。IDを返させるとハルシネーションで存在しないIDを渡されるリスクがあるが、名前は文字列の完全一致チェックで機械的に弾ける。この完全一致は大文字小文字・表記ゆれで意図せず弾かれる可能性があるが、「フォールバックは空配列（タグ無し）」で安全に倒れるため許容している。
-- **候補が0件なら即座に空配列を返しGemini自体を呼ばない**（`availableTagNames.length === 0`で早期return）。タグが1つも登録されていない初期状態でAPIコストを無駄にしない。
+- **AIには候補のname/category/descriptionを渡し、IDではなく名前で答えさせる。** 返却名を登録済み候補と完全一致で照合し、重複、未知名、同カテゴリー2件目をコード側で捨ててから最大3件へ絞る。
+- **候補が0件なら即座に空配列を返しGemini自体を呼ばない。** QA routeは取得時点で`isWorkTag: true`へ絞り、ひろばrouteは絞らない。
+- **公開タグ取得には`lib/prisma/selects.ts`の`publicTagSelect`を使う。** description/isWorkTagをPrismaオブジェクトのspreadで公開APIやClient Componentへ漏らさない。管理APIだけ`AdminTagSchema`を使う。
+- isWorkTagをtrueからfalseへ変えるときは既存QAのPostTagを同一transactionで削除し、HirobaPostTagは維持する。カテゴリー変更が既存投稿の一カテゴリー一件制約に抵触する場合は409で拒否する。
 - モデレーションでフラグが立ち`deletedAt`が設定された投稿にはタグ付けをスキップする（`posts.ts`の`createPostRoute`内、`if (!post.deletedAt)`で分岐）。非表示になる投稿にAI呼び出しする意味が無いため。
 - 投稿レスポンスの`tags`フィールド（`PostSchema.tags`）は`Tag`と同じ形（`id`/`name`/`createdAt`）で統一する。作成直後のレスポンスだけ選択的なフィールドで`select`すると、一覧・詳細取得時のレスポンスと形が食い違う（実際に一度`createdAt`を取り忘れて発覚した）。新しい`select`を書くときは、そのレスポンスが他のエンドポイントの同名オブジェクトと完全に同じ形になっているか確認する。
 - スタンドアロンで動作確認したいときは`npx tsx -r dotenv/config <script>.ts dotenv_config_path=.env.local`で`assignTags()`を直接呼ぶ（§7の地雷と同じ理由で`.env.local`の明示読み込みが要る）。
