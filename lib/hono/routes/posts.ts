@@ -153,7 +153,10 @@ const createAnswerRoute = createRoute({
       content: { 'application/json': { schema: z.object({ answer: AnswerSchema }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
-    404: errorResponse('質問が見つからない', 'Not found'),
+    404: errorResponse(
+      '投稿が存在しない、または削除済みのため回答できない',
+      'この投稿は削除されたため、回答できません',
+    ),
     409: errorResponse('解決済み・非表示の質問には回答できない', '回答を受け付けていない質問です'),
     500: errorResponse('回答の作成に失敗した', '回答の作成に失敗しました'),
   },
@@ -445,7 +448,10 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
 
     if (process.env.MOCK_MODE === 'true') {
       const post = MOCK_POSTS.find((p) => p.id === id)
-      if (!post) return c.json({ error: 'Not found' }, 404)
+      if (!post) return c.json({ error: '投稿が見つかりません' }, 404)
+      if (post.deletedAt) {
+        return c.json({ error: 'この投稿は削除されたため、回答できません' }, 404)
+      }
       const data = c.req.valid('json')
       return c.json(
         {
@@ -468,8 +474,11 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     const data = c.req.valid('json')
     const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
 
-    const post = await prisma.post.findFirst({ where: { id, deletedAt: null } })
-    if (!post) return c.json({ error: 'Not found' }, 404)
+    const post = await prisma.post.findUnique({ where: { id } })
+    if (!post) return c.json({ error: '投稿が見つかりません' }, 404)
+    if (post.deletedAt) {
+      return c.json({ error: 'この投稿は削除されたため、回答できません' }, 404)
+    }
     if (post.status !== QuestionStatus.OPEN && post.status !== QuestionStatus.ANSWERED) {
       return c.json({ error: '回答を受け付けていない質問です' }, 409)
     }
