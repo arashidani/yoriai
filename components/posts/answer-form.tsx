@@ -1,6 +1,7 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
@@ -16,6 +17,7 @@ type AnswerFormProps = {
 export function AnswerForm({ postId }: AnswerFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [isPostUnavailable, setIsPostUnavailable] = useState(false)
   const isSubmittingRef = useRef(false)
   const idempotencyKeyRef = useRef<{ key: string; requestBody: string } | null>(null)
   const {
@@ -28,7 +30,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
   })
 
   async function onSubmit(data: CreateAnswerInput) {
-    if (isSubmittingRef.current) return
+    if (isSubmittingRef.current || isPostUnavailable) return
     isSubmittingRef.current = true
     setError(null)
 
@@ -45,6 +47,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
       })
       if (!res.ok) {
         const body = await res.json()
+        if (res.status === 404) setIsPostUnavailable(true)
         setError('error' in body ? body.error : '回答の投稿に失敗しました')
         return
       }
@@ -64,14 +67,20 @@ export function AnswerForm({ postId }: AnswerFormProps) {
           {error}
         </p>
       )}
+      {isPostUnavailable && (
+        <Link href="/" className="text-sm font-medium text-primary underline underline-offset-4">
+          一覧に戻る
+        </Link>
+      )}
       <Textarea
         placeholder="回答を入力してください"
         rows={4}
+        disabled={isPostUnavailable}
         {...register('body')}
         aria-invalid={!!errors.body}
       />
       {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting || isPostUnavailable}>
         {isSubmitting ? '送信中...' : '回答する'}
       </Button>
     </form>
