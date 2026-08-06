@@ -116,6 +116,20 @@ const listInvitesRoute = createRoute({
   },
 })
 
+const deleteInviteRoute = createRoute({
+  method: 'delete',
+  path: '/invites/{id}',
+  tags: ['admin'],
+  summary: '招待リンクを削除（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
 const createPasswordResetRoute = createRoute({
   method: 'post',
   path: '/users/{id}/password-resets',
@@ -493,6 +507,23 @@ export const adminRoute = $(
     }
     const invites = await prisma.invite.findMany({ orderBy: { createdAt: 'desc' } })
     return c.json({ invites: invites.map((i) => ({ ...i, status: inviteStatus(i) })) }, 200)
+  })
+  .openapi(deleteInviteRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    try {
+      await prisma.invite.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
+    return c.json({ success: true }, 200)
   })
   .openapi(createPasswordResetRoute, async (c) => {
     const { id: userId } = c.req.valid('param')
