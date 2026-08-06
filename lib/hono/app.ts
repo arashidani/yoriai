@@ -3,6 +3,9 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { openApiConfig } from './openapi/config'
 import { adminRoute } from './routes/admin'
 import { answersRoute } from './routes/answers'
+import { hirobaRoute } from './routes/hiroba'
+import { hirobaAnswersRoute } from './routes/hiroba-answers'
+import { hirobaPostsRoute } from './routes/hiroba-posts'
 import { invitesRoute } from './routes/invites'
 import { passwordResetsRoute } from './routes/password-resets'
 import { postsRoute } from './routes/posts'
@@ -12,6 +15,9 @@ const app = new OpenAPIHono()
   .basePath('/api')
   .route('/posts', postsRoute)
   .route('/answers', answersRoute)
+  .route('/hiroba', hirobaRoute)
+  .route('/hiroba-posts', hirobaPostsRoute)
+  .route('/hiroba-answers', hirobaAnswersRoute)
   .route('/admin', adminRoute)
   .route('/users', usersRoute)
   .route('/invites', invitesRoute)
