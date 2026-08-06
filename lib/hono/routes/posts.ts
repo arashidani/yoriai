@@ -23,6 +23,7 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import { MOCK_ANSWERS, MOCK_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { publicTagSelect } from '@/lib/prisma/selects'
 import { getOrAssignAnonymousProfile } from '@/lib/questions/assign-anonymous-profile'
 import { createAnswerSchema } from '@/lib/schemas/answer'
 import { createPostSchema } from '@/lib/schemas/post'
@@ -285,7 +286,13 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
     const posts = await prisma.post.findMany({
       where: { deletedAt: null },
-      include: { author: true, tags: { include: { tag: true } } },
+      include: {
+        author: true,
+        tags: {
+          where: { tag: { isWorkTag: true } },
+          include: { tag: { select: publicTagSelect } },
+        },
+      },
       orderBy: { updatedAt: 'desc' },
     })
     return c.json({ posts: posts.map((p) => ({ ...p, tags: p.tags.map((pt) => pt.tag) })) }, 200)
@@ -299,7 +306,13 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
     const post = await prisma.post.findFirst({
       where: { id, deletedAt: null },
-      include: { author: true, tags: { include: { tag: true } } },
+      include: {
+        author: true,
+        tags: {
+          where: { tag: { isWorkTag: true } },
+          include: { tag: { select: publicTagSelect } },
+        },
+      },
     })
     if (!post) return c.json({ error: 'Not found' }, 404)
     return c.json({ post: { ...post, tags: post.tags.map((pt) => pt.tag) } }, 200)
@@ -403,19 +416,16 @@ export const postsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     if (!post.deletedAt) {
       try {
         const allTags = await prisma.tag.findMany({
-          select: { id: true, name: true, createdAt: true },
+          where: { isWorkTag: true },
+          select: { id: true, name: true, category: true, description: true, createdAt: true },
         })
-        const selectedNames = await assignTags(
-          post.title,
-          post.body,
-          allTags.map((t) => t.name),
-        )
+        const selectedNames = await assignTags(post.title, post.body, allTags)
         const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 3)
         if (selectedTags.length > 0) {
           await prisma.postTag.createMany({
             data: selectedTags.map((t) => ({ postId: post.id, tagId: t.id })),
           })
-          tags = selectedTags
+          tags = selectedTags.map(({ id, name, createdAt }) => ({ id, name, createdAt }))
         }
       } catch (error) {
         console.error('Failed to assign tags', { postId: post.id, error })
