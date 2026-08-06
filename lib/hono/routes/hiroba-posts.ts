@@ -16,6 +16,7 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import { MOCK_HIROBA_ANSWERS, MOCK_HIROBA_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { publicTagSelect } from '@/lib/prisma/selects'
 import { createHirobaAnswerSchema } from '@/lib/schemas/hiroba'
 
 type HirobaAnswerWithAuthor = HirobaAnswer & { author: User | null }
@@ -211,7 +212,7 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     }
     const post = await prisma.hirobaPost.findFirst({
       where: { id, deletedAt: null },
-      include: { author: true, tags: { include: { tag: true } } },
+      include: { author: true, tags: { include: { tag: { select: publicTagSelect } } } },
     })
     if (!post) return c.json({ error: 'Not found' }, 404)
     return c.json({ post: { ...post, tags: post.tags.map((pt) => pt.tag) } }, 200)

@@ -665,6 +665,37 @@ components:
         - postId
         - answerId
         - createdAt
+    AdminTag:
+      type: object
+      properties:
+        id:
+          type: string
+          example: tag-1
+        name:
+          type: string
+          example: 給与
+        category:
+          type: string
+          example: 人事
+        description:
+          type:
+            - string
+            - "null"
+          example: 給与計算、給与明細、控除に関する投稿に使用します。
+        isWorkTag:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - name
+        - category
+        - description
+        - isWorkTag
+        - createdAt
     Invite:
       type: object
       properties:
@@ -3089,7 +3120,7 @@ paths:
                   tags:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Tag"
+                      $ref: "#/components/schemas/AdminTag"
                 required:
                   - tags
         "401":
@@ -3124,8 +3155,19 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 50
+                category:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                description:
+                  type: string
+                  maxLength: 500
+                isWorkTag:
+                  type: boolean
               required:
                 - name
+                - category
+                - isWorkTag
       responses:
         "201":
           description: 作成されたタグ
@@ -3135,7 +3177,7 @@ paths:
                 type: object
                 properties:
                   tag:
-                    $ref: "#/components/schemas/Tag"
+                    $ref: "#/components/schemas/AdminTag"
                 required:
                   - tag
         "401":
@@ -3163,6 +3205,86 @@ paths:
               example:
                 error: 同じ名前のタグがすでに存在します
   /api/admin/tags/{id}:
+    patch:
+      tags:
+        - admin
+      summary: タグを更新（管理者専用）
+      security: *a2
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                category:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                description:
+                  type: string
+                  maxLength: 500
+                isWorkTag:
+                  type: boolean
+              required:
+                - name
+                - category
+                - isWorkTag
+      responses:
+        "200":
+          description: 更新されたタグ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: "#/components/schemas/AdminTag"
+                required:
+                  - tag
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: タグが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 同名タグまたはカテゴリー変更による割り当て競合
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: カテゴリー変更により1つの投稿へ同じカテゴリーのタグが複数割り当てられます
     delete:
       tags:
         - admin

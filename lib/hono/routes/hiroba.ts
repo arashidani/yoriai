@@ -14,6 +14,7 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import { MOCK_HIROBA_POSTS, MOCK_HIROBAS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { publicTagSelect } from '@/lib/prisma/selects'
 import { createHirobaPostSchema } from '@/lib/schemas/hiroba'
 
 type HirobaPostWithAuthor = HirobaPost & { author: User | null }
@@ -109,7 +110,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
 
     const posts = await prisma.hirobaPost.findMany({
       where: { hirobaId: hiroba.id, deletedAt: null },
-      include: { author: true, tags: { include: { tag: true } } },
+      include: { author: true, tags: { include: { tag: { select: publicTagSelect } } } },
       orderBy: { updatedAt: 'desc' },
     })
     return c.json(
@@ -210,19 +211,15 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     if (!post.deletedAt) {
       try {
         const allTags = await prisma.tag.findMany({
-          select: { id: true, name: true, createdAt: true },
+          select: { id: true, name: true, category: true, description: true, createdAt: true },
         })
-        const selectedNames = await assignTags(
-          post.title,
-          post.body,
-          allTags.map((t) => t.name),
-        )
+        const selectedNames = await assignTags(post.title, post.body, allTags)
         const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 3)
         if (selectedTags.length > 0) {
           await prisma.hirobaPostTag.createMany({
             data: selectedTags.map((t) => ({ hirobaPostId: post.id, tagId: t.id })),
           })
-          tags = selectedTags
+          tags = selectedTags.map(({ id, name, createdAt }) => ({ id, name, createdAt }))
         }
       } catch (error) {
         console.error('Failed to assign tags', { hirobaPostId: post.id, error })

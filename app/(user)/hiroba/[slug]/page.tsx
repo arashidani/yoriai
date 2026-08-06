@@ -4,6 +4,7 @@ import { HirobaFeed } from '@/components/hiroba/hiroba-feed'
 import { getCurrentUser } from '@/lib/auth/current-user'
 import { MOCK_HIROBA_POSTS, MOCK_HIROBAS, MOCK_TAGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { publicTagSelect } from '@/lib/prisma/selects'
 
 async function getHiroba(slug: string) {
   if (process.env.MOCK_MODE === 'true') {
@@ -18,15 +19,15 @@ async function getRawPosts(hirobaId: string) {
   }
   const posts = await prisma.hirobaPost.findMany({
     where: { hirobaId, deletedAt: null },
-    include: { author: true, tags: { include: { tag: true } } },
+    include: { author: true, tags: { include: { tag: { select: publicTagSelect } } } },
     orderBy: { updatedAt: 'desc' },
   })
   return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
 }
 
 async function getAllTags() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_TAGS
-  return prisma.tag.findMany({ orderBy: { name: 'asc' } })
+  if (process.env.MOCK_MODE === 'true') return MOCK_TAGS.map(({ id, name }) => ({ id, name }))
+  return prisma.tag.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } })
 }
 
 async function getViewerState(userId: string | undefined, postIds: string[]) {

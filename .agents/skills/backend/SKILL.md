@@ -221,6 +221,14 @@ app.openapi(route, async (c) => {
 - スキーマの `min`/`max` などの制約は OpenAPI ドキュメントにも反映される。
 - スキーマをルートファイルにインラインで書くのは、フロントと共有しない場合のみ許容。
 
+### Zod union の使い分け
+
+- 通常のnullableフィールドは `.nullable()` を使う。
+- `.openapi('Name')` で登録済みの共有コンポーネントをnullableにするときは、共有スキーマ自体を汚染しないよう `z.union([Schema, z.null()])` を使う。
+- 複数のオブジェクトバリアントは判別キー付きの `z.discriminatedUnion` を使う。
+- 判別キーを持てない排他的な2択だけ `z.xor` を使う。
+- 排他的でないオブジェクト同士を `z.union` に並べない。最初に一致した形が採用され、OpenAPIも `anyOf` になる。
+
 ---
 
 ## 5. Prisma クエリパターン
