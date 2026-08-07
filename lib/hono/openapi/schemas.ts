@@ -43,6 +43,14 @@ export const AdminTagSchema = z
   })
   .openapi('AdminTag')
 
+export const TagCategorySchema = z
+  .object({
+    id: z.string().openapi({ example: 'tag-category-1' }),
+    name: z.string().openapi({ example: '人事' }),
+    createdAt: dateTime(),
+  })
+  .openapi('TagCategory')
+
 export const PostSchema = z
   .object({
     id: z.string().openapi({ example: 'post-1' }),

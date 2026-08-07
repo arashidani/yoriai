@@ -11,6 +11,7 @@ import {
   MOCK_MISSIONS,
   MOCK_PASSWORD_RESETS,
   MOCK_POSTS,
+  MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
   MOCK_USERS,
 } from '../lib/mocks/fixtures'
@@ -175,6 +176,23 @@ export const mswHandlers = {
       return HttpResponse.json({ profile: { ...profile, isActive: body.isActive } })
     }),
     http.delete('/api/admin/anonymous-profiles/:id', () => HttpResponse.json({ success: true })),
+    http.get('/api/admin/tag-categories', () =>
+      HttpResponse.json({ categories: MOCK_TAG_CATEGORIES }),
+    ),
+    http.post('/api/admin/tag-categories', async ({ request }) => {
+      const body = (await request.json()) as { name: string }
+      return HttpResponse.json(
+        {
+          category: {
+            id: 'tag-category-new',
+            name: body.name,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.delete('/api/admin/tag-categories/:id', () => HttpResponse.json({ success: true })),
     http.get('/api/admin/tags', () => HttpResponse.json({ tags: MOCK_TAGS })),
     http.post('/api/admin/tags', async ({ request }) => {
       const body = (await request.json()) as {

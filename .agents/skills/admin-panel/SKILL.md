@@ -33,13 +33,15 @@ backend/frontend skillsの上に適用する、現在の管理画面固有ルー
 `Tag`はQAとひろばで共有する。管理者だけが作成・編集・削除でき、ユーザーは直接割り当てない。
 
 - `name`: グローバルに一意。
-- `category`: 必須。同じ投稿へ同じカテゴリーのタグは最大1件。
+- `category`: 必須。`TagCategory`マスタから選択し、自由入力させない。同じ投稿へ同じカテゴリーのタグは最大1件。
 - `description`: 任意。管理画面とAIプロンプトだけで使用し、公開API、QA、ひろばのRSC payloadへ渡さない。
 - `isWorkTag`: 新規作成時のデフォルトはfalse。trueだけQAで候補・表示可能。ひろばはtrue/false両方を使える。
 
 公開タグは `lib/prisma/selects.ts` の `publicTagSelect`（id/name/createdAt）のみを取得する。管理APIは `AdminTagSchema` を使う。PrismaのTagをそのままspreadして公開レスポンスへ入れない。
 
 `isWorkTag`をtrueからfalseへ変更するときは、既存QAの`PostTag`を同じtransactionで削除する。ひろばの`HirobaPostTag`は維持する。カテゴリー変更で既存投稿に同カテゴリーが2件になる場合は409で拒否する。
+
+`Tag.category`は`TagCategory.name`への外部キー。タグフォームは`GET /api/admin/tag-categories`の結果を単一選択ドロップダウンにする。カテゴリーは`/admin/tag-categories`で作成・削除し、タグで使用中のカテゴリー削除はDBの外部キー制約で拒否して409を返す。カテゴリーのリネーム・並び替えは要求されるまで追加しない。
 
 ## AIタグ割り当て
 
@@ -53,7 +55,7 @@ backend/frontend skillsの上に適用する、現在の管理画面固有ルー
 
 ## 現在の管理リソース
 
-ユーザー、招待、パスワードリセット、匿名プロフィール、バッジ、ミッション、AIフラグ、タグ、ひろばを管理する。既存のroute/schema/mock/Storyパターンを再利用し、未実装のゲーミフィケーションや検知エンジンを管理CRUD変更から勝手に追加しない。
+ユーザー、招待、パスワードリセット、匿名プロフィール、バッジ、ミッション、AIフラグ、タグ、タグカテゴリー、ひろばを管理する。既存のroute/schema/mock/Storyパターンを再利用し、未実装のゲーミフィケーションや検知エンジンを管理CRUD変更から勝手に追加しない。
 
 ## 検証
 

@@ -202,14 +202,23 @@ model AiFlag {
 
 /// タグのマスタ（管理者が管理パネルで維持し、投稿にはAIが自動付与する。ユーザーは付与・変更不可）
 model Tag {
-  id          String          @id @default(uuid(7))
-  name        String          @unique
-  category    String
-  description String?
-  isWorkTag   Boolean         @default(false)
-  posts       PostTag[]
-  hirobaPosts HirobaPostTag[]
-  createdAt   DateTime        @default(now())
+  id                 String          @id @default(uuid(7))
+  name               String          @unique
+  category           String
+  categoryDefinition TagCategory     @relation(fields: [category], references: [name], onDelete: Restrict, onUpdate: Cascade)
+  description        String?
+  isWorkTag          Boolean         @default(false)
+  posts              PostTag[]
+  hirobaPosts        HirobaPostTag[]
+  createdAt          DateTime        @default(now())
+}
+
+/// タグカテゴリーのマスタ。管理者が管理し、Tag.categoryの選択肢になる
+model TagCategory {
+  id        String   @id @default(uuid(7))
+  name      String   @unique
+  tags      Tag[]
+  createdAt DateTime @default(now())
 }
 
 /// 投稿とタグの中間テーブル（AI自動付与、1投稿あたり最大3件）

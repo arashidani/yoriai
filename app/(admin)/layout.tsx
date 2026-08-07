@@ -17,6 +17,7 @@ const tabs = [
   { href: '/admin/mission', label: 'ミッション管理' },
   { href: '/admin/mission/create', label: 'ミッション作成' },
   { href: '/admin/tags', label: 'タグ管理' },
+  { href: '/admin/tag-categories', label: 'タグカテゴリー管理' },
   { href: '/admin/hiroba', label: 'ひろば管理' },
 ]
 
@@ -37,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <h1 className="text-xl font-bold">管理パネル</h1>
       </header>
       <nav className="flex items-center justify-between border-b px-8">
-        <div className="flex gap-2">
+        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto">
           {tabs.map((tab) => (
             <Link
               key={tab.href}
@@ -56,7 +57,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <button
           type="button"
           onClick={handleLogout}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
           ログアウト
