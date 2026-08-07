@@ -49,6 +49,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-display-name-green: var(--display-name-green);
+  --color-display-name-yellow: var(--display-name-yellow);
+  --color-display-name-blue: var(--display-name-blue);
+  --color-display-name-purple: var(--display-name-purple);
+  --color-display-name-gray: var(--display-name-gray);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-sidebar: var(--sidebar);
@@ -504,6 +509,11 @@
   --chart-3: #104e64;
   --chart-4: #ffb900;
   --chart-5: #fe9a00;
+  --display-name-green: #15803d; /* green-700 */
+  --display-name-yellow: #a16207; /* yellow-700 */
+  --display-name-blue: #2563eb; /* blue-600 */
+  --display-name-purple: #9333ea; /* purple-600 */
+  --display-name-gray: #6b7280; /* gray-500 */
   --positive: #009689;
   --negative: #f54a00;
 
@@ -553,6 +563,11 @@
   --chart-3: #fd9a00;
   --chart-4: #ad46ff;
   --chart-5: #ff2056;
+  --display-name-green: #4ade80; /* green-400 */
+  --display-name-yellow: #facc15; /* yellow-400 */
+  --display-name-blue: #60a5fa; /* blue-400 */
+  --display-name-purple: #c084fc; /* purple-400 */
+  --display-name-gray: #9ca3af; /* gray-400 */
   --positive: #00bc7d;
   --negative: #ff2056;
 

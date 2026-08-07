@@ -52,7 +52,7 @@ export async function proxy(request: NextRequest) {
   const homePath = role === 'ADMIN' ? '/admin' : '/'
 
   // ログイン済みユーザーが /login・/register・/reset-password にアクセスしたら自分のホームへ
-  if (isPublicPath) {
+  if (isPublicPath && pathname !== '/register/complete') {
     return NextResponse.redirect(new URL(homePath, request.url))
   }
 

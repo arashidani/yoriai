@@ -1,7 +1,9 @@
 import {
   BadgeRarity,
+  DisplayNameColor,
   FlagSeverity,
   FlagStatus,
+  LunchPreference,
   QuestionStatus,
   Role,
 } from '@/app/generated/prisma/enums'
@@ -12,7 +14,17 @@ export const MOCK_USERS = [
     supabaseId: 'supabase-user-1',
     email: 'dev@example.com',
     name: '開発者',
+    username: 'みどりさん',
     role: Role.ADMIN,
+    departmentId: 'department-1',
+    businessAreaId: 'business-area-1',
+    joinedYear: 2020,
+    joinedMonth: 4,
+    lunchPreference: LunchPreference.NO_PREFERENCE,
+    recommendedLunchSpot: null,
+    bio: 'よろしくお願いします',
+    displayNameColor: DisplayNameColor.GREEN,
+    onboardingCompletedAt: new Date('2024-01-01'),
     createdAt: new Date('2024-01-01'),
   },
   {
@@ -20,9 +32,44 @@ export const MOCK_USERS = [
     supabaseId: 'supabase-user-2',
     email: 'user@example.com',
     name: '一般ユーザー',
+    username: 'あおさん',
     role: Role.USER,
+    departmentId: 'department-2',
+    businessAreaId: 'business-area-2',
+    joinedYear: 2022,
+    joinedMonth: 10,
+    lunchPreference: LunchPreference.TEAM,
+    recommendedLunchSpot: '駅前食堂',
+    bio: null,
+    displayNameColor: DisplayNameColor.BLUE,
+    onboardingCompletedAt: new Date('2024-01-02'),
     createdAt: new Date('2024-01-02'),
   },
+]
+
+const optionDates = {
+  createdAt: new Date('2024-01-01'),
+  updatedAt: new Date('2024-01-01'),
+}
+
+export const MOCK_DEPARTMENTS = [
+  { id: 'department-1', name: '開発部', isActive: true, ...optionDates },
+  { id: 'department-2', name: '営業部', isActive: true, ...optionDates },
+]
+
+export const MOCK_BUSINESS_AREAS = [
+  { id: 'business-area-1', name: 'プロダクト開発', isActive: true, ...optionDates },
+  { id: 'business-area-2', name: '法人営業', isActive: true, ...optionDates },
+]
+
+export const MOCK_BUSINESS_SKILLS = [
+  { id: 'business-skill-1', name: 'プロジェクト管理', isActive: true, ...optionDates },
+  { id: 'business-skill-2', name: 'プレゼンテーション', isActive: true, ...optionDates },
+]
+
+export const MOCK_INTERESTS = [
+  { id: 'interest-1', name: '生成AI', isActive: true, ...optionDates },
+  { id: 'interest-2', name: '組織づくり', isActive: true, ...optionDates },
 ]
 
 export const MOCK_ANONYMOUS_PROFILES = [

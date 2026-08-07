@@ -133,14 +133,14 @@ function RegisterForm() {
                     type: 'email',
                     ...emailField,
                     onBlur: (e) => {
-                      emailField.onBlur(e)
+                      void emailField.onBlur(e)
                       setEmailTouched(true)
                     },
                   }}
                 />
 
                 <FormField
-                  label="表示名"
+                  label="氏名"
                   error={errors.name?.message}
                   inputProps={{
                     id: 'name',
