@@ -139,6 +139,14 @@ export const MOCK_TAGS = [
   },
 ]
 
+export const MOCK_TAG_CATEGORIES = [
+  { id: 'tag-category-1', name: 'フレームワーク', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-2', name: '言語', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-3', name: 'データベース', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-4', name: 'UIライブラリ', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-5', name: '交流', createdAt: new Date('2024-01-01') },
+]
+
 const MOCK_PUBLIC_TAGS = MOCK_TAGS.map(({ id, name, createdAt }) => ({ id, name, createdAt }))
 
 export const MOCK_POSTS = [
