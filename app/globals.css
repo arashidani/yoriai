@@ -414,8 +414,8 @@
      paragraph の weight バリエーションは font-medium(500) /
      font-semibold(600) を併用する。
      フォントは見出しに font-heading、本文は html 既定の font-sans を使う。 */
-  --text-heading-1: 3rem;
-  --text-heading-1--line-height: 3rem;
+  --text-heading-1: 1.5rem;
+  --text-heading-1--line-height: 1.75rem;
   --text-heading-1--letter-spacing: 0.5px;
   --text-heading-1--font-weight: 700;
   --text-heading-2: 1.875rem;
@@ -480,10 +480,10 @@
   --primary-foreground: #fffefc;
   --primary-hover: #f36e49; /* orange-600 */
   --secondary: #fffefc;
-  --secondary-foreground: #a59a8d; /* neutral-600 */
+  --secondary-foreground: #7d746a; /* neutral-600 */
   --secondary-hover: #ece7df; /* neutral-300 */
   --muted: #f6f3ed; /* neutral-200 */
-  --muted-foreground: #ddd6cc; /* neutral-400 */
+  --muted-foreground: #a59a8d; /* neutral-600 */
   --accent: #fdfbf7;
   --accent-foreground: #2f2b27;
   --destructive: #f87171; /* red-400 */
@@ -534,7 +534,7 @@
   --secondary-foreground: #fdfbf7;
   --secondary-hover: #ece7df;
   --muted: #544d46;
-  --muted-foreground: #c9c0b5; /* neutral-500 */
+  --muted-foreground: #a59a8d; /* neutral-600 */
   --accent: #2f2b27;
   --accent-foreground: #fdfbf7;
   --destructive: #ffe2e2; /* red-100 */
