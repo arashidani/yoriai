@@ -1,15 +1,23 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Button } from '@/components/ui/button'
+import eyeIcon from '@/assets/eye.png'
+import eyeOffIcon from '@/assets/eye-off.png'
+import passwordInsufficientIcon from '@/assets/password-insufficient.png'
+import passwordOkIcon from '@/assets/password-ok.png'
+import { Button } from '@/components/design-system/button'
+import { FormField } from '@/components/design-system/form-field'
+import { RegisterImagePanel } from '@/components/register/register-image-panel'
+import { RegisterSidePanel } from '@/components/register/register-side-panel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { client } from '@/lib/hono/client'
 import { type RegisterFormInput, registerFormSchema } from '@/lib/schemas/register'
-import { createClient } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 
 type Invite = { name: string | null; role: string }
 
@@ -20,14 +28,26 @@ function RegisterForm() {
   const [inviteError, setInviteError] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [passwordVisible, setPasswordVisible] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    watch,
+    formState: { errors, isSubmitting, isValid },
   } = useForm<RegisterFormInput>({
     resolver: zodResolver(registerFormSchema),
+    mode: 'onChange',
   })
+  const emailField = register('email')
+  const passwordField = register('password')
+  const password = watch('password')
+  const isPasswordValid =
+    /^[a-zA-Z0-9]+$/.test(password ?? '') &&
+    /[a-zA-Z]/.test(password ?? '') &&
+    /[0-9]/.test(password ?? '')
+  const isOverEightWords = (password ?? '').length >= 8
 
   useEffect(() => {
     if (!token) {
@@ -43,7 +63,14 @@ function RegisterForm() {
       }
       const { invite } = await res.json()
       setInvite(invite)
-      reset({ name: invite.name ?? '' })
+
+      const raw = sessionStorage.getItem('registerFormData')
+      const stored = raw ? (JSON.parse(raw) as RegisterFormInput & { token: string }) : null
+      if (stored && stored.token === token) {
+        reset({ name: stored.name, email: stored.email, password: stored.password })
+      } else {
+        reset({ name: invite.name ?? '' })
+      }
       setChecking(false)
     })
   }, [token, reset])
@@ -52,31 +79,8 @@ function RegisterForm() {
     if (!invite || !token) return
     setError(null)
 
-    const supabase = createClient()
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: { data: { name: data.name } },
-    })
-
-    if (signUpError) {
-      setError(signUpError.message)
-      return
-    }
-
-    if (signUpData.user) {
-      const res = await client.api.users.$post({
-        json: { name: data.name, inviteToken: token },
-      })
-      if (!res.ok) {
-        const body = await res.json()
-        setError('error' in body ? body.error : 'ユーザー情報の保存に失敗しました')
-        return
-      }
-    }
-
-    router.push('/')
-    router.refresh()
+    sessionStorage.setItem('registerFormData', JSON.stringify({ ...data, token }))
+    router.push('/register/confirm')
   }
 
   if (checking) return null
@@ -98,52 +102,127 @@ function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-full max-w-sm space-y-6 p-8 border rounded-xl">
-        <h1 className="text-2xl font-bold text-center">ユーザー登録</h1>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">表示名</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="山田 太郎"
-              {...register('name')}
-              aria-invalid={!!errors.name}
-            />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">メールアドレス</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@ibjapan.jp"
-              autoComplete="email"
-              {...register('email')}
-              aria-invalid={!!errors.email}
-            />
-            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">パスワード</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="8文字以上"
-              {...register('password')}
-              aria-invalid={!!errors.password}
-            />
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
-            )}
-          </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? '登録中...' : 'アカウント作成'}
-          </Button>
-        </form>
-      </div>
+    <div className="relative flex h-screen items-center bg-background-subtle overflow-hidden">
+      <RegisterImagePanel />
+
+      <RegisterSidePanel>
+        <div className="w-full max-w-95 h-139 flex flex-col justify-between">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col justify-between h-full w-full"
+          >
+            <div className="flex flex-col gap-16">
+              <div className="flex flex-col gap-4 items-center">
+                <h1 className="text-2xl font-bold text-foreground">ようこそ</h1>
+
+                <p className="text-secondary-foreground">
+                  情報を入力してアカウント登録をしましょう
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <FormField
+                  label="メールアドレス"
+                  error={
+                    emailTouched && errors.email
+                      ? '有効なメールアドレスを入力してください'
+                      : undefined
+                  }
+                  inputProps={{
+                    id: 'email',
+                    type: 'email',
+                    ...emailField,
+                    onBlur: (e) => {
+                      emailField.onBlur(e)
+                      setEmailTouched(true)
+                    },
+                  }}
+                />
+
+                <FormField
+                  label="表示名"
+                  error={errors.name?.message}
+                  inputProps={{
+                    id: 'name',
+                    type: 'text',
+                    placeholder: '山田 太郎',
+                    ...register('name'),
+                  }}
+                />
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="password">
+                    <p className="text-sm font-bold text-foreground">パスワード</p>
+                  </Label>
+
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={passwordVisible ? 'text' : 'password'}
+                      {...passwordField}
+                      className={cn('p-3 h-11 pr-16')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setPasswordVisible((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2"
+                      aria-label={passwordVisible ? 'パスワードを隠す' : 'パスワードを表示'}
+                    >
+                      <Image
+                        src={passwordVisible ? eyeIcon : eyeOffIcon}
+                        alt=""
+                        width={16}
+                        height={16}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <div className="flex items-center gap-1">
+                      <Image
+                        src={isPasswordValid ? passwordOkIcon : passwordInsufficientIcon}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="shrink-0"
+                      />
+                      <span
+                        className={isPasswordValid ? 'text-green-400' : 'text-secondary-foreground'}
+                      >
+                        半角英数字両方を含む
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <Image
+                        src={isOverEightWords ? passwordOkIcon : passwordInsufficientIcon}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="shrink-0"
+                      />
+                      <span
+                        className={
+                          isOverEightWords ? 'text-green-400' : 'text-secondary-foreground'
+                        }
+                      >
+                        8文字以上
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {error && <p className="">{error}</p>}
+              <Button type="submit" isDisabled={!isValid || isSubmitting}>
+                {isSubmitting ? '登録中...' : '確認へ進む'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </RegisterSidePanel>
     </div>
   )
 }
