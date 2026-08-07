@@ -1,8 +1,9 @@
 'use client'
 
+import { Select } from '@base-ui/react/select'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2, Pencil, Tag as TagIcon, Trash2 } from 'lucide-react'
+import { Check, ChevronsUpDown, Loader2, Pencil, Tag as TagIcon, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   type Control,
@@ -33,6 +34,7 @@ import {
   type UpdateTagInput,
   updateTagSchema,
 } from '@/lib/schemas/tag'
+import { fetchTagCategories, type TagCategory } from './tag-category-list'
 
 type Tag = {
   id: string
@@ -50,7 +52,15 @@ async function fetchTags(): Promise<Tag[]> {
   return data.tags
 }
 
-function EditTagDialog({ tag, onUpdated }: { tag: Tag; onUpdated: () => void }) {
+function EditTagDialog({
+  tag,
+  categories,
+  onUpdated,
+}: {
+  tag: Tag
+  categories: TagCategory[]
+  onUpdated: () => void
+}) {
   const [open, setOpen] = useState(false)
   const {
     register,
@@ -102,6 +112,7 @@ function EditTagDialog({ tag, onUpdated }: { tag: Tag; onUpdated: () => void }) 
             register={register}
             control={control}
             errors={errors}
+            categories={categories}
             prefix={`edit-${tag.id}`}
           />
           <DialogFooter>
@@ -119,10 +130,72 @@ type TagFieldsProps = {
   register: UseFormRegister<UpdateTagInput>
   control: Control<UpdateTagInput>
   errors: FieldErrors<UpdateTagInput>
+  categories: TagCategory[]
   prefix: string
 }
 
-function TagFields({ register, control, errors, prefix }: TagFieldsProps) {
+function CategorySelect({
+  id,
+  value,
+  categories,
+  invalid,
+  onChange,
+}: {
+  id: string
+  value: string
+  categories: TagCategory[]
+  invalid: boolean
+  onChange: (value: string) => void
+}) {
+  const items = categories.map(({ name }) => ({ label: name, value: name }))
+
+  return (
+    <Select.Root
+      items={items}
+      value={value || null}
+      onValueChange={(nextValue) => onChange(nextValue ?? '')}
+    >
+      <Select.Trigger
+        id={id}
+        aria-invalid={invalid}
+        disabled={categories.length === 0}
+        className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <Select.Value
+          className="data-placeholder:text-muted-foreground"
+          placeholder={
+            categories.length === 0 ? 'カテゴリーを先に作成してください' : '選択してください'
+          }
+        />
+        <Select.Icon>
+          <ChevronsUpDown className="size-4 text-muted-foreground" />
+        </Select.Icon>
+      </Select.Trigger>
+      <Select.Portal>
+        <Select.Positioner className="z-50 outline-hidden" sideOffset={4}>
+          <Select.Popup className="min-w-(--anchor-width) origin-(--transform-origin) rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0">
+            <Select.List>
+              {items.map((item) => (
+                <Select.Item
+                  key={item.value}
+                  value={item.value}
+                  className="grid cursor-default grid-cols-[1rem_1fr] items-center gap-2 rounded-md py-1.5 pr-3 pl-2 text-sm outline-none data-highlighted:bg-accent data-highlighted:text-accent-foreground"
+                >
+                  <Select.ItemIndicator>
+                    <Check className="size-4" />
+                  </Select.ItemIndicator>
+                  <Select.ItemText>{item.label}</Select.ItemText>
+                </Select.Item>
+              ))}
+            </Select.List>
+          </Select.Popup>
+        </Select.Positioner>
+      </Select.Portal>
+    </Select.Root>
+  )
+}
+
+function TagFields({ register, control, errors, categories, prefix }: TagFieldsProps) {
   return (
     <>
       <div className="space-y-2">
@@ -132,10 +205,18 @@ function TagFields({ register, control, errors, prefix }: TagFieldsProps) {
       </div>
       <div className="space-y-2">
         <Label htmlFor={`${prefix}-category`}>カテゴリー</Label>
-        <Input
-          id={`${prefix}-category`}
-          {...register('category')}
-          aria-invalid={!!errors.category}
+        <Controller
+          name="category"
+          control={control}
+          render={({ field }) => (
+            <CategorySelect
+              id={`${prefix}-category`}
+              value={field.value}
+              categories={categories}
+              invalid={!!errors.category}
+              onChange={field.onChange}
+            />
+          )}
         />
         {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
       </div>
@@ -170,7 +251,19 @@ function TagFields({ register, control, errors, prefix }: TagFieldsProps) {
 
 export function TagList() {
   const queryClient = useQueryClient()
-  const { data: tags = [], isLoading, error } = useQuery({ queryKey: ['tags'], queryFn: fetchTags })
+  const {
+    data: tags = [],
+    isLoading: tagsLoading,
+    error: tagsError,
+  } = useQuery({
+    queryKey: ['tags'],
+    queryFn: fetchTags,
+  })
+  const {
+    data: categories = [],
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useQuery({ queryKey: ['tagCategories'], queryFn: fetchTagCategories })
 
   const {
     register,
@@ -223,7 +316,7 @@ export function TagList() {
     await createMutation.mutateAsync(data)
   }
 
-  if (isLoading) {
+  if (tagsLoading || categoriesLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -231,12 +324,20 @@ export function TagList() {
     )
   }
 
-  if (error) return <div className="text-sm text-destructive">タグの取得に失敗しました</div>
+  if (tagsError || categoriesError) {
+    return <div className="text-sm text-destructive">タグ情報の取得に失敗しました</div>
+  }
 
   return (
     <div className="max-w-3xl space-y-8">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-lg border p-4">
-        <TagFields register={register} control={control} errors={errors} prefix="create" />
+        <TagFields
+          register={register}
+          control={control}
+          errors={errors}
+          categories={categories}
+          prefix="create"
+        />
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? '作成中...' : 'タグを追加'}
         </Button>
@@ -265,6 +366,7 @@ export function TagList() {
               </div>
               <EditTagDialog
                 tag={tag}
+                categories={categories}
                 onUpdated={() => queryClient.invalidateQueries({ queryKey: ['tags'] })}
               />
               <Button
