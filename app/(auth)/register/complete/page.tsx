@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import completeRightImage from '@/assets/register-complete-right.png'
 import { Button } from '@/components/design-system/button'
 import { RegisterImagePanel } from '@/components/register/register-image-panel'
@@ -19,7 +20,9 @@ export default function CompletePage() {
           </p>
         </div>
 
-        <Button className="w-95">プロフィール設定に進む</Button>
+        <Button render={<Link href="/onboarding" />} className="w-95">
+          プロフィール設定に進む
+        </Button>
       </RegisterSidePanel>
     </div>
   )

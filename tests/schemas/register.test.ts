@@ -4,7 +4,7 @@ import { COMPANY_EMAIL_ERROR, registerFormSchema } from '@/lib/schemas/register'
 const validInput = {
   name: '山田 太郎',
   email: 'taro@ibjapan.jp',
-  password: 'password',
+  password: 'password1',
 }
 
 describe('registerFormSchema', () => {

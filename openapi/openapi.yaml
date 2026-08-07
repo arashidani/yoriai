@@ -14,6 +14,8 @@ tags:
     description: 回答へのいいね
   - name: users
     description: ユーザー登録・自分のプロフィール取得
+  - name: onboarding
+    description: 初回プロフィール登録
   - name: admin
     description: 管理者専用のユーザー・投稿管理
   - name: invites
@@ -120,6 +122,23 @@ components:
             - string
             - "null"
           example: 一般ユーザー
+        username:
+          type:
+            - string
+            - "null"
+          example: あおさん
+        displayNameColor:
+          type:
+            - string
+            - "null"
+          enum:
+            - GREEN
+            - YELLOW
+            - BLUE
+            - PURPLE
+            - GRAY
+            - null
+          example: BLUE
         role:
           type: string
           enum:
@@ -135,6 +154,8 @@ components:
         - supabaseId
         - email
         - name
+        - username
+        - displayNameColor
         - role
         - createdAt
     Tag:
@@ -249,6 +270,32 @@ components:
           example: true
       required:
         - success
+    ProfileOption:
+      type: object
+      properties:
+        id:
+          type: string
+          example: option-1
+        name:
+          type: string
+          example: 開発部
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - name
+        - isActive
+        - createdAt
+        - updatedAt
     InviteCreated:
       type: object
       properties:
@@ -668,14 +715,6 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
-        "404":
-          description: 質問が見つからない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Not found
         "409":
           description: 回答が付いている質問は質問者本人には削除できない
           content:
@@ -784,13 +823,13 @@ paths:
               example:
                 error: Unauthorized
         "404":
-          description: 質問が見つからない
+          description: 投稿が存在しない、または削除済みのため回答できない
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
-                error: Not found
+                error: この投稿は削除されたため、回答できません
         "409":
           description: 解決済み・非表示の質問には回答できない
           content:
@@ -1148,12 +1187,205 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: いいね取り消しの処理に失敗しました
+  /api/admin/profile-options/{category}:
+    get:
+      tags:
+        - admin
+      summary: プロフィール選択肢一覧を取得（管理者専用）
+      security: &a1
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - departments
+              - business-areas
+              - business-skills
+              - interests
+          required: true
+          name: category
+          in: path
+      responses:
+        "200":
+          description: 選択肢一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  options:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProfileOption"
+                required:
+                  - options
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+    post:
+      tags:
+        - admin
+      summary: プロフィール選択肢を作成（管理者専用）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - departments
+              - business-areas
+              - business-skills
+              - interests
+          required: true
+          name: category
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+              required:
+                - name
+      responses:
+        "201":
+          description: 作成された選択肢
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  option:
+                    $ref: "#/components/schemas/ProfileOption"
+                required:
+                  - option
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "409":
+          description: 同名の選択肢が存在する
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 同じ名前の項目がすでに存在します
+  /api/admin/profile-options/{category}/{id}:
+    patch:
+      tags:
+        - admin
+      summary: プロフィール選択肢を更新（管理者専用）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - departments
+              - business-areas
+              - business-skills
+              - interests
+          required: true
+          name: category
+          in: path
+        - schema:
+            type: string
+            minLength: 1
+          required: true
+          name: id
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                isActive:
+                  type: boolean
+      responses:
+        "200":
+          description: 更新された選択肢
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  option:
+                    $ref: "#/components/schemas/ProfileOption"
+                required:
+                  - option
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 選択肢が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 同名の選択肢が存在する
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 同じ名前の項目がすでに存在します
   /api/admin/users:
     get:
       tags:
         - admin
       summary: ユーザー一覧を取得（管理者専用）
-      security: &a1
+      security: &a2
         - supabaseSession: []
       responses:
         "200":
@@ -1190,7 +1422,7 @@ paths:
       tags:
         - admin
       summary: 招待リンクを発行（管理者専用）
-      security: *a1
+      security: *a2
       requestBody:
         required: true
         content:
@@ -1242,7 +1474,7 @@ paths:
       tags:
         - admin
       summary: 招待一覧を取得（管理者専用）
-      security: *a1
+      security: *a2
       responses:
         "200":
           description: 招待一覧
@@ -1273,12 +1505,48 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
+  /api/admin/invites/{id}:
+    delete:
+      tags:
+        - admin
+      summary: 招待リンクを削除（管理者専用）
+      security: *a2
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/users/{id}/password-resets:
     post:
       tags:
         - admin
       summary: ユーザーのパスワードリセットリンクを発行（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1327,7 +1595,7 @@ paths:
       tags:
         - admin
       summary: 投稿一覧を取得（管理者専用）
-      security: *a1
+      security: *a2
       responses:
         "200":
           description: 投稿一覧
@@ -1363,7 +1631,7 @@ paths:
       tags:
         - admin
       summary: ソフトデリートされた投稿を復元（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1412,7 +1680,7 @@ paths:
       tags:
         - admin
       summary: 非表示にされた回答を復元（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1461,7 +1729,7 @@ paths:
       tags:
         - admin
       summary: ユーザーの名前・ロールを更新（管理者専用、自分自身のロール変更は不可）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1524,7 +1792,7 @@ paths:
       tags:
         - admin
       summary: ユーザーを削除（管理者専用、自分自身は削除不可）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1568,7 +1836,7 @@ paths:
       tags:
         - admin
       summary: バッジ一覧を取得（管理者専用）
-      security: *a1
+      security: *a2
       responses:
         "200":
           description: バッジ一覧
@@ -1603,7 +1871,7 @@ paths:
       tags:
         - admin
       summary: バッジを作成（管理者専用）
-      security: *a1
+      security: *a2
       requestBody:
         required: true
         content:
@@ -1667,7 +1935,7 @@ paths:
       tags:
         - admin
       summary: ミッション一覧を取得（管理者専用）
-      security: *a1
+      security: *a2
       responses:
         "200":
           description: ミッション一覧
@@ -1702,7 +1970,7 @@ paths:
       tags:
         - admin
       summary: ミッションを作成（管理者専用）
-      security: *a1
+      security: *a2
       requestBody:
         required: true
         content:
@@ -1766,7 +2034,7 @@ paths:
       tags:
         - admin
       summary: AIフラグ一覧を取得（管理者専用）
-      security: *a1
+      security: *a2
       responses:
         "200":
           description: AIフラグ一覧
@@ -1802,7 +2070,7 @@ paths:
       tags:
         - admin
       summary: AIフラグを確認済みにする（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1851,7 +2119,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラ一覧を取得（管理者専用）
-      security: *a1
+      security: *a2
       responses:
         "200":
           description: 匿名キャラ一覧
@@ -1886,7 +2154,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラを追加（管理者専用）
-      security: *a1
+      security: *a2
       requestBody:
         required: true
         content:
@@ -1937,7 +2205,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1996,7 +2264,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラを削除（管理者専用、割り当て済みのキャラは削除不可）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -2027,14 +2295,6 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
-        "404":
-          description: 匿名キャラが見つからない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Not found
         "409":
           description: すでに質問スレッドで使われているため削除できない
           content:
@@ -2048,7 +2308,7 @@ paths:
       tags:
         - admin
       summary: タグ一覧を取得（管理者専用）
-      security: *a1
+      security: *a2
       responses:
         "200":
           description: タグ一覧
@@ -2083,7 +2343,7 @@ paths:
       tags:
         - admin
       summary: タグを作成（管理者専用）
-      security: *a1
+      security: *a2
       requestBody:
         required: true
         content:
@@ -2138,7 +2398,7 @@ paths:
       tags:
         - admin
       summary: タグを削除（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -2258,6 +2518,146 @@ paths:
                     $ref: "#/components/schemas/User"
                 required:
                   - user
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+  /api/onboarding/options:
+    get:
+      tags:
+        - onboarding
+      summary: オンボーディングで選択できる項目を取得
+      security: &a3
+        - supabaseSession: []
+      responses:
+        "200":
+          description: 有効なプロフィール選択肢
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  departments:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProfileOption"
+                  businessAreas:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProfileOption"
+                  businessSkills:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProfileOption"
+                  interests:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ProfileOption"
+                required:
+                  - departments
+                  - businessAreas
+                  - businessSkills
+                  - interests
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+  /api/onboarding:
+    post:
+      tags:
+        - onboarding
+      summary: オンボーディングを完了
+      security: *a3
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                departmentId:
+                  type: string
+                  minLength: 1
+                businessAreaId:
+                  type: string
+                  minLength: 1
+                joinedYear:
+                  type: integer
+                  minimum: 1900
+                  maximum: 2026
+                joinedMonth:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+                businessSkillIds:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  minItems: 1
+                interestIds:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  minItems: 1
+                lunchPreference:
+                  type: string
+                  enum:
+                    - NO_PREFERENCE
+                    - TEAM
+                    - ALONE
+                recommendedLunchSpot:
+                  type: string
+                  maxLength: 20
+                bio:
+                  type: string
+                  maxLength: 200
+                displayNameColor:
+                  type: string
+                  enum:
+                    - GREEN
+                    - YELLOW
+                    - BLUE
+                    - PURPLE
+                    - GRAY
+              required:
+                - username
+                - departmentId
+                - businessAreaId
+                - joinedYear
+                - joinedMonth
+                - businessSkillIds
+                - interestIds
+                - lunchPreference
+                - displayNameColor
+      responses:
+        "200":
+          description: 登録完了
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: 選択肢が無効
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 選択した項目が無効です
         "401":
           description: 未認証
           content:
