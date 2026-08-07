@@ -38,13 +38,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <h1 className="text-xl font-bold">管理パネル</h1>
       </header>
       <nav className="flex items-center justify-between border-b px-8">
-        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto">
+        <div className="flex min-w-0 flex-1 flex-wrap gap-x-2">
           {tabs.map((tab) => (
             <Link
               key={tab.href}
               href={tab.href}
               className={cn(
-                'px-4 py-2 text-sm border-b-2 -mb-px transition-colors',
+                'shrink-0 whitespace-nowrap px-4 py-2 text-sm border-b-2 -mb-px transition-colors',
                 pathname === tab.href
                   ? 'border-primary text-primary font-medium'
                   : 'border-transparent text-muted-foreground hover:text-foreground',
