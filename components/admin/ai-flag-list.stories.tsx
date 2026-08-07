@@ -1,53 +1,56 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { HttpResponse, http } from 'msw'
 import { expect } from 'storybook/test'
+import { MOCK_AI_FLAGS } from '@/lib/mocks/fixtures'
 import { AiFlagList } from './ai-flag-list'
 
 const meta = {
   component: AiFlagList,
+  decorators: [
+    (Story) => (
+      <QueryClientProvider client={new QueryClient()}>
+        <Story />
+      </QueryClientProvider>
+    ),
+  ],
 } satisfies Meta<typeof AiFlagList>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
-const flags = [
-  {
-    id: 'flag-1',
-    title: '攻撃的な表現を検出',
-    detail: '投稿内に攻撃的とみられる表現が含まれています',
-    severity: 'HIGH' as const,
-    status: 'UNREAD' as const,
-    targetUser: { name: '田中 陽子' },
-    post: null,
-    createdAt: '2024-01-10T00:00:00Z',
-  },
-  {
-    id: 'flag-2',
-    title: '短時間での連続投稿',
-    detail: '5分間に8件の投稿を検出しました',
-    severity: 'MEDIUM' as const,
-    status: 'CONFIRMED' as const,
-    targetUser: { name: '山本 直樹' },
-    post: null,
-    createdAt: '2024-01-11T00:00:00Z',
-  },
-]
-
 export const Default: Story = {
-  args: { flags },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('未確認 1 件')).toBeVisible()
-    await expect(canvas.getByRole('button', { name: '確認済みにする' })).toBeEnabled()
-    await expect(canvas.getByRole('button', { name: '確認済み' })).toBeDisabled()
+    await expect(await canvas.findByText('未確認 2 件')).toBeVisible()
+    await expect(await canvas.findAllByRole('button', { name: '確認済みにする' })).toHaveLength(2)
   },
 }
 
 export const Empty: Story = {
-  args: { flags: [] },
+  parameters: {
+    msw: {
+      handlers: [http.get('/api/admin/ai-flags', () => HttpResponse.json({ flags: [] }))],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(await canvas.findByText('フラグはありません')).toBeVisible()
+  },
 }
 
 export const AllConfirmed: Story = {
-  args: { flags: flags.map((f) => ({ ...f, status: 'CONFIRMED' as const })) },
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/admin/ai-flags', () =>
+          HttpResponse.json({
+            flags: MOCK_AI_FLAGS.map((f) => ({ ...f, status: 'CONFIRMED' })),
+          }),
+        ),
+      ],
+    },
+  },
   play: async ({ canvas }) => {
+    await expect(await canvas.findAllByText('確認済み')).not.toHaveLength(0)
     await expect(canvas.queryByText(/未確認/)).not.toBeInTheDocument()
   },
 }

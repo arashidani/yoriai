@@ -31,7 +31,7 @@ const notoSansJP = Noto_Sans_JP({
 })
 
 export const metadata: Metadata = {
-  title: 'Yoriai',
+  title: 'Yoriai - 会社の「はじめまして」を身近に',
   description: '社内向け質問共有プラットフォーム',
 }
 
