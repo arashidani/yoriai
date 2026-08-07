@@ -6,6 +6,7 @@ import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, UserSchema } from '@/lib/hono/openapi/schemas'
 import { MOCK_INVITES, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { COMPANY_EMAIL_ERROR, companyEmailSchema } from '@/lib/schemas/register'
 import { createUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
@@ -27,8 +28,11 @@ const createRoute_ = createRoute({
       description: '既に存在するユーザー',
       content: { 'application/json': { schema: z.object({ user: UserSchema }) } },
     },
-    400: errorResponse('招待リンクが無効・期限切れ、またはメールアドレスが取得できない'),
-    401: errorResponse('未認証'),
+    400: errorResponse(
+      '招待リンクが無効・期限切れ、またはメールアドレスが取得できない',
+      '招待リンクが無効です',
+    ),
+    401: errorResponse('未認証', 'Unauthorized'),
   },
 })
 
@@ -44,7 +48,7 @@ const meRoute = createRoute({
       description: '自分のユーザー情報',
       content: { 'application/json': { schema: z.object({ user: UserSchema }) } },
     },
-    401: errorResponse('未認証'),
+    401: errorResponse('未認証', 'Unauthorized'),
   },
 })
 
@@ -91,6 +95,9 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
 
     if (!authUser.email) {
       return c.json({ error: 'Email not found' }, 400)
+    }
+    if (!companyEmailSchema.safeParse(authUser.email).success) {
+      return c.json({ error: COMPANY_EMAIL_ERROR }, 400)
     }
 
     const now = new Date()
