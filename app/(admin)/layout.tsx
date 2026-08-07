@@ -34,7 +34,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="admin-panel min-h-screen">
       <header className="border-b px-8 py-4">
         <h1 className="text-xl font-bold">管理パネル</h1>
       </header>
