@@ -17,6 +17,7 @@ export const openApiConfig = {
     },
     { name: 'answers', description: '回答へのいいね' },
     { name: 'users', description: 'ユーザー登録・自分のプロフィール取得' },
+    { name: 'onboarding', description: '初回プロフィール登録' },
     { name: 'admin', description: '管理者専用のユーザー・投稿管理' },
     { name: 'invites', description: '招待リンクの発行・確認' },
     { name: 'password-resets', description: 'パスワードリセットリンクの確認・実行' },
