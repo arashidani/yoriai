@@ -20,7 +20,7 @@ export default function CompletePage() {
           </p>
         </div>
 
-        <Button render={<Link href="/onboarding" />} className="w-95">
+        <Button render={<Link href="/onboarding" />} nativeButton={false} className="w-95">
           プロフィール設定に進む
         </Button>
       </RegisterSidePanel>
