@@ -31,7 +31,13 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/register', '/reset-password']
+  const publicPaths = [
+    '/login',
+    '/register',
+    '/register/confirm',
+    '/register/complete',
+    '/reset-password',
+  ]
   const isPublicPath = publicPaths.includes(pathname)
 
   // 未認証ユーザーを /login にリダイレクト（/login・/register・/reset-password・/api は除外）
@@ -46,7 +52,7 @@ export async function proxy(request: NextRequest) {
   const homePath = role === 'ADMIN' ? '/admin' : '/'
 
   // ログイン済みユーザーが /login・/register・/reset-password にアクセスしたら自分のホームへ
-  if (isPublicPath) {
+  if (isPublicPath && pathname !== '/register/complete') {
     return NextResponse.redirect(new URL(homePath, request.url))
   }
 

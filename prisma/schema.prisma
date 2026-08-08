@@ -12,7 +12,21 @@ model User {
   supabaseId            String                 @unique
   email                 String                 @unique
   name                  String?
+  username              String?                @db.VarChar(100)
   role                  Role                   @default(USER)
+  departmentId          String?
+  department            Department?            @relation(fields: [departmentId], references: [id])
+  businessAreaId        String?
+  businessArea          BusinessArea?          @relation(fields: [businessAreaId], references: [id])
+  joinedYear            Int?
+  joinedMonth           Int?
+  businessSkills        UserBusinessSkill[]
+  interests             UserInterest[]
+  lunchPreference       LunchPreference?
+  recommendedLunchSpot  String?                @db.VarChar(20)
+  bio                   String?                @db.VarChar(200)
+  displayNameColor      DisplayNameColor?
+  onboardingCompletedAt DateTime?
   posts                 Post[]
   answers               Answer[]               @relation("AnswerAuthor")
   hiddenAnswers         Answer[]               @relation("AnswerHiddenBy")
@@ -21,7 +35,66 @@ model User {
   answerLikes           AnswerLike[]
   postBookmarks         PostBookmark[]
   aiFlags               AiFlag[]
+  hirobaPosts           HirobaPost[]
+  hirobaAnswers         HirobaAnswer[]         @relation("HirobaAnswerAuthor")
+  hirobaPostLikes       HirobaPostLike[]
+  hirobaAnswerLikes     HirobaAnswerLike[]
+  hirobaPostBookmarks   HirobaPostBookmark[]
   createdAt             DateTime               @default(now())
+}
+
+model Department {
+  id        String   @id @default(uuid(7))
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BusinessArea {
+  id        String   @id @default(uuid(7))
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BusinessSkill {
+  id        String              @id @default(uuid(7))
+  name      String              @unique
+  isActive  Boolean             @default(true)
+  users     UserBusinessSkill[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+}
+
+model Interest {
+  id        String         @id @default(uuid(7))
+  name      String         @unique
+  isActive  Boolean        @default(true)
+  users     UserInterest[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model UserBusinessSkill {
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessSkillId String
+  businessSkill   BusinessSkill @relation(fields: [businessSkillId], references: [id], onDelete: Cascade)
+
+  @@id([userId, businessSkillId])
+}
+
+model UserInterest {
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  interestId String
+  interest   Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@id([userId, interestId])
 }
 
 model Post {
@@ -177,26 +250,43 @@ model Mission {
 }
 
 model AiFlag {
-  id           String       @id @default(uuid(7))
-  title        String
-  detail       String
-  severity     FlagSeverity
-  status       FlagStatus   @default(UNREAD)
-  targetUserId String?
-  targetUser   User?        @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
-  postId       String?
-  post         Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
-  answerId     String?
-  answer       Answer?      @relation(fields: [answerId], references: [id], onDelete: Cascade)
-  createdAt    DateTime     @default(now())
+  id             String        @id @default(uuid(7))
+  title          String
+  detail         String
+  severity       FlagSeverity
+  status         FlagStatus    @default(UNREAD)
+  targetUserId   String?
+  targetUser     User?         @relation(fields: [targetUserId], references: [id], onDelete: SetNull)
+  postId         String?
+  post           Post?         @relation(fields: [postId], references: [id], onDelete: Cascade)
+  answerId       String?
+  answer         Answer?       @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  hirobaPostId   String?
+  hirobaPost     HirobaPost?   @relation(fields: [hirobaPostId], references: [id], onDelete: Cascade)
+  hirobaAnswerId String?
+  hirobaAnswer   HirobaAnswer? @relation(fields: [hirobaAnswerId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
 }
 
 /// タグのマスタ（管理者が管理パネルで維持し、投稿にはAIが自動付与する。ユーザーは付与・変更不可）
 model Tag {
-  id        String    @id @default(uuid(7))
-  name      String    @unique
-  posts     PostTag[]
-  createdAt DateTime  @default(now())
+  id                 String          @id @default(uuid(7))
+  name               String          @unique
+  category           String
+  categoryDefinition TagCategory     @relation(fields: [category], references: [name], onDelete: Restrict, onUpdate: Cascade)
+  description        String?
+  isWorkTag          Boolean         @default(false)
+  posts              PostTag[]
+  hirobaPosts        HirobaPostTag[]
+  createdAt          DateTime        @default(now())
+}
+
+/// タグカテゴリーのマスタ。管理者が管理し、Tag.categoryの選択肢になる
+model TagCategory {
+  id        String   @id @default(uuid(7))
+  name      String   @unique
+  tags      Tag[]
+  createdAt DateTime @default(now())
 }
 
 /// 投稿とタグの中間テーブル（AI自動付与、1投稿あたり最大3件）
@@ -209,6 +299,115 @@ model PostTag {
   createdAt DateTime @default(now())
 
   @@unique([postId, tagId])
+}
+
+/// ひろば（サブフォーラム）のマスタ。管理者が作成・削除する
+model Hiroba {
+  id          String       @id @default(uuid(7))
+  slug        String       @unique
+  name        String
+  description String
+  posts       HirobaPost[]
+  createdAt   DateTime     @default(now())
+}
+
+/// ひろば内の投稿。QA投稿と異なり匿名化は行わない
+model HirobaPost {
+  id       String  @id @default(uuid(7))
+  hirobaId String
+  hiroba   Hiroba  @relation(fields: [hirobaId], references: [id], onDelete: Cascade)
+  title    String
+  body     String
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  idempotencyKey String?
+  answerCount    Int     @default(0)
+  likeCount      Int     @default(0)
+
+  answers   HirobaAnswer[]
+  likes     HirobaPostLike[]
+  bookmarks HirobaPostBookmark[]
+  aiFlags   AiFlag[]
+  tags      HirobaPostTag[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  /// AIフラグによる自動ソフトデリート日時
+  deletedAt DateTime?
+
+  @@unique([authorId, idempotencyKey])
+}
+
+/// ひろば投稿への回答。実名で表示する
+model HirobaAnswer {
+  id           String     @id @default(uuid(7))
+  hirobaPostId String
+  hirobaPost   HirobaPost @relation(fields: [hirobaPostId], references: [id], onDelete: Cascade)
+
+  authorId String?
+  author   User?   @relation("HirobaAnswerAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  body String
+
+  isHidden     Boolean   @default(false)
+  hiddenAt     DateTime?
+  hiddenReason String?
+
+  likeCount      Int     @default(0)
+  idempotencyKey String?
+
+  likes     HirobaAnswerLike[]
+  aiFlags   AiFlag[]
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  @@unique([authorId, idempotencyKey])
+}
+
+model HirobaPostLike {
+  id           String     @id @default(uuid(7))
+  hirobaPostId String
+  hirobaPost   HirobaPost @relation(fields: [hirobaPostId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([hirobaPostId, userId])
+}
+
+model HirobaAnswerLike {
+  id             String       @id @default(uuid(7))
+  hirobaAnswerId String
+  hirobaAnswer   HirobaAnswer @relation(fields: [hirobaAnswerId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([hirobaAnswerId, userId])
+}
+
+model HirobaPostBookmark {
+  id           String     @id @default(uuid(7))
+  hirobaPostId String
+  hirobaPost   HirobaPost @relation(fields: [hirobaPostId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([hirobaPostId, userId])
+}
+
+/// ひろば投稿とタグの中間テーブル（Tagマスタを共用、AI自動付与）
+model HirobaPostTag {
+  id           String     @id @default(uuid(7))
+  hirobaPostId String
+  hirobaPost   HirobaPost @relation(fields: [hirobaPostId], references: [id], onDelete: Cascade)
+  tagId        String
+  tag          Tag        @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@unique([hirobaPostId, tagId])
 }
 
 model Invite {
@@ -233,6 +432,20 @@ model PasswordReset {
 enum Role {
   USER
   ADMIN
+}
+
+enum LunchPreference {
+  NO_PREFERENCE
+  TEAM
+  ALONE
+}
+
+enum DisplayNameColor {
+  GREEN
+  YELLOW
+  BLUE
+  PURPLE
+  GRAY
 }
 
 enum BadgeRarity {

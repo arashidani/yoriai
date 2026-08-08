@@ -844,7 +844,15 @@ export const adminRoute = $(
     }
 
     try {
-      const tag = await prisma.tag.create({ data })
+      const tag = await prisma.tag.create({
+        data: {
+          ...data,
+          isWorkTag: true,
+          categoryDefinition: {
+            connectOrCreate: { where: { name: data.name }, create: { name: data.name } },
+          },
+        },
+      })
       return c.json({ tag }, 201)
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
