@@ -69,7 +69,7 @@ function RegisterForm() {
       if (stored && stored.token === token) {
         reset({ name: stored.name, email: stored.email, password: stored.password })
       } else {
-        reset({ name: invite.name ?? '' })
+        reset()
       }
       setChecking(false)
     })
@@ -131,6 +131,7 @@ function RegisterForm() {
                   inputProps={{
                     id: 'email',
                     type: 'email',
+                    placeholder: 'example@ibjapan.jp',
                     ...emailField,
                     onBlur: (e) => {
                       void emailField.onBlur(e)
@@ -145,7 +146,7 @@ function RegisterForm() {
                   inputProps={{
                     id: 'name',
                     type: 'text',
-                    placeholder: '山田 太郎',
+                    placeholder: '山田太郎',
                     ...register('name'),
                   }}
                 />

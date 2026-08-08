@@ -6,7 +6,7 @@ export const COMPANY_EMAIL_ERROR = `${COMPANY_EMAIL_DOMAIN}ドメインのメー
 export const companyEmailSchema = z
   .string()
   .min(1, 'メールアドレスを入力してください')
-  .pipe(z.email({ error: 'メールアドレスの形式が正しくありません' }))
+  .pipe(z.email({ error: '有効なメールアドレスを入力してください' }))
   .refine((email) => email.toLowerCase().endsWith(`@${COMPANY_EMAIL_DOMAIN}`), {
     message: COMPANY_EMAIL_ERROR,
   })
