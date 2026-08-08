@@ -16,10 +16,25 @@ export const UserSchema = z
     supabaseId: z.string().openapi({ example: 'supabase-user-1' }),
     email: z.string().openapi({ example: 'user@example.com' }),
     name: z.string().nullable().openapi({ example: '一般ユーザー' }),
+    username: z.string().nullable().openapi({ example: 'あおさん' }),
+    displayNameColor: z
+      .enum(['GREEN', 'YELLOW', 'BLUE', 'PURPLE', 'GRAY'])
+      .nullable()
+      .openapi({ example: 'BLUE' }),
     role: z.enum(['USER', 'ADMIN']).openapi({ example: 'USER' }),
     createdAt: dateTime(),
   })
   .openapi('User')
+
+export const ProfileOptionSchema = z
+  .object({
+    id: z.string().openapi({ example: 'option-1' }),
+    name: z.string().openapi({ example: '開発部' }),
+    isActive: z.boolean().openapi({ example: true }),
+    createdAt: dateTime(),
+    updatedAt: dateTime(),
+  })
+  .openapi('ProfileOption')
 
 export const TagSchema = z
   .object({

@@ -4,6 +4,10 @@ import {
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
   MOCK_BADGES,
+  MOCK_BUSINESS_AREAS,
+  MOCK_BUSINESS_SKILLS,
+  MOCK_DEPARTMENTS,
+  MOCK_INTERESTS,
   MOCK_INVITES,
   MOCK_MISSIONS,
   MOCK_PASSWORD_RESETS,
@@ -13,6 +17,17 @@ import {
 } from '../lib/mocks/fixtures'
 
 export const mswHandlers = {
+  onboarding: [
+    http.get('/api/onboarding/options', () =>
+      HttpResponse.json({
+        departments: MOCK_DEPARTMENTS,
+        businessAreas: MOCK_BUSINESS_AREAS,
+        businessSkills: MOCK_BUSINESS_SKILLS,
+        interests: MOCK_INTERESTS,
+      }),
+    ),
+    http.post('/api/onboarding', () => HttpResponse.json({ success: true })),
+  ],
   posts: [
     http.get('/api/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
     http.get('/api/posts/:id', ({ params }) => {
@@ -48,6 +63,42 @@ export const mswHandlers = {
     http.delete('/api/answers/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
   ],
   admin: [
+    http.get('/api/admin/profile-options/:category', ({ params }) => {
+      const options = {
+        departments: MOCK_DEPARTMENTS,
+        'business-areas': MOCK_BUSINESS_AREAS,
+        'business-skills': MOCK_BUSINESS_SKILLS,
+        interests: MOCK_INTERESTS,
+      }[String(params.category)]
+      return HttpResponse.json({ options: options ?? [] })
+    }),
+    http.post('/api/admin/profile-options/:category', async ({ params, request }) => {
+      const body = (await request.json()) as { name: string }
+      return HttpResponse.json(
+        {
+          option: {
+            id: `${params.category}-new`,
+            name: body.name,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.patch('/api/admin/profile-options/:category/:id', async ({ request }) => {
+      const body = (await request.json()) as { name?: string; isActive?: boolean }
+      return HttpResponse.json({
+        option: {
+          id: 'option-1',
+          name: body.name ?? '項目',
+          isActive: body.isActive ?? true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      })
+    }),
     http.get('/api/admin/users', () => HttpResponse.json({ users: MOCK_USERS })),
     http.get('/api/admin/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
     http.patch('/api/admin/users/:id', () => HttpResponse.json({ success: true })),
