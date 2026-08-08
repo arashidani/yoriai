@@ -618,6 +618,54 @@ components:
         - postId
         - answerId
         - createdAt
+    TagCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          example: tag-category-1
+        name:
+          type: string
+          example: 人事
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - name
+        - createdAt
+    AdminTag:
+      type: object
+      properties:
+        id:
+          type: string
+          example: tag-1
+        name:
+          type: string
+          example: 給与
+        category:
+          type: string
+          example: 人事
+        description:
+          type:
+            - string
+            - "null"
+          example: 給与計算、給与明細、控除に関する投稿に使用します。
+        isWorkTag:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - name
+        - category
+        - description
+        - isWorkTag
+        - createdAt
     Invite:
       type: object
       properties:
@@ -2796,6 +2844,148 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: すでに使われている匿名キャラは削除できません。候補から外すには無効化してください
+  /api/admin/tag-categories:
+    get:
+      tags:
+        - admin
+      summary: タグカテゴリー一覧を取得（管理者専用）
+      security: *a1
+      responses:
+        "200":
+          description: タグカテゴリー一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  categories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/TagCategory"
+                required:
+                  - categories
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+    post:
+      tags:
+        - admin
+      summary: タグカテゴリーを作成（管理者専用）
+      security: *a1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+              required:
+                - name
+      responses:
+        "201":
+          description: 作成されたタグカテゴリー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  category:
+                    $ref: "#/components/schemas/TagCategory"
+                required:
+                  - category
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "409":
+          description: 同名のタグカテゴリーがすでに存在する
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 同じ名前のカテゴリーがすでに存在します
+  /api/admin/tag-categories/{id}:
+    delete:
+      tags:
+        - admin
+      summary: タグカテゴリーを削除（使用中は削除不可）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: タグカテゴリーが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: タグで使用中のため削除不可
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: このカテゴリーを使用しているタグがあるため削除できません
   /api/admin/tags:
     get:
       tags:
@@ -2813,7 +3003,7 @@ paths:
                   tags:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Tag"
+                      $ref: "#/components/schemas/AdminTag"
                 required:
                   - tags
         "401":
@@ -2848,8 +3038,19 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 50
+                category:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                description:
+                  type: string
+                  maxLength: 500
+                isWorkTag:
+                  type: boolean
               required:
                 - name
+                - category
+                - isWorkTag
       responses:
         "201":
           description: 作成されたタグ
@@ -2859,7 +3060,7 @@ paths:
                 type: object
                 properties:
                   tag:
-                    $ref: "#/components/schemas/Tag"
+                    $ref: "#/components/schemas/AdminTag"
                 required:
                   - tag
         "401":
@@ -2887,6 +3088,86 @@ paths:
               example:
                 error: 同じ名前のタグがすでに存在します
   /api/admin/tags/{id}:
+    patch:
+      tags:
+        - admin
+      summary: タグを更新（管理者専用）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                category:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                description:
+                  type: string
+                  maxLength: 500
+                isWorkTag:
+                  type: boolean
+              required:
+                - name
+                - category
+                - isWorkTag
+      responses:
+        "200":
+          description: 更新されたタグ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: "#/components/schemas/AdminTag"
+                required:
+                  - tag
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: タグが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 同名タグまたはカテゴリー変更による割り当て競合
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: カテゴリー変更により1つの投稿へ同じカテゴリーのタグが複数割り当てられます
     delete:
       tags:
         - admin

@@ -6,6 +6,7 @@ import { FlagStatus, Role } from '@/app/generated/prisma/enums'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
+  AdminTagSchema,
   AiFlagSchema,
   AnonymousProfileSchema,
   AnswerSchema,
@@ -19,7 +20,7 @@ import {
   PasswordResetCreatedSchema,
   PostSchema,
   SuccessSchema,
-  TagSchema,
+  TagCategorySchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
 import { toAnswerResponse } from '@/lib/hono/routes/posts'
@@ -32,6 +33,7 @@ import {
   MOCK_INVITES,
   MOCK_MISSIONS,
   MOCK_POSTS,
+  MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
@@ -44,7 +46,8 @@ import { createBadgeSchema } from '@/lib/schemas/badge'
 import { createHirobaSchema } from '@/lib/schemas/hiroba'
 import { createInviteSchema } from '@/lib/schemas/invite'
 import { createMissionSchema } from '@/lib/schemas/mission'
-import { createTagSchema } from '@/lib/schemas/tag'
+import { createTagSchema, updateTagSchema } from '@/lib/schemas/tag'
+import { createTagCategorySchema } from '@/lib/schemas/tag-category'
 import { updateUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
@@ -422,10 +425,70 @@ const listTagsRoute = createRoute({
   responses: {
     200: {
       description: 'タグ一覧',
-      content: { 'application/json': { schema: z.object({ tags: z.array(TagSchema) }) } },
+      content: { 'application/json': { schema: z.object({ tags: z.array(AdminTagSchema) }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const listTagCategoriesRoute = createRoute({
+  method: 'get',
+  path: '/tag-categories',
+  tags: ['admin'],
+  summary: 'タグカテゴリー一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: 'タグカテゴリー一覧',
+      content: {
+        'application/json': { schema: z.object({ categories: z.array(TagCategorySchema) }) },
+      },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const createTagCategoryRoute = createRoute({
+  method: 'post',
+  path: '/tag-categories',
+  tags: ['admin'],
+  summary: 'タグカテゴリーを作成（管理者専用）',
+  security,
+  request: {
+    body: { required: true, content: { 'application/json': { schema: createTagCategorySchema } } },
+  },
+  responses: {
+    201: {
+      description: '作成されたタグカテゴリー',
+      content: { 'application/json': { schema: z.object({ category: TagCategorySchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    409: errorResponse(
+      '同名のタグカテゴリーがすでに存在する',
+      '同じ名前のカテゴリーがすでに存在します',
+    ),
+  },
+})
+
+const deleteTagCategoryRoute = createRoute({
+  method: 'delete',
+  path: '/tag-categories/{id}',
+  tags: ['admin'],
+  summary: 'タグカテゴリーを削除（使用中は削除不可）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('タグカテゴリーが見つからない', 'Not found'),
+    409: errorResponse(
+      'タグで使用中のため削除不可',
+      'このカテゴリーを使用しているタグがあるため削除できません',
+    ),
   },
 })
 
@@ -441,11 +504,36 @@ const createTagRoute = createRoute({
   responses: {
     201: {
       description: '作成されたタグ',
-      content: { 'application/json': { schema: z.object({ tag: TagSchema }) } },
+      content: { 'application/json': { schema: z.object({ tag: AdminTagSchema }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
     409: errorResponse('同名のタグがすでに存在する', '同じ名前のタグがすでに存在します'),
+  },
+})
+
+const updateTagRoute = createRoute({
+  method: 'patch',
+  path: '/tags/{id}',
+  tags: ['admin'],
+  summary: 'タグを更新（管理者専用）',
+  security,
+  request: {
+    params: IdParamSchema,
+    body: { required: true, content: { 'application/json': { schema: updateTagSchema } } },
+  },
+  responses: {
+    200: {
+      description: '更新されたタグ',
+      content: { 'application/json': { schema: z.object({ tag: AdminTagSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('タグが見つからない', 'Not found'),
+    409: errorResponse(
+      '同名タグまたはカテゴリー変更による割り当て競合',
+      'カテゴリー変更により1つの投稿へ同じカテゴリーのタグが複数割り当てられます',
+    ),
   },
 })
 
@@ -849,6 +937,59 @@ export const adminRoute = $(
     }
     return c.json({ success: true }, 200)
   })
+  .openapi(listTagCategoriesRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ categories: MOCK_TAG_CATEGORIES }, 200)
+    }
+    const categories = await prisma.tagCategory.findMany({ orderBy: { name: 'asc' } })
+    return c.json({ categories }, 200)
+  })
+  .openapi(createTagCategoryRoute, async (c) => {
+    const data = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json(
+        {
+          category: {
+            id: `tag-category-${MOCK_TAG_CATEGORIES.length + 1}`,
+            ...data,
+            createdAt: new Date(),
+          },
+        },
+        201,
+      )
+    }
+
+    try {
+      const category = await prisma.tagCategory.create({ data })
+      return c.json({ category }, 201)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ error: '同じ名前のカテゴリーがすでに存在します' }, 409)
+      }
+      throw error
+    }
+  })
+  .openapi(deleteTagCategoryRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const existing = await prisma.tagCategory.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    try {
+      await prisma.tagCategory.delete({ where: { id } })
+      return c.json({ success: true }, 200)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json({ error: 'このカテゴリーを使用しているタグがあるため削除できません' }, 409)
+      }
+      throw error
+    }
+  })
   .openapi(listTagsRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
       return c.json({ tags: MOCK_TAGS }, 200)
@@ -857,21 +998,89 @@ export const adminRoute = $(
     return c.json({ tags }, 200)
   })
   .openapi(createTagRoute, async (c) => {
-    const data = c.req.valid('json')
+    const { description, ...data } = c.req.valid('json')
+    const tagData = { ...data, description: description || null }
 
     if (process.env.MOCK_MODE === 'true') {
       return c.json(
-        { tag: { id: `tag-${MOCK_TAGS.length + 1}`, ...data, createdAt: new Date() } },
+        { tag: { id: `tag-${MOCK_TAGS.length + 1}`, ...tagData, createdAt: new Date() } },
         201,
       )
     }
 
     try {
-      const tag = await prisma.tag.create({ data })
+      const tag = await prisma.tag.create({ data: tagData })
       return c.json({ tag }, 201)
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         return c.json({ error: '同じ名前のタグがすでに存在します' }, 409)
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json({ error: '指定されたカテゴリーが見つかりません' }, 409)
+      }
+      throw error
+    }
+  })
+  .openapi(updateTagRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const { description, ...data } = c.req.valid('json')
+    const tagData = { ...data, description: description || null }
+
+    if (process.env.MOCK_MODE === 'true') {
+      const existing = MOCK_TAGS.find((tag) => tag.id === id)
+      if (!existing) return c.json({ error: 'Not found' }, 404)
+      return c.json({ tag: { ...existing, ...tagData } }, 200)
+    }
+
+    const existing = await prisma.tag.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    if (existing.category !== tagData.category) {
+      const [postConflict, hirobaConflict] = await Promise.all([
+        tagData.isWorkTag
+          ? prisma.postTag.findFirst({
+              where: {
+                tagId: id,
+                post: {
+                  tags: { some: { tagId: { not: id }, tag: { category: tagData.category } } },
+                },
+              },
+              select: { id: true },
+            })
+          : null,
+        prisma.hirobaPostTag.findFirst({
+          where: {
+            tagId: id,
+            hirobaPost: {
+              tags: { some: { tagId: { not: id }, tag: { category: tagData.category } } },
+            },
+          },
+          select: { id: true },
+        }),
+      ])
+      if (postConflict || hirobaConflict) {
+        return c.json(
+          { error: 'カテゴリー変更により1つの投稿へ同じカテゴリーのタグが複数割り当てられます' },
+          409,
+        )
+      }
+    }
+
+    try {
+      const tag =
+        existing.isWorkTag && !tagData.isWorkTag
+          ? await prisma.$transaction(async (tx) => {
+              await tx.postTag.deleteMany({ where: { tagId: id } })
+              return tx.tag.update({ where: { id }, data: tagData })
+            })
+          : await prisma.tag.update({ where: { id }, data: tagData })
+      return c.json({ tag }, 200)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ error: '同じ名前のタグがすでに存在します' }, 409)
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json({ error: '指定されたカテゴリーが見つかりません' }, 409)
       }
       throw error
     }

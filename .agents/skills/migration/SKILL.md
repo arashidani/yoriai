@@ -59,6 +59,8 @@ npx prisma generate
 - 命名は `snake_case` でこれまでの変更を踏襲（例: `prisma/migrations/20260705051059_post_author_nullable_set_null/`）。
 - `migrate dev` は内部で shadow database を使ってドリフト検知をする（開発時のみ。本番では使われない）。
 
+**ルール: 新規モデルのIDは `@default(uuid(7))` を使う。** 既存モデルは2026-07-24にUUID v7へ統一済み。`cuid()`やランダムな`uuid()`へ戻さない。これはPrisma Client側の生成関数なので、変更時にDB SQL差分が出ない場合がある。
+
 ---
 
 ## 3. コマンド早見表
@@ -137,3 +139,4 @@ npx prisma migrate deploy
 - 大きいテーブルのカラム削除を1マイグレーションで完結させる → expand/contractで分割する（§5）
 - ローカルで `migrate reset` した後にシードを忘れる → `prisma db seed` を明示的に実行する
 - `prisma/migrations/` 配下の適用済みファイルを直接書き換える → ドリフトの原因になる。新しいマイグレーションを追加する
+- 新規モデルの `id` に `cuid()` / `uuid()` を使う → `@default(uuid(7))` を使う
