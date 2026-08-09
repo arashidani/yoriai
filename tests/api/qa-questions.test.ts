@@ -75,4 +75,19 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     const response = await app.request('/api/posts')
     expect(response.status).toBe(404)
   })
+  it('MOCK_MODEでも削除済み質問への回答は410を返す', async () => {
+    const response = await app.request('/api/questions/post-deleted/answers', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440000',
+      },
+      body: JSON.stringify({ body: '回答テスト' }),
+    })
+
+    expect(response.status).toBe(410)
+    expect(await response.json()).toEqual({
+      error: 'この投稿は削除されたため、回答できません',
+    })
+  })
 })

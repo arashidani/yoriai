@@ -50,7 +50,7 @@ describe('削除済み投稿への回答投稿', () => {
 
     const response = await app.request('/api/questions/post-1/answers', requestInit)
 
-    expect(response.status).toBe(404)
+    expect(response.status).toBe(410)
     expect(await response.json()).toEqual({
       error: 'この投稿は削除されたため、回答できません',
     })

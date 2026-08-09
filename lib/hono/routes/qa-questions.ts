@@ -169,7 +169,8 @@ const createAnswerRoute = createRoute({
       content: { 'application/json': { schema: z.object({ answer: QaAnswerSchema }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
-    404: errorResponse('質問が存在しない・削除済み', '投稿が見つかりません'),
+    404: errorResponse('質問が存在しない', '投稿が見つかりません'),
+    410: errorResponse('質問が削除済み', 'この投稿は削除されたため、回答できません'),
     409: errorResponse('回答受付終了', '回答を受け付けていない質問です'),
     500: errorResponse('作成失敗', '回答の作成に失敗しました'),
   },
@@ -500,7 +501,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (process.env.MOCK_MODE === 'true') {
       if (!mockPost) return c.json({ error: '投稿が見つかりません' }, 404)
       if (mockPost.deletedAt)
-        return c.json({ error: 'この投稿は削除されたため、回答できません' }, 404)
+        return c.json({ error: 'この投稿は削除されたため、回答できません' }, 410)
       if (mockPost.status !== QuestionStatus.OPEN && mockPost.status !== QuestionStatus.ANSWERED)
         return c.json({ error: '回答を受け付けていない質問です' }, 409)
       return c.json(
@@ -526,7 +527,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     }
     const post = await prisma.post.findUnique({ where: { id } })
     if (!post) return c.json({ error: '投稿が見つかりません' }, 404)
-    if (post.deletedAt) return c.json({ error: 'この投稿は削除されたため、回答できません' }, 404)
+    if (post.deletedAt) return c.json({ error: 'この投稿は削除されたため、回答できません' }, 410)
     if (post.status !== QuestionStatus.OPEN && post.status !== QuestionStatus.ANSWERED)
       return c.json({ error: '回答を受け付けていない質問です' }, 409)
     let assignment: Awaited<ReturnType<typeof getOrAssignAnonymousProfile>>
