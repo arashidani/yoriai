@@ -166,6 +166,20 @@ const listPostsRoute = createRoute({
   },
 })
 
+const deletePostRoute = createRoute({
+  method: 'delete',
+  path: '/posts/{id}',
+  tags: ['admin'],
+  summary: '投稿を削除（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
 const restorePostRoute = createRoute({
   method: 'patch',
   path: '/posts/{id}/restore',
@@ -549,6 +563,21 @@ export const adminRoute = $(
       orderBy: { updatedAt: 'desc' },
     })
     return c.json({ posts }, 200)
+  })
+  .openapi(deletePostRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') return c.json({ success: true }, 200)
+
+    try {
+      await prisma.post.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
+    return c.json({ success: true }, 200)
   })
   .openapi(restorePostRoute, async (c) => {
     const { id } = c.req.valid('param')

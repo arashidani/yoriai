@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { Prisma } from '@/app/generated/prisma/client'
-import { FlagSeverity, QuestionStatus, Role } from '@/app/generated/prisma/enums'
+import { FlagSeverity, QuestionStatus } from '@/app/generated/prisma/enums'
 import { assignTags } from '@/lib/ai/assign-tags'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
@@ -18,7 +18,6 @@ import {
   IdParamSchema,
   LikeStatusSchema,
   SavedStatusSchema,
-  SuccessSchema,
 } from '@/lib/hono/openapi/schemas'
 import { MOCK_ANSWERS, MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
@@ -258,21 +257,6 @@ const unbookmarkRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     404: errorResponse('質問が見つからない', 'Not found'),
-  },
-})
-
-const deleteRoute = createRoute({
-  method: 'delete',
-  path: '/{id}',
-  tags: ['questions'],
-  summary: '質問を削除',
-  ...auth,
-  request: { params: IdParamSchema },
-  responses: {
-    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足', 'Forbidden'),
-    409: errorResponse('回答あり', '回答がある質問は削除できません'),
   },
 })
 
@@ -710,24 +694,6 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (process.env.MOCK_MODE !== 'true')
       await prisma.postBookmark.deleteMany({ where: { postId: id, userId: user.id } })
     return c.json({ saved: false }, 200)
-  })
-  .openapi(deleteRoute, async (c) => {
-    const user = c.get('user')
-    const { id } = c.req.valid('param')
-    if (process.env.MOCK_MODE === 'true') return c.json({ success: true }, 200)
-    const post = await prisma.post.findUnique({ where: { id } })
-    if (!post) return c.json({ success: true }, 200)
-    if (user.role !== Role.ADMIN) {
-      if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
-      if (post.answerCount > 0) return c.json({ error: '回答がある質問は削除できません' }, 409)
-    }
-    try {
-      await prisma.post.delete({ where: { id } })
-    } catch (error) {
-      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2025')
-        throw error
-    }
-    return c.json({ success: true }, 200)
   })
 
 const tagsRouteDefinition = createRoute({

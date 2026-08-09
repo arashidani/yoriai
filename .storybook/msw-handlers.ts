@@ -55,7 +55,7 @@ export const mswHandlers = {
         { status: 201 },
       )
     }),
-    http.delete('/api/questions/:id', () => HttpResponse.json({ success: true })),
+    http.delete('/api/admin/posts/:id', () => HttpResponse.json({ success: true })),
     http.post('/api/questions/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
     http.delete('/api/questions/:id/likes', () =>
       HttpResponse.json({ liked: false, likeCount: 0 }),
