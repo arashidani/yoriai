@@ -19,6 +19,9 @@
 | QA-013 | 自分の投稿 | ページング | 本人の質問だけ返す |
 | QA-014 | 保存した質問 | ページング | 保存日時降順、全件 `saved=true` |
 | QA-015 | 旧API | `GET /api/posts` | 404 |
+| QA-016 | 回答作成 | 質問が存在しない | 404 |
+| QA-017 | 回答作成 | 質問が論理削除済み | 410 Gone（実DB・MOCK_MODE） |
+| QA-018 | 回答作成 | 質問が回答受付終了 | 409 |
 
 実装: `tests/api/qa-questions.test.ts`
 
@@ -30,8 +33,10 @@
 | QA-A02 | 他人の質問をresolve | 403 |
 | QA-A03 | 自分の質問へ足跡POST | 403 |
 | QA-A04 | 自分の回答へ足跡POST | 403 |
-| QA-A05 | 回答あり質問を一般質問者が削除 | 409 |
-| QA-A06 | 管理者が質問を削除 | 200 |
+| QA-A05 | 一般ユーザーが `DELETE /api/admin/posts/{id}` | 403 |
+| QA-A06 | 管理者が `DELETE /api/admin/posts/{id}` | 200 |
+| QA-A07 | 廃止した `DELETE /api/questions/{id}` | 404 |
+| QA-A08 | 管理者が存在しない投稿を削除 | 200（冪等） |
 
 ## 更新・冪等性
 
@@ -46,6 +51,10 @@
 | QA-M07 | 保存DELETEを2回 | 200 |
 | QA-M08 | 質問をresolve | 成功後の回答再取得でメダル規則を適用 |
 | QA-M09 | AIタグ付与 | 新規質問へのPostTag作成が最大1件 |
+| QA-M10 | AI非公開の質問作成 | 201で `moderation.isHidden=true`、理由は含めない |
+| QA-M11 | AI非公開の質問を冪等再送 | 200でも `moderation.isHidden=true` |
+| QA-M12 | AI非公開の回答作成 | 201で `moderation.isHidden=true`、理由は含めない |
+| QA-M13 | AI非公開の回答を冪等再送 | 200でも `moderation.isHidden=true` |
 
 ## 手動確認
 
@@ -53,3 +62,9 @@
 - `/api/openapi.json` と `openapi/openapi.{json,yaml}` のpathsが一致する。
 - MOCK_MODEで対象3画面の空状態・取得中・エラー表示を確認する。
 - Figmaコメントに記載したMETHOD、PATH、Query、表示条件を実APIと照合する。
+- AI非公開の質問・回答で標準アラートが表示され、質問は一覧へ遷移、回答は入力リセット後に詳細を更新する。
+- 一般ユーザーの3画面に質問削除ボタンが表示されず、管理者だけ削除ボタンが表示される。
+- AIフラグの検出日時、招待リンクの作成日時・有効期限がJST時刻で表示される。
+- UTCとJSTで日付が変わるユーザー登録日がJSTの日付で表示される。
+- 招待リンクの作成日検索がJSTの00:00:00〜23:59:59.999境界で一致する。
+- 左ナビで「マイページ」の直下に「投稿・保存した質問」があり、`/my-questions` でアクティブになる。
