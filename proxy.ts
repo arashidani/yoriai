@@ -3,6 +3,13 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { requireEnv } from '@/lib/env'
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const isQaMockPage =
+    pathname === '/' || pathname === '/my-questions' || pathname.startsWith('/posts/')
+  if (process.env.MOCK_MODE === 'true' && process.env.MOCK_AUTH_BYPASS === 'true' && isQaMockPage) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -30,7 +37,6 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { pathname } = request.nextUrl
   const publicPaths = [
     '/login',
     '/register',

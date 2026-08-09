@@ -12,7 +12,8 @@
       "!**/app/generated",
       "!**/public/mockServiceWorker.js",
       "!**/app/api/**/route.ts",
-      "!**/openapi/openapi.json"
+      "!**/openapi/openapi.json",
+      "!**/lib/hono/server-client.ts"
     ]
   },
   "formatter": {
