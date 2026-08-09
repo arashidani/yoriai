@@ -52,6 +52,10 @@ export function AnswerForm({ postId }: AnswerFormProps) {
         return
       }
       reset()
+      const body = await res.json()
+      if (body.moderation.isHidden) {
+        window.alert('AIによる確認の結果、この回答は公開されませんでした。')
+      }
       router.refresh()
     } catch {
       setError('通信に失敗しました。画面をリロードせず、もう一度お試しください')

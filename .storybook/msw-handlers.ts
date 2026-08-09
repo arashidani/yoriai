@@ -51,6 +51,7 @@ export const mswHandlers = {
       return HttpResponse.json(
         {
           question: { ...MOCK_QUESTIONS[0], id: 'post-new', title: body.title, body: body.body },
+          moderation: { isHidden: false },
         },
         { status: 201 },
       )
