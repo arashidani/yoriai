@@ -168,6 +168,22 @@ export const MOCK_POSTS = [
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
   },
+  {
+    id: 'post-deleted',
+    title: '削除済みの質問',
+    body: 'AI判定によって論理削除された質問です。',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
+    status: QuestionStatus.OPEN,
+    answerCount: 0,
+    likeCount: 0,
+    resolvedAt: null,
+    deletedAt: new Date('2024-01-14'),
+    tags: [],
+    createdAt: new Date('2024-01-14'),
+    updatedAt: new Date('2024-01-14'),
+  },
 ]
 
 export const MOCK_ANSWERS = [
