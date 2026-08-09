@@ -13,8 +13,12 @@
   ],
   "tags": [
     {
-      "name": "posts",
+      "name": "questions",
       "description": "質問（投稿）の閲覧・作成・削除、回答の投稿・一覧取得、解決済み操作"
+    },
+    {
+      "name": "question-tags",
+      "description": "Q&Aの質問タグ候補"
     },
     {
       "name": "answers",
@@ -51,6 +55,473 @@
       }
     },
     "schemas": {
+      "Question": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "OPEN",
+              "ANSWERED",
+              "RESOLVED"
+            ]
+          },
+          "answerCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "liked": {
+            "type": "boolean"
+          },
+          "saved": {
+            "type": "boolean"
+          },
+          "isOwnQuestion": {
+            "type": "boolean"
+          },
+          "displayAuthor": {
+            "$ref": "#/components/schemas/QuestionDisplayAuthor"
+          },
+          "tag": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuestionTag"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resolvedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "example": "2026-08-08T00:00:00.000Z"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-08T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-08T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "body",
+          "status",
+          "answerCount",
+          "likeCount",
+          "liked",
+          "saved",
+          "isOwnQuestion",
+          "displayAuthor",
+          "tag",
+          "resolvedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "QuestionDisplayAuthor": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "example": "ねこ"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "/anonymous-profiles/cat.svg"
+          }
+        },
+        "required": [
+          "displayName",
+          "avatarUrl"
+        ]
+      },
+      "QuestionTag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tag-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "プロジェクト管理"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ]
+      },
+      "QuestionPagination": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "totalPages": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "page",
+          "pageSize",
+          "total",
+          "totalPages"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "QuestionAnswer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "questionId": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "likeCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "liked": {
+            "type": "boolean"
+          },
+          "isOwnAnswer": {
+            "type": "boolean"
+          },
+          "isMostLiked": {
+            "type": "boolean",
+            "description": "募集終了済み質問の最多いいね回答1件だけtrue"
+          },
+          "displayAuthor": {
+            "$ref": "#/components/schemas/QuestionDisplayAuthor"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-08T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-08T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "questionId",
+          "body",
+          "likeCount",
+          "liked",
+          "isOwnAnswer",
+          "isMostLiked",
+          "displayAuthor",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LikeStatus": {
+        "type": "object",
+        "properties": {
+          "liked": {
+            "type": "boolean",
+            "example": true
+          },
+          "likeCount": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "liked",
+          "likeCount"
+        ]
+      },
+      "SavedStatus": {
+        "type": "object",
+        "properties": {
+          "saved": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "saved"
+        ]
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "ProfileOption": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "option-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "開発部"
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "user-1"
+          },
+          "supabaseId": {
+            "type": "string",
+            "example": "supabase-user-1"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "一般ユーザー"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "あおさん"
+          },
+          "displayNameColor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "GREEN",
+              "YELLOW",
+              "BLUE",
+              "PURPLE",
+              "GRAY",
+              null
+            ],
+            "example": "BLUE"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "supabaseId",
+          "email",
+          "name",
+          "username",
+          "displayNameColor",
+          "role",
+          "createdAt"
+        ]
+      },
+      "InviteCreated": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "山田 太郎（仮）"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "token",
+          "name",
+          "role",
+          "expiresAt"
+        ]
+      },
+      "InviteListItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "invite-1"
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "山田 太郎（仮）"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "USED",
+              "EXPIRED"
+            ],
+            "example": "PENDING"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "status",
+          "expiresAt",
+          "createdAt"
+        ]
+      },
+      "PasswordResetCreated": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a1b2c3..."
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "token",
+          "expiresAt"
+        ]
+      },
       "Post": {
         "type": "object",
         "properties": {
@@ -159,75 +630,6 @@
           "updatedAt"
         ]
       },
-      "User": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "user-1"
-          },
-          "supabaseId": {
-            "type": "string",
-            "example": "supabase-user-1"
-          },
-          "email": {
-            "type": "string",
-            "example": "user@example.com"
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "一般ユーザー"
-          },
-          "username": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "あおさん"
-          },
-          "displayNameColor": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "enum": [
-              "GREEN",
-              "YELLOW",
-              "BLUE",
-              "PURPLE",
-              "GRAY",
-              null
-            ],
-            "example": "BLUE"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "USER",
-              "ADMIN"
-            ],
-            "example": "USER"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "supabaseId",
-          "email",
-          "name",
-          "username",
-          "displayNameColor",
-          "role",
-          "createdAt"
-        ]
-      },
       "Tag": {
         "type": "object",
         "properties": {
@@ -249,17 +651,6 @@
           "id",
           "name",
           "createdAt"
-        ]
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "error"
         ]
       },
       "Answer": {
@@ -339,185 +730,6 @@
           "id",
           "displayName",
           "avatarUrl"
-        ]
-      },
-      "LikeStatus": {
-        "type": "object",
-        "properties": {
-          "liked": {
-            "type": "boolean",
-            "example": true
-          },
-          "likeCount": {
-            "type": "number",
-            "example": 1
-          }
-        },
-        "required": [
-          "liked",
-          "likeCount"
-        ]
-      },
-      "SavedStatus": {
-        "type": "object",
-        "properties": {
-          "saved": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "required": [
-          "saved"
-        ]
-      },
-      "Success": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "required": [
-          "success"
-        ]
-      },
-      "ProfileOption": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "option-1"
-          },
-          "name": {
-            "type": "string",
-            "example": "開発部"
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "isActive",
-          "createdAt",
-          "updatedAt"
-        ]
-      },
-      "InviteCreated": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "example": "a1b2c3..."
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "山田 太郎（仮）"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "USER",
-              "ADMIN"
-            ],
-            "example": "USER"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "token",
-          "name",
-          "role",
-          "expiresAt"
-        ]
-      },
-      "InviteListItem": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "invite-1"
-          },
-          "name": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "山田 太郎（仮）"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "USER",
-              "ADMIN"
-            ],
-            "example": "USER"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PENDING",
-              "USED",
-              "EXPIRED"
-            ],
-            "example": "PENDING"
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "role",
-          "status",
-          "expiresAt",
-          "createdAt"
-        ]
-      },
-      "PasswordResetCreated": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "example": "a1b2c3..."
-          },
-          "expiresAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "token",
-          "expiresAt"
         ]
       },
       "Badge": {
@@ -769,30 +981,108 @@
     "parameters": {}
   },
   "paths": {
-    "/api/posts": {
+    "/api/questions": {
       "get": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "投稿一覧を取得",
+        "summary": "質問一覧を検索・絞り込み・ページングして取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "example": 10
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            },
+            "required": false,
+            "name": "keyword",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "unanswered",
+                "resolved"
+              ],
+              "default": "all"
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": false,
+            "name": "tagId",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "投稿一覧",
+            "description": "質問一覧",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "posts": {
+                    "questions": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Post"
+                        "$ref": "#/components/schemas/Question"
                       }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/QuestionPagination"
                     }
                   },
                   "required": [
-                    "posts"
+                    "questions",
+                    "pagination"
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -801,9 +1091,9 @@
       },
       "post": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "投稿を作成",
+        "summary": "質問を作成",
         "security": [
           {
             "supabaseSession": []
@@ -814,11 +1104,9 @@
             "schema": {
               "type": "string",
               "format": "uuid",
-              "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
               "example": "550e8400-e29b-41d4-a716-446655440000"
             },
             "required": true,
-            "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
             "name": "idempotency-key",
             "in": "header"
           }
@@ -850,36 +1138,36 @@
         },
         "responses": {
           "200": {
-            "description": "再送された投稿（すでに作成済みの投稿）",
+            "description": "同一内容の再送",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "post": {
-                      "$ref": "#/components/schemas/Post"
+                    "question": {
+                      "$ref": "#/components/schemas/Question"
                     }
                   },
                   "required": [
-                    "post"
+                    "question"
                   ]
                 }
               }
             }
           },
           "201": {
-            "description": "作成された投稿",
+            "description": "作成成功",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "post": {
-                      "$ref": "#/components/schemas/Post"
+                    "question": {
+                      "$ref": "#/components/schemas/Question"
                     }
                   },
                   "required": [
-                    "post"
+                    "question"
                   ]
                 }
               }
@@ -899,7 +1187,7 @@
             }
           },
           "409": {
-            "description": "同じキーで、前回とは異なる投稿内容が送信された",
+            "description": "同じキーで異なる内容",
             "content": {
               "application/json": {
                 "schema": {
@@ -912,7 +1200,7 @@
             }
           },
           "500": {
-            "description": "投稿の作成に失敗した",
+            "description": "作成失敗",
             "content": {
               "application/json": {
                 "schema": {
@@ -927,12 +1215,17 @@
         }
       }
     },
-    "/api/posts/{id}": {
+    "/api/questions/{id}": {
       "get": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "投稿を1件取得",
+        "summary": "質問詳細を取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
         "parameters": [
           {
             "schema": {
@@ -946,25 +1239,38 @@
         ],
         "responses": {
           "200": {
-            "description": "投稿詳細",
+            "description": "質問詳細",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "post": {
-                      "$ref": "#/components/schemas/Post"
+                    "question": {
+                      "$ref": "#/components/schemas/Question"
                     }
                   },
                   "required": [
-                    "post"
+                    "question"
                   ]
                 }
               }
             }
           },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
           "404": {
-            "description": "投稿が見つからない",
+            "description": "質問が見つからない",
             "content": {
               "application/json": {
                 "schema": {
@@ -980,9 +1286,9 @@
       },
       "delete": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "投稿を削除（管理者、または回答が付く前の質問者本人）",
+        "summary": "質問を削除",
         "security": [
           {
             "supabaseSession": []
@@ -1024,7 +1330,7 @@
             }
           },
           "403": {
-            "description": "権限不足（管理者・質問者本人以外）",
+            "description": "権限不足",
             "content": {
               "application/json": {
                 "schema": {
@@ -1037,7 +1343,7 @@
             }
           },
           "409": {
-            "description": "回答が付いている質問は質問者本人には削除できない",
+            "description": "回答あり",
             "content": {
               "application/json": {
                 "schema": {
@@ -1052,12 +1358,17 @@
         }
       }
     },
-    "/api/posts/{id}/answers": {
+    "/api/questions/{id}/answers": {
       "get": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "質問への回答一覧を取得（いいね数の多い順、同数なら投稿順）",
+        "summary": "回答一覧を取得。募集終了済みの場合だけ最多いいね回答1件を示す",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
         "parameters": [
           {
             "schema": {
@@ -1080,13 +1391,26 @@
                     "answers": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Answer"
+                        "$ref": "#/components/schemas/QuestionAnswer"
                       }
                     }
                   },
                   "required": [
                     "answers"
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -1108,9 +1432,9 @@
       },
       "post": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "質問に回答を投稿",
+        "summary": "質問へ回答を投稿",
         "security": [
           {
             "supabaseSession": []
@@ -1129,12 +1453,9 @@
           {
             "schema": {
               "type": "string",
-              "format": "uuid",
-              "description": "通信失敗後に同じ回答を再送しても、重複作成しないためのUUID",
-              "example": "550e8400-e29b-41d4-a716-446655440000"
+              "format": "uuid"
             },
             "required": true,
-            "description": "通信失敗後に同じ回答を再送しても、重複作成しないためのUUID",
             "name": "idempotency-key",
             "in": "header"
           }
@@ -1160,14 +1481,14 @@
         },
         "responses": {
           "200": {
-            "description": "再送された回答（すでに作成済みの回答）",
+            "description": "同一内容の再送",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "answer": {
-                      "$ref": "#/components/schemas/Answer"
+                      "$ref": "#/components/schemas/QuestionAnswer"
                     }
                   },
                   "required": [
@@ -1178,14 +1499,14 @@
             }
           },
           "201": {
-            "description": "作成された回答",
+            "description": "作成成功",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "answer": {
-                      "$ref": "#/components/schemas/Answer"
+                      "$ref": "#/components/schemas/QuestionAnswer"
                     }
                   },
                   "required": [
@@ -1209,20 +1530,20 @@
             }
           },
           "404": {
-            "description": "投稿が存在しない、または削除済みのため回答できない",
+            "description": "質問が存在しない・削除済み",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "example": {
-                  "error": "この投稿は削除されたため、回答できません"
+                  "error": "投稿が見つかりません"
                 }
               }
             }
           },
           "409": {
-            "description": "解決済み・非表示の質問には回答できない",
+            "description": "回答受付終了",
             "content": {
               "application/json": {
                 "schema": {
@@ -1235,7 +1556,7 @@
             }
           },
           "500": {
-            "description": "回答の作成に失敗した",
+            "description": "作成失敗",
             "content": {
               "application/json": {
                 "schema": {
@@ -1250,12 +1571,12 @@
         }
       }
     },
-    "/api/posts/{id}/resolve": {
+    "/api/questions/{id}/resolve": {
       "post": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "質問を解決済みにする（質問者のみ）",
+        "summary": "質問の募集を終了",
         "security": [
           {
             "supabaseSession": []
@@ -1274,18 +1595,18 @@
         ],
         "responses": {
           "200": {
-            "description": "解決済みにした質問",
+            "description": "募集終了",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "post": {
-                      "$ref": "#/components/schemas/Post"
+                    "question": {
+                      "$ref": "#/components/schemas/Question"
                     }
                   },
                   "required": [
-                    "post"
+                    "question"
                   ]
                 }
               }
@@ -1305,7 +1626,7 @@
             }
           },
           "403": {
-            "description": "質問者以外による操作",
+            "description": "質問者以外",
             "content": {
               "application/json": {
                 "schema": {
@@ -1331,7 +1652,7 @@
             }
           },
           "409": {
-            "description": "非表示の質問は解決済みにできない",
+            "description": "操作不可",
             "content": {
               "application/json": {
                 "schema": {
@@ -1346,12 +1667,12 @@
         }
       }
     },
-    "/api/posts/{id}/likes": {
+    "/api/questions/{id}/likes": {
       "post": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "質問にいいねする",
+        "summary": "質問に足跡を付ける",
         "security": [
           {
             "supabaseSession": []
@@ -1370,7 +1691,7 @@
         ],
         "responses": {
           "200": {
-            "description": "いいね後の状態",
+            "description": "足跡状態",
             "content": {
               "application/json": {
                 "schema": {
@@ -1393,7 +1714,7 @@
             }
           },
           "403": {
-            "description": "自分の質問にはいいねできない",
+            "description": "自分の質問",
             "content": {
               "application/json": {
                 "schema": {
@@ -1419,7 +1740,7 @@
             }
           },
           "500": {
-            "description": "いいねの処理に失敗した",
+            "description": "処理失敗",
             "content": {
               "application/json": {
                 "schema": {
@@ -1435,9 +1756,9 @@
       },
       "delete": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "質問へのいいねを取り消す",
+        "summary": "質問の足跡を取り消す",
         "security": [
           {
             "supabaseSession": []
@@ -1456,7 +1777,7 @@
         ],
         "responses": {
           "200": {
-            "description": "いいね取り消し後の状態",
+            "description": "足跡状態",
             "content": {
               "application/json": {
                 "schema": {
@@ -1492,7 +1813,7 @@
             }
           },
           "500": {
-            "description": "いいね取り消しの処理に失敗した",
+            "description": "処理失敗",
             "content": {
               "application/json": {
                 "schema": {
@@ -1507,12 +1828,12 @@
         }
       }
     },
-    "/api/posts/{id}/bookmarks": {
+    "/api/questions/{id}/bookmarks": {
       "post": {
         "tags": [
-          "posts"
+          "questions"
         ],
-        "summary": "質問を保存する",
+        "summary": "質問を保存",
         "security": [
           {
             "supabaseSession": []
@@ -1531,7 +1852,7 @@
         ],
         "responses": {
           "200": {
-            "description": "保存後の状態",
+            "description": "保存状態",
             "content": {
               "application/json": {
                 "schema": {
@@ -1567,7 +1888,7 @@
             }
           },
           "500": {
-            "description": "保存の処理に失敗した",
+            "description": "処理失敗",
             "content": {
               "application/json": {
                 "schema": {
@@ -1583,7 +1904,7 @@
       },
       "delete": {
         "tags": [
-          "posts"
+          "questions"
         ],
         "summary": "質問の保存を取り消す",
         "security": [
@@ -1604,7 +1925,7 @@
         ],
         "responses": {
           "200": {
-            "description": "保存取り消し後の状態",
+            "description": "保存状態",
             "content": {
               "application/json": {
                 "schema": {
@@ -1638,16 +1959,208 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/question-tags": {
+      "get": {
+        "tags": [
+          "question-tags"
+        ],
+        "summary": "Q&Aで使用するタグ候補を取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Q&Aタグ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/QuestionTag"
+                      }
+                    }
+                  },
+                  "required": [
+                    "tags"
+                  ]
+                }
+              }
+            }
           },
-          "500": {
-            "description": "保存取り消しの処理に失敗した",
+          "401": {
+            "description": "未認証",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "example": {
-                  "error": "保存取り消しの処理に失敗しました"
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/questions": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "自分が投稿した質問を取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "example": 10
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "投稿した質問",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Question"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/QuestionPagination"
+                    }
+                  },
+                  "required": [
+                    "questions",
+                    "pagination"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/saved-questions": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "自分が保存した質問を取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "example": 1
+            },
+            "required": false,
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10,
+              "example": 10
+            },
+            "required": false,
+            "name": "pageSize",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "保存した質問",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Question"
+                      }
+                    },
+                    "pagination": {
+                      "$ref": "#/components/schemas/QuestionPagination"
+                    }
+                  },
+                  "required": [
+                    "questions",
+                    "pagination"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }

@@ -29,7 +29,7 @@ export function DeletePostButton({ postId, postTitle, onDeleted }: DeletePostBut
 
   async function handleConfirm() {
     setPending(true)
-    const res = await client.api.posts[':id'].$delete({ param: { id: postId } })
+    const res = await client.api.questions[':id'].$delete({ param: { id: postId } })
     setPending(false)
     setOpen(false)
 

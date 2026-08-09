@@ -7,12 +7,14 @@ import { answersRoute } from './routes/answers'
 import { invitesRoute } from './routes/invites'
 import { onboardingRoute } from './routes/onboarding'
 import { passwordResetsRoute } from './routes/password-resets'
-import { postsRoute } from './routes/posts'
+import { meQuestionsRoute, qaQuestionsRoute, questionTagsRoute } from './routes/qa-questions'
 import { usersRoute } from './routes/users'
 
 const app = new OpenAPIHono()
   .basePath('/api')
-  .route('/posts', postsRoute)
+  .route('/questions', qaQuestionsRoute)
+  .route('/question-tags', questionTagsRoute)
+  .route('/users/me', meQuestionsRoute)
   .route('/answers', answersRoute)
   .route('/admin/profile-options', adminProfileOptionsRoute)
   .route('/admin', adminRoute)

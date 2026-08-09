@@ -17,7 +17,7 @@ export function ResolveButton({ postId }: ResolveButtonProps) {
 
   async function handleClick() {
     setPending(true)
-    const res = await client.api.posts[':id'].resolve.$post({ param: { id: postId } })
+    const res = await client.api.questions[':id'].resolve.$post({ param: { id: postId } })
     setPending(false)
 
     if (!res.ok) {

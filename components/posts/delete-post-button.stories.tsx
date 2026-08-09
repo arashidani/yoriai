@@ -33,7 +33,7 @@ export const DeleteFails: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.delete('/api/posts/:id', () =>
+        http.delete('/api/questions/:id', () =>
           HttpResponse.json({ error: '削除に失敗しました' }, { status: 400 }),
         ),
       ],

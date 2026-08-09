@@ -26,7 +26,7 @@ export default function NewPostPage() {
     }
 
     try {
-      const res = await client.api.posts.$post({
+      const res = await client.api.questions.$post({
         header: { 'idempotency-key': idempotencyKeyRef.current.key },
         json: data,
       })

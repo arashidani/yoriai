@@ -21,7 +21,6 @@ import {
   TagSchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
-import { toAnswerResponse } from '@/lib/hono/routes/posts'
 import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
@@ -34,6 +33,7 @@ import {
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { toAnswerResponse } from '@/lib/questions/legacy-answer-response'
 import {
   createAnonymousProfileSchema,
   updateAnonymousProfileSchema,
