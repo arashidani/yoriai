@@ -151,6 +151,28 @@ export const AnswerSchema = z
   })
   .openapi('Answer')
 
+export const NotificationTypeSchema = z
+  .enum(['POST_ANSWERED', 'POST_DELETED', 'ANSWER_HIDDEN'])
+  .openapi('NotificationType')
+
+export const NotificationSchema = z
+  .object({
+    id: z.string().openapi({ example: 'notification-1' }),
+    userId: z.string().openapi({ example: 'user-1' }),
+    type: NotificationTypeSchema,
+    postId: z.string().nullable().openapi({ example: 'post-1' }),
+    post: z.union([PostSchema, z.null()]).optional(),
+    answerId: z.string().nullable().openapi({ example: null }),
+    answer: z.union([AnswerSchema, z.null()]).optional(),
+    isRead: z.boolean().openapi({ example: false }),
+    createdAt: dateTime(),
+  })
+  .openapi('Notification')
+
+export const UnreadNotificationCountSchema = z
+  .object({ count: z.number().int().openapi({ example: 3 }) })
+  .openapi('UnreadNotificationCount')
+
 export const LikeStatusSchema = z
   .object({
     liked: z.boolean().openapi({ example: true }),
