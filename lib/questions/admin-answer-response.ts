@@ -4,8 +4,8 @@ type AnswerWithAnonymousProfile = Answer & {
   postAnonymousProfile: PostAnonymousProfile & { anonymousProfile: AnonymousProfile }
 }
 
-/** 管理APIが引き続き利用する従来形式の回答レスポンスmapper。 */
-export function toAnswerResponse(answer: AnswerWithAnonymousProfile) {
+/** AIフラグ管理・回答復元APIで使用する管理画面専用の回答レスポンスmapper。 */
+export function toAdminAnswerResponse(answer: AnswerWithAnonymousProfile) {
   return {
     id: answer.id,
     postId: answer.postId,
