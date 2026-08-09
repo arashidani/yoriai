@@ -36,6 +36,10 @@ export default function NewPostPage() {
         return
       }
 
+      const body = await res.json()
+      if (body.moderation.isHidden) {
+        window.alert('AIによる確認の結果、この質問は公開されませんでした。')
+      }
       router.push('/')
     } catch {
       setError('通信に失敗しました。画面をリロードせず、もう一度お試しください')

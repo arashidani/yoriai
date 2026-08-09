@@ -6,6 +6,7 @@ import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
+  ModerationResultSchema,
   PageQuerySchema,
   QaAnswerSchema,
   QuestionListQuerySchema,
@@ -136,11 +137,19 @@ const createQuestionRoute = createRoute({
   responses: {
     201: {
       description: '作成成功',
-      content: { 'application/json': { schema: z.object({ question: QuestionSchema }) } },
+      content: {
+        'application/json': {
+          schema: z.object({ question: QuestionSchema, moderation: ModerationResultSchema }),
+        },
+      },
     },
     200: {
       description: '同一内容の再送',
-      content: { 'application/json': { schema: z.object({ question: QuestionSchema }) } },
+      content: {
+        'application/json': {
+          schema: z.object({ question: QuestionSchema, moderation: ModerationResultSchema }),
+        },
+      },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     409: errorResponse('同じキーで異なる内容', '同じ投稿操作に異なる内容が指定されています'),
@@ -162,11 +171,19 @@ const createAnswerRoute = createRoute({
   responses: {
     201: {
       description: '作成成功',
-      content: { 'application/json': { schema: z.object({ answer: QaAnswerSchema }) } },
+      content: {
+        'application/json': {
+          schema: z.object({ answer: QaAnswerSchema, moderation: ModerationResultSchema }),
+        },
+      },
     },
     200: {
       description: '同一内容の再送',
-      content: { 'application/json': { schema: z.object({ answer: QaAnswerSchema }) } },
+      content: {
+        'application/json': {
+          schema: z.object({ answer: QaAnswerSchema, moderation: ModerationResultSchema }),
+        },
+      },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     404: errorResponse('質問が存在しない', '投稿が見つかりません'),
@@ -407,6 +424,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
             },
             user.id,
           ),
+          moderation: { isHidden: false },
         },
         201,
       )
@@ -428,7 +446,13 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       if (!existing) return c.json({ error: '投稿の作成に失敗しました' }, 500)
       if (existing.title !== data.title || existing.body !== data.body)
         return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
-      return c.json({ question: toQuestionResponse(existing, user.id) }, 200)
+      return c.json(
+        {
+          question: toQuestionResponse(existing, user.id),
+          moderation: { isHidden: Boolean(existing.deletedAt) },
+        },
+        200,
+      )
     }
     try {
       const assignment = await getOrAssignAnonymousProfile(post.id, user.id)
@@ -489,7 +513,13 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         console.error('Failed to assign tags', { postId: post.id, error })
       }
     }
-    return c.json({ question: toQuestionResponse({ ...post, tags }, user.id) }, 201)
+    return c.json(
+      {
+        question: toQuestionResponse({ ...post, tags }, user.id),
+        moderation: { isHidden: Boolean(post.deletedAt) },
+      },
+      201,
+    )
   })
   .openapi(createAnswerRoute, async (c) => {
     const user = c.get('user')
@@ -521,6 +551,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
             user.id,
             null,
           ),
+          moderation: { isHidden: false },
         },
         201,
       )
@@ -569,7 +600,13 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       if (!existing) return c.json({ error: '回答の作成に失敗しました' }, 500)
       if (existing.body !== data.body)
         return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
-      return c.json({ answer: toQaAnswerResponse(existing, user.id, null) }, 200)
+      return c.json(
+        {
+          answer: toQaAnswerResponse(existing, user.id, null),
+          moderation: { isHidden: Boolean(existing.isHidden) },
+        },
+        200,
+      )
     }
     const moderation = await moderateAnswer(answer.body)
     if (moderation?.flagged) {
@@ -598,7 +635,13 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         console.error('Failed to create AI flag', { answerId: answer.id, error })
       }
     }
-    return c.json({ answer: toQaAnswerResponse(answer, user.id, null) }, 201)
+    return c.json(
+      {
+        answer: toQaAnswerResponse(answer, user.id, null),
+        moderation: { isHidden: Boolean(answer.isHidden) },
+      },
+      201,
+    )
   })
   .openapi(resolveRoute, async (c) => {
     const user = c.get('user')

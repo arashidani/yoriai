@@ -75,6 +75,7 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     const response = await app.request('/api/posts')
     expect(response.status).toBe(404)
   })
+
   it('MOCK_MODEでも削除済み質問への回答は410を返す', async () => {
     const response = await app.request('/api/questions/post-deleted/answers', {
       method: 'POST',
@@ -89,5 +90,26 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(await response.json()).toEqual({
       error: 'この投稿は削除されたため、回答できません',
     })
+  })
+  it('質問・回答の作成レスポンスに公開状態を返す', async () => {
+    const headers = {
+      'content-type': 'application/json',
+      'idempotency-key': '550e8400-e29b-41d4-a716-446655440001',
+    }
+    const question = await app.request('/api/questions', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ title: '質問テスト', body: '本文テスト' }),
+    })
+    const answer = await app.request('/api/questions/post-1/answers', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ body: '回答テスト' }),
+    })
+
+    expect(question.status).toBe(201)
+    expect(answer.status).toBe(201)
+    expect((await question.json()).moderation).toEqual({ isHidden: false })
+    expect((await answer.json()).moderation).toEqual({ isHidden: false })
   })
 })

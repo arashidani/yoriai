@@ -53,6 +53,12 @@ export const QaAnswerSchema = z
   })
   .openapi('QuestionAnswer')
 
+export const ModerationResultSchema = z
+  .object({
+    isHidden: z.boolean().openapi({ description: 'AI判定によって非公開になった場合はtrue' }),
+  })
+  .openapi('ModerationResult')
+
 export const PaginationSchema = z
   .object({
     page: z.number().int().positive(),
