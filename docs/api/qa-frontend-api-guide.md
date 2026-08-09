@@ -16,7 +16,7 @@
 | 回答の足跡 | POST / DELETE | `/api/answers/{id}/likes` |
 | 保存 | POST / DELETE | `/api/questions/{id}/bookmarks` |
 | 募集終了 | POST | `/api/questions/{id}/resolve` |
-| 質問削除 | DELETE | `/api/questions/{id}` |
+| 管理画面の質問削除 | DELETE | `/api/admin/posts/{id}` |
 
 ## 2. 共通の認証方法
 
@@ -24,7 +24,8 @@
 
 - `401`: ログイン画面へ遷移
 - `403`: 操作権限なし
-- `404`: 対象なし・削除済み
+- `404`: 対象が存在しない
+- `410`: 回答先の質問が削除済み
 - `409`: 現在の状態では操作不可、または冪等キー競合
 
 ## 3. Query・Body・レスポンス型
@@ -67,6 +68,10 @@ type Pagination = {
   pageSize: number
   total: number
   totalPages: number
+}
+
+type Moderation = {
+  isHidden: boolean
 }
 ```
 
@@ -148,24 +153,38 @@ const res = await client.api.users.me['saved-questions'].$get({
 
 ## 質問・回答投稿
 
-Body:
+同じ内容を再送するときは同じUUIDを使う。新規作成は `201`、冪等再送は `200`。
 
-```ts
-// 質問
-{ title: string, body: string }
-
-// 回答
-{ body: string }
-```
-
-同じ内容を再送するときは同じUUIDを使う。
+質問:
 
 ```ts
 const res = await client.api.questions.$post({
-  header: { 'idempotency-key': crypto.randomUUID() },
+  header: { 'idempotency-key': idempotencyKey },
   json: { title, body },
 })
+const data = await res.json()
+
+if (res.ok && data.moderation.isHidden) {
+  window.alert('AIによる確認の結果、この質問は公開されませんでした。')
+}
 ```
+
+回答:
+
+```ts
+const res = await client.api.questions[':id'].answers.$post({
+  param: { id },
+  header: { 'idempotency-key': idempotencyKey },
+  json: { body },
+})
+const data = await res.json()
+
+if (res.ok && data.moderation.isHidden) {
+  window.alert('AIによる確認の結果、この回答は公開されませんでした。')
+}
+```
+
+成功レスポンスは質問が `{ question: Question, moderation: Moderation }`、回答が `{ answer: Answer, moderation: Moderation }`。AI判定理由は返さない。
 
 ## 4. UI表示条件
 
@@ -174,6 +193,7 @@ const res = await client.api.questions.$post({
 - `isOwnAnswer`: 回答の足跡ボタンを表示しない。
 - `status === 'RESOLVED'`: 回答フォーム・募集終了ボタンを表示しない。
 - `isMostLiked === true`: その回答だけメダルを表示する。
+- 一般ユーザーには質問削除ボタンを表示しない。管理画面の削除だけ `/api/admin/posts/{id}` を使う。
 - `questions.length === 0`: 一覧の空状態を表示する。
 - `answers.length === 0`: 「まだ回答がありません」を表示する。
 
@@ -184,8 +204,9 @@ const res = await client.api.questions.$post({
 | 400 | APIの `error` をフォーム付近に表示 |
 | 401 | ログイン画面へ遷移 |
 | 403 | 権限エラー通知 |
-| 404 | 詳細はNot Found、投稿フォームは無効化 |
-| 409 | 最新状態を再取得しAPIの `error` を表示 |
+| 404 | 詳細はNot Found。回答フォームを無効化して「一覧に戻る」を表示 |
+| 410 | 削除済みとして回答フォームを無効化し「一覧に戻る」を表示 |
+| 409 | 募集終了などの最新状態を再取得しAPIの `error` を表示 |
 | 500 | 再試行ボタン付き共通エラー |
 
 足跡・保存は楽観更新してよいが、失敗時に必ず元へ戻す。
@@ -196,7 +217,9 @@ Server/APIは `MOCK_MODE=true`、ブラウザ側の既存モック判定は `NEX
 
 認証済みセッションなしで対象3画面を確認するときだけ、追加で `MOCK_AUTH_BYPASS=true` を指定する。このフラグはQ&A画面以外には作用しない。
 
-`post-3` の回答で、募集終了後の `isMostLiked=true` を確認できる。
+- `post-3` の回答で、募集終了後の `isMostLiked=true` を確認できる。
+- `post-deleted` への回答で `410` を確認できる。
+- 質問・回答作成では `moderation.isHidden` を本番と同じ形式で返す。
 
 ## 7. Swagger
 

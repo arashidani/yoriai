@@ -36,6 +36,9 @@
 | 自分の一覧 | 専用APIなし | 投稿・保存それぞれ専用API |
 | 回答メダル | 契約なし | 解決済み質問の最多いいね回答1件だけ `isMostLiked=true` |
 | AIタグ付与 | 最大3件 | 最大1件 |
+| AI非公開判定 | 投稿者へ通知なし | `moderation.isHidden` で通知 |
+| 質問削除 | 一般APIから実行 | 管理者専用APIから実行 |
+| 削除済み質問への回答 | 409 | 410 Gone |
 | 旧API | 利用中 | `/api/posts` を廃止し404 |
 
 Prismaの `PostTag` は複数件を保持できる現行構造を変更しない。公開APIは `PostTag.createdAt ASC, PostTag.id ASC` の先頭1件だけを `tag` として返す。
@@ -56,7 +59,11 @@ Status: `401`
 
 ### 4.2 日時
 
-日時はISO 8601の文字列として返す。
+APIとDBの日時はUTCのISO 8601文字列を維持する。管理画面では共通関数で `Asia/Tokyo` に変換して表示する。
+
+- `formatDateTimeJst`: AIフラグ検出日時、招待リンクの作成日時・有効期限
+- `formatDateJst`: ユーザー登録日
+- 招待リンクの作成日検索: JSTの00:00:00〜23:59:59.999をUTCへ変換して検索する
 
 ### 4.3 ページング
 
@@ -130,6 +137,16 @@ type Answer = {
 3. 最大いいね数の回答だけを候補にする。
 4. 同数の場合は `createdAt ASC, id ASC` の先頭1件だけを `true` にする。
 5. 条件を満たさない場合は全回答を `false` にする。
+
+### 4.6 投稿時のAI判定
+
+```ts
+type Moderation = {
+  isHidden: boolean
+}
+```
+
+質問・回答の新規作成 `201` と冪等再送 `200` の両方で同じ非公開状態を返す。AIの判定理由や重大度は一般APIへ含めない。
 
 ## 5. エンドポイント
 
@@ -214,6 +231,13 @@ Body: `{ "title": string, "body": string }`
 
 Response: 新規作成 `201`、同一内容の再送 `200`、同じキーで異なる内容 `409`。
 
+```json
+{
+  "question": {},
+  "moderation": { "isHidden": false }
+}
+```
+
 AIによるタグ選択・PostTag作成は最大1件とする。
 
 ### 5.8 回答作成
@@ -224,7 +248,16 @@ Header: `Idempotency-Key: UUID`
 
 Body: `{ "body": string }`
 
-Response: 新規作成 `201`、同一内容の再送 `200`、解決済み・非表示 `409`。自分の質問への回答は許可する。
+Response: 新規作成 `201`、同一内容の再送 `200`。自分の質問への回答は許可する。
+
+```json
+{
+  "answer": {},
+  "moderation": { "isHidden": false }
+}
+```
+
+質問が存在しない場合は `404`、論理削除済みの場合は `410 Gone`、回答受付終了の場合は `409` を返す。
 
 ### 5.9 質問の足跡
 
@@ -261,19 +294,19 @@ POST/DELETEとも冪等。
 
 募集終了直後の回答一覧再取得から `isMostLiked` を計算する。DBにメダル状態は保存しない。
 
-### 5.13 質問削除
+### 5.13 管理者による質問削除
 
-`DELETE /api/questions/{id}`
+`DELETE /api/admin/posts/{id}`
 
-管理者、または回答が付く前の質問者本人だけ実行できる。既に存在しない場合も成功とする。
+管理者だけが実行できる。管理者以外は `403`。既に存在しない場合も冪等に成功とする。一般向けの `DELETE /api/questions/{id}` は廃止する。
 
 ## 6. 画面ごとの利用API
 
 | 画面 | API |
 | --- | --- |
-| Q&A一覧 | `GET /api/questions`、`GET /api/question-tags`、質問の足跡・保存・削除 |
+| Q&A一覧 | `GET /api/questions`、`GET /api/question-tags`、質問の足跡・保存 |
 | 質問詳細 | `GET /api/questions/{id}`、`GET /api/questions/{id}/answers`、回答投稿、足跡、保存、募集終了 |
-| 投稿・保存した質問一覧 | `GET /api/users/me/questions`、`GET /api/users/me/saved-questions`、保存・削除 |
+| 投稿・保存した質問一覧 | `GET /api/users/me/questions`、`GET /api/users/me/saved-questions`、保存 |
 
 ## 7. MOCK_MODE
 
@@ -281,6 +314,8 @@ POST/DELETEとも冪等。
 - 実APIと同じQuery、Status、Body、レスポンス構造を使う。
 - 一覧検索・状態・単数タグ・ページングをfixture上でも適用する。
 - `post-3` を解決済み、1票以上の回答ありとしてメダル表示を確認できるようにする。
+- `post-deleted` への回答は実APIと同じく `410 Gone` を返す。
+- 投稿レスポンスは実APIと同じ `moderation.isHidden` を返す。
 - 認証セッションなしの画面確認は、`MOCK_MODE=true` と `MOCK_AUTH_BYPASS=true` を同時指定したQ&A画面だけ許可する。
 - モックの更新系は永続化しないが、返却値とエラー条件を実APIに合わせる。
 
@@ -294,7 +329,10 @@ POST/DELETEとも冪等。
 - Server ComponentのQ&AデータPrisma直読を廃止し、Cookieを転送する内部Hono RPCクライアントへ変更する。
 - Client ComponentのRPCパスを `/questions` へ変更する。
 - MSW/Storybookを新契約へ変更する。
-- `/api/posts` の公開登録を削除する。`/api/admin/posts` は変更しない。
+- `/api/posts` の公開登録を削除する。
+- 質問削除を管理者専用の `DELETE /api/admin/posts/{id}` へ移行する。
+- 管理画面のAIフラグ一覧・確認・回答復元は `admin-answer-response` mapperを使い、既存レスポンス形式を維持する。
+- 質問・回答投稿でAI非公開状態を返し、フロントで標準アラートを表示する。
 
 ## 9. 将来TODO
 

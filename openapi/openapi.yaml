@@ -189,6 +189,14 @@ components:
         - displayAuthor
         - createdAt
         - updatedAt
+    ModerationResult:
+      type: object
+      properties:
+        isHidden:
+          type: boolean
+          description: AI判定によって非公開になった場合はtrue
+      required:
+        - isHidden
     LikeStatus:
       type: object
       properties:
@@ -209,14 +217,6 @@ components:
           example: true
       required:
         - saved
-    Success:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-      required:
-        - success
     ProfileOption:
       type: object
       properties:
@@ -361,6 +361,14 @@ components:
         - status
         - expiresAt
         - createdAt
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+      required:
+        - success
     PasswordResetCreated:
       type: object
       properties:
@@ -810,8 +818,11 @@ paths:
                 properties:
                   question:
                     $ref: "#/components/schemas/Question"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
                   - question
+                  - moderation
         "201":
           description: 作成成功
           content:
@@ -821,8 +832,11 @@ paths:
                 properties:
                   question:
                     $ref: "#/components/schemas/Question"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
                   - question
+                  - moderation
         "401":
           description: 未認証
           content:
@@ -888,49 +902,6 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Not found
-    delete:
-      tags:
-        - questions
-      summary: 質問を削除
-      security: *a1
-      parameters:
-        - schema:
-            type: string
-            example: post-1
-          required: true
-          name: id
-          in: path
-      responses:
-        "200":
-          description: 削除成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Success"
-        "401":
-          description: 未認証
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
-        "403":
-          description: 権限不足
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Forbidden
-        "409":
-          description: 回答あり
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: 回答がある質問は削除できません
   /api/questions/{id}/answers:
     get:
       tags:
@@ -1014,8 +985,11 @@ paths:
                 properties:
                   answer:
                     $ref: "#/components/schemas/QuestionAnswer"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
                   - answer
+                  - moderation
         "201":
           description: 作成成功
           content:
@@ -1025,8 +999,11 @@ paths:
                 properties:
                   answer:
                     $ref: "#/components/schemas/QuestionAnswer"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
                   - answer
+                  - moderation
         "401":
           description: 未認証
           content:
@@ -1036,7 +1013,7 @@ paths:
               example:
                 error: Unauthorized
         "404":
-          description: 質問が存在しない・削除済み
+          description: 質問が存在しない
           content:
             application/json:
               schema:
@@ -1051,6 +1028,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 回答を受け付けていない質問です
+        "410":
+          description: 質問が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: この投稿は削除されたため、回答できません
         "500":
           description: 作成失敗
           content:
@@ -1936,6 +1921,42 @@ paths:
                       $ref: "#/components/schemas/Post"
                 required:
                   - posts
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+  /api/admin/posts/{id}:
+    delete:
+      tags:
+        - admin
+      summary: 投稿を削除（管理者専用）
+      security: *a3
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
         "401":
           description: 未認証
           content:
