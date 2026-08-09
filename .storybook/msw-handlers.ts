@@ -16,6 +16,12 @@ import {
   MOCK_USERS,
 } from '../lib/mocks/fixtures'
 
+import { toQuestionResponse } from '../lib/questions/api-mappers'
+
+const MOCK_QUESTIONS = MOCK_POSTS.map((post) =>
+  toQuestionResponse({ ...post, likes: [], bookmarks: [] }, MOCK_USERS[0].id),
+)
+
 export const mswHandlers = {
   onboarding: [
     http.get('/api/onboarding/options', () =>
@@ -29,34 +35,33 @@ export const mswHandlers = {
     http.post('/api/onboarding', () => HttpResponse.json({ success: true })),
   ],
   posts: [
-    http.get('/api/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
-    http.get('/api/posts/:id', ({ params }) => {
-      const post = MOCK_POSTS.find((p) => p.id === params.id)
+    http.get('/api/questions', () =>
+      HttpResponse.json({
+        questions: MOCK_QUESTIONS,
+        pagination: { page: 1, pageSize: 10, total: MOCK_QUESTIONS.length, totalPages: 1 },
+      }),
+    ),
+    http.get('/api/questions/:id', ({ params }) => {
+      const post = MOCK_QUESTIONS.find((p) => p.id === params.id)
       if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
-      return HttpResponse.json({ post })
+      return HttpResponse.json({ question: post })
     }),
-    http.post('/api/posts', async ({ request }) => {
+    http.post('/api/questions', async ({ request }) => {
       const body = (await request.json()) as { title: string; body: string }
       return HttpResponse.json(
         {
-          post: {
-            id: 'post-new',
-            title: body.title,
-            body: body.body,
-            authorId: 'user-1',
-            author: MOCK_USERS[0],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
+          question: { ...MOCK_QUESTIONS[0], id: 'post-new', title: body.title, body: body.body },
         },
         { status: 201 },
       )
     }),
-    http.delete('/api/posts/:id', () => HttpResponse.json({ success: true })),
-    http.post('/api/posts/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
-    http.delete('/api/posts/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
-    http.post('/api/posts/:id/bookmarks', () => HttpResponse.json({ saved: true })),
-    http.delete('/api/posts/:id/bookmarks', () => HttpResponse.json({ saved: false })),
+    http.delete('/api/questions/:id', () => HttpResponse.json({ success: true })),
+    http.post('/api/questions/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
+    http.delete('/api/questions/:id/likes', () =>
+      HttpResponse.json({ liked: false, likeCount: 0 }),
+    ),
+    http.post('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: true })),
+    http.delete('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: false })),
   ],
   answers: [
     http.post('/api/answers/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),

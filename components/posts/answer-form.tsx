@@ -40,7 +40,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
     }
 
     try {
-      const res = await client.api.posts[':id'].answers.$post({
+      const res = await client.api.questions[':id'].answers.$post({
         param: { id: postId },
         header: { 'idempotency-key': idempotencyKeyRef.current.key },
         json: data,
