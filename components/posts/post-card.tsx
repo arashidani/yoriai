@@ -28,7 +28,7 @@ const actionChipClass =
 
 export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
   const excerpt = post.body.length > 100 ? `${post.body.slice(0, 100)}…` : post.body
-  const canDelete = isAdmin || (post.isOwnQuestion && post.answerCount === 0)
+  const canDelete = isAdmin
 
   return (
     <div className="relative rounded-xl border border-input bg-background shadow-xs transition-shadow hover:shadow-md">
