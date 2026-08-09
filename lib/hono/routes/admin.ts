@@ -33,7 +33,7 @@ import {
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { toAnswerResponse } from '@/lib/questions/legacy-answer-response'
+import { toAdminAnswerResponse } from '@/lib/questions/admin-answer-response'
 import {
   createAnonymousProfileSchema,
   updateAnonymousProfileSchema,
@@ -586,7 +586,7 @@ export const adminRoute = $(
       data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
       include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
     })
-    return c.json({ answer: toAnswerResponse(answer) }, 200)
+    return c.json({ answer: toAdminAnswerResponse(answer) }, 200)
   })
   .openapi(patchUserRoute, async (c) => {
     const currentUser = c.get('user')
@@ -727,7 +727,12 @@ export const adminRoute = $(
       orderBy: { createdAt: 'desc' },
     })
     return c.json(
-      { flags: flags.map((f) => ({ ...f, answer: f.answer ? toAnswerResponse(f.answer) : null })) },
+      {
+        flags: flags.map((f) => ({
+          ...f,
+          answer: f.answer ? toAdminAnswerResponse(f.answer) : null,
+        })),
+      },
       200,
     )
   })
@@ -750,7 +755,7 @@ export const adminRoute = $(
       },
     })
     return c.json(
-      { flag: { ...flag, answer: flag.answer ? toAnswerResponse(flag.answer) : null } },
+      { flag: { ...flag, answer: flag.answer ? toAdminAnswerResponse(flag.answer) : null } },
       200,
     )
   })
