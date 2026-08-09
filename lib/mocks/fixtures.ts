@@ -4,6 +4,7 @@ import {
   FlagSeverity,
   FlagStatus,
   LunchPreference,
+  NotificationType,
   QuestionStatus,
   Role,
 } from '@/app/generated/prisma/enums'
@@ -300,6 +301,42 @@ export const MOCK_ANSWERS = [
     likeCount: 1,
     createdAt: new Date('2024-01-12T02:00:00Z'),
     updatedAt: new Date('2024-01-12T02:00:00Z'),
+  },
+]
+
+export const MOCK_NOTIFICATIONS = [
+  {
+    id: 'notification-1',
+    userId: 'user-1',
+    type: NotificationType.POST_ANSWERED,
+    postId: 'post-2',
+    post: MOCK_POSTS[1],
+    answerId: null,
+    answer: null,
+    isRead: false,
+    createdAt: new Date('2024-01-14T00:00:00Z'),
+  },
+  {
+    id: 'notification-2',
+    userId: 'user-1',
+    type: NotificationType.ANSWER_HIDDEN,
+    postId: null,
+    post: null,
+    answerId: 'answer-2',
+    answer: { ...MOCK_ANSWERS[1], isHidden: true },
+    isRead: true,
+    createdAt: new Date('2024-01-13T00:00:00Z'),
+  },
+  {
+    id: 'notification-3',
+    userId: 'user-2',
+    type: NotificationType.POST_ANSWERED,
+    postId: 'post-1',
+    post: MOCK_POSTS[0],
+    answerId: null,
+    answer: null,
+    isRead: false,
+    createdAt: new Date('2024-01-12T00:00:00Z'),
   },
 ]
 

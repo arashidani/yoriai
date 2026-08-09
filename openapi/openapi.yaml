@@ -26,6 +26,8 @@ tags:
     description: 管理者専用のユーザー・投稿管理
   - name: invites
     description: 招待リンクの発行・確認
+  - name: notifications
+    description: 自分宛て通知の一覧取得・既読化・未読件数取得
   - name: password-resets
     description: パスワードリセットリンクの確認・実行
 components:
@@ -730,6 +732,64 @@ components:
       required:
         - name
         - role
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          example: notification-1
+        userId:
+          type: string
+          example: user-1
+        type:
+          $ref: "#/components/schemas/NotificationType"
+        postId:
+          type:
+            - string
+            - "null"
+          example: post-1
+        post:
+          anyOf:
+            - $ref: "#/components/schemas/Post"
+            - type: "null"
+        answerId:
+          type:
+            - string
+            - "null"
+          example: null
+        answer:
+          anyOf:
+            - $ref: "#/components/schemas/Answer"
+            - type: "null"
+        isRead:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - userId
+        - type
+        - postId
+        - answerId
+        - isRead
+        - createdAt
+    NotificationType:
+      type: string
+      enum:
+        - POST_ANSWERED
+        - POST_DELETED
+        - ANSWER_HIDDEN
+    UnreadNotificationCount:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 3
+      required:
+        - count
   parameters: {}
 paths:
   /api/posts:
@@ -3887,6 +3947,128 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 招待が見つかりません
+  /api/notifications:
+    get:
+      tags:
+        - notifications
+      summary: 自分の通知一覧をカーソルベースで取得（作成日時降順）
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: notification-20
+          required: false
+          name: cursor
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+          required: false
+          name: limit
+          in: query
+      responses:
+        "200":
+          description: 通知一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Notification"
+                  nextCursor:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - notifications
+                  - nextCursor
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+  /api/notifications/unread-count:
+    get:
+      tags:
+        - notifications
+      summary: 自分の未読通知件数を取得
+      security:
+        - supabaseSession: []
+      responses:
+        "200":
+          description: 未読件数
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UnreadNotificationCount"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+  /api/notifications/{id}:
+    patch:
+      tags:
+        - notifications
+      summary: 通知を既読にする
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 既読化後の通知
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  notification:
+                    $ref: "#/components/schemas/Notification"
+                required:
+                  - notification
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 自分宛て以外の通知への操作
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 通知が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
   /api/password-resets/{token}:
     get:
       tags:
