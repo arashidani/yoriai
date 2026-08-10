@@ -1004,6 +1004,102 @@
           "createdAt"
         ]
       },
+      "UserProfile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "departmentId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "department-1"
+              },
+              "businessAreaId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "business-area-1"
+              },
+              "joinedYear": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "example": 2024
+              },
+              "joinedMonth": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "example": 4
+              },
+              "businessSkillIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "business-skill-1"
+                ]
+              },
+              "interestIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "interest-1"
+                ]
+              },
+              "lunchPreference": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "NO_PREFERENCE",
+                  "TEAM",
+                  "ALONE",
+                  null
+                ],
+                "example": "TEAM"
+              },
+              "recommendedLunchSpot": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "駅前食堂"
+              },
+              "bio": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "よろしくお願いします"
+              }
+            },
+            "required": [
+              "departmentId",
+              "businessAreaId",
+              "joinedYear",
+              "joinedMonth",
+              "businessSkillIds",
+              "interestIds",
+              "lunchPreference",
+              "recommendedLunchSpot",
+              "bio"
+            ]
+          }
+        ]
+      },
       "Invite": {
         "type": "object",
         "properties": {
@@ -6016,19 +6112,175 @@
         ],
         "responses": {
           "200": {
-            "description": "自分のユーザー情報",
+            "description": "自分のプロフィール情報",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "user": {
-                      "$ref": "#/components/schemas/User"
+                      "$ref": "#/components/schemas/UserProfile"
                     }
                   },
                   "required": [
                     "user"
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ユーザーが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "自分のプロフィールを更新",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "departmentId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "businessAreaId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "joinedYear": {
+                    "type": "integer",
+                    "minimum": 1900,
+                    "maximum": 2026
+                  },
+                  "joinedMonth": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "businessSkillIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "interestIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "lunchPreference": {
+                    "type": "string",
+                    "enum": [
+                      "NO_PREFERENCE",
+                      "TEAM",
+                      "ALONE"
+                    ]
+                  },
+                  "recommendedLunchSpot": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "bio": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "displayNameColor": {
+                    "type": "string",
+                    "enum": [
+                      "GREEN",
+                      "YELLOW",
+                      "BLUE",
+                      "PURPLE",
+                      "GRAY"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "username",
+                  "departmentId",
+                  "businessAreaId",
+                  "joinedYear",
+                  "joinedMonth",
+                  "businessSkillIds",
+                  "interestIds",
+                  "lunchPreference",
+                  "displayNameColor",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新完了",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "選択肢が無効",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "選択した項目が無効です"
                 }
               }
             }

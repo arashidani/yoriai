@@ -20,6 +20,7 @@ const preview: Preview = {
   parameters: {
     msw: {
       handlers: [
+        ...mswHandlers.users,
         ...mswHandlers.onboarding,
         ...mswHandlers.posts,
         ...mswHandlers.answers,
