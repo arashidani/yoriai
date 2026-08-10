@@ -23,6 +23,7 @@ const preview: Preview = {
         ...mswHandlers.onboarding,
         ...mswHandlers.posts,
         ...mswHandlers.answers,
+        ...mswHandlers.hiroba,
         ...mswHandlers.admin,
         ...mswHandlers.invites,
         ...mswHandlers.passwordResets,
