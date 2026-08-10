@@ -4,6 +4,7 @@ import {
   FlagSeverity,
   FlagStatus,
   LunchPreference,
+  NotificationType,
   QuestionStatus,
   Role,
 } from '@/app/generated/prisma/enums'
@@ -97,11 +98,57 @@ export const MOCK_ANONYMOUS_PROFILES = [
 ]
 
 export const MOCK_TAGS = [
-  { id: 'tag-1', name: 'Next.js', createdAt: new Date('2024-01-01') },
-  { id: 'tag-2', name: 'TypeScript', createdAt: new Date('2024-01-01') },
-  { id: 'tag-3', name: 'Prisma', createdAt: new Date('2024-01-01') },
-  { id: 'tag-4', name: 'React', createdAt: new Date('2024-01-01') },
+  {
+    id: 'tag-1',
+    name: 'Next.js',
+    category: 'フレームワーク',
+    description: 'Next.js固有の機能や挙動に関する投稿',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-2',
+    name: 'TypeScript',
+    category: '言語',
+    description: 'TypeScriptの型や構文に関する投稿',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-3',
+    name: 'Prisma',
+    category: 'データベース',
+    description: null,
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-4',
+    name: 'React',
+    category: 'UIライブラリ',
+    description: null,
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-5',
+    name: 'ランチ',
+    category: '交流',
+    description: '食事や飲食店についての気軽な投稿',
+    isWorkTag: false,
+    createdAt: new Date('2024-01-01'),
+  },
 ]
+
+export const MOCK_TAG_CATEGORIES = [
+  { id: 'tag-category-1', name: 'フレームワーク', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-2', name: '言語', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-3', name: 'データベース', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-4', name: 'UIライブラリ', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-5', name: '交流', createdAt: new Date('2024-01-01') },
+]
+
+const MOCK_PUBLIC_TAGS = MOCK_TAGS.map(({ id, name, createdAt }) => ({ id, name, createdAt }))
 
 export const MOCK_POSTS = [
   {
@@ -116,7 +163,7 @@ export const MOCK_POSTS = [
     likeCount: 5,
     resolvedAt: null,
     deletedAt: null,
-    tags: [MOCK_TAGS[0]],
+    tags: [MOCK_PUBLIC_TAGS[0]],
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-10'),
   },
@@ -132,7 +179,7 @@ export const MOCK_POSTS = [
     likeCount: 0,
     resolvedAt: null,
     deletedAt: null,
-    tags: [MOCK_TAGS[1]],
+    tags: [MOCK_PUBLIC_TAGS[1]],
     createdAt: new Date('2024-01-11'),
     updatedAt: new Date('2024-01-11'),
   },
@@ -148,7 +195,7 @@ export const MOCK_POSTS = [
     likeCount: 2,
     resolvedAt: new Date('2024-01-15'),
     deletedAt: null,
-    tags: [MOCK_TAGS[2], MOCK_TAGS[1]],
+    tags: [MOCK_PUBLIC_TAGS[2], MOCK_PUBLIC_TAGS[1]],
     createdAt: new Date('2024-01-12'),
     updatedAt: new Date('2024-01-15'),
   },
@@ -164,9 +211,71 @@ export const MOCK_POSTS = [
     likeCount: 0,
     resolvedAt: null,
     deletedAt: null,
-    tags: [MOCK_TAGS[0], MOCK_TAGS[3]],
+    tags: [MOCK_PUBLIC_TAGS[0], MOCK_PUBLIC_TAGS[3]],
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
+  },
+]
+
+export const MOCK_HIROBAS = [
+  {
+    id: 'hiroba-1',
+    slug: 'hiroba-1',
+    name: '広場１',
+    description: 'みんなで気軽に話せる広場です。',
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'hiroba-2',
+    slug: 'hiroba-2',
+    name: '広場２',
+    description: 'みんなで気軽に話せる広場です。',
+    createdAt: new Date('2024-01-01'),
+  },
+]
+
+export const MOCK_HIROBA_POSTS = [
+  {
+    id: 'hiroba-post-1',
+    hirobaId: 'hiroba-1',
+    title: '今日のランチどこ行きました？',
+    body: '近くに新しくできたお店に行ってみたら、とても美味しかったです。',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
+    answerCount: 1,
+    likeCount: 2,
+    deletedAt: null,
+    tags: [MOCK_PUBLIC_TAGS[4]],
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-01-20'),
+  },
+  {
+    id: 'hiroba-post-2',
+    hirobaId: 'hiroba-1',
+    title: 'おすすめの本を教えてください',
+    body: '最近読んで面白かった本があれば教えてほしいです。',
+    authorId: 'user-1',
+    author: MOCK_USERS[0],
+    answerCount: 0,
+    likeCount: 0,
+    deletedAt: null,
+    tags: [],
+    createdAt: new Date('2024-01-21'),
+    updatedAt: new Date('2024-01-21'),
+  },
+]
+
+export const MOCK_HIROBA_ANSWERS = [
+  {
+    id: 'hiroba-answer-1',
+    hirobaPostId: 'hiroba-post-1',
+    authorId: 'user-1',
+    author: MOCK_USERS[0],
+    body: 'いいですね、今度行ってみます！',
+    isHidden: false,
+    likeCount: 1,
+    createdAt: new Date('2024-01-20T01:00:00Z'),
+    updatedAt: new Date('2024-01-20T01:00:00Z'),
   },
 ]
 
@@ -192,6 +301,42 @@ export const MOCK_ANSWERS = [
     likeCount: 1,
     createdAt: new Date('2024-01-12T02:00:00Z'),
     updatedAt: new Date('2024-01-12T02:00:00Z'),
+  },
+]
+
+export const MOCK_NOTIFICATIONS = [
+  {
+    id: 'notification-1',
+    userId: 'user-1',
+    type: NotificationType.POST_ANSWERED,
+    postId: 'post-2',
+    post: MOCK_POSTS[1],
+    answerId: null,
+    answer: null,
+    isRead: false,
+    createdAt: new Date('2024-01-14T00:00:00Z'),
+  },
+  {
+    id: 'notification-2',
+    userId: 'user-1',
+    type: NotificationType.ANSWER_HIDDEN,
+    postId: null,
+    post: null,
+    answerId: 'answer-2',
+    answer: { ...MOCK_ANSWERS[1], isHidden: true },
+    isRead: true,
+    createdAt: new Date('2024-01-13T00:00:00Z'),
+  },
+  {
+    id: 'notification-3',
+    userId: 'user-2',
+    type: NotificationType.POST_ANSWERED,
+    postId: 'post-1',
+    post: MOCK_POSTS[0],
+    answerId: null,
+    answer: null,
+    isRead: false,
+    createdAt: new Date('2024-01-12T00:00:00Z'),
   },
 ]
 
