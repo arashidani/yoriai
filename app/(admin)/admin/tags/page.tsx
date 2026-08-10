@@ -8,7 +8,7 @@ export default function TagsPage() {
       <div>
         <h2 className="text-lg font-semibold">タグ管理</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          投稿にAIが自動付与するタグの一覧。ユーザー自身はタグを付与・変更できません。
+          AIが投稿へ自動付与するタグを管理します。QAでは「QAで使用可能」のタグだけが候補になります。
         </p>
       </div>
 

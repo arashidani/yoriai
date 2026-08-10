@@ -4,7 +4,11 @@ import { openApiConfig } from './openapi/config'
 import { adminRoute } from './routes/admin'
 import { adminProfileOptionsRoute } from './routes/admin-profile-options'
 import { answersRoute } from './routes/answers'
+import { hirobaRoute } from './routes/hiroba'
+import { hirobaAnswersRoute } from './routes/hiroba-answers'
+import { hirobaPostsRoute } from './routes/hiroba-posts'
 import { invitesRoute } from './routes/invites'
+import { notificationsRoute } from './routes/notifications'
 import { onboardingRoute } from './routes/onboarding'
 import { passwordResetsRoute } from './routes/password-resets'
 import { postsRoute } from './routes/posts'
@@ -15,10 +19,14 @@ const app = new OpenAPIHono()
   .route('/posts', postsRoute)
   .route('/answers', answersRoute)
   .route('/admin/profile-options', adminProfileOptionsRoute)
+  .route('/hiroba', hirobaRoute)
+  .route('/hiroba-posts', hirobaPostsRoute)
+  .route('/hiroba-answers', hirobaAnswersRoute)
   .route('/admin', adminRoute)
   .route('/users', usersRoute)
   .route('/onboarding', onboardingRoute)
   .route('/invites', invitesRoute)
+  .route('/notifications', notificationsRoute)
   .route('/password-resets', passwordResetsRoute)
 
 app.openAPIRegistry.registerComponent('securitySchemes', 'supabaseSession', {
