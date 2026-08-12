@@ -20,6 +20,10 @@ const { prismaMock, txMock } = vi.hoisted(() => {
   return {
     txMock: tx,
     prismaMock: {
+      department: { findMany: vi.fn() },
+      businessArea: { findMany: vi.fn() },
+      businessSkill: { findMany: vi.fn() },
+      interest: { findMany: vi.fn() },
       $transaction: vi.fn(async (callback: (transaction: TransactionMock) => unknown) =>
         callback(tx),
       ),
@@ -72,6 +76,24 @@ describe('オンボーディング完了API', () => {
     txMock.businessArea.findFirst.mockResolvedValue({ id: 'business-area-1' })
     txMock.businessSkill.count.mockResolvedValue(1)
     txMock.interest.count.mockResolvedValue(1)
+    prismaMock.department.findMany.mockResolvedValue([])
+    prismaMock.businessArea.findMany.mockResolvedValue([])
+    prismaMock.businessSkill.findMany.mockResolvedValue([])
+    prismaMock.interest.findMany.mockResolvedValue([])
+  })
+
+  it('有効項目に加えて現在選択中の無効項目を取得する', async () => {
+    const response = await app.request('/api/onboarding/options')
+
+    expect(response.status).toBe(200)
+    expect(prismaMock.department.findMany).toHaveBeenCalledWith({
+      where: { OR: [{ isActive: true }, { users: { some: { id: 'user-1' } } }] },
+      orderBy: { name: 'asc' },
+    })
+    expect(prismaMock.businessSkill.findMany).toHaveBeenCalledWith({
+      where: { OR: [{ isActive: true }, { users: { some: { userId: 'user-1' } } }] },
+      orderBy: { name: 'asc' },
+    })
   })
 
   it('無効なマスタ項目が含まれる場合は保存しない', async () => {
