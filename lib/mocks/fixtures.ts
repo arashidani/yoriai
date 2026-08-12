@@ -48,6 +48,12 @@ export const MOCK_USERS = [
   },
 ]
 
+export const MOCK_USER_PROFILE = {
+  ...MOCK_USERS[0],
+  businessSkillIds: ['business-skill-1'],
+  interestIds: ['interest-1'],
+}
+
 const optionDates = {
   createdAt: new Date('2024-01-01'),
   updatedAt: new Date('2024-01-01'),

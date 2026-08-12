@@ -26,6 +26,21 @@ export const UserSchema = z
   })
   .openapi('User')
 
+export const UserProfileSchema = UserSchema.extend({
+  departmentId: z.string().nullable().openapi({ example: 'department-1' }),
+  businessAreaId: z.string().nullable().openapi({ example: 'business-area-1' }),
+  joinedYear: z.number().int().nullable().openapi({ example: 2024 }),
+  joinedMonth: z.number().int().nullable().openapi({ example: 4 }),
+  businessSkillIds: z.array(z.string()).openapi({ example: ['business-skill-1'] }),
+  interestIds: z.array(z.string()).openapi({ example: ['interest-1'] }),
+  lunchPreference: z
+    .enum(['NO_PREFERENCE', 'TEAM', 'ALONE'])
+    .nullable()
+    .openapi({ example: 'TEAM' }),
+  recommendedLunchSpot: z.string().nullable().openapi({ example: '駅前食堂' }),
+  bio: z.string().nullable().openapi({ example: 'よろしくお願いします' }),
+}).openapi('UserProfile')
+
 export const ProfileOptionSchema = z
   .object({
     id: z.string().openapi({ example: 'option-1' }),

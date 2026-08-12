@@ -3,9 +3,16 @@ import { createServerClient } from '@supabase/ssr'
 import { requireEnv } from '@/lib/env'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
-import { errorResponse, UserSchema } from '@/lib/hono/openapi/schemas'
-import { MOCK_INVITES, MOCK_USERS } from '@/lib/mocks/fixtures'
+import {
+  errorResponse,
+  SuccessSchema,
+  UserProfileSchema,
+  UserSchema,
+} from '@/lib/hono/openapi/schemas'
+import { MOCK_INVITES, MOCK_USER_PROFILE, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { updateUserProfile } from '@/lib/prisma/update-user-profile'
+import { updateProfileSchema } from '@/lib/schemas/profile'
 import { COMPANY_EMAIL_ERROR, companyEmailSchema } from '@/lib/schemas/register'
 import { createUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
@@ -45,9 +52,30 @@ const meRoute = createRoute({
   middleware: [authMiddleware] as const,
   responses: {
     200: {
-      description: '自分のユーザー情報',
-      content: { 'application/json': { schema: z.object({ user: UserSchema }) } },
+      description: '自分のプロフィール情報',
+      content: { 'application/json': { schema: z.object({ user: UserProfileSchema }) } },
     },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('ユーザーが見つからない', 'Not found'),
+  },
+})
+
+const updateMeRoute = createRoute({
+  method: 'patch',
+  path: '/me',
+  tags: ['users'],
+  summary: '自分のプロフィールを更新',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: {
+    body: { required: true, content: { 'application/json': { schema: updateProfileSchema } } },
+  },
+  responses: {
+    200: {
+      description: '更新完了',
+      content: { 'application/json': { schema: SuccessSchema } },
+    },
+    400: errorResponse('選択肢が無効', '選択した項目が無効です'),
     401: errorResponse('未認証', 'Unauthorized'),
   },
 })
@@ -136,5 +164,56 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
   // 自分のプロフィール取得
   .openapi(meRoute, async (c) => {
     const user = c.get('user')
-    return c.json({ user }, 200)
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ user: MOCK_USER_PROFILE }, 200)
+    }
+
+    const profile = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        supabaseId: true,
+        email: true,
+        name: true,
+        username: true,
+        role: true,
+        createdAt: true,
+        departmentId: true,
+        businessAreaId: true,
+        joinedYear: true,
+        joinedMonth: true,
+        lunchPreference: true,
+        recommendedLunchSpot: true,
+        bio: true,
+        displayNameColor: true,
+        businessSkills: { select: { businessSkillId: true } },
+        interests: { select: { interestId: true } },
+      },
+    })
+    if (!profile) return c.json({ error: 'Not found' }, 404)
+
+    const { businessSkills, interests, ...userProfile } = profile
+    return c.json(
+      {
+        user: {
+          ...userProfile,
+          businessSkillIds: businessSkills.map((item) => item.businessSkillId),
+          interestIds: interests.map((item) => item.interestId),
+        },
+      },
+      200,
+    )
+  })
+  .openapi(updateMeRoute, async (c) => {
+    const user = c.get('user')
+    const data = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const saved = await updateUserProfile(user.id, data)
+    if (!saved) return c.json({ error: '選択した項目が無効です' }, 400)
+
+    return c.json({ success: true }, 200)
   })

@@ -17,10 +17,15 @@ import {
   MOCK_POSTS,
   MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
+  MOCK_USER_PROFILE,
   MOCK_USERS,
 } from '../lib/mocks/fixtures'
 
 export const mswHandlers = {
+  users: [
+    http.get('/api/users/me', () => HttpResponse.json({ user: MOCK_USER_PROFILE })),
+    http.patch('/api/users/me', () => HttpResponse.json({ success: true })),
+  ],
   onboarding: [
     http.get('/api/onboarding/options', () =>
       HttpResponse.json({
