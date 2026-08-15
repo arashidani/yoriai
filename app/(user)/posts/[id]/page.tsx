@@ -9,7 +9,7 @@ import { SaveButton } from '@/components/posts/save-button'
 import { Button } from '@/components/ui/button'
 import { createServerApiClient } from '@/lib/hono/server-client'
 
-const STATUS_LABEL = { OPEN: '未回答', ANSWERED: '回答あり', RESOLVED: '解決済み' } as const
+const STATUS_LABEL = { OPEN: '回答募集中', RESOLVED: '解決済み' } as const
 
 type Props = {
   params: Promise<{ id: string }>
@@ -27,7 +27,7 @@ export default async function QaDetailPage({ params }: Props) {
 
   const { question } = await questionResponse.json()
   const { answers } = await answersResponse.json()
-  const canAnswer = question.status === 'OPEN' || question.status === 'ANSWERED'
+  const canAnswer = question.status === 'OPEN'
 
   return (
     <article className="mx-auto w-full max-w-4xl px-4 py-8">

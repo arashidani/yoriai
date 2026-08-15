@@ -22,7 +22,7 @@ export const QuestionSchema = z
     id: z.string(),
     title: z.string(),
     body: z.string(),
-    status: z.enum(['OPEN', 'ANSWERED', 'RESOLVED']),
+    status: z.enum(['OPEN', 'RESOLVED']),
     answerCount: z.number().int().nonnegative(),
     likeCount: z.number().int().nonnegative(),
     liked: z.boolean(),

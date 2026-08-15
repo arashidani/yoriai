@@ -91,7 +91,7 @@ type Question = {
   id: string
   title: string
   body: string
-  status: 'OPEN' | 'ANSWERED' | 'RESOLVED'
+  status: 'OPEN' | 'RESOLVED'
   answerCount: number
   likeCount: number
   liked: boolean
@@ -164,8 +164,8 @@ Query:
 
 状態条件:
 
-- `all`: `OPEN`、`ANSWERED`、`RESOLVED`
-- `unanswered`: `OPEN`
+- `all`: `OPEN`、`RESOLVED`
+- `unanswered`: `OPEN`（画面表示は「回答募集中」）
 - `resolved`: `RESOLVED`
 
 Response `200`:

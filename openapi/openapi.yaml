@@ -46,7 +46,6 @@ components:
           type: string
           enum:
             - OPEN
-            - ANSWERED
             - RESOLVED
         answerCount:
           type: integer
@@ -407,7 +406,6 @@ components:
           type: string
           enum:
             - OPEN
-            - ANSWERED
             - RESOLVED
             - HIDDEN
           example: OPEN

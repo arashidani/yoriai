@@ -18,7 +18,7 @@ function toPosts(
     likeCount: number
     liked: boolean
     saved: boolean
-    status: 'OPEN' | 'ANSWERED' | 'RESOLVED'
+    status: 'OPEN' | 'RESOLVED'
     answerCount: number
     tag: { id: string; name: string } | null
     createdAt: Date | string
