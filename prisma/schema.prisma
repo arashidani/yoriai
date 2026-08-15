@@ -29,6 +29,7 @@ model User {
   onboardingCompletedAt DateTime?
   posts                 Post[]
   answers               Answer[]               @relation("AnswerAuthor")
+  notifications         Notification[]
   hiddenAnswers         Answer[]               @relation("AnswerHiddenBy")
   postAnonymousProfiles PostAnonymousProfile[]
   questionLikes         QuestionLike[]
@@ -115,13 +116,14 @@ model Post {
   /// このスレッドに紐づく全ユーザー分の匿名キャラ割り当て
   anonymousProfileAssignments PostAnonymousProfile[] @relation("PostAssignments")
 
-  answers   Answer[]
-  likes     QuestionLike[]
-  bookmarks PostBookmark[]
-  aiFlags   AiFlag[]
-  tags      PostTag[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  answers       Answer[]
+  likes         QuestionLike[]
+  bookmarks     PostBookmark[]
+  aiFlags       AiFlag[]
+  notifications Notification[]
+  tags          PostTag[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   /// AIフラグによる自動ソフトデリート日時（管理者が復元するとnullに戻る）
   deletedAt DateTime?
@@ -183,12 +185,28 @@ model Answer {
 
   idempotencyKey String?
 
-  likes     AnswerLike[]
-  aiFlags   AiFlag[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  likes         AnswerLike[]
+  aiFlags       AiFlag[]
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@unique([authorId, idempotencyKey])
+}
+
+model Notification {
+  id        String           @id @default(uuid(7))
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  postId    String?
+  post      Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
+  answerId  String?
+  answer    Answer?          @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model QuestionLike {
@@ -470,4 +488,10 @@ enum QuestionStatus {
   OPEN
   RESOLVED
   HIDDEN
+}
+
+enum NotificationType {
+  POST_ANSWERED
+  POST_DELETED
+  ANSWER_HIDDEN
 }

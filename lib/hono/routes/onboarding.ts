@@ -9,6 +9,7 @@ import {
   MOCK_INTERESTS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { updateUserProfile } from '@/lib/prisma/update-user-profile'
 import { onboardingSchema } from '@/lib/schemas/onboarding'
 
 const security = [{ supabaseSession: [] }]
@@ -72,11 +73,24 @@ export const onboardingRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ d
       )
     }
 
+    const user = c.get('user')
     const [departments, businessAreas, businessSkills, interests] = await Promise.all([
-      prisma.department.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
-      prisma.businessArea.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
-      prisma.businessSkill.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
-      prisma.interest.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
+      prisma.department.findMany({
+        where: { OR: [{ isActive: true }, { users: { some: { id: user.id } } }] },
+        orderBy: { name: 'asc' },
+      }),
+      prisma.businessArea.findMany({
+        where: { OR: [{ isActive: true }, { users: { some: { id: user.id } } }] },
+        orderBy: { name: 'asc' },
+      }),
+      prisma.businessSkill.findMany({
+        where: { OR: [{ isActive: true }, { users: { some: { userId: user.id } } }] },
+        orderBy: { name: 'asc' },
+      }),
+      prisma.interest.findMany({
+        where: { OR: [{ isActive: true }, { users: { some: { userId: user.id } } }] },
+        orderBy: { name: 'asc' },
+      }),
     ])
     return c.json({ departments, businessAreas, businessSkills, interests }, 200)
   })
@@ -88,46 +102,7 @@ export const onboardingRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ d
       return c.json({ success: true }, 200)
     }
 
-    const saved = await prisma.$transaction(async (tx) => {
-      const [department, businessArea, businessSkillCount, interestCount] = await Promise.all([
-        tx.department.findFirst({ where: { id: data.departmentId, isActive: true } }),
-        tx.businessArea.findFirst({ where: { id: data.businessAreaId, isActive: true } }),
-        tx.businessSkill.count({ where: { id: { in: data.businessSkillIds }, isActive: true } }),
-        tx.interest.count({ where: { id: { in: data.interestIds }, isActive: true } }),
-      ])
-      if (
-        !department ||
-        !businessArea ||
-        businessSkillCount !== data.businessSkillIds.length ||
-        interestCount !== data.interestIds.length
-      ) {
-        return false
-      }
-      await tx.user.update({
-        where: { id: user.id },
-        data: {
-          username: data.username,
-          departmentId: data.departmentId,
-          businessAreaId: data.businessAreaId,
-          joinedYear: data.joinedYear,
-          joinedMonth: data.joinedMonth,
-          lunchPreference: data.lunchPreference,
-          recommendedLunchSpot: data.recommendedLunchSpot || null,
-          bio: data.bio || null,
-          displayNameColor: data.displayNameColor,
-          onboardingCompletedAt: new Date(),
-          businessSkills: {
-            deleteMany: {},
-            create: data.businessSkillIds.map((businessSkillId) => ({ businessSkillId })),
-          },
-          interests: {
-            deleteMany: {},
-            create: data.interestIds.map((interestId) => ({ interestId })),
-          },
-        },
-      })
-      return true
-    })
+    const saved = await updateUserProfile(user.id, data, true)
 
     if (!saved) return c.json({ error: '選択した項目が無効です' }, 400)
 

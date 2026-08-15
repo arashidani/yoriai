@@ -25,6 +25,18 @@
       "description": "回答へのいいね"
     },
     {
+      "name": "hiroba",
+      "description": "ひろば（サブフォーラム）の一覧・詳細取得、投稿の作成（実名表示）"
+    },
+    {
+      "name": "hiroba-posts",
+      "description": "ひろば投稿の取得・回答・いいね・保存・削除"
+    },
+    {
+      "name": "hiroba-answers",
+      "description": "ひろば回答へのいいね"
+    },
+    {
       "name": "users",
       "description": "ユーザー登録・自分のプロフィール取得"
     },
@@ -39,6 +51,10 @@
     {
       "name": "invites",
       "description": "招待リンクの発行・確認"
+    },
+    {
+      "name": "notifications",
+      "description": "自分宛て通知の一覧取得・既読化・未読件数取得"
     },
     {
       "name": "password-resets",
@@ -348,6 +364,127 @@
           "updatedAt"
         ]
       },
+      "Hiroba": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "hiroba-1"
+          },
+          "slug": {
+            "type": "string",
+            "example": "hiroba-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "広場１"
+          },
+          "description": {
+            "type": "string",
+            "example": "みんなで気軽に話せる広場です。"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "description",
+          "createdAt"
+        ]
+      },
+      "HirobaPost": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "hiroba-post-1"
+          },
+          "hirobaId": {
+            "type": "string",
+            "example": "hiroba-1"
+          },
+          "title": {
+            "type": "string",
+            "example": "今日のランチどこ行きました？"
+          },
+          "body": {
+            "type": "string",
+            "example": "近くに新しくできたお店に行ってみました。"
+          },
+          "authorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "user-2"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answerCount": {
+            "type": "number",
+            "example": 0
+          },
+          "likeCount": {
+            "type": "number",
+            "example": 0
+          },
+          "deletedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "example": "2024-01-01T00:00:00.000Z"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "example": []
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "hirobaId",
+          "title",
+          "body",
+          "authorId",
+          "answerCount",
+          "likeCount",
+          "deletedAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
       "User": {
         "type": "object",
         "properties": {
@@ -415,6 +552,103 @@
           "displayNameColor",
           "role",
           "createdAt"
+        ]
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tag-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "経理"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt"
+        ]
+      },
+      "HirobaAnswer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "hiroba-answer-1"
+          },
+          "hirobaPostId": {
+            "type": "string",
+            "example": "hiroba-post-1"
+          },
+          "body": {
+            "type": "string",
+            "example": "いいですね、今度行ってみます！"
+          },
+          "authorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "user-1"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/User"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isHidden": {
+            "type": "boolean",
+            "example": false
+          },
+          "likeCount": {
+            "type": "number",
+            "example": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "hirobaPostId",
+          "body",
+          "authorId",
+          "isHidden",
+          "likeCount",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
         ]
       },
       "InviteCreated": {
@@ -501,18 +735,6 @@
           "status",
           "expiresAt",
           "createdAt"
-        ]
-      },
-      "Success": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "required": [
-          "success"
         ]
       },
       "PasswordResetCreated": {
@@ -638,29 +860,6 @@
           "deletedAt",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "Tag": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "tag-1"
-          },
-          "name": {
-            "type": "string",
-            "example": "経理"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "createdAt"
         ]
       },
       "Answer": {
@@ -963,6 +1162,166 @@
           "createdAt"
         ]
       },
+      "TagCategory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tag-category-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "人事"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt"
+        ]
+      },
+      "AdminTag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tag-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "給与"
+          },
+          "category": {
+            "type": "string",
+            "example": "人事"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "給与計算、給与明細、控除に関する投稿に使用します。"
+          },
+          "isWorkTag": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "description",
+          "isWorkTag",
+          "createdAt"
+        ]
+      },
+      "UserProfile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "departmentId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "department-1"
+              },
+              "businessAreaId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "business-area-1"
+              },
+              "joinedYear": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "example": 2024
+              },
+              "joinedMonth": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "example": 4
+              },
+              "businessSkillIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "business-skill-1"
+                ]
+              },
+              "interestIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "interest-1"
+                ]
+              },
+              "lunchPreference": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "NO_PREFERENCE",
+                  "TEAM",
+                  "ALONE",
+                  null
+                ],
+                "example": "TEAM"
+              },
+              "recommendedLunchSpot": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "駅前食堂"
+              },
+              "bio": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "よろしくお願いします"
+              }
+            },
+            "required": [
+              "departmentId",
+              "businessAreaId",
+              "joinedYear",
+              "joinedMonth",
+              "businessSkillIds",
+              "interestIds",
+              "lunchPreference",
+              "recommendedLunchSpot",
+              "bio"
+            ]
+          }
+        ]
+      },
       "Invite": {
         "type": "object",
         "properties": {
@@ -985,6 +1344,94 @@
         "required": [
           "name",
           "role"
+        ]
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "notification-1"
+          },
+          "userId": {
+            "type": "string",
+            "example": "user-1"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "postId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "post-1"
+          },
+          "post": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Post"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answerId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Answer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isRead": {
+            "type": "boolean",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "type",
+          "postId",
+          "answerId",
+          "isRead",
+          "createdAt"
+        ]
+      },
+      "NotificationType": {
+        "type": "string",
+        "enum": [
+          "POST_ANSWERED",
+          "POST_DELETED",
+          "ANSWER_HIDDEN"
+        ]
+      },
+      "UnreadNotificationCount": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 3
+          }
+        },
+        "required": [
+          "count"
         ]
       }
     },
@@ -2609,6 +3056,1040 @@
         }
       }
     },
+    "/api/hiroba": {
+      "get": {
+        "tags": [
+          "hiroba"
+        ],
+        "summary": "ひろば一覧を取得",
+        "responses": {
+          "200": {
+            "description": "ひろば一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hirobas": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Hiroba"
+                      }
+                    }
+                  },
+                  "required": [
+                    "hirobas"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba/{slug}": {
+      "get": {
+        "tags": [
+          "hiroba"
+        ],
+        "summary": "ひろば詳細と投稿一覧を取得",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "hiroba-1"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ひろば詳細",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hiroba": {
+                      "$ref": "#/components/schemas/Hiroba"
+                    },
+                    "posts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HirobaPost"
+                      }
+                    }
+                  },
+                  "required": [
+                    "hiroba",
+                    "posts"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ひろばが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba/{slug}/posts": {
+      "post": {
+        "tags": [
+          "hiroba"
+        ],
+        "summary": "ひろばに投稿を作成",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "hiroba-1"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            },
+            "required": true,
+            "description": "通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID",
+            "name": "idempotency-key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "title",
+                  "body"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "再送された投稿（すでに作成済みの投稿）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "post": {
+                      "$ref": "#/components/schemas/HirobaPost"
+                    }
+                  },
+                  "required": [
+                    "post"
+                  ]
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "作成された投稿",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "post": {
+                      "$ref": "#/components/schemas/HirobaPost"
+                    }
+                  },
+                  "required": [
+                    "post"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ひろばが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "同じキーで、前回とは異なる投稿内容が送信された",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "同じ投稿操作に異なる内容が指定されています"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "投稿の作成に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "投稿の作成に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba-posts/{id}": {
+      "get": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "ひろば投稿を1件取得",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "投稿詳細",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "post": {
+                      "$ref": "#/components/schemas/HirobaPost"
+                    }
+                  },
+                  "required": [
+                    "post"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "投稿を削除（管理者、または回答が付く前の投稿者本人）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "削除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者・投稿者本人以外）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "回答が付いている投稿は投稿者本人には削除できない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "回答がある投稿は削除できません"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba-posts/{id}/answers": {
+      "get": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "投稿への回答一覧を取得（いいね数の多い順、同数なら投稿順）",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "回答一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answers": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/HirobaAnswer"
+                      }
+                    }
+                  },
+                  "required": [
+                    "answers"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "投稿に回答を投稿",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "通信失敗後に同じ回答を再送しても、重複作成しないためのUUID",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            },
+            "required": true,
+            "description": "通信失敗後に同じ回答を再送しても、重複作成しないためのUUID",
+            "name": "idempotency-key",
+            "in": "header"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "body"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "再送された回答（すでに作成済みの回答）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": {
+                      "$ref": "#/components/schemas/HirobaAnswer"
+                    }
+                  },
+                  "required": [
+                    "answer"
+                  ]
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "作成された回答",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "answer": {
+                      "$ref": "#/components/schemas/HirobaAnswer"
+                    }
+                  },
+                  "required": [
+                    "answer"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "同じキーで、前回とは異なる回答内容が送信された",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "同じ投稿操作に異なる内容が指定されています"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "回答の作成に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "回答の作成に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba-posts/{id}/likes": {
+      "post": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "投稿にいいねする",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "いいね後の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "自分の投稿にはいいねできない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "自分の投稿にはいいねできません"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "いいねの処理に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "いいねの処理に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "投稿へのいいねを取り消す",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "いいね取り消し後の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "いいね取り消しの処理に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "いいね取り消しの処理に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba-posts/{id}/bookmarks": {
+      "post": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "投稿を保存する",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "保存後の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "保存の処理に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "保存の処理に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "投稿の保存を取り消す",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "保存取り消し後の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SavedStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "保存取り消しの処理に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "保存取り消しの処理に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba-answers/{id}/likes": {
+      "post": {
+        "tags": [
+          "hiroba-answers"
+        ],
+        "summary": "回答にいいねする",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "いいね後の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "自分の回答にはいいねできない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "自分の回答にはいいねできません"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "回答が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "いいねの処理に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "いいねの処理に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "hiroba-answers"
+        ],
+        "summary": "回答へのいいねを取り消す",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "いいね取り消し後の状態",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LikeStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "回答が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "いいね取り消しの処理に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "いいね取り消しの処理に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/users": {
       "get": {
         "tags": [
@@ -4216,6 +5697,246 @@
         }
       }
     },
+    "/api/admin/tag-categories": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "タグカテゴリー一覧を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "タグカテゴリー一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/TagCategory"
+                      }
+                    }
+                  },
+                  "required": [
+                    "categories"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "タグカテゴリーを作成（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作成されたタグカテゴリー",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "category": {
+                      "$ref": "#/components/schemas/TagCategory"
+                    }
+                  },
+                  "required": [
+                    "category"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "同名のタグカテゴリーがすでに存在する",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "同じ名前のカテゴリーがすでに存在します"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/tag-categories/{id}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "タグカテゴリーを削除（使用中は削除不可）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "削除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "タグカテゴリーが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "タグで使用中のため削除不可",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "このカテゴリーを使用しているタグがあるため削除できません"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/tags": {
       "get": {
         "tags": [
@@ -4238,7 +5959,7 @@
                     "tags": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Tag"
+                        "$ref": "#/components/schemas/AdminTag"
                       }
                     }
                   },
@@ -4298,10 +6019,24 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 50
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "isWorkTag": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
-                  "name"
+                  "name",
+                  "category",
+                  "isWorkTag"
                 ]
               }
             }
@@ -4316,7 +6051,7 @@
                   "type": "object",
                   "properties": {
                     "tag": {
-                      "$ref": "#/components/schemas/Tag"
+                      "$ref": "#/components/schemas/AdminTag"
                     }
                   },
                   "required": [
@@ -4369,6 +6104,134 @@
       }
     },
     "/api/admin/tags/{id}": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "タグを更新（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "category": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "isWorkTag": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "category",
+                  "isWorkTag"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新されたタグ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tag": {
+                      "$ref": "#/components/schemas/AdminTag"
+                    }
+                  },
+                  "required": [
+                    "tag"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "タグが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "同名タグまたはカテゴリー変更による割り当て競合",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "カテゴリー変更により1つの投稿へ同じカテゴリーのタグが複数割り当てられます"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "admin"
@@ -4429,6 +6292,239 @@
           },
           "404": {
             "description": "タグが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/hiroba": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "ひろば一覧を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ひろば一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hirobas": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Hiroba"
+                      }
+                    }
+                  },
+                  "required": [
+                    "hirobas"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "ひろばを作成（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 50
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                },
+                "required": [
+                  "name",
+                  "description"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "作成されたひろば",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "hiroba": {
+                      "$ref": "#/components/schemas/Hiroba"
+                    }
+                  },
+                  "required": [
+                    "hiroba"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ひろばの作成に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ひろばの作成に失敗しました"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/hiroba/{id}": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "ひろばを削除（管理者専用、配下の投稿・回答も削除される）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "削除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ひろばが見つからない",
             "content": {
               "application/json": {
                 "schema": {
@@ -4557,19 +6653,175 @@
         ],
         "responses": {
           "200": {
-            "description": "自分のユーザー情報",
+            "description": "自分のプロフィール情報",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "user": {
-                      "$ref": "#/components/schemas/User"
+                      "$ref": "#/components/schemas/UserProfile"
                     }
                   },
                   "required": [
                     "user"
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ユーザーが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "users"
+        ],
+        "summary": "自分のプロフィールを更新",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "departmentId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "businessAreaId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "joinedYear": {
+                    "type": "integer",
+                    "minimum": 1900,
+                    "maximum": 2026
+                  },
+                  "joinedMonth": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 12
+                  },
+                  "businessSkillIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "interestIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  },
+                  "lunchPreference": {
+                    "type": "string",
+                    "enum": [
+                      "NO_PREFERENCE",
+                      "TEAM",
+                      "ALONE"
+                    ]
+                  },
+                  "recommendedLunchSpot": {
+                    "type": "string",
+                    "maxLength": 20
+                  },
+                  "bio": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "displayNameColor": {
+                    "type": "string",
+                    "enum": [
+                      "GREEN",
+                      "YELLOW",
+                      "BLUE",
+                      "PURPLE",
+                      "GRAY"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  }
+                },
+                "required": [
+                  "username",
+                  "departmentId",
+                  "businessAreaId",
+                  "joinedYear",
+                  "joinedMonth",
+                  "businessSkillIds",
+                  "interestIds",
+                  "lunchPreference",
+                  "displayNameColor",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新完了",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "選択肢が無効",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "選択した項目が無効です"
                 }
               }
             }
@@ -4844,6 +7096,206 @@
                 },
                 "example": {
                   "error": "招待が見つかりません"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "自分の通知一覧をカーソルベースで取得（作成日時降順）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "notification-20"
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "example": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "通知一覧",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notifications": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Notification"
+                      }
+                    },
+                    "nextCursor": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "notifications",
+                    "nextCursor"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "自分の未読通知件数を取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "未読件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadNotificationCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}": {
+      "patch": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "通知を既読にする",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "既読化後の通知",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "notification": {
+                      "$ref": "#/components/schemas/Notification"
+                    }
+                  },
+                  "required": [
+                    "notification"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "自分宛て以外の通知への操作",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "通知が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
                 }
               }
             }

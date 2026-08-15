@@ -26,6 +26,21 @@ export const UserSchema = z
   })
   .openapi('User')
 
+export const UserProfileSchema = UserSchema.extend({
+  departmentId: z.string().nullable().openapi({ example: 'department-1' }),
+  businessAreaId: z.string().nullable().openapi({ example: 'business-area-1' }),
+  joinedYear: z.number().int().nullable().openapi({ example: 2024 }),
+  joinedMonth: z.number().int().nullable().openapi({ example: 4 }),
+  businessSkillIds: z.array(z.string()).openapi({ example: ['business-skill-1'] }),
+  interestIds: z.array(z.string()).openapi({ example: ['interest-1'] }),
+  lunchPreference: z
+    .enum(['NO_PREFERENCE', 'TEAM', 'ALONE'])
+    .nullable()
+    .openapi({ example: 'TEAM' }),
+  recommendedLunchSpot: z.string().nullable().openapi({ example: '駅前食堂' }),
+  bio: z.string().nullable().openapi({ example: 'よろしくお願いします' }),
+}).openapi('UserProfile')
+
 export const ProfileOptionSchema = z
   .object({
     id: z.string().openapi({ example: 'option-1' }),
@@ -43,6 +58,28 @@ export const TagSchema = z
     createdAt: dateTime(),
   })
   .openapi('Tag')
+
+export const AdminTagSchema = z
+  .object({
+    id: z.string().openapi({ example: 'tag-1' }),
+    name: z.string().openapi({ example: '給与' }),
+    category: z.string().openapi({ example: '人事' }),
+    description: z
+      .string()
+      .nullable()
+      .openapi({ example: '給与計算、給与明細、控除に関する投稿に使用します。' }),
+    isWorkTag: z.boolean().openapi({ example: true }),
+    createdAt: dateTime(),
+  })
+  .openapi('AdminTag')
+
+export const TagCategorySchema = z
+  .object({
+    id: z.string().openapi({ example: 'tag-category-1' }),
+    name: z.string().openapi({ example: '人事' }),
+    createdAt: dateTime(),
+  })
+  .openapi('TagCategory')
 
 export const PostSchema = z
   .object({
@@ -63,6 +100,47 @@ export const PostSchema = z
     updatedAt: dateTime(),
   })
   .openapi('Post')
+
+export const HirobaSchema = z
+  .object({
+    id: z.string().openapi({ example: 'hiroba-1' }),
+    slug: z.string().openapi({ example: 'hiroba-1' }),
+    name: z.string().openapi({ example: '広場１' }),
+    description: z.string().openapi({ example: 'みんなで気軽に話せる広場です。' }),
+    createdAt: dateTime(),
+  })
+  .openapi('Hiroba')
+
+export const HirobaPostSchema = z
+  .object({
+    id: z.string().openapi({ example: 'hiroba-post-1' }),
+    hirobaId: z.string().openapi({ example: 'hiroba-1' }),
+    title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
+    body: z.string().openapi({ example: '近くに新しくできたお店に行ってみました。' }),
+    authorId: z.string().nullable().openapi({ example: 'user-2' }),
+    author: z.union([UserSchema, z.null()]).optional(),
+    answerCount: z.number().openapi({ example: 0 }),
+    likeCount: z.number().openapi({ example: 0 }),
+    deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
+    tags: z.array(TagSchema).optional().openapi({ example: [] }),
+    createdAt: dateTime(),
+    updatedAt: dateTime(),
+  })
+  .openapi('HirobaPost')
+
+export const HirobaAnswerSchema = z
+  .object({
+    id: z.string().openapi({ example: 'hiroba-answer-1' }),
+    hirobaPostId: z.string().openapi({ example: 'hiroba-post-1' }),
+    body: z.string().openapi({ example: 'いいですね、今度行ってみます！' }),
+    authorId: z.string().nullable().openapi({ example: 'user-1' }),
+    author: z.union([UserSchema, z.null()]).optional(),
+    isHidden: z.boolean().openapi({ example: false }),
+    likeCount: z.number().openapi({ example: 0 }),
+    createdAt: dateTime(),
+    updatedAt: dateTime(),
+  })
+  .openapi('HirobaAnswer')
 
 export const AnonymousProfileSchema = z
   .object({
@@ -87,6 +165,28 @@ export const AnswerSchema = z
     updatedAt: dateTime(),
   })
   .openapi('Answer')
+
+export const NotificationTypeSchema = z
+  .enum(['POST_ANSWERED', 'POST_DELETED', 'ANSWER_HIDDEN'])
+  .openapi('NotificationType')
+
+export const NotificationSchema = z
+  .object({
+    id: z.string().openapi({ example: 'notification-1' }),
+    userId: z.string().openapi({ example: 'user-1' }),
+    type: NotificationTypeSchema,
+    postId: z.string().nullable().openapi({ example: 'post-1' }),
+    post: z.union([PostSchema, z.null()]).optional(),
+    answerId: z.string().nullable().openapi({ example: null }),
+    answer: z.union([AnswerSchema, z.null()]).optional(),
+    isRead: z.boolean().openapi({ example: false }),
+    createdAt: dateTime(),
+  })
+  .openapi('Notification')
+
+export const UnreadNotificationCountSchema = z
+  .object({ count: z.number().int().openapi({ example: 3 }) })
+  .openapi('UnreadNotificationCount')
 
 export const LikeStatusSchema = z
   .object({
@@ -195,6 +295,11 @@ export const SuccessSchema = z
 /** パスパラメータ :id */
 export const IdParamSchema = z.object({
   id: z.string().openapi({ param: { name: 'id', in: 'path' }, example: 'post-1' }),
+})
+
+/** パスパラメータ :slug */
+export const SlugParamSchema = z.object({
+  slug: z.string().openapi({ param: { name: 'slug', in: 'path' }, example: 'hiroba-1' }),
 })
 
 /** よく使うエラーレスポンス定義 */

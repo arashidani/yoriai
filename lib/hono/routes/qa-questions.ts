@@ -494,13 +494,9 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       try {
         const allTags = await prisma.tag.findMany({
           where: { isWorkTag: true },
-          select: { id: true, name: true, createdAt: true },
+          select: { id: true, name: true, category: true, description: true, createdAt: true },
         })
-        const names = await assignTags(
-          post.title,
-          post.body,
-          allTags.map((tag) => tag.name),
-        )
+        const names = await assignTags(post.title, post.body, allTags)
         const selected = allTags.find((tag) => names.includes(tag.name))
         if (selected) {
           await prisma.postTag.createMany({
