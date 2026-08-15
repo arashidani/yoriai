@@ -21,7 +21,7 @@ export const Default: Story = {
     await expect(canvas.getByText('ミッション')).toBeVisible()
     await expect(canvas.getByRole('link', { name: '投稿・保存した質問' })).toBeVisible()
     await expect(canvas.getByText('マイページ')).toBeVisible()
-    await expect(canvas.getByLabelText('通知')).toBeVisible()
+    await expect(canvas.getAllByLabelText('通知')[1]).toBeVisible()
     await expect(canvas.queryByText('管理者画面へ')).not.toBeInTheDocument()
   },
 }

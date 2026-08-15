@@ -7,12 +7,17 @@ import {
   MOCK_BUSINESS_AREAS,
   MOCK_BUSINESS_SKILLS,
   MOCK_DEPARTMENTS,
+  MOCK_HIROBA_ANSWERS,
+  MOCK_HIROBA_POSTS,
+  MOCK_HIROBAS,
   MOCK_INTERESTS,
   MOCK_INVITES,
   MOCK_MISSIONS,
   MOCK_PASSWORD_RESETS,
   MOCK_POSTS,
+  MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
+  MOCK_USER_PROFILE,
   MOCK_USERS,
 } from '../lib/mocks/fixtures'
 
@@ -23,6 +28,10 @@ const MOCK_QUESTIONS = MOCK_POSTS.map((post) =>
 )
 
 export const mswHandlers = {
+  users: [
+    http.get('/api/users/me', () => HttpResponse.json({ user: MOCK_USER_PROFILE })),
+    http.patch('/api/users/me', () => HttpResponse.json({ success: true })),
+  ],
   onboarding: [
     http.get('/api/onboarding/options', () =>
       HttpResponse.json({
@@ -67,6 +76,62 @@ export const mswHandlers = {
   answers: [
     http.post('/api/answers/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
     http.delete('/api/answers/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
+  ],
+  hiroba: [
+    http.get('/api/hiroba', () => HttpResponse.json({ hirobas: MOCK_HIROBAS })),
+    http.get('/api/hiroba/:slug', ({ params }) => {
+      const hiroba = MOCK_HIROBAS.find((h) => h.slug === params.slug)
+      if (!hiroba) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      const posts = MOCK_HIROBA_POSTS.filter((p) => p.hirobaId === hiroba.id)
+      return HttpResponse.json({ hiroba, posts })
+    }),
+    http.post('/api/hiroba/:slug/posts', async ({ request }) => {
+      const body = (await request.json()) as { title: string; body: string }
+      return HttpResponse.json(
+        {
+          post: {
+            id: 'hiroba-post-new',
+            hirobaId: 'hiroba-1',
+            title: body.title,
+            body: body.body,
+            authorId: 'user-1',
+            author: MOCK_USERS[0],
+            answerCount: 0,
+            likeCount: 0,
+            deletedAt: null,
+            tags: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.get('/api/hiroba-posts/:id', ({ params }) => {
+      const post = MOCK_HIROBA_POSTS.find((p) => p.id === params.id)
+      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      return HttpResponse.json({ post })
+    }),
+    http.get('/api/hiroba-posts/:id/answers', ({ params }) =>
+      HttpResponse.json({
+        answers: MOCK_HIROBA_ANSWERS.filter((a) => a.hirobaPostId === params.id),
+      }),
+    ),
+    http.delete('/api/hiroba-posts/:id', () => HttpResponse.json({ success: true })),
+    http.post('/api/hiroba-posts/:id/likes', () =>
+      HttpResponse.json({ liked: true, likeCount: 1 }),
+    ),
+    http.delete('/api/hiroba-posts/:id/likes', () =>
+      HttpResponse.json({ liked: false, likeCount: 0 }),
+    ),
+    http.post('/api/hiroba-posts/:id/bookmarks', () => HttpResponse.json({ saved: true })),
+    http.delete('/api/hiroba-posts/:id/bookmarks', () => HttpResponse.json({ saved: false })),
+    http.post('/api/hiroba-answers/:id/likes', () =>
+      HttpResponse.json({ liked: true, likeCount: 1 }),
+    ),
+    http.delete('/api/hiroba-answers/:id/likes', () =>
+      HttpResponse.json({ liked: false, likeCount: 0 }),
+    ),
   ],
   admin: [
     http.get('/api/admin/profile-options/:category', ({ params }) => {
@@ -173,15 +238,72 @@ export const mswHandlers = {
       return HttpResponse.json({ profile: { ...profile, isActive: body.isActive } })
     }),
     http.delete('/api/admin/anonymous-profiles/:id', () => HttpResponse.json({ success: true })),
-    http.get('/api/admin/tags', () => HttpResponse.json({ tags: MOCK_TAGS })),
-    http.post('/api/admin/tags', async ({ request }) => {
+    http.get('/api/admin/tag-categories', () =>
+      HttpResponse.json({ categories: MOCK_TAG_CATEGORIES }),
+    ),
+    http.post('/api/admin/tag-categories', async ({ request }) => {
       const body = (await request.json()) as { name: string }
       return HttpResponse.json(
-        { tag: { id: 'tag-new', name: body.name, createdAt: new Date().toISOString() } },
+        {
+          category: {
+            id: 'tag-category-new',
+            name: body.name,
+            createdAt: new Date().toISOString(),
+          },
+        },
         { status: 201 },
       )
     }),
+    http.delete('/api/admin/tag-categories/:id', () => HttpResponse.json({ success: true })),
+    http.get('/api/admin/tags', () => HttpResponse.json({ tags: MOCK_TAGS })),
+    http.post('/api/admin/tags', async ({ request }) => {
+      const body = (await request.json()) as {
+        name: string
+        category: string
+        description?: string
+        isWorkTag: boolean
+      }
+      return HttpResponse.json(
+        {
+          tag: {
+            id: 'tag-new',
+            ...body,
+            description: body.description || null,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.patch('/api/admin/tags/:id', async ({ params, request }) => {
+      const tag = MOCK_TAGS.find((item) => item.id === params.id)
+      if (!tag) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      const body = (await request.json()) as {
+        name: string
+        category: string
+        description?: string
+        isWorkTag: boolean
+      }
+      return HttpResponse.json({ tag: { ...tag, ...body, description: body.description || null } })
+    }),
     http.delete('/api/admin/tags/:id', () => HttpResponse.json({ success: true })),
+    http.get('/api/admin/hiroba', () => HttpResponse.json({ hirobas: MOCK_HIROBAS })),
+    http.post('/api/admin/hiroba', async ({ request }) => {
+      const body = (await request.json()) as { name: string; description: string }
+      return HttpResponse.json(
+        {
+          hiroba: {
+            id: 'hiroba-new',
+            slug: 'hiroba-new',
+            name: body.name,
+            description: body.description,
+            createdAt: new Date().toISOString(),
+          },
+        },
+        { status: 201 },
+      )
+    }),
+    http.delete('/api/admin/hiroba/:id', () => HttpResponse.json({ success: true })),
     http.post('/api/admin/users/:id/password-resets', () =>
       HttpResponse.json(
         {

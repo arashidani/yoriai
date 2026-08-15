@@ -165,7 +165,18 @@ export function PostForm({ onSubmit }: { onSubmit: (data: CreatePostInput) => Pr
 
 ---
 
-## 6. コンポーネント設計
+## 6. TanStack Query
+
+**ルール: `useQuery` / `useMutation` は、同じ画面内で取得結果や更新結果を反映するClient Componentでのみ使う。** 1回だけ取得するページはServer ComponentのままPrismaから取得し、送信後に別ページへ遷移するフォームへは追加しない。
+
+- API呼び出しはquery/mutation内でも `@/lib/hono/client` を使い、直接`fetch`しない。
+- 更新成功後は同じ`queryKey`を`invalidateQueries`する。
+- Queryを使うコンポーネントのStoryは、Storyごとに新しい`QueryClient`を作る`QueryClientProvider`デコレーターで包む。
+- Storyのplay関数は `npx vitest run --project=storybook <story-file>` で実行して確認する。型チェックだけではProvider不足を検出できない。
+
+---
+
+## 7. コンポーネント設計
 
 **ルール: UIコンポーネントは shadcn/ui を使う。クラス結合は `cn()` を使う。新しいコンポーネントにはストーリーを書く。**
 
@@ -186,6 +197,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 2. `view_items_in_registries` で依存関係・ファイル内容を確認する
 3. `get_add_command_for_items` で追加コマンドを取得し、それを実行する
 4. `get_audit_checklist` で追加後に確認すべき項目を取得し、チェックする
+
+### 複数選択フィルタ
+
+単一選択は `@base-ui/react/select`、複数選択チェックリストは `@base-ui/react/menu` の `Menu.CheckboxItem` を使う。既存例は `components/posts/qa-feed-controls.tsx`。
 
 ### Storybook ストーリーの書き方
 
@@ -285,7 +300,7 @@ export const ServerError: Story = {
 
 ---
 
-## 7. デザインシステム（globals.css / Obra デザイントークン）
+## 8. デザインシステム（globals.css / Obra デザイントークン）
 
 **ルール: スタイルは必ず `app/globals.css` のデザイントークンを使う。生のカラースケール（`blue-500` など）や任意値（`bg-[#3b82f6]`）を直接書かない。**
 
@@ -345,7 +360,7 @@ export const ServerError: Story = {
 
 ---
 
-## 8. ページ追加チェックリスト
+## 9. ページ追加チェックリスト
 
 新しいページを追加するとき、この順番で進める:
 
@@ -357,7 +372,7 @@ export const ServerError: Story = {
 
 ---
 
-## 9. やってはいけないこと
+## 10. やってはいけないこと
 
 - `fetch('/api/...')` を直接書く → `client.api...` を使う
 - Server Component に `'use client'` を付ける → 必要なときだけ付ける

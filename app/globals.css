@@ -589,6 +589,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  body:has(.admin-panel) {
+    --muted-foreground: var(--sidebar-foreground);
+  }
   html {
     /* 本文フォント。font-sans は Inter → Noto Sans JP の順にフォールバックする */
     @apply font-sans;
