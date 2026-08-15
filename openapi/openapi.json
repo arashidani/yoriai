@@ -71,7 +71,6 @@
             "type": "string",
             "enum": [
               "OPEN",
-              "ANSWERED",
               "RESOLVED"
             ]
           },
@@ -570,7 +569,6 @@
             "type": "string",
             "enum": [
               "OPEN",
-              "ANSWERED",
               "RESOLVED",
               "HIDDEN"
             ],

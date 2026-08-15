@@ -111,7 +111,7 @@ export const MOCK_POSTS = [
     authorId: 'user-2',
     author: MOCK_USERS[1],
     postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
-    status: QuestionStatus.ANSWERED,
+    status: QuestionStatus.OPEN,
     answerCount: 1,
     likeCount: 5,
     resolvedAt: null,

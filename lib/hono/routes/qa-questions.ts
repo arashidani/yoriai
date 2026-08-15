@@ -311,7 +311,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           ? QuestionStatus.OPEN
           : status === 'resolved'
             ? QuestionStatus.RESOLVED
-            : { in: [QuestionStatus.OPEN, QuestionStatus.ANSWERED, QuestionStatus.RESOLVED] },
+            : { in: [QuestionStatus.OPEN, QuestionStatus.RESOLVED] },
       ...(keyword
         ? {
             OR: [
@@ -532,7 +532,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       if (!mockPost) return c.json({ error: '投稿が見つかりません' }, 404)
       if (mockPost.deletedAt)
         return c.json({ error: 'この投稿は削除されたため、回答できません' }, 410)
-      if (mockPost.status !== QuestionStatus.OPEN && mockPost.status !== QuestionStatus.ANSWERED)
+      if (mockPost.status !== QuestionStatus.OPEN)
         return c.json({ error: '回答を受け付けていない質問です' }, 409)
       return c.json(
         {
@@ -559,7 +559,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const post = await prisma.post.findUnique({ where: { id } })
     if (!post) return c.json({ error: '投稿が見つかりません' }, 404)
     if (post.deletedAt) return c.json({ error: 'この投稿は削除されたため、回答できません' }, 410)
-    if (post.status !== QuestionStatus.OPEN && post.status !== QuestionStatus.ANSWERED)
+    if (post.status !== QuestionStatus.OPEN)
       return c.json({ error: '回答を受け付けていない質問です' }, 409)
     let assignment: Awaited<ReturnType<typeof getOrAssignAnonymousProfile>>
     try {
@@ -585,7 +585,6 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           where: { id },
           data: {
             answerCount: { increment: 1 },
-            status: post.status === QuestionStatus.OPEN ? QuestionStatus.ANSWERED : post.status,
           },
         })
         return created

@@ -37,7 +37,7 @@ type Question = {
   id: string
   title: string
   body: string
-  status: 'OPEN' | 'ANSWERED' | 'RESOLVED'
+  status: 'OPEN' | 'RESOLVED'
   answerCount: number
   likeCount: number
   liked: boolean

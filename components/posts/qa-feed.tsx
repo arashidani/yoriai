@@ -12,7 +12,7 @@ import { QaFeedStatusFilter, QaFeedTagFilter } from './qa-feed-controls'
 const STATUS_FILTERS = [
   { id: 'all', label: 'すべて' },
   { id: 'resolved', label: '解決済み' },
-  { id: 'unanswered', label: '未回答' },
+  { id: 'unanswered', label: '回答募集中' },
 ]
 
 type QaFeedProps = {
@@ -31,7 +31,7 @@ function toPost(question: {
   likeCount: number
   liked: boolean
   saved: boolean
-  status: 'OPEN' | 'ANSWERED' | 'RESOLVED'
+  status: 'OPEN' | 'RESOLVED'
   answerCount: number
   tag: { id: string; name: string } | null
   createdAt: Date | string
