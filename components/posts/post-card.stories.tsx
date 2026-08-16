@@ -71,3 +71,37 @@ export const OwnQuestion: Story = {
     await expect(canvas.queryByRole('button', { pressed: false, name: /^\d+$/ })).toBeNull()
   },
 }
+
+export const OpenWithCategory: Story = {
+  args: { post: basePost },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Next.js')).toBeVisible()
+    await expect(canvas.getByText('回答募集中')).toBeVisible()
+  },
+}
+
+export const ResolvedWithCategory: Story = {
+  args: {
+    post: {
+      ...basePost,
+      status: 'RESOLVED' as const,
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('Next.js')).toBeVisible()
+    await expect(canvas.getByText('解決済み')).toBeVisible()
+  },
+}
+
+export const NoCategory: Story = {
+  args: {
+    post: {
+      ...basePost,
+      tags: [],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('回答募集中')).toBeVisible()
+    await expect(canvas.queryByText('Next.js')).toBeNull()
+  },
+}
