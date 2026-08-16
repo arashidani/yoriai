@@ -1,8 +1,7 @@
 'use client'
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { useEffect, useRef, useState } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
@@ -10,6 +9,7 @@ import type { Post } from './post-list'
 import { PostList } from './post-list'
 import { QaFeedStatusFilter } from './qa-feed-controls'
 import { QaFilterBar } from './qa-filter-bar'
+import { QaPagination } from './qa-pagination'
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'すべて' },
@@ -17,7 +17,7 @@ const STATUS_FILTERS = [
   { id: 'unanswered', label: '回答募集中' },
 ] as const
 
-const PAGE_SIZE = '10'
+const PAGE_SIZE = 10
 const KEYWORD_DEBOUNCE_MS = 250
 
 type StatusFilter = (typeof STATUS_FILTERS)[number]['id']
@@ -27,11 +27,13 @@ type QaFeedProps = {
   isAdmin: boolean
   allTags: { id: string; name: string }[]
   initialTotalPages?: number
+  initialTotal?: number
 }
 
 type QuestionsResult = {
   posts: Post[]
   totalPages: number
+  total: number
 }
 
 function toPost(question: {
@@ -84,7 +86,7 @@ async function fetchQuestions(params: {
   const response = await client.api.questions.$get({
     query: {
       page: String(params.page),
-      pageSize: PAGE_SIZE,
+      pageSize: String(PAGE_SIZE),
       status: params.status,
       keyword: params.keyword || undefined,
       tagId: params.tagId,
@@ -95,6 +97,7 @@ async function fetchQuestions(params: {
   return {
     posts: body.questions.map(toPost),
     totalPages: body.pagination.totalPages,
+    total: body.pagination.total,
   }
 }
 
@@ -131,11 +134,18 @@ function QaPostListSkeleton() {
 }
 
 /** 検索・状態・単一タグ・ページをAPI Queryへ反映する質問一覧。 */
-export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFeedProps) {
+export function QaFeed({
+  posts,
+  isAdmin,
+  allTags,
+  initialTotalPages = 1,
+  initialTotal = 0,
+}: QaFeedProps) {
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState<StatusFilter>('all')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [page, setPage] = useState(1)
+  const listRef = useRef<HTMLDivElement>(null)
   const debouncedKeyword = useDebouncedValue(keyword, KEYWORD_DEBOUNCE_MS)
   const tagId = selectedTagIds[0]
   const isDefaultQuery =
@@ -150,13 +160,17 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
         keyword: debouncedKeyword,
         tagId,
       }),
-    initialData: posts && isDefaultQuery ? { posts, totalPages: initialTotalPages } : undefined,
+    initialData:
+      posts && isDefaultQuery
+        ? { posts, totalPages: initialTotalPages, total: initialTotal }
+        : undefined,
     placeholderData: keepPreviousData,
     staleTime: 30_000,
   })
 
   const visiblePosts = data?.posts ?? []
   const totalPages = data?.totalPages ?? initialTotalPages
+  const total = data?.total ?? initialTotal
   const showSkeleton = isPending
   // クエリキー変更で前データを残している再取得のみ。SSR の isFetching 差による hydration mismatch を避ける
   const showSpinner = isFetching && isPlaceholderData
@@ -164,6 +178,11 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
   function resetPage(action: () => void) {
     setPage(1)
     action()
+  }
+
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
+    listRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
   }
 
   return (
@@ -192,7 +211,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
           />
         </div>
       </div>
-      <div className="flex-1 px-8 py-6" aria-busy={showSpinner}>
+      <div ref={listRef} className="flex-1 scroll-mt-[17rem] px-8 py-6" aria-busy={showSpinner}>
         {error ? (
           <p role="alert" className="text-destructive">
             質問一覧の取得に失敗しました。もう一度お試しください。
@@ -202,29 +221,14 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
         ) : (
           <PostList posts={visiblePosts} isAdmin={isAdmin} />
         )}
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1 || showSpinner}
-              onClick={() => setPage((value) => value - 1)}
-            >
-              前へ
-            </Button>
-            <span className="text-paragraph-small">
-              {page} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages || showSpinner}
-              onClick={() => setPage((value) => value + 1)}
-            >
-              次へ
-            </Button>
-          </div>
-        )}
+        <QaPagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          disabled={showSpinner}
+          onPageChange={handlePageChange}
+        />
       </div>
     </div>
   )

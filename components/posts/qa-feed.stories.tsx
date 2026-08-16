@@ -61,7 +61,13 @@ const baseTags = [
 ]
 
 export const Default: Story = {
-  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  args: {
+    posts: basePosts,
+    isAdmin: false,
+    allTags: baseTags,
+    initialTotal: 4,
+    initialTotalPages: 1,
+  },
   play: async ({ canvas }) => {
     await expect(canvas.getByPlaceholderText('キーワードを入力')).toBeVisible()
     await expect(canvas.getByText('カテゴリーを選択')).toBeVisible()
@@ -70,6 +76,8 @@ export const Default: Story = {
       'true',
     )
     await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
+    await expect(canvas.getByText('4件中 1~4件を表示')).toBeVisible()
+    await expect(canvas.queryByRole('navigation', { name: 'ページ送り' })).not.toBeInTheDocument()
   },
 }
 
@@ -167,16 +175,24 @@ export const KeywordFilter: Story = {
 }
 
 export const NoMatch: Story = {
-  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  args: {
+    posts: basePosts,
+    isAdmin: false,
+    allTags: baseTags,
+    initialTotal: 4,
+    initialTotalPages: 1,
+  },
   play: async ({ canvas }) => {
     await userEvent.type(canvas.getByPlaceholderText('キーワードを入力'), '存在しないキーワード')
     await expect(await canvas.findByText('まだ質問がありません。')).toBeVisible()
+    await expect(canvas.queryByText(/件中/)).not.toBeInTheDocument()
   },
 }
 
 export const Empty: Story = {
-  args: { posts: [], isAdmin: false, allTags: baseTags },
+  args: { posts: [], isAdmin: false, allTags: baseTags, initialTotal: 0, initialTotalPages: 0 },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('まだ質問がありません。')).toBeVisible()
+    await expect(canvas.queryByText(/件中/)).not.toBeInTheDocument()
   },
 }
