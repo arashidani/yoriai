@@ -110,7 +110,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
               onChange={(event) => resetPage(() => setKeyword(event.target.value))}
               placeholder="キーワードを入力"
               aria-label="キーワード検索"
-              className="h-10 bg-background pl-9"
+              className="h-11 border-3 border-input bg-background pl-9"
             />
           </div>
           <QaFeedTagFilter
