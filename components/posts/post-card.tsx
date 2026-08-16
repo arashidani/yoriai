@@ -55,8 +55,8 @@ export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
                   {formatRelativeTime(post.createdAt)}
                 </span>
               </div>
-              <p className="pt-1 text-paragraph-small">{post.title}</p>
-              <p className="line-clamp-2 text-paragraph-small text-secondary-foreground">
+              <p className="pt-1 text-paragraph">{post.title}</p>
+              <p className="line-clamp-2 mt-1 text-paragraph-small text-secondary-foreground">
                 {excerpt}
               </p>
               {tags.length > 0 && (
