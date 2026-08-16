@@ -17,12 +17,18 @@ type QaFeedTagFilterProps = {
   onChange: (tagIds: string[]) => void
 }
 
-/** タグのドロップダウンチェックリスト。択一で、同じタグを再選択すると解除する。 */
+const NONE_TAG_LABEL = 'なし'
+const TAG_CHECKBOX_ITEM_CLASS =
+  "relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+
+/** タグのドロップダウンチェックリスト。択一。「なし」は tagId を送らず絞り込まない */
 function QaFeedTagFilter({ tags, selectedTagIds, onChange }: QaFeedTagFilterProps) {
   const selectedTag = tags.find((tag) => selectedTagIds.includes(tag.id))
+  const isNoneSelected = selectedTagIds.length === 0
+  const items = [{ id: null, name: NONE_TAG_LABEL }, ...tags]
 
-  function toggleTag(tagId: string, checked: boolean) {
-    onChange(checked ? [tagId] : [])
+  function selectTag(tagId: string | null) {
+    onChange(tagId ? [tagId] : [])
   }
 
   return (
@@ -51,26 +57,24 @@ function QaFeedTagFilter({ tags, selectedTagIds, onChange }: QaFeedTagFilterProp
           className="isolate z-50"
         >
           <MenuPrimitive.Popup className="relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg bg-popover p-1 text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[side=bottom]:slide-in-from-top-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95">
-            {tags.length === 0 ? (
-              <div className="px-2 py-1.5 text-sm text-muted-foreground">タグがありません</div>
-            ) : (
-              tags.map((tag) => {
-                const checked = selectedTagIds.includes(tag.id)
-                return (
-                  <MenuPrimitive.CheckboxItem
-                    key={tag.id}
-                    checked={checked}
-                    onCheckedChange={(nextChecked) => toggleTag(tag.id, nextChecked)}
-                    className="relative flex w-full cursor-default items-center gap-1.5 rounded-md py-1 pr-8 pl-1.5 text-sm outline-hidden select-none data-highlighted:bg-accent data-highlighted:text-accent-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
-                  >
-                    <span className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">{tag.name}</span>
-                    <MenuPrimitive.CheckboxItemIndicator className="pointer-events-none absolute right-2 flex size-4 items-center justify-center">
-                      <CheckIcon className="pointer-events-none" />
-                    </MenuPrimitive.CheckboxItemIndicator>
-                  </MenuPrimitive.CheckboxItem>
-                )
-              })
-            )}
+            {items.map((item) => {
+              const checked = item.id === null ? isNoneSelected : selectedTagIds.includes(item.id)
+              return (
+                <MenuPrimitive.CheckboxItem
+                  key={item.id ?? 'none'}
+                  checked={checked}
+                  onCheckedChange={(nextChecked) => {
+                    if (nextChecked) selectTag(item.id)
+                  }}
+                  className={TAG_CHECKBOX_ITEM_CLASS}
+                >
+                  <span className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">{item.name}</span>
+                  <MenuPrimitive.CheckboxItemIndicator className="pointer-events-none absolute right-2 flex size-4 items-center justify-center">
+                    <CheckIcon className="pointer-events-none" />
+                  </MenuPrimitive.CheckboxItemIndicator>
+                </MenuPrimitive.CheckboxItem>
+              )
+            })}
           </MenuPrimitive.Popup>
         </MenuPrimitive.Positioner>
       </MenuPrimitive.Portal>
