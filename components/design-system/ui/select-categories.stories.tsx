@@ -31,3 +31,12 @@ export const SelectOption: Story = {
     await expect(canvas.getByText('妊活')).toBeVisible()
   },
 }
+
+export const SelectNone: Story = {
+  args: { defaultValue: 'pregnancy' },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('combobox'))
+    await userEvent.click(await screen.findByRole('option', { name: 'なし' }))
+    await expect(canvas.getByText('カテゴリーを選択')).toBeVisible()
+  },
+}
