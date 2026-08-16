@@ -52,7 +52,7 @@ export const Default: Story = {
   args: { posts: basePosts, isAdmin: false, allTags: baseTags },
   play: async ({ canvas }) => {
     await expect(canvas.getByPlaceholderText('キーワードを入力')).toBeVisible()
-    await expect(canvas.getByText('タグで絞り込み')).toBeVisible()
+    await expect(canvas.getByText('カテゴリーを選択')).toBeVisible()
     await expect(canvas.getByRole('button', { name: 'すべて' })).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -64,7 +64,7 @@ export const Default: Story = {
 export const TagFilter: Story = {
   args: { posts: basePosts, isAdmin: false, allTags: baseTags },
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByText('タグで絞り込み'))
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
     await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Next.js' }))
     await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
     await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()

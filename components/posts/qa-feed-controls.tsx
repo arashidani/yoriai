@@ -31,7 +31,7 @@ function QaFeedTagFilter({ tags, selectedTagIds, onChange }: QaFeedTagFilterProp
         )}
       >
         <span className="flex flex-1 text-left">
-          {selectedTagIds.length > 0 ? `タグ (${selectedTagIds.length})` : 'タグで絞り込み'}
+          {selectedTagIds.length > 0 ? `タグ (${selectedTagIds.length})` : 'カテゴリーを選択'}
         </span>
         <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
       </MenuPrimitive.Trigger>
