@@ -1,15 +1,15 @@
 import Image from 'next/image'
-import type { ComponentProps } from 'react'
+import Link from 'next/link'
 
-import { BookmarkButton } from '@/components/design-system/ui/bookmark-button'
 import { CategoryChip } from '@/components/design-system/ui/category-chip'
-import { CommentCount } from '@/components/design-system/ui/comment-count'
-import { LikeButton } from '@/components/design-system/ui/like-button'
+import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { StatusChip, type StatusChipStatus } from '@/components/design-system/ui/status-chip'
 import { cn } from '@/lib/utils'
 
 type QuestionItemProps = {
   className?: string
+  postId?: string
+  href?: string
   avatarSrc?: string
   avatarAlt?: string
   authorName: string
@@ -21,14 +21,15 @@ type QuestionItemProps = {
   commentCount: number
   likeCount: number
   liked?: boolean
-  onLikedChange?: ComponentProps<typeof LikeButton>['onPressedChange']
   bookmarkCount: number
   bookmarked?: boolean
-  onBookmarkedChange?: ComponentProps<typeof BookmarkButton>['onPressedChange']
+  isOwnQuestion?: boolean
 }
 
 function QuestionItem({
   className,
+  postId,
+  href,
   avatarSrc,
   avatarAlt = '',
   authorName,
@@ -40,10 +41,9 @@ function QuestionItem({
   commentCount,
   likeCount,
   liked,
-  onLikedChange,
   bookmarkCount,
   bookmarked,
-  onBookmarkedChange,
+  isOwnQuestion,
 }: QuestionItemProps) {
   return (
     <div
@@ -63,19 +63,28 @@ function QuestionItem({
               <span className="text-paragraph-mini text-muted-foreground">{timestamp}</span>
             </div>
             <div className="flex w-full flex-col gap-1">
-              <p className="text-paragraph text-foreground">{title}</p>
-              <p className="truncate text-paragraph-mini text-muted-foreground">{excerpt}</p>
+              {href ? (
+                <Link href={href} className="flex w-full flex-col gap-1">
+                  <p className="text-paragraph text-foreground">{title}</p>
+                  <p className="truncate text-paragraph-mini text-muted-foreground">{excerpt}</p>
+                </Link>
+              ) : (
+                <>
+                  <p className="text-paragraph text-foreground">{title}</p>
+                  <p className="truncate text-paragraph-mini text-muted-foreground">{excerpt}</p>
+                </>
+              )}
             </div>
           </div>
-          <div className="flex w-full items-center gap-4">
-            <CommentCount count={commentCount} />
-            <LikeButton count={likeCount} pressed={liked} onPressedChange={onLikedChange} />
-            <BookmarkButton
-              count={bookmarkCount}
-              pressed={bookmarked}
-              onPressedChange={onBookmarkedChange}
-            />
-          </div>
+          <QuestionItemActions
+            postId={postId}
+            commentCount={commentCount}
+            likeCount={likeCount}
+            liked={liked}
+            bookmarkCount={bookmarkCount}
+            bookmarked={bookmarked}
+            isOwnQuestion={isOwnQuestion}
+          />
         </div>
       </div>
     </div>

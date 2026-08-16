@@ -5,6 +5,7 @@ import { QaFeed } from '@/components/posts/qa-feed'
 import { QuestionComposeDialog } from '@/components/posts/question-compose-dialog'
 import { getCurrentUser } from '@/lib/auth/current-user'
 import { createServerApiClient } from '@/lib/hono/server-client'
+import { toQaPost } from '@/lib/questions/qa-post'
 
 export default async function QaHomePage() {
   const api = await createServerApiClient()
@@ -18,20 +19,7 @@ export default async function QaHomePage() {
     ? await questionsResponse.json()
     : { questions: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } }
   const tagsBody = tagsResponse.ok ? await tagsResponse.json() : { tags: [] }
-  const posts = questionsBody.questions.map((question) => ({
-    id: question.id,
-    title: question.title,
-    body: question.body,
-    displayName: question.displayAuthor.displayName,
-    isOwnQuestion: question.isOwnQuestion,
-    likeCount: question.likeCount,
-    liked: question.liked,
-    saved: question.saved,
-    status: question.status,
-    answerCount: question.answerCount,
-    tags: question.tag ? [question.tag] : [],
-    createdAt: question.createdAt,
-  }))
+  const posts = questionsBody.questions.map(toQaPost)
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
