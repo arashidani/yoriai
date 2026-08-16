@@ -8,8 +8,10 @@ servers:
   - url: /
     description: デフォルト
 tags:
-  - name: posts
+  - name: questions
     description: 質問（投稿）の閲覧・作成・削除、回答の投稿・一覧取得、解決済み操作
+  - name: question-tags
+    description: Q&Aの質問タグ候補
   - name: answers
     description: 回答へのいいね
   - name: hiroba
@@ -39,134 +41,82 @@ components:
       description: "Supabase Auth のセッションクッキーによる認証。実際のクッキー名はSupabaseプロジェクトごとに異なる（例:
         sb-<project-ref>-auth-token）。"
   schemas:
-    Post:
+    Question:
       type: object
       properties:
         id:
           type: string
-          example: post-1
         title:
           type: string
-          example: Next.js App Routerの使い方を教えてください
         body:
           type: string
-          example: App Router と Pages Router の違いが分かりません。
-        authorId:
-          type:
-            - string
-            - "null"
-          example: user-2
-        author:
-          anyOf:
-            - $ref: "#/components/schemas/User"
-            - type: "null"
         status:
           type: string
           enum:
             - OPEN
-            - ANSWERED
             - RESOLVED
-            - HIDDEN
-          example: OPEN
         answerCount:
-          type: number
-          example: 0
+          type: integer
+          minimum: 0
         likeCount:
-          type: number
-          example: 0
+          type: integer
+          minimum: 0
+        liked:
+          type: boolean
+        saved:
+          type: boolean
+        isOwnQuestion:
+          type: boolean
+        displayAuthor:
+          $ref: "#/components/schemas/QuestionDisplayAuthor"
+        tag:
+          anyOf:
+            - $ref: "#/components/schemas/QuestionTag"
+            - type: "null"
         resolvedAt:
           anyOf:
             - type: string
               format: date-time
-              example: 2024-01-01T00:00:00.000Z
+              example: 2026-08-08T00:00:00.000Z
             - type: "null"
-          example: null
-        deletedAt:
-          anyOf:
-            - type: string
-              format: date-time
-              example: 2024-01-01T00:00:00.000Z
-            - type: "null"
-          example: null
-        tags:
-          type: array
-          items:
-            $ref: "#/components/schemas/Tag"
-          example: []
         createdAt:
           type: string
           format: date-time
-          example: 2024-01-01T00:00:00.000Z
+          example: 2026-08-08T00:00:00.000Z
         updatedAt:
           type: string
           format: date-time
-          example: 2024-01-01T00:00:00.000Z
+          example: 2026-08-08T00:00:00.000Z
       required:
         - id
         - title
         - body
-        - authorId
         - status
         - answerCount
         - likeCount
+        - liked
+        - saved
+        - isOwnQuestion
+        - displayAuthor
+        - tag
         - resolvedAt
-        - deletedAt
         - createdAt
         - updatedAt
-    User:
+    QuestionDisplayAuthor:
       type: object
       properties:
-        id:
+        displayName:
           type: string
-          example: user-1
-        supabaseId:
-          type: string
-          example: supabase-user-1
-        email:
-          type: string
-          example: user@example.com
-        name:
+          example: ねこ
+        avatarUrl:
           type:
             - string
             - "null"
-          example: 一般ユーザー
-        username:
-          type:
-            - string
-            - "null"
-          example: あおさん
-        displayNameColor:
-          type:
-            - string
-            - "null"
-          enum:
-            - GREEN
-            - YELLOW
-            - BLUE
-            - PURPLE
-            - GRAY
-            - null
-          example: BLUE
-        role:
-          type: string
-          enum:
-            - USER
-            - ADMIN
-          example: USER
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
+          example: /anonymous-profiles/cat.svg
       required:
-        - id
-        - supabaseId
-        - email
-        - name
-        - username
-        - displayNameColor
-        - role
-        - createdAt
-    Tag:
+        - displayName
+        - avatarUrl
+    QuestionTag:
       type: object
       properties:
         id:
@@ -174,15 +124,31 @@ components:
           example: tag-1
         name:
           type: string
-          example: 経理
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
+          example: プロジェクト管理
       required:
         - id
         - name
-        - createdAt
+    QuestionPagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          exclusiveMinimum: 0
+        pageSize:
+          type: integer
+          minimum: 1
+          maximum: 50
+        total:
+          type: integer
+          minimum: 0
+        totalPages:
+          type: integer
+          minimum: 0
+      required:
+        - page
+        - pageSize
+        - total
+        - totalPages
     Error:
       type: object
       properties:
@@ -190,66 +156,54 @@ components:
           type: string
       required:
         - error
-    Answer:
+    QuestionAnswer:
       type: object
       properties:
         id:
           type: string
-          example: answer-1
-        postId:
+        questionId:
           type: string
-          example: post-1
         body:
           type: string
-          example: App Router を使うのがおすすめです。
-        anonymousProfile:
-          $ref: "#/components/schemas/AnonymousProfile"
-        isHidden:
-          type: boolean
-          example: false
         likeCount:
-          type: number
-          example: 0
+          type: integer
+          minimum: 0
+        liked:
+          type: boolean
+        isOwnAnswer:
+          type: boolean
+        isMostLiked:
+          type: boolean
+          description: 募集終了済み質問の最多いいね回答1件だけtrue
+        displayAuthor:
+          $ref: "#/components/schemas/QuestionDisplayAuthor"
         createdAt:
           type: string
           format: date-time
-          example: 2024-01-01T00:00:00.000Z
+          example: 2026-08-08T00:00:00.000Z
         updatedAt:
           type: string
           format: date-time
-          example: 2024-01-01T00:00:00.000Z
+          example: 2026-08-08T00:00:00.000Z
       required:
         - id
-        - postId
+        - questionId
         - body
-        - anonymousProfile
-        - isHidden
         - likeCount
+        - liked
+        - isOwnAnswer
+        - isMostLiked
+        - displayAuthor
         - createdAt
         - updatedAt
-    AnonymousProfile:
+    ModerationResult:
       type: object
       properties:
-        id:
-          type: string
-          example: anon-1
-        displayName:
-          type: string
-          example: ねこ
-        avatarUrl:
-          type: string
-          example: /anonymous-profiles/cat.svg
-        isActive:
+        isHidden:
           type: boolean
-          example: true
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
+          description: AI判定によって非公開になった場合はtrue
       required:
-        - id
-        - displayName
-        - avatarUrl
+        - isHidden
     LikeStatus:
       type: object
       properties:
@@ -270,14 +224,6 @@ components:
           example: true
       required:
         - saved
-    Success:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-      required:
-        - success
     ProfileOption:
       type: object
       properties:
@@ -390,6 +336,76 @@ components:
         - deletedAt
         - createdAt
         - updatedAt
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          example: user-1
+        supabaseId:
+          type: string
+          example: supabase-user-1
+        email:
+          type: string
+          example: user@example.com
+        name:
+          type:
+            - string
+            - "null"
+          example: 一般ユーザー
+        username:
+          type:
+            - string
+            - "null"
+          example: あおさん
+        displayNameColor:
+          type:
+            - string
+            - "null"
+          enum:
+            - GREEN
+            - YELLOW
+            - BLUE
+            - PURPLE
+            - GRAY
+            - null
+          example: BLUE
+        role:
+          type: string
+          enum:
+            - USER
+            - ADMIN
+          example: USER
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - supabaseId
+        - email
+        - name
+        - username
+        - displayNameColor
+        - role
+        - createdAt
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          example: tag-1
+        name:
+          type: string
+          example: 経理
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - name
+        - createdAt
     HirobaAnswer:
       type: object
       properties:
@@ -434,6 +450,14 @@ components:
         - likeCount
         - createdAt
         - updatedAt
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+      required:
+        - success
     InviteCreated:
       type: object
       properties:
@@ -512,6 +536,139 @@ components:
       required:
         - token
         - expiresAt
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          example: post-1
+        title:
+          type: string
+          example: Next.js App Routerの使い方を教えてください
+        body:
+          type: string
+          example: App Router と Pages Router の違いが分かりません。
+        authorId:
+          type:
+            - string
+            - "null"
+          example: user-2
+        author:
+          anyOf:
+            - $ref: "#/components/schemas/User"
+            - type: "null"
+        status:
+          type: string
+          enum:
+            - OPEN
+            - RESOLVED
+            - HIDDEN
+          example: OPEN
+        answerCount:
+          type: number
+          example: 0
+        likeCount:
+          type: number
+          example: 0
+        resolvedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              example: 2024-01-01T00:00:00.000Z
+            - type: "null"
+          example: null
+        deletedAt:
+          anyOf:
+            - type: string
+              format: date-time
+              example: 2024-01-01T00:00:00.000Z
+            - type: "null"
+          example: null
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+          example: []
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - title
+        - body
+        - authorId
+        - status
+        - answerCount
+        - likeCount
+        - resolvedAt
+        - deletedAt
+        - createdAt
+        - updatedAt
+    Answer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: answer-1
+        postId:
+          type: string
+          example: post-1
+        body:
+          type: string
+          example: App Router を使うのがおすすめです。
+        anonymousProfile:
+          $ref: "#/components/schemas/AnonymousProfile"
+        isHidden:
+          type: boolean
+          example: false
+        likeCount:
+          type: number
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - postId
+        - body
+        - anonymousProfile
+        - isHidden
+        - likeCount
+        - createdAt
+        - updatedAt
+    AnonymousProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: anon-1
+        displayName:
+          type: string
+          example: ねこ
+        avatarUrl:
+          type: string
+          example: /anonymous-profiles/cat.svg
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - displayName
+        - avatarUrl
     Badge:
       type: object
       properties:
@@ -859,39 +1016,88 @@ components:
         - count
   parameters: {}
 paths:
-  /api/posts:
+  /api/questions:
     get:
       tags:
-        - posts
-      summary: 投稿一覧を取得
+        - questions
+      summary: 質問一覧を検索・絞り込み・ページングして取得
+      security: &a1
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+          required: false
+          name: page
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+            example: 10
+          required: false
+          name: pageSize
+          in: query
+        - schema:
+            type: string
+            maxLength: 100
+          required: false
+          name: keyword
+          in: query
+        - schema:
+            type: string
+            enum:
+              - all
+              - unanswered
+              - resolved
+            default: all
+          required: false
+          name: status
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: tagId
+          in: query
       responses:
         "200":
-          description: 投稿一覧
+          description: 質問一覧
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  posts:
+                  questions:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Post"
+                      $ref: "#/components/schemas/Question"
+                  pagination:
+                    $ref: "#/components/schemas/QuestionPagination"
                 required:
-                  - posts
+                  - questions
+                  - pagination
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
     post:
       tags:
-        - posts
-      summary: 投稿を作成
-      security:
-        - supabaseSession: []
+        - questions
+      summary: 質問を作成
+      security: *a1
       parameters:
         - schema:
             type: string
             format: uuid
-            description: 通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID
             example: 550e8400-e29b-41d4-a716-446655440000
           required: true
-          description: 通信失敗後に同じ投稿を再送しても、重複作成しないためのUUID
           name: idempotency-key
           in: header
       requestBody:
@@ -913,27 +1119,33 @@ paths:
                 - body
       responses:
         "200":
-          description: 再送された投稿（すでに作成済みの投稿）
+          description: 同一内容の再送
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  post:
-                    $ref: "#/components/schemas/Post"
+                  question:
+                    $ref: "#/components/schemas/Question"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
-                  - post
+                  - question
+                  - moderation
         "201":
-          description: 作成された投稿
+          description: 作成成功
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  post:
-                    $ref: "#/components/schemas/Post"
+                  question:
+                    $ref: "#/components/schemas/Question"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
-                  - post
+                  - question
+                  - moderation
         "401":
           description: 未認証
           content:
@@ -943,7 +1155,7 @@ paths:
               example:
                 error: Unauthorized
         "409":
-          description: 同じキーで、前回とは異なる投稿内容が送信された
+          description: 同じキーで異なる内容
           content:
             application/json:
               schema:
@@ -951,18 +1163,19 @@ paths:
               example:
                 error: 同じ投稿操作に異なる内容が指定されています
         "500":
-          description: 投稿の作成に失敗した
+          description: 作成失敗
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 投稿の作成に失敗しました
-  /api/posts/{id}:
+  /api/questions/{id}:
     get:
       tags:
-        - posts
-      summary: 投稿を1件取得
+        - questions
+      summary: 質問詳細を取得
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -972,44 +1185,16 @@ paths:
           in: path
       responses:
         "200":
-          description: 投稿詳細
+          description: 質問詳細
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  post:
-                    $ref: "#/components/schemas/Post"
+                  question:
+                    $ref: "#/components/schemas/Question"
                 required:
-                  - post
-        "404":
-          description: 投稿が見つからない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Not found
-    delete:
-      tags:
-        - posts
-      summary: 投稿を削除（管理者、または回答が付く前の質問者本人）
-      security:
-        - supabaseSession: []
-      parameters:
-        - schema:
-            type: string
-            example: post-1
-          required: true
-          name: id
-          in: path
-      responses:
-        "200":
-          description: 削除成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Success"
+                  - question
         "401":
           description: 未認証
           content:
@@ -1018,27 +1203,20 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Unauthorized
-        "403":
-          description: 権限不足（管理者・質問者本人以外）
+        "404":
+          description: 質問が見つからない
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
-                error: Forbidden
-        "409":
-          description: 回答が付いている質問は質問者本人には削除できない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: 回答がある質問は削除できません
-  /api/posts/{id}/answers:
+                error: Not found
+  /api/questions/{id}/answers:
     get:
       tags:
-        - posts
-      summary: 質問への回答一覧を取得（いいね数の多い順、同数なら投稿順）
+        - questions
+      summary: 回答一覧を取得。募集終了済みの場合だけ最多いいね回答1件を示す
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -1057,9 +1235,17 @@ paths:
                   answers:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Answer"
+                      $ref: "#/components/schemas/QuestionAnswer"
                 required:
                   - answers
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
         "404":
           description: 質問が見つからない
           content:
@@ -1070,10 +1256,9 @@ paths:
                 error: Not found
     post:
       tags:
-        - posts
-      summary: 質問に回答を投稿
-      security:
-        - supabaseSession: []
+        - questions
+      summary: 質問へ回答を投稿
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -1084,10 +1269,7 @@ paths:
         - schema:
             type: string
             format: uuid
-            description: 通信失敗後に同じ回答を再送しても、重複作成しないためのUUID
-            example: 550e8400-e29b-41d4-a716-446655440000
           required: true
-          description: 通信失敗後に同じ回答を再送しても、重複作成しないためのUUID
           name: idempotency-key
           in: header
       requestBody:
@@ -1104,27 +1286,33 @@ paths:
                 - body
       responses:
         "200":
-          description: 再送された回答（すでに作成済みの回答）
+          description: 同一内容の再送
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   answer:
-                    $ref: "#/components/schemas/Answer"
+                    $ref: "#/components/schemas/QuestionAnswer"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
                   - answer
+                  - moderation
         "201":
-          description: 作成された回答
+          description: 作成成功
           content:
             application/json:
               schema:
                 type: object
                 properties:
                   answer:
-                    $ref: "#/components/schemas/Answer"
+                    $ref: "#/components/schemas/QuestionAnswer"
+                  moderation:
+                    $ref: "#/components/schemas/ModerationResult"
                 required:
                   - answer
+                  - moderation
         "401":
           description: 未認証
           content:
@@ -1134,36 +1322,43 @@ paths:
               example:
                 error: Unauthorized
         "404":
-          description: 投稿が存在しない、または削除済みのため回答できない
+          description: 質問が存在しない
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
-                error: この投稿は削除されたため、回答できません
+                error: 投稿が見つかりません
         "409":
-          description: 解決済み・非表示の質問には回答できない
+          description: 回答受付終了
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 回答を受け付けていない質問です
+        "410":
+          description: 質問が削除済み
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: この投稿は削除されたため、回答できません
         "500":
-          description: 回答の作成に失敗した
+          description: 作成失敗
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 回答の作成に失敗しました
-  /api/posts/{id}/resolve:
+  /api/questions/{id}/resolve:
     post:
       tags:
-        - posts
-      summary: 質問を解決済みにする（質問者のみ）
-      security:
-        - supabaseSession: []
+        - questions
+      summary: 質問の募集を終了
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -1173,16 +1368,16 @@ paths:
           in: path
       responses:
         "200":
-          description: 解決済みにした質問
+          description: 募集終了
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  post:
-                    $ref: "#/components/schemas/Post"
+                  question:
+                    $ref: "#/components/schemas/Question"
                 required:
-                  - post
+                  - question
         "401":
           description: 未認証
           content:
@@ -1192,7 +1387,7 @@ paths:
               example:
                 error: Unauthorized
         "403":
-          description: 質問者以外による操作
+          description: 質問者以外
           content:
             application/json:
               schema:
@@ -1208,20 +1403,19 @@ paths:
               example:
                 error: Not found
         "409":
-          description: 非表示の質問は解決済みにできない
+          description: 操作不可
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 操作できない質問の状態です
-  /api/posts/{id}/likes:
+  /api/questions/{id}/likes:
     post:
       tags:
-        - posts
-      summary: 質問にいいねする
-      security:
-        - supabaseSession: []
+        - questions
+      summary: 質問に足跡を付ける
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -1231,7 +1425,7 @@ paths:
           in: path
       responses:
         "200":
-          description: いいね後の状態
+          description: 足跡状態
           content:
             application/json:
               schema:
@@ -1245,7 +1439,7 @@ paths:
               example:
                 error: Unauthorized
         "403":
-          description: 自分の質問にはいいねできない
+          description: 自分の質問
           content:
             application/json:
               schema:
@@ -1261,7 +1455,7 @@ paths:
               example:
                 error: Not found
         "500":
-          description: いいねの処理に失敗した
+          description: 処理失敗
           content:
             application/json:
               schema:
@@ -1270,10 +1464,9 @@ paths:
                 error: いいねの処理に失敗しました
     delete:
       tags:
-        - posts
-      summary: 質問へのいいねを取り消す
-      security:
-        - supabaseSession: []
+        - questions
+      summary: 質問の足跡を取り消す
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -1283,7 +1476,7 @@ paths:
           in: path
       responses:
         "200":
-          description: いいね取り消し後の状態
+          description: 足跡状態
           content:
             application/json:
               schema:
@@ -1305,20 +1498,19 @@ paths:
               example:
                 error: Not found
         "500":
-          description: いいね取り消しの処理に失敗した
+          description: 処理失敗
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
                 error: いいね取り消しの処理に失敗しました
-  /api/posts/{id}/bookmarks:
+  /api/questions/{id}/bookmarks:
     post:
       tags:
-        - posts
-      summary: 質問を保存する
-      security:
-        - supabaseSession: []
+        - questions
+      summary: 質問を保存
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -1328,7 +1520,7 @@ paths:
           in: path
       responses:
         "200":
-          description: 保存後の状態
+          description: 保存状態
           content:
             application/json:
               schema:
@@ -1350,7 +1542,7 @@ paths:
               example:
                 error: Not found
         "500":
-          description: 保存の処理に失敗した
+          description: 処理失敗
           content:
             application/json:
               schema:
@@ -1359,10 +1551,9 @@ paths:
                 error: 保存の処理に失敗しました
     delete:
       tags:
-        - posts
+        - questions
       summary: 質問の保存を取り消す
-      security:
-        - supabaseSession: []
+      security: *a1
       parameters:
         - schema:
             type: string
@@ -1372,7 +1563,7 @@ paths:
           in: path
       responses:
         "200":
-          description: 保存取り消し後の状態
+          description: 保存状態
           content:
             application/json:
               schema:
@@ -1393,14 +1584,132 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Not found
-        "500":
-          description: 保存取り消しの処理に失敗した
+  /api/question-tags:
+    get:
+      tags:
+        - question-tags
+      summary: Q&Aで使用するタグ候補を取得
+      security: *a1
+      responses:
+        "200":
+          description: Q&Aタグ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tags:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/QuestionTag"
+                required:
+                  - tags
+        "401":
+          description: 未認証
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
-                error: 保存取り消しの処理に失敗しました
+                error: Unauthorized
+  /api/users/me/questions:
+    get:
+      tags:
+        - users
+      summary: 自分が投稿した質問を取得
+      security: *a1
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+          required: false
+          name: page
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+            example: 10
+          required: false
+          name: pageSize
+          in: query
+      responses:
+        "200":
+          description: 投稿した質問
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Question"
+                  pagination:
+                    $ref: "#/components/schemas/QuestionPagination"
+                required:
+                  - questions
+                  - pagination
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+  /api/users/me/saved-questions:
+    get:
+      tags:
+        - users
+      summary: 自分が保存した質問を取得
+      security: *a1
+      parameters:
+        - schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+          required: false
+          name: page
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+            example: 10
+          required: false
+          name: pageSize
+          in: query
+      responses:
+        "200":
+          description: 保存した質問
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Question"
+                  pagination:
+                    $ref: "#/components/schemas/QuestionPagination"
+                required:
+                  - questions
+                  - pagination
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
   /api/answers/{id}/likes:
     post:
       tags:
@@ -1503,7 +1812,7 @@ paths:
       tags:
         - admin
       summary: プロフィール選択肢一覧を取得（管理者専用）
-      security: &a1
+      security: &a2
         - supabaseSession: []
       parameters:
         - schema:
@@ -1550,7 +1859,7 @@ paths:
       tags:
         - admin
       summary: プロフィール選択肢を作成（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -1616,7 +1925,7 @@ paths:
       tags:
         - admin
       summary: プロフィール選択肢を更新（管理者専用）
-      security: *a1
+      security: *a2
       parameters:
         - schema:
             type: string
@@ -2329,7 +2638,7 @@ paths:
       tags:
         - admin
       summary: ユーザー一覧を取得（管理者専用）
-      security: &a2
+      security: &a3
         - supabaseSession: []
       responses:
         "200":
@@ -2366,7 +2675,7 @@ paths:
       tags:
         - admin
       summary: 招待リンクを発行（管理者専用）
-      security: *a2
+      security: *a3
       requestBody:
         required: true
         content:
@@ -2418,7 +2727,7 @@ paths:
       tags:
         - admin
       summary: 招待一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: 招待一覧
@@ -2454,7 +2763,7 @@ paths:
       tags:
         - admin
       summary: 招待リンクを削除（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -2490,7 +2799,7 @@ paths:
       tags:
         - admin
       summary: ユーザーのパスワードリセットリンクを発行（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -2539,7 +2848,7 @@ paths:
       tags:
         - admin
       summary: 投稿一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: 投稿一覧
@@ -2570,12 +2879,48 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
+  /api/admin/posts/{id}:
+    delete:
+      tags:
+        - admin
+      summary: 投稿を削除（管理者専用）
+      security: *a3
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      responses:
+        "200":
+          description: 削除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/posts/{id}/restore:
     patch:
       tags:
         - admin
       summary: ソフトデリートされた投稿を復元（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -2624,7 +2969,7 @@ paths:
       tags:
         - admin
       summary: 非表示にされた回答を復元（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -2673,7 +3018,7 @@ paths:
       tags:
         - admin
       summary: ユーザーの名前・ロールを更新（管理者専用、自分自身のロール変更は不可）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -2736,7 +3081,7 @@ paths:
       tags:
         - admin
       summary: ユーザーを削除（管理者専用、自分自身は削除不可）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -2780,7 +3125,7 @@ paths:
       tags:
         - admin
       summary: バッジ一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: バッジ一覧
@@ -2815,7 +3160,7 @@ paths:
       tags:
         - admin
       summary: バッジを作成（管理者専用）
-      security: *a2
+      security: *a3
       requestBody:
         required: true
         content:
@@ -2879,7 +3224,7 @@ paths:
       tags:
         - admin
       summary: ミッション一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: ミッション一覧
@@ -2914,7 +3259,7 @@ paths:
       tags:
         - admin
       summary: ミッションを作成（管理者専用）
-      security: *a2
+      security: *a3
       requestBody:
         required: true
         content:
@@ -2978,7 +3323,7 @@ paths:
       tags:
         - admin
       summary: AIフラグ一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: AIフラグ一覧
@@ -3014,7 +3359,7 @@ paths:
       tags:
         - admin
       summary: AIフラグを確認済みにする（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3063,7 +3408,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラ一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: 匿名キャラ一覧
@@ -3098,7 +3443,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラを追加（管理者専用）
-      security: *a2
+      security: *a3
       requestBody:
         required: true
         content:
@@ -3149,7 +3494,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3208,7 +3553,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラを削除（管理者専用、割り当て済みのキャラは削除不可）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3252,7 +3597,7 @@ paths:
       tags:
         - admin
       summary: タグカテゴリー一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: タグカテゴリー一覧
@@ -3287,7 +3632,7 @@ paths:
       tags:
         - admin
       summary: タグカテゴリーを作成（管理者専用）
-      security: *a2
+      security: *a3
       requestBody:
         required: true
         content:
@@ -3342,7 +3687,7 @@ paths:
       tags:
         - admin
       summary: タグカテゴリーを削除（使用中は削除不可）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3394,7 +3739,7 @@ paths:
       tags:
         - admin
       summary: タグ一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: タグ一覧
@@ -3429,7 +3774,7 @@ paths:
       tags:
         - admin
       summary: タグを作成（管理者専用）
-      security: *a2
+      security: *a3
       requestBody:
         required: true
         content:
@@ -3495,7 +3840,7 @@ paths:
       tags:
         - admin
       summary: タグを更新（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3575,7 +3920,7 @@ paths:
       tags:
         - admin
       summary: タグを削除（管理者専用）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3619,7 +3964,7 @@ paths:
       tags:
         - admin
       summary: ひろば一覧を取得（管理者専用）
-      security: *a2
+      security: *a3
       responses:
         "200":
           description: ひろば一覧
@@ -3654,7 +3999,7 @@ paths:
       tags:
         - admin
       summary: ひろばを作成（管理者専用）
-      security: *a2
+      security: *a3
       requestBody:
         required: true
         content:
@@ -3714,7 +4059,7 @@ paths:
       tags:
         - admin
       summary: ひろばを削除（管理者専用、配下の投稿・回答も削除される）
-      security: *a2
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3956,7 +4301,7 @@ paths:
       tags:
         - onboarding
       summary: オンボーディングで選択できる項目を取得
-      security: &a3
+      security: &a4
         - supabaseSession: []
       responses:
         "200":
@@ -4000,7 +4345,7 @@ paths:
       tags:
         - onboarding
       summary: オンボーディングを完了
-      security: *a3
+      security: *a4
       requestBody:
         required: true
         content:

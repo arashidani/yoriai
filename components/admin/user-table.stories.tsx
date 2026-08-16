@@ -15,14 +15,14 @@ const users = [
     email: 'admin@example.com',
     name: '管理者',
     role: 'ADMIN' as const,
-    createdAt: '2024-01-01T00:00:00Z',
+    createdAt: '2024-01-01T18:00:00Z',
   },
   {
     id: 'user-2',
     email: 'user@example.com',
     name: '一般ユーザー',
     role: 'USER' as const,
-    createdAt: '2024-01-02T00:00:00Z',
+    createdAt: '2024-01-03T00:00:00Z',
   },
 ]
 
@@ -31,6 +31,7 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByText('管理者')).toBeVisible()
     await expect(canvas.getByText('ADMIN')).toBeVisible()
+    await expect(canvas.getByText('2024/1/2')).toBeVisible()
     await expect(canvas.getAllByRole('button', { name: 'ユーザーを編集' })).toHaveLength(2)
     await expect(canvas.getAllByRole('button', { name: 'ユーザーを削除' })).toHaveLength(2)
   },

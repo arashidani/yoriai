@@ -89,7 +89,7 @@ export const PostSchema = z
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
     // .nullable() だと登録済みコンポーネント User 自体が nullable になるため union で書く
     author: z.union([UserSchema, z.null()]).optional(),
-    status: z.enum(['OPEN', 'ANSWERED', 'RESOLVED', 'HIDDEN']).openapi({ example: 'OPEN' }),
+    status: z.enum(['OPEN', 'RESOLVED', 'HIDDEN']).openapi({ example: 'OPEN' }),
     answerCount: z.number().openapi({ example: 0 }),
     likeCount: z.number().openapi({ example: 0 }),
     resolvedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),

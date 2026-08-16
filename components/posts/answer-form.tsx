@@ -40,18 +40,22 @@ export function AnswerForm({ postId }: AnswerFormProps) {
     }
 
     try {
-      const res = await client.api.posts[':id'].answers.$post({
+      const res = await client.api.questions[':id'].answers.$post({
         param: { id: postId },
         header: { 'idempotency-key': idempotencyKeyRef.current.key },
         json: data,
       })
       if (!res.ok) {
         const body = await res.json()
-        if (res.status === 404) setIsPostUnavailable(true)
+        if (res.status === 404 || res.status === 410) setIsPostUnavailable(true)
         setError('error' in body ? body.error : '回答の投稿に失敗しました')
         return
       }
       reset()
+      const body = await res.json()
+      if (body.moderation.isHidden) {
+        window.alert('AIによる確認の結果、この回答は公開されませんでした。')
+      }
       router.refresh()
     } catch {
       setError('通信に失敗しました。画面をリロードせず、もう一度お試しください')
