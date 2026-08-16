@@ -1,35 +1,35 @@
 import type { ComponentProps } from 'react'
 import { FormLabel } from '@/components/design-system/form-label'
-import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { Textarea } from '../ui/textarea'
 
-type FormFieldProps = {
+type FormTextAreaProps = {
   label: string
   error?: string
-  inputProps: ComponentProps<typeof Input>
   isRequired?: boolean
   caption?: string
   maxLength?: number
+  textareaProps: ComponentProps<typeof Textarea>
 }
 
-export function FormField({
+export function FormTextarea({
   label,
   error,
-  inputProps,
   isRequired = false,
   caption,
   maxLength,
-}: FormFieldProps) {
-  const { className, ...restInputProps } = inputProps
+  textareaProps,
+}: FormTextAreaProps) {
+  const { className, ...restTextareaProps } = textareaProps
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <FormLabel label={label} isRequired={isRequired} id={inputProps.id} />
+      <FormLabel label={label} isRequired={isRequired} id={textareaProps.id} />
 
-      <Input
-        {...restInputProps}
+      <Textarea
+        {...restTextareaProps}
         aria-invalid={!!error}
-        className={cn('p-3 h-11', className)}
+        className={cn('p-3 resize-none', className)}
         maxLength={maxLength}
       />
 
