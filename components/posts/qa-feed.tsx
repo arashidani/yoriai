@@ -1,13 +1,12 @@
 'use client'
 
-import { Search } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { client } from '@/lib/hono/client'
 import type { Post } from './post-list'
 import { PostList } from './post-list'
-import { QaFeedStatusFilter, QaFeedTagFilter } from './qa-feed-controls'
+import { QaFeedStatusFilter } from './qa-feed-controls'
+import { QaFilterBar } from './qa-filter-bar'
 
 const STATUS_FILTERS = [
   { id: 'all', label: 'すべて' },
@@ -102,21 +101,13 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
   return (
     <>
       <div className="sticky top-25 z-20 bg-background px-4 py-4 sm:px-8 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full min-w-0 sm:flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={keyword}
-              onChange={(event) => resetPage(() => setKeyword(event.target.value))}
-              placeholder="キーワードを入力"
-              aria-label="キーワード検索"
-              className="h-11 border-3 border-input bg-background pl-9"
-            />
-          </div>
-          <QaFeedTagFilter
+        <div className="flex flex-col gap-6">
+          <QaFilterBar
+            keyword={keyword}
+            onKeywordChange={(value) => resetPage(() => setKeyword(value))}
             tags={allTags}
             selectedTagIds={selectedTagIds}
-            onChange={(ids) => resetPage(() => setSelectedTagIds(ids.slice(-1)))}
+            onSelectedTagIdsChange={(ids) => resetPage(() => setSelectedTagIds(ids.slice(-1)))}
           />
           <QaFeedStatusFilter
             filters={STATUS_FILTERS}
