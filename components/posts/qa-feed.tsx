@@ -5,8 +5,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
-import type { Post } from './post-list'
-import { PostList } from './post-list'
+import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
+import { PostCard } from './post-card'
 import { QaFeedStatusFilter } from './qa-feed-controls'
 import { QaFilterBar } from './qa-filter-bar'
 import { QaPagination } from './qa-pagination'
@@ -23,7 +23,7 @@ const KEYWORD_DEBOUNCE_MS = 250
 type StatusFilter = (typeof STATUS_FILTERS)[number]['id']
 
 type QaFeedProps = {
-  posts?: Post[]
+  posts?: QaPost[]
   isAdmin: boolean
   allTags: { id: string; name: string }[]
   initialTotalPages?: number
@@ -31,39 +31,9 @@ type QaFeedProps = {
 }
 
 type QuestionsResult = {
-  posts: Post[]
+  posts: QaPost[]
   totalPages: number
   total: number
-}
-
-function toPost(question: {
-  id: string
-  title: string
-  body: string
-  displayAuthor: { displayName: string }
-  isOwnQuestion: boolean
-  likeCount: number
-  liked: boolean
-  saved: boolean
-  status: 'OPEN' | 'RESOLVED'
-  answerCount: number
-  tag: { id: string; name: string } | null
-  createdAt: Date | string
-}): Post {
-  return {
-    id: question.id,
-    title: question.title,
-    body: question.body,
-    displayName: question.displayAuthor.displayName,
-    isOwnQuestion: question.isOwnQuestion,
-    likeCount: question.likeCount,
-    liked: question.liked,
-    saved: question.saved,
-    status: question.status,
-    answerCount: question.answerCount,
-    tags: question.tag ? [question.tag] : [],
-    createdAt: question.createdAt,
-  }
 }
 
 function useDebouncedValue<T>(value: T, delay: number) {
@@ -95,7 +65,7 @@ async function fetchQuestions(params: {
   if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
   const body = await response.json()
   return {
-    posts: body.questions.map(toPost),
+    posts: body.questions.map(toQaPost),
     totalPages: body.pagination.totalPages,
     total: body.pagination.total,
   }
@@ -103,31 +73,50 @@ async function fetchQuestions(params: {
 
 function QaPostListSkeleton() {
   return (
-    <div className="grid gap-4" role="status" aria-label="読み込み中">
+    <div className="flex w-full flex-col divide-y divide-border" role="status" aria-label="読み込み中">
       {['skeleton-1', 'skeleton-2', 'skeleton-3'].map((key) => (
-        <div
-          key={key}
-          className="rounded-xl border border-input bg-background p-5 shadow-xs"
-          aria-hidden
-        >
-          <div className="flex gap-3">
-            <Skeleton className="size-10 shrink-0 rounded-full" />
-            <div className="min-w-0 flex-1 space-y-2">
-              <Skeleton className="h-4 w-24" />
+        <div key={key} className="flex flex-col gap-4 p-6" aria-hidden>
+          <div className="flex items-start gap-4">
+            <Skeleton className="size-12.5 shrink-0 rounded-md" />
+            <div className="min-w-0 flex-1 space-y-3">
+              <Skeleton className="h-4 w-32" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-2/3" />
-              <div className="flex gap-1.5 pt-1">
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-20 rounded-full" />
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-12" />
               </div>
             </div>
           </div>
-          <div className="flex gap-3 pt-3 pl-[3.25rem]">
-            <Skeleton className="h-7 w-16 rounded-full" />
-            <Skeleton className="h-7 w-16 rounded-full" />
-          </div>
         </div>
+      ))}
+    </div>
+  )
+}
+
+type QaQuestionListProps = {
+  posts: QaPost[]
+  isAdmin: boolean
+}
+
+function QaQuestionList({ posts, isAdmin }: QaQuestionListProps) {
+  const [deletedIds, setDeletedIds] = useState<string[]>([])
+  const visiblePosts = posts.filter((post) => !deletedIds.includes(post.id))
+
+  if (visiblePosts.length === 0) {
+    return <p className="text-secondary-foreground">まだ質問がありません。</p>
+  }
+
+  return (
+    <div className="flex w-full flex-col divide-y divide-border">
+      {visiblePosts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          isAdmin={isAdmin}
+          onDeleted={(id) => setDeletedIds((prev) => [...prev, id])}
+        />
       ))}
     </div>
   )
@@ -219,7 +208,7 @@ export function QaFeed({
         ) : showSkeleton ? (
           <QaPostListSkeleton />
         ) : (
-          <PostList posts={visiblePosts} isAdmin={isAdmin} />
+          <QaQuestionList posts={visiblePosts} isAdmin={isAdmin} />
         )}
         <QaPagination
           page={page}

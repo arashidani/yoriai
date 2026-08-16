@@ -1,43 +1,11 @@
 import Link from 'next/link'
-import { PostList } from '@/components/posts/post-list'
+import { QuestionItemList } from '@/components/design-system/ui/question-item-list'
 import { buttonVariants } from '@/components/ui/button'
-import { getCurrentUser } from '@/lib/auth/current-user'
 import { createServerApiClient } from '@/lib/hono/server-client'
+import { toQaPost, toQuestionItemData } from '@/lib/questions/qa-post'
 
 type Props = {
   searchParams: Promise<{ tab?: string; page?: string }>
-}
-
-function toPosts(
-  questions: Array<{
-    id: string
-    title: string
-    body: string
-    displayAuthor: { displayName: string }
-    isOwnQuestion: boolean
-    likeCount: number
-    liked: boolean
-    saved: boolean
-    status: 'OPEN' | 'RESOLVED'
-    answerCount: number
-    tag: { id: string; name: string } | null
-    createdAt: Date | string
-  }>,
-) {
-  return questions.map((question) => ({
-    id: question.id,
-    title: question.title,
-    body: question.body,
-    displayName: question.displayAuthor.displayName,
-    isOwnQuestion: question.isOwnQuestion,
-    likeCount: question.likeCount,
-    liked: question.liked,
-    saved: question.saved,
-    status: question.status,
-    answerCount: question.answerCount,
-    tags: question.tag ? [question.tag] : [],
-    createdAt: question.createdAt,
-  }))
 }
 
 function positivePage(value: string | undefined) {
@@ -56,11 +24,12 @@ export default async function MyQuestionsPage({ searchParams }: Props) {
           query: { page: String(page), pageSize: '10' },
         })
       : api.meQuestions.questions.$get({ query: { page: String(page), pageSize: '10' } })
-  const [response, user] = await Promise.all([request, getCurrentUser()])
+  const response = await request
   if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
   const body = await response.json()
   const totalPages = body.pagination.totalPages
   const queryForPage = (targetPage: number) => `/my-questions?tab=${tab}&page=${targetPage}`
+  const items = body.questions.map((question) => toQuestionItemData(toQaPost(question)))
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8">
@@ -83,7 +52,12 @@ export default async function MyQuestionsPage({ searchParams }: Props) {
         <h2 id="question-list-heading" className="mb-4 text-heading-4">
           {tab === 'saved' ? '保存した質問' : '投稿した質問'}
         </h2>
-        <PostList posts={toPosts(body.questions)} isAdmin={user?.role === 'ADMIN'} />
+        {/* TODO: 質問がない場合のUIを後で追加する */}
+        {items.length === 0 ? (
+          <p className="text-secondary-foreground">まだ質問がありません。</p>
+        ) : (
+          <QuestionItemList items={items} />
+        )}
         {totalPages > 1 && (
           <nav className="mt-6 flex items-center justify-center gap-3" aria-label="ページ送り">
             {page > 1 ? (
