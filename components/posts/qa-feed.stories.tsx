@@ -71,7 +71,7 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByPlaceholderText('キーワードを入力')).toBeVisible()
     await expect(canvas.getByText('カテゴリーを選択')).toBeVisible()
-    await expect(canvas.getByRole('button', { name: 'すべて' })).toHaveAttribute(
+    await expect(canvas.getByRole('button', { name: '全て' })).toHaveAttribute(
       'aria-pressed',
       'true',
     )
@@ -150,7 +150,7 @@ export const StatusFilter: Story = {
     const resolved = canvas.getByRole('button', { name: '解決済み' })
     await userEvent.click(resolved)
     await expect(resolved).toHaveAttribute('aria-pressed', 'true')
-    await expect(canvas.getByRole('button', { name: 'すべて' })).toHaveAttribute(
+    await expect(canvas.getByRole('button', { name: '全て' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )

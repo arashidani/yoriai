@@ -1,4 +1,6 @@
-import { Check, MessageCircle, Sparkles } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
+import { FilterChip } from '@/components/design-system/ui/filter-chip'
+import { StatusChip } from '@/components/design-system/ui/status-chip'
 import Link from 'next/link'
 import { QuestionLikeButton } from '@/components/posts/question-like-button'
 import { SaveButton } from '@/components/posts/save-button'
@@ -26,11 +28,6 @@ function formatRelativeTime(input: Date | string) {
 const actionChipClass =
   'inline-flex items-center gap-1.5 rounded-full border border-input px-3 py-1 text-paragraph-mini font-medium text-secondary-foreground'
 
-const metaChipClass =
-  'inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-paragraph-mini font-medium'
-
-const STATUS_LABEL = { OPEN: '回答募集中', RESOLVED: '解決済み' } as const
-
 export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
   const excerpt = post.body.length > 100 ? `${post.body.slice(0, 100)}…` : post.body
   const canDelete = isAdmin
@@ -52,22 +49,11 @@ export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-paragraph-small font-bold">{post.displayName}</span>
                 {category && (
-                  <span className={`${metaChipClass} bg-blue-100 text-blue-600`}>
-                    <Sparkles className="size-3" aria-hidden />
+                  <FilterChip pressed render={<span />} nativeButton={false}>
                     {category.name}
-                  </span>
+                  </FilterChip>
                 )}
-                {post.status === 'OPEN' ? (
-                  <span className={`${metaChipClass} bg-orange-100 text-orange-700`}>
-                    <span className="size-1.5 rounded-full bg-orange-600" aria-hidden />
-                    {STATUS_LABEL.OPEN}
-                  </span>
-                ) : (
-                  <span className={`${metaChipClass} bg-neutral-100 text-neutral-600`}>
-                    <Check className="size-3" aria-hidden />
-                    {STATUS_LABEL.RESOLVED}
-                  </span>
-                )}
+                <StatusChip status={post.status} />
                 <span
                   className="text-paragraph-mini text-secondary-foreground"
                   suppressHydrationWarning

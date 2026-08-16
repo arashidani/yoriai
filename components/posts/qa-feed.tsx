@@ -12,7 +12,7 @@ import { QaFilterBar } from './qa-filter-bar'
 import { QaPagination } from './qa-pagination'
 
 const STATUS_FILTERS = [
-  { id: 'all', label: 'すべて' },
+  { id: 'all', label: '全て' },
   { id: 'resolved', label: '解決済み' },
   { id: 'unanswered', label: '回答募集中' },
 ] as const

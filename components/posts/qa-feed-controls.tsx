@@ -1,9 +1,9 @@
 'use client'
 
 import { Menu as MenuPrimitive } from '@base-ui/react/menu'
-import { Toggle as TogglePrimitive } from '@base-ui/react/toggle'
 import { ToggleGroup as ToggleGroupPrimitive } from '@base-ui/react/toggle-group'
 import { CheckIcon, ChevronDownIcon } from 'lucide-react'
+import { FilterChip } from '@/components/design-system/ui/filter-chip'
 import { cn } from '@/lib/utils'
 
 type Tag = {
@@ -101,26 +101,14 @@ function QaFeedStatusFilter({ filters, value, onValueChange }: QaFeedStatusFilte
         const selectedValue = nextValue.at(-1)
         if (typeof selectedValue === 'string') onValueChange(selectedValue)
       }}
-      data-slot="toggle-group"
-      data-spacing={0}
-      data-orientation="horizontal"
       orientation="horizontal"
       aria-label="ステータスで絞り込み"
-      className="group/toggle-group grid h-11 w-full grid-cols-3 rounded-lg border-2 border-input bg-background sm:flex sm:w-fit sm:shrink-0"
+      className="flex flex-wrap items-center gap-2"
     >
       {filters.map(({ id, label }) => (
-        <TogglePrimitive
-          key={id}
-          value={id}
-          data-slot="toggle-group-item"
-          data-spacing={0}
-          className={cn(
-            "group/toggle inline-flex h-full min-w-0 shrink-0 items-center justify-center gap-1 rounded-lg px-2 text-paragraph-small font-medium whitespace-nowrap text-secondary-foreground transition-all outline-none hover:bg-muted hover:text-foreground focus:z-10 focus-visible:z-10 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 aria-pressed:bg-secondary-hover aria-pressed:font-bold dark:aria-invalid:ring-destructive/40 sm:px-3 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
-            'group-data-[spacing=0]/toggle-group:rounded-none group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-lg group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-lg not-last:border-r-2 not-last:border-input',
-          )}
-        >
+        <FilterChip key={id} value={id}>
           {label}
-        </TogglePrimitive>
+        </FilterChip>
       ))}
     </ToggleGroupPrimitive>
   )
