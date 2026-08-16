@@ -78,6 +78,17 @@ export const WithKeywordAndTag: Story = {
   },
 }
 
+export const NoneSelected: Story = {
+  args: Default.args,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await expect(await screen.findByRole('menuitemcheckbox', { name: 'なし' })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+  },
+}
+
 export const ExclusiveTag: Story = {
   args: Default.args,
   play: async ({ canvas, args }) => {
@@ -85,6 +96,21 @@ export const ExclusiveTag: Story = {
     await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Next.js' }))
     await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'TypeScript' }))
     await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith(['tag-2'])
+  },
+}
+
+export const ClearTag: Story = {
+  args: {
+    keyword: '',
+    onKeywordChange: fn(),
+    tags: baseTags,
+    selectedTagIds: ['tag-2'],
+    onSelectedTagIdsChange: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'TypeScript' }))
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'なし' }))
+    await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith([])
   },
 }
 
