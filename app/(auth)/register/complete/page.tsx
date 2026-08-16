@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import completeRightImage from '@/assets/register-complete-right.png'
+import completeRightImage from '@/assets/register-complete-right.svg'
 import { Button } from '@/components/design-system/button'
 import { RegisterImagePanel } from '@/components/register/register-image-panel'
 import { RegisterSidePanel } from '@/components/register/register-side-panel'
