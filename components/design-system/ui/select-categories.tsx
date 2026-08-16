@@ -10,7 +10,7 @@ type Category = {
   name: string
 }
 
-const NONE_LABEL = 'なし'
+const NONE_LABEL = 'カテゴリーを選択'
 
 type SelectCategoriesProps = Omit<
   SelectPrimitive.Root.Props<string | null>,
