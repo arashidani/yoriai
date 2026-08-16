@@ -126,8 +126,8 @@ export const Refetching: Story = {
 export const TagFilter: Story = {
   args: { posts: basePosts, isAdmin: false, allTags: baseTags },
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByText('カテゴリーを選択'))
-    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Next.js' }))
+    await userEvent.click(canvas.getByRole('combobox'))
+    await userEvent.click(await screen.findByRole('option', { name: 'Next.js' }))
     await expect(await canvas.findByText(/Next\.jsのエラーを解決したい/)).toBeVisible()
     await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
   },
@@ -137,8 +137,8 @@ export const TagFilter: Story = {
 export const TagFilterSecondaryTag: Story = {
   args: { posts: basePosts, isAdmin: false, allTags: baseTags },
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByText('カテゴリーを選択'))
-    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'TypeScript' }))
+    await userEvent.click(canvas.getByRole('combobox'))
+    await userEvent.click(await screen.findByRole('option', { name: 'TypeScript' }))
     await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
     await expect(await canvas.findByText(/Prismaでリレーション/)).toBeVisible()
   },

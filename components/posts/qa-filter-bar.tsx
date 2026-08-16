@@ -1,7 +1,7 @@
 'use client'
 
 import { KeywordInput } from '@/components/design-system/ui/keyword-input'
-import { QaFeedTagFilter } from './qa-feed-controls'
+import { SelectCategories } from '@/components/design-system/ui/select-categories'
 
 type QaFilterBarProps = {
   keyword: string
@@ -29,10 +29,10 @@ function QaFilterBar({
         />
       </div>
       <div className="min-w-0 w-full md:w-56 md:shrink-0">
-        <QaFeedTagFilter
-          tags={tags}
-          selectedTagIds={selectedTagIds}
-          onChange={onSelectedTagIdsChange}
+        <SelectCategories
+          categories={tags}
+          value={selectedTagIds[0] ?? null}
+          onValueChange={(tagId) => onSelectedTagIdsChange(tagId ? [tagId] : [])}
         />
       </div>
     </div>
