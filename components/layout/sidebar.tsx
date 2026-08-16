@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/hiroba', label: 'ひろば', icon: UsersRound },
-  { href: '/', label: 'おせっかいQA', icon: MessageSquare },
+  { href: '/', label: 'なんでもQ&A', icon: MessageSquare },
   { href: '/missions', label: 'ミッション', icon: Swords },
   { href: '/my-questions', label: '投稿・保存した質問', icon: ListChecks },
   { href: '/mypage', label: 'マイページ', icon: Settings },
@@ -25,7 +25,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
   const pathname = usePathname()
 
   function isActive(href: string) {
-    // おせっかいQA(/)は投稿詳細・作成ページでもアクティブ扱いにする
+    // なんでもQ&A(/)は投稿詳細・作成ページでもアクティブ扱いにする
     if (href === '/') return pathname === '/' || pathname.startsWith('/posts')
     return pathname === href || pathname.startsWith(`${href}/`)
   }

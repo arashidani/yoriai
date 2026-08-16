@@ -17,7 +17,7 @@ export const Default: Story = {
   args: { isAdmin: false },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('ひろば')).toBeVisible()
-    await expect(canvas.getByText('おせっかいQA')).toBeVisible()
+    await expect(canvas.getByText('なんでもQ&A')).toBeVisible()
     await expect(canvas.getByText('ミッション')).toBeVisible()
     await expect(canvas.getByRole('link', { name: '投稿・保存した質問' })).toBeVisible()
     await expect(canvas.getByText('マイページ')).toBeVisible()
@@ -39,8 +39,8 @@ export const PostsPageActive: Story = {
     nextjs: { appDirectory: true, navigation: { pathname: '/posts/new' } },
   },
   play: async ({ canvas }) => {
-    // /posts/* でも「おせっかいQA」がアクティブ表示になる
-    const qaLink = canvas.getByText('おせっかいQA').closest('a')
+    // /posts/* でも「なんでもQ&A」がアクティブ表示になる
+    const qaLink = canvas.getByText('なんでもQ&A').closest('a')
     await expect(qaLink).toHaveClass(/bg-muted/)
   },
 }
