@@ -6,10 +6,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
 import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
+import { Pagination } from '@/components/design-system/ui/pagination'
 import { PostCard } from './post-card'
 import { QaFeedStatusFilter } from './qa-feed-controls'
 import { QaFilterBar } from './qa-filter-bar'
-import { QaPagination } from './qa-pagination'
 
 const STATUS_FILTERS = [
   { id: 'all', label: '全て' },
@@ -210,14 +210,19 @@ export function QaFeed({
         ) : (
           <QaQuestionList posts={visiblePosts} isAdmin={isAdmin} />
         )}
-        <QaPagination
-          page={page}
-          totalPages={totalPages}
-          total={total}
-          pageSize={PAGE_SIZE}
-          disabled={showSpinner}
-          onPageChange={handlePageChange}
-        />
+        {total >= 1 && (
+          <div className="mt-6 flex flex-col items-center gap-2">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              disabled={showSpinner}
+              onPageChange={handlePageChange}
+            />
+            <p className="text-paragraph-small text-muted-foreground">
+              {total}件中 {(page - 1) * PAGE_SIZE + 1}~{Math.min(page * PAGE_SIZE, total)}件を表示
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )
