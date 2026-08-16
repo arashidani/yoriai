@@ -35,7 +35,30 @@ export const WithError: Story = {
     },
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('有効なメールアドレスを入力してください')).toBeVisible()
     await expect(canvas.getByDisplayValue('invalid-email')).toHaveAttribute('aria-invalid', 'true')
+  },
+}
+
+export const Required: Story = {
+  args: {
+    label: 'メールアドレス',
+    isRequired: true,
+    inputProps: { id: 'email', type: 'email' },
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('必須')).toBeVisible()
+  },
+}
+
+export const WithCaption: Story = {
+  args: {
+    label: 'ニックネーム',
+    caption: '100文字以内で入力してください',
+    maxLength: 100,
+    inputProps: { id: 'username' },
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('100文字以内で入力してください')).toBeVisible()
+    await expect(canvas.getByLabelText('ニックネーム')).toHaveAttribute('maxlength', '100')
   },
 }
