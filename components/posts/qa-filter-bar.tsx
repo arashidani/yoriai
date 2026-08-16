@@ -1,7 +1,6 @@
 'use client'
 
-import { Search } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { KeywordInput } from '@/components/design-system/ui/keyword-input'
 import { QaFeedTagFilter } from './qa-feed-controls'
 
 type QaFilterBarProps = {
@@ -22,14 +21,11 @@ function QaFilterBar({
 }: QaFilterBarProps) {
   return (
     <div className="flex w-full min-w-0 flex-col gap-3 md:flex-row md:items-center">
-      <div className="relative min-w-0 w-full md:flex-1">
-        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
+      <div className="min-w-0 w-full md:flex-1">
+        <KeywordInput
           value={keyword}
           onChange={(event) => onKeywordChange(event.target.value)}
-          placeholder="キーワードを入力"
           aria-label="キーワード検索"
-          className="h-11 min-w-0 border-3 border-input bg-background pl-9"
         />
       </div>
       <div className="min-w-0 w-full md:w-56 md:shrink-0">
