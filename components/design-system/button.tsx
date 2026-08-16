@@ -4,11 +4,13 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
-  'text-center w-full rounded-full disabled:opacity-50 disabled:pointer-events-none',
+  'text-center rounded-full disabled:opacity-50 disabled:pointer-events-none',
   {
     variants: {
       size: {
-        extraLarge: 'px-8 py-6 font-bold text-paragraph',
+        extraLarge: 'w-full px-8 py-6 font-bold text-paragraph',
+        large:
+          'inline-flex w-fit min-h-10 items-center justify-center gap-2 px-6 py-4 font-bold text-paragraph',
       },
       variant: {
         primary: 'bg-primary text-white hover:bg-primary/80',
@@ -29,9 +31,16 @@ function Button({
   variant = 'primary',
   size = 'extraLarge',
   children,
+  leftIcon,
+  rightIcon,
   isDisabled = false,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { isDisabled?: boolean }) {
+}: ButtonPrimitive.Props &
+  VariantProps<typeof buttonVariants> & {
+    isDisabled?: boolean
+    leftIcon?: React.ReactNode
+    rightIcon?: React.ReactNode
+  }) {
   return (
     <ButtonPrimitive
       data-slot="button"
@@ -41,7 +50,9 @@ function Button({
       )}
       {...props}
     >
+      {leftIcon && <span className="size-4 shrink-0 overflow-clip">{leftIcon}</span>}
       {children}
+      {rightIcon && <span className="size-4 shrink-0 overflow-clip">{rightIcon}</span>}
     </ButtonPrimitive>
   )
 }
