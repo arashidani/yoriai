@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, screen, userEvent } from 'storybook/test'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { delay, HttpResponse, http } from 'msw'
+import { expect, screen, userEvent, waitFor } from 'storybook/test'
 import { QaFeed } from './qa-feed'
 
 const meta = {
@@ -7,6 +9,15 @@ const meta = {
   parameters: {
     nextjs: { appDirectory: true },
   },
+  decorators: [
+    (Story) => (
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Story />
+      </QueryClientProvider>
+    ),
+  ],
 } satisfies Meta<typeof QaFeed>
 
 export default meta
@@ -46,6 +57,7 @@ const basePosts = [
 const baseTags = [
   { id: 'tag-1', name: 'Next.js' },
   { id: 'tag-2', name: 'TypeScript' },
+  { id: 'tag-3', name: 'Prisma' },
 ]
 
 export const Default: Story = {
@@ -61,13 +73,66 @@ export const Default: Story = {
   },
 }
 
+export const Loading: Story = {
+  args: { isAdmin: false, allTags: baseTags },
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/questions', async () => {
+          await delay('infinite')
+          return HttpResponse.json({
+            questions: [],
+            pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 },
+          })
+        }),
+      ],
+    },
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status', { name: '読み込み中' })).toBeVisible()
+  },
+}
+
+export const Refetching: Story = {
+  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/questions', async () => {
+          await delay('infinite')
+          return HttpResponse.json({
+            questions: [],
+            pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 },
+          })
+        }),
+      ],
+    },
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: '解決済み' }))
+    await expect(await canvas.findByRole('status', { name: '読み込み中' })).toBeVisible()
+    await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
+  },
+}
+
 export const TagFilter: Story = {
   args: { posts: basePosts, isAdmin: false, allTags: baseTags },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByText('カテゴリーを選択'))
     await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Next.js' }))
-    await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
+    await expect(await canvas.findByText(/Next\.jsのエラーを解決したい/)).toBeVisible()
     await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
+  },
+}
+
+/** post-3 は公開 tag が Prisma だが、第2 PostTag に TypeScript がある。some 判定で返ること。 */
+export const TagFilterSecondaryTag: Story = {
+  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'TypeScript' }))
+    await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
+    await expect(await canvas.findByText(/Prismaでリレーション/)).toBeVisible()
   },
 }
 
@@ -81,13 +146,14 @@ export const StatusFilter: Story = {
       'aria-pressed',
       'false',
     )
-    await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
+    await expect(await canvas.findByText(/Prismaでリレーション/)).toBeVisible()
     await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
+    await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
 
     const unanswered = canvas.getByRole('button', { name: '回答募集中' })
     await userEvent.click(unanswered)
-    await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
-    await expect(canvas.getByText(/TypeScriptの型エラー/)).toBeVisible()
+    await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
+    await expect(canvas.queryByText(/Prismaでリレーション/)).not.toBeInTheDocument()
   },
 }
 
@@ -95,8 +161,8 @@ export const KeywordFilter: Story = {
   args: { posts: basePosts, isAdmin: false, allTags: baseTags },
   play: async ({ canvas }) => {
     await userEvent.type(canvas.getByPlaceholderText('キーワードを入力'), 'TypeScript')
-    await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
-    await expect(canvas.getByText(/TypeScriptの型エラー/)).toBeVisible()
+    await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
+    await waitFor(() => expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument())
   },
 }
 
@@ -104,7 +170,7 @@ export const NoMatch: Story = {
   args: { posts: basePosts, isAdmin: false, allTags: baseTags },
   play: async ({ canvas }) => {
     await userEvent.type(canvas.getByPlaceholderText('キーワードを入力'), '存在しないキーワード')
-    await expect(canvas.getByText('まだ質問がありません。')).toBeVisible()
+    await expect(await canvas.findByText('まだ質問がありません。')).toBeVisible()
   },
 }
 

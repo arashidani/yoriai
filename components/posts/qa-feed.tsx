@@ -1,7 +1,10 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
 import type { Post } from './post-list'
 import { PostList } from './post-list'
@@ -12,13 +15,23 @@ const STATUS_FILTERS = [
   { id: 'all', label: 'すべて' },
   { id: 'resolved', label: '解決済み' },
   { id: 'unanswered', label: '回答募集中' },
-]
+] as const
+
+const PAGE_SIZE = '10'
+const KEYWORD_DEBOUNCE_MS = 250
+
+type StatusFilter = (typeof STATUS_FILTERS)[number]['id']
 
 type QaFeedProps = {
-  posts: Post[]
+  posts?: Post[]
   isAdmin: boolean
   allTags: { id: string; name: string }[]
   initialTotalPages?: number
+}
+
+type QuestionsResult = {
+  posts: Post[]
+  totalPages: number
 }
 
 function toPost(question: {
@@ -51,47 +64,102 @@ function toPost(question: {
   }
 }
 
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedValue(value), delay)
+    return () => window.clearTimeout(timer)
+  }, [delay, value])
+
+  return debouncedValue
+}
+
+async function fetchQuestions(params: {
+  page: number
+  status: StatusFilter
+  keyword: string
+  tagId?: string
+}): Promise<QuestionsResult> {
+  const response = await client.api.questions.$get({
+    query: {
+      page: String(params.page),
+      pageSize: PAGE_SIZE,
+      status: params.status,
+      keyword: params.keyword || undefined,
+      tagId: params.tagId,
+    },
+  })
+  if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
+  const body = await response.json()
+  return {
+    posts: body.questions.map(toPost),
+    totalPages: body.pagination.totalPages,
+  }
+}
+
+function QaPostListSkeleton() {
+  return (
+    <div className="grid gap-4" role="status" aria-label="読み込み中">
+      {['skeleton-1', 'skeleton-2', 'skeleton-3'].map((key) => (
+        <div
+          key={key}
+          className="rounded-xl border border-input bg-background p-5 shadow-xs"
+          aria-hidden
+        >
+          <div className="flex gap-3">
+            <Skeleton className="size-10 shrink-0 rounded-full" />
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+              <div className="flex gap-1.5 pt-1">
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-20 rounded-full" />
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3 pt-3 pl-[3.25rem]">
+            <Skeleton className="h-7 w-16 rounded-full" />
+            <Skeleton className="h-7 w-16 rounded-full" />
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /** 検索・状態・単一タグ・ページをAPI Queryへ反映する質問一覧。 */
 export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFeedProps) {
   const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState('all')
+  const [status, setStatus] = useState<StatusFilter>('all')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(initialTotalPages)
-  const [visiblePosts, setVisiblePosts] = useState(posts)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const latestRequestId = useRef(0)
+  const debouncedKeyword = useDebouncedValue(keyword, KEYWORD_DEBOUNCE_MS)
+  const tagId = selectedTagIds[0]
+  const isDefaultQuery =
+    page === 1 && status === 'all' && debouncedKeyword === '' && selectedTagIds.length === 0
 
-  useEffect(() => {
-    const requestId = ++latestRequestId.current
-    const timer = window.setTimeout(async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await client.api.questions.$get({
-          query: {
-            page: String(page),
-            pageSize: '10',
-            status: status as 'all' | 'unanswered' | 'resolved',
-            keyword: keyword || undefined,
-            tagId: selectedTagIds[0],
-          },
-        })
-        if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
-        const body = await response.json()
-        if (requestId !== latestRequestId.current) return
-        setVisiblePosts(body.questions.map(toPost))
-        setTotalPages(body.pagination.totalPages)
-      } catch {
-        if (requestId !== latestRequestId.current) return
-        setError('質問一覧の取得に失敗しました。もう一度お試しください。')
-      } finally {
-        if (requestId === latestRequestId.current) setLoading(false)
-      }
-    }, 250)
-    return () => window.clearTimeout(timer)
-  }, [keyword, page, selectedTagIds, status])
+  const { data, isPending, isFetching, isPlaceholderData, error } = useQuery({
+    queryKey: ['questions', { page, status, keyword: debouncedKeyword, tagId }],
+    queryFn: () =>
+      fetchQuestions({
+        page,
+        status,
+        keyword: debouncedKeyword,
+        tagId,
+      }),
+    initialData: posts && isDefaultQuery ? { posts, totalPages: initialTotalPages } : undefined,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
+
+  const visiblePosts = data?.posts ?? []
+  const totalPages = data?.totalPages ?? initialTotalPages
+  const showSkeleton = isPending
+  // クエリキー変更で前データを残している再取得のみ。SSR の isFetching 差による hydration mismatch を避ける
+  const showSpinner = isFetching && isPlaceholderData
 
   function resetPage(action: () => void) {
     setPage(1)
@@ -99,7 +167,15 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
   }
 
   return (
-    <>
+    <div className="relative flex flex-1 flex-col">
+      {showSpinner && (
+        <div className="absolute inset-0 z-40 bg-background/70">
+          {/* リストが長くてもスピナーが視界に入るよう、ビューポート中央に留める */}
+          <div className="sticky top-1/2 flex -translate-y-1/2 justify-center">
+            <Spinner className="size-8 text-primary" aria-label="読み込み中" />
+          </div>
+        </div>
+      )}
       <div className="sticky top-25 z-20 bg-background px-4 py-4 sm:px-8 sm:py-5">
         <div className="flex flex-col gap-6">
           <QaFilterBar
@@ -110,17 +186,19 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
             onSelectedTagIdsChange={(ids) => resetPage(() => setSelectedTagIds(ids))}
           />
           <QaFeedStatusFilter
-            filters={STATUS_FILTERS}
+            filters={[...STATUS_FILTERS]}
             value={status}
-            onValueChange={(value) => resetPage(() => setStatus(value))}
+            onValueChange={(value) => resetPage(() => setStatus(value as StatusFilter))}
           />
         </div>
       </div>
-      <div className="flex-1 px-8 py-6" aria-busy={loading}>
+      <div className="flex-1 px-8 py-6" aria-busy={isFetching}>
         {error ? (
           <p role="alert" className="text-destructive">
-            {error}
+            質問一覧の取得に失敗しました。もう一度お試しください。
           </p>
+        ) : showSkeleton ? (
+          <QaPostListSkeleton />
         ) : (
           <PostList posts={visiblePosts} isAdmin={isAdmin} />
         )}
@@ -129,7 +207,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
             <Button
               variant="outline"
               size="sm"
-              disabled={page <= 1 || loading}
+              disabled={page <= 1 || isFetching}
               onClick={() => setPage((value) => value - 1)}
             >
               前へ
@@ -140,7 +218,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
             <Button
               variant="outline"
               size="sm"
-              disabled={page >= totalPages || loading}
+              disabled={page >= totalPages || isFetching}
               onClick={() => setPage((value) => value + 1)}
             >
               次へ
@@ -148,6 +226,6 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }

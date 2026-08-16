@@ -19,6 +19,7 @@ import {
   MOCK_TAGS,
   MOCK_USER_PROFILE,
   MOCK_USERS,
+  mockPostHasTagId,
 } from '../lib/mocks/fixtures'
 
 import { toQuestionResponse } from '../lib/questions/api-mappers'
@@ -44,12 +45,40 @@ export const mswHandlers = {
     http.post('/api/onboarding', () => HttpResponse.json({ success: true })),
   ],
   posts: [
-    http.get('/api/questions', () =>
-      HttpResponse.json({
-        questions: MOCK_QUESTIONS,
-        pagination: { page: 1, pageSize: 10, total: MOCK_QUESTIONS.length, totalPages: 1 },
-      }),
-    ),
+    http.get('/api/questions', ({ request }) => {
+      const url = new URL(request.url)
+      const keyword = url.searchParams.get('keyword') ?? ''
+      const status = url.searchParams.get('status') ?? 'all'
+      const tagId = url.searchParams.get('tagId')
+      const page = Number(url.searchParams.get('page') ?? '1')
+      const pageSize = Number(url.searchParams.get('pageSize') ?? '10')
+
+      let questions = MOCK_QUESTIONS.filter((question) => {
+        const post = MOCK_POSTS.find((item) => item.id === question.id)
+        return post && !post.deletedAt
+      })
+      if (keyword) {
+        questions = questions.filter(
+          (question) => question.title.includes(keyword) || question.body.includes(keyword),
+        )
+      }
+      if (status === 'unanswered') {
+        questions = questions.filter((question) => question.status === 'OPEN')
+      }
+      if (status === 'resolved') {
+        questions = questions.filter((question) => question.status === 'RESOLVED')
+      }
+      if (tagId) {
+        questions = questions.filter((question) => mockPostHasTagId(question.id, tagId))
+      }
+
+      const total = questions.length
+      const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize)
+      return HttpResponse.json({
+        questions: questions.slice((page - 1) * pageSize, page * pageSize),
+        pagination: { page, pageSize, total, totalPages },
+      })
+    }),
     http.get('/api/questions/:id', ({ params }) => {
       const post = MOCK_QUESTIONS.find((p) => p.id === params.id)
       if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
