@@ -107,7 +107,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
             onKeywordChange={(value) => resetPage(() => setKeyword(value))}
             tags={allTags}
             selectedTagIds={selectedTagIds}
-            onSelectedTagIdsChange={(ids) => resetPage(() => setSelectedTagIds(ids.slice(-1)))}
+            onSelectedTagIdsChange={(ids) => resetPage(() => setSelectedTagIds(ids))}
           />
           <QaFeedStatusFilter
             filters={STATUS_FILTERS}

@@ -17,10 +17,12 @@ type QaFeedTagFilterProps = {
   onChange: (tagIds: string[]) => void
 }
 
-/** タグのドロップダウンチェックリスト。複数選択した場合はAND条件（すべてのタグを含む投稿のみ）で絞り込む。 */
+/** タグのドロップダウンチェックリスト。択一で、同じタグを再選択すると解除する。 */
 function QaFeedTagFilter({ tags, selectedTagIds, onChange }: QaFeedTagFilterProps) {
+  const selectedTag = tags.find((tag) => selectedTagIds.includes(tag.id))
+
   function toggleTag(tagId: string, checked: boolean) {
-    onChange(checked ? [...selectedTagIds, tagId] : selectedTagIds.filter((id) => id !== tagId))
+    onChange(checked ? [tagId] : [])
   }
 
   return (
@@ -33,10 +35,10 @@ function QaFeedTagFilter({ tags, selectedTagIds, onChange }: QaFeedTagFilterProp
         <span
           className={cn(
             'min-w-0 flex-1 truncate text-left',
-            selectedTagIds.length === 0 && 'text-muted-foreground',
+            !selectedTag && 'text-muted-foreground',
           )}
         >
-          {selectedTagIds.length > 0 ? `タグ (${selectedTagIds.length})` : 'カテゴリーを選択'}
+          {selectedTag ? selectedTag.name : 'カテゴリーを選択'}
         </span>
         <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
       </MenuPrimitive.Trigger>
