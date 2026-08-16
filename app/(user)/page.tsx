@@ -2,6 +2,7 @@ import { PencilLine } from 'lucide-react'
 import Link from 'next/link'
 import { Role } from '@/app/generated/prisma/enums'
 import { AnswerableQuestions } from '@/components/posts/answerable-questions'
+import { QaCover } from '@/components/posts/qa-cover'
 import { QaFeed } from '@/components/posts/qa-feed'
 import { buttonVariants } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/auth/current-user'
@@ -35,27 +36,30 @@ export default async function QaHomePage() {
   }))
 
   return (
-    <div className="flex flex-1">
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-25 items-center justify-between border-b border-input bg-background p-8">
-          <h1 className="font-heading text-heading-3">おせっかいQA</h1>
-          <Link
-            href="/posts/new"
-            className={buttonVariants({ size: 'lg', className: 'rounded-full px-5' })}
-          >
-            <PencilLine />
-            質問する
-          </Link>
-        </header>
-        <QaFeed
-          posts={posts}
-          isAdmin={user?.role === Role.ADMIN}
-          allTags={tagsBody.tags}
-          initialTotalPages={questionsBody.pagination.totalPages}
-        />
+    <div className="flex min-w-0 flex-1 flex-col">
+      <QaCover />
+      <div className="flex flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-25 items-center justify-between border-b border-input bg-background p-8">
+            <h1 className="font-heading text-heading-3">なんでもQ&A</h1>
+            <Link
+              href="/posts/new"
+              className={buttonVariants({ size: 'lg', className: 'rounded-full px-5' })}
+            >
+              <PencilLine />
+              質問する
+            </Link>
+          </header>
+          <QaFeed
+            posts={posts}
+            isAdmin={user?.role === Role.ADMIN}
+            allTags={tagsBody.tags}
+            initialTotalPages={questionsBody.pagination.totalPages}
+          />
+        </div>
+        {/* TODO: BusinessSkillとQ&Aタグの関連付け後、OPEN・本人以外の推薦APIへ変更する。現状は一覧先頭3件。 */}
+        <AnswerableQuestions posts={posts} />
       </div>
-      {/* TODO: BusinessSkillとQ&Aタグの関連付け後、OPEN・本人以外の推薦APIへ変更する。現状は一覧先頭3件。 */}
-      <AnswerableQuestions posts={posts} />
     </div>
   )
 }
