@@ -1,10 +1,8 @@
-import { PencilLine } from 'lucide-react'
-import Link from 'next/link'
 import { Role } from '@/app/generated/prisma/enums'
 import { AnswerableQuestions } from '@/components/posts/answerable-questions'
 import { QaCover } from '@/components/posts/qa-cover'
 import { QaFeed } from '@/components/posts/qa-feed'
-import { buttonVariants } from '@/components/ui/button'
+import { QuestionComposeDialog } from '@/components/posts/question-compose-dialog'
 import { getCurrentUser } from '@/lib/auth/current-user'
 import { createServerApiClient } from '@/lib/hono/server-client'
 
@@ -42,13 +40,7 @@ export default async function QaHomePage() {
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 flex h-25 items-center justify-between bg-background p-8">
             <h1 className="font-heading text-heading-3">なんでもQ&A</h1>
-            <Link
-              href="/posts/new"
-              className={buttonVariants({ size: 'lg', className: 'rounded-full px-5' })}
-            >
-              <PencilLine />
-              質問する
-            </Link>
+            <QuestionComposeDialog displayName={user?.username || 'ユーザー'} />
           </header>
           <QaFeed
             posts={posts}

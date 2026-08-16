@@ -64,8 +64,25 @@ export const Submitting: Story = {
     displayName: '名無しのおせワニ',
     onSubmit: fn(),
     isSubmitting: true,
+    onClose: fn(),
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: /投稿する/ })).toBeDisabled()
+    await expect(canvas.getByText('質問を投稿する')).toBeVisible()
+    await expect(canvas.getByRole('status', { name: 'Loading' })).toBeVisible()
+    await expect(canvas.getByRole('button', { name: '閉じる' })).toBeDisabled()
+    await expect(canvas.queryByLabelText('質問のタイトル')).not.toBeInTheDocument()
+  },
+}
+
+export const Error: Story = {
+  args: {
+    displayName: '名無しのおせワニ',
+    onSubmit: fn(),
+    error: '通信に失敗しました。画面をリロードせず、もう一度お試しください',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('alert')).toHaveTextContent(
+      '通信に失敗しました。画面をリロードせず、もう一度お試しください',
+    )
   },
 }

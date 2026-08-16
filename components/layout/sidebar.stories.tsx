@@ -36,7 +36,7 @@ export const Admin: Story = {
 export const PostsPageActive: Story = {
   args: { isAdmin: false },
   parameters: {
-    nextjs: { appDirectory: true, navigation: { pathname: '/posts/new' } },
+    nextjs: { appDirectory: true, navigation: { pathname: '/posts/post-1' } },
   },
   play: async ({ canvas }) => {
     // /posts/* でも「なんでもQ&A」がアクティブ表示になる
