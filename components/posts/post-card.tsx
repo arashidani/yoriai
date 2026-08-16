@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react'
-import { FilterChip } from '@/components/design-system/ui/filter-chip'
+import { CategoryChip } from '@/components/design-system/ui/category-chip'
 import { StatusChip } from '@/components/design-system/ui/status-chip'
 import Link from 'next/link'
 import { QuestionLikeButton } from '@/components/posts/question-like-button'
@@ -48,11 +48,7 @@ export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
               {/* 投稿者・カテゴリ・ステータス・投稿日 */}
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-paragraph-small font-bold">{post.displayName}</span>
-                {category && (
-                  <FilterChip pressed render={<span />} nativeButton={false}>
-                    {category.name}
-                  </FilterChip>
-                )}
+                {category && <CategoryChip>{category.name}</CategoryChip>}
                 <StatusChip status={post.status} />
                 <span
                   className="text-paragraph-mini text-secondary-foreground"
