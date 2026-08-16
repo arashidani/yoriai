@@ -81,7 +81,11 @@ export const WithKeywordAndTag: Story = {
 export const NoneSelected: Story = {
   args: Default.args,
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('カテゴリーを選択')).toBeVisible()
+    await userEvent.click(canvas.getByRole('combobox'))
+    await expect(await screen.findByRole('option', { name: 'なし' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
   },
 }
 
@@ -108,6 +112,21 @@ export const ChangeTag: Story = {
     await userEvent.click(canvas.getByRole('combobox'))
     await userEvent.click(await screen.findByRole('option', { name: 'Next.js' }))
     await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith(['tag-1'])
+  },
+}
+
+export const ClearTag: Story = {
+  args: {
+    keyword: '',
+    onKeywordChange: fn(),
+    tags: baseTags,
+    selectedTagIds: ['tag-2'],
+    onSelectedTagIdsChange: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByRole('combobox'))
+    await userEvent.click(await screen.findByRole('option', { name: 'なし' }))
+    await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith([])
   },
 }
 
