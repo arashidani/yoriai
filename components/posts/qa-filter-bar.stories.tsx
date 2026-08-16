@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn, userEvent } from 'storybook/test'
+import { expect, fn, screen, userEvent } from 'storybook/test'
 import { QaFilterBar } from './qa-filter-bar'
 
 const meta = {
@@ -74,7 +74,17 @@ export const WithKeywordAndTag: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByDisplayValue('TypeScript')).toBeVisible()
-    await expect(canvas.getByText('タグ (1)')).toBeVisible()
+    await expect(canvas.getByRole('button', { name: 'TypeScript' })).toBeVisible()
+  },
+}
+
+export const ExclusiveTag: Story = {
+  args: Default.args,
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Next.js' }))
+    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'TypeScript' }))
+    await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith(['tag-2'])
   },
 }
 

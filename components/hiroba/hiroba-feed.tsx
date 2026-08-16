@@ -16,7 +16,7 @@ type HirobaFeedProps = {
   allTags: { id: string; name: string }[]
 }
 
-/** 検索・フィルタ行とひろば投稿一覧。キーワードはタイトル・本文に対する部分一致、タグはAND条件で絞り込む。 */
+/** 検索・フィルタ行とひろば投稿一覧。キーワードはタイトル・本文に対する部分一致、タグは択一で絞り込む。 */
 export function HirobaFeed({ hirobaSlug, posts, isAdmin, allTags }: HirobaFeedProps) {
   const [keyword, setKeyword] = useState('')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
