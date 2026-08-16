@@ -486,7 +486,6 @@ enum FlagStatus {
 
 enum QuestionStatus {
   OPEN
-  ANSWERED
   RESOLVED
   HIDDEN
 }

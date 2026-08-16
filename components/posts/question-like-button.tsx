@@ -20,8 +20,8 @@ export function QuestionLikeButton({
       initialLikeCount={initialLikeCount}
       onToggle={async (next) => {
         const res = next
-          ? await client.api.posts[':id'].likes.$post({ param: { id: postId } })
-          : await client.api.posts[':id'].likes.$delete({ param: { id: postId } })
+          ? await client.api.questions[':id'].likes.$post({ param: { id: postId } })
+          : await client.api.questions[':id'].likes.$delete({ param: { id: postId } })
         if (!res.ok) throw new Error('いいねの処理に失敗しました')
         return res.json()
       }}

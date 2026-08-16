@@ -8,9 +8,9 @@ import {
   NotificationSchema,
   UnreadNotificationCountSchema,
 } from '@/lib/hono/openapi/schemas'
-import { toAnswerResponse } from '@/lib/hono/routes/posts'
 import { MOCK_NOTIFICATIONS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { toAdminAnswerResponse } from '@/lib/questions/admin-answer-response'
 
 const listQuerySchema = z.object({
   cursor: z
@@ -43,7 +43,7 @@ type NotificationWithRelations = Prisma.NotificationGetPayload<{
 
 const toNotificationResponse = (notification: NotificationWithRelations) => ({
   ...notification,
-  answer: notification.answer ? toAnswerResponse(notification.answer) : null,
+  answer: notification.answer ? toAdminAnswerResponse(notification.answer) : null,
 })
 
 const listRoute = createRoute({

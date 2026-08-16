@@ -26,8 +26,8 @@ export function SaveButton({ postId, initialSaved }: SaveButtonProps) {
     setSaved(next)
 
     const res = next
-      ? await client.api.posts[':id'].bookmarks.$post({ param: { id: postId } })
-      : await client.api.posts[':id'].bookmarks.$delete({ param: { id: postId } })
+      ? await client.api.questions[':id'].bookmarks.$post({ param: { id: postId } })
+      : await client.api.questions[':id'].bookmarks.$delete({ param: { id: postId } })
 
     setPending(false)
 
