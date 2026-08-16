@@ -74,32 +74,29 @@ export const WithKeywordAndTag: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByDisplayValue('TypeScript')).toBeVisible()
-    await expect(canvas.getByRole('button', { name: 'TypeScript' })).toBeVisible()
+    await expect(canvas.getByText('TypeScript')).toBeVisible()
   },
 }
 
 export const NoneSelected: Story = {
   args: Default.args,
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByText('カテゴリーを選択'))
-    await expect(await screen.findByRole('menuitemcheckbox', { name: 'なし' })).toHaveAttribute(
-      'aria-checked',
-      'true',
-    )
+    await expect(canvas.getByText('カテゴリーを選択')).toBeVisible()
   },
 }
 
 export const ExclusiveTag: Story = {
   args: Default.args,
   play: async ({ canvas, args }) => {
-    await userEvent.click(canvas.getByText('カテゴリーを選択'))
-    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'Next.js' }))
-    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'TypeScript' }))
+    await userEvent.click(canvas.getByRole('combobox'))
+    await userEvent.click(await screen.findByRole('option', { name: 'Next.js' }))
+    await userEvent.click(canvas.getByRole('combobox'))
+    await userEvent.click(await screen.findByRole('option', { name: 'TypeScript' }))
     await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith(['tag-2'])
   },
 }
 
-export const ClearTag: Story = {
+export const ChangeTag: Story = {
   args: {
     keyword: '',
     onKeywordChange: fn(),
@@ -108,9 +105,9 @@ export const ClearTag: Story = {
     onSelectedTagIdsChange: fn(),
   },
   play: async ({ canvas, args }) => {
-    await userEvent.click(canvas.getByRole('button', { name: 'TypeScript' }))
-    await userEvent.click(await screen.findByRole('menuitemcheckbox', { name: 'なし' }))
-    await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith([])
+    await userEvent.click(canvas.getByRole('combobox'))
+    await userEvent.click(await screen.findByRole('option', { name: 'Next.js' }))
+    await expect(args.onSelectedTagIdsChange).toHaveBeenLastCalledWith(['tag-1'])
   },
 }
 
