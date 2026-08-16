@@ -12,6 +12,8 @@ const buttonVariants = cva(
       },
       variant: {
         primary: 'bg-primary text-white hover:bg-primary/80',
+        secondary:
+          'border-2 border-input bg-background text-secondary-foreground hover:bg-secondary-hover',
         disabled: 'bg-muted text-muted-foreground',
       },
     },

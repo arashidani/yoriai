@@ -21,6 +21,17 @@ export const Primary: Story = {
   },
 }
 
+export const Secondary: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'secondary',
+    size: 'extraLarge',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeVisible()
+  },
+}
+
 export const Disabled: Story = {
   args: {
     children: 'ボタン',
