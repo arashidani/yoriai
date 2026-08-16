@@ -1,3 +1,4 @@
+import { cva, type VariantProps } from 'class-variance-authority'
 import { CheckIcon } from 'lucide-react'
 
 import type { QuestionStatus } from '@/app/generated/prisma/enums'
@@ -15,25 +16,41 @@ const STATUS_CLASS: Record<StatusChipStatus, string> = {
   RESOLVED: 'bg-muted text-muted-foreground',
 }
 
-type StatusChipProps = {
+const statusChipVariants = cva(
+  'inline-flex items-center justify-center gap-1 rounded-full font-bold whitespace-nowrap',
+  {
+    variants: {
+      size: {
+        default: 'px-2 py-0.5 text-paragraph-mini',
+        large: 'px-4 py-2 text-paragraph-small',
+      },
+    },
+    defaultVariants: {
+      size: 'default',
+    },
+  },
+)
+
+type StatusChipProps = VariantProps<typeof statusChipVariants> & {
   className?: string
   status: StatusChipStatus
 }
 
-function StatusChip({ className, status }: StatusChipProps) {
+function StatusChip({ className, status, size = 'default' }: StatusChipProps) {
+  const isLarge = size === 'large'
+
   return (
     <span
       data-slot="status-chip"
-      className={cn(
-        'inline-flex items-center justify-center gap-1 rounded-full px-2 py-0.5 text-paragraph-mini font-bold whitespace-nowrap',
-        STATUS_CLASS[status],
-        className,
-      )}
+      className={cn(statusChipVariants({ size }), STATUS_CLASS[status], className)}
     >
       {status === 'OPEN' ? (
-        <span aria-hidden className="size-2 shrink-0 rounded-full bg-primary" />
+        <span
+          aria-hidden
+          className={cn('shrink-0 rounded-full bg-primary', isLarge ? 'size-3' : 'size-2')}
+        />
       ) : (
-        <CheckIcon aria-hidden className="size-2.5 shrink-0" />
+        <CheckIcon aria-hidden className={cn('shrink-0', isLarge ? 'size-3.5' : 'size-2.5')} />
       )}
       {STATUS_LABEL[status]}
     </span>

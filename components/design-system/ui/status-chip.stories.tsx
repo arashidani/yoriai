@@ -22,3 +22,17 @@ export const Resolved: Story = {
     await expect(canvas.getByText('解決済み')).toBeVisible()
   },
 }
+
+export const OpenLarge: Story = {
+  args: { status: 'OPEN', size: 'large' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('回答募集中')).toBeVisible()
+  },
+}
+
+export const ResolvedLarge: Story = {
+  args: { status: 'RESOLVED', size: 'large' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('解決済み')).toBeVisible()
+  },
+}
