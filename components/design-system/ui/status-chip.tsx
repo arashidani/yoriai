@@ -57,4 +57,5 @@ function StatusChip({ className, status, size = 'default' }: StatusChipProps) {
   )
 }
 
+export type { StatusChipStatus }
 export { StatusChip }
