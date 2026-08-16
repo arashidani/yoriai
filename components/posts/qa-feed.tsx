@@ -192,7 +192,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
           />
         </div>
       </div>
-      <div className="flex-1 px-8 py-6" aria-busy={isFetching}>
+      <div className="flex-1 px-8 py-6" aria-busy={showSpinner}>
         {error ? (
           <p role="alert" className="text-destructive">
             質問一覧の取得に失敗しました。もう一度お試しください。
@@ -207,7 +207,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
             <Button
               variant="outline"
               size="sm"
-              disabled={page <= 1 || isFetching}
+              disabled={page <= 1 || showSpinner}
               onClick={() => setPage((value) => value - 1)}
             >
               前へ
@@ -218,7 +218,7 @@ export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFee
             <Button
               variant="outline"
               size="sm"
-              disabled={page >= totalPages || isFetching}
+              disabled={page >= totalPages || showSpinner}
               onClick={() => setPage((value) => value + 1)}
             >
               次へ
