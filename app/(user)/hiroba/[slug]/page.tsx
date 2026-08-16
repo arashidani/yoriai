@@ -88,7 +88,7 @@ export default async function HirobaDetailPage({ params }: { params: Promise<{ s
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      <header className="sticky top-0 z-30 flex h-25 items-center justify-between border-b border-input bg-background p-8">
+      <header className="sticky top-0 z-30 flex h-25 items-center justify-between bg-background p-8">
         <div>
           <h1 className="font-heading text-heading-3">{hiroba.name}</h1>
           <p className="text-paragraph-small text-secondary-foreground">{hiroba.description}</p>
