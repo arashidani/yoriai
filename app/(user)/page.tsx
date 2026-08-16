@@ -40,7 +40,7 @@ export default async function QaHomePage() {
       <QaCover />
       <div className="flex flex-1">
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-25 items-center justify-between border-b border-input bg-background p-8">
+          <header className="sticky top-0 z-30 flex h-25 items-center justify-between bg-background p-8">
             <h1 className="font-heading text-heading-3">なんでもQ&A</h1>
             <Link
               href="/posts/new"
