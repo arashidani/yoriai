@@ -30,7 +30,12 @@ function QaFeedTagFilter({ tags, selectedTagIds, onChange }: QaFeedTagFilterProp
           "flex h-10 w-full items-center justify-between gap-1.5 rounded-lg border border-input bg-background py-2 pr-2 pl-2.5 text-sm whitespace-nowrap transition-colors outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 sm:flex-1 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         )}
       >
-        <span className="flex flex-1 text-left">
+        <span
+          className={cn(
+            'flex flex-1 text-left',
+            selectedTagIds.length === 0 && 'text-muted-foreground',
+          )}
+        >
           {selectedTagIds.length > 0 ? `タグ (${selectedTagIds.length})` : 'カテゴリーを選択'}
         </span>
         <ChevronDownIcon className="pointer-events-none size-4 text-muted-foreground" />
