@@ -54,3 +54,14 @@ export const LongLabel: Story = {
     await expect(canvas.getByRole('button', { name: 'プロフィール設定に進む' })).toBeVisible()
   },
 }
+
+export const Large: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'primary',
+    size: 'large',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeVisible()
+  },
+}
