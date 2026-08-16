@@ -21,10 +21,22 @@ export const Default: Story = {
 
 export const ValidationErrors: Story = {
   play: async ({ canvas }) => {
-    await userEvent.click(await canvas.findByRole('button', { name: '次へ' }))
-    await expect(await canvas.findByText('ニックネームを入力してください')).toBeVisible()
-    await expect(canvas.getByText('所属部署を選択してください')).toBeVisible()
-    await expect(canvas.getByText('業務エリアを選択してください')).toBeVisible()
+    const username = await canvas.findByLabelText('ニックネーム')
+    await userEvent.click(username)
+    await userEvent.tab()
+    await expect(username).toHaveAttribute('aria-invalid', 'true')
+
+    const department = canvas.getByLabelText('所属部署')
+    await userEvent.click(department)
+    await userEvent.keyboard('{Escape}')
+    await expect(department).toHaveAttribute('aria-invalid', 'true')
+
+    const businessArea = canvas.getByLabelText('勤務エリア')
+    await userEvent.click(businessArea)
+    await userEvent.keyboard('{Escape}')
+    await expect(businessArea).toHaveAttribute('aria-invalid', 'true')
+
+    await expect(canvas.getByRole('button', { name: '次へ' })).toBeDisabled()
   },
 }
 
@@ -36,7 +48,7 @@ export const SelectedOptionLabels: Story = {
     await expect(department).toHaveTextContent('開発部')
     await expect(department).not.toHaveTextContent('department-1')
 
-    const businessArea = canvas.getByLabelText('業務エリア')
+    const businessArea = canvas.getByLabelText('勤務エリア')
     await userEvent.click(businessArea)
     await userEvent.click(
       await within(document.body).findByRole('option', { name: 'プロダクト開発' }),

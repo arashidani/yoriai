@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import confirmRightImage from '@/assets/register-confirm-right.png'
+import confirmRightImage from '@/assets/register-confirm-right.svg'
 import { Button } from '@/components/design-system/button'
 import { RegisterImagePanel } from '@/components/register/register-image-panel'
 import { RegisterSidePanel } from '@/components/register/register-side-panel'
