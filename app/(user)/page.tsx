@@ -55,6 +55,7 @@ export default async function QaHomePage() {
             isAdmin={user?.role === Role.ADMIN}
             allTags={tagsBody.tags}
             initialTotalPages={questionsBody.pagination.totalPages}
+            initialTotal={questionsBody.pagination.total}
           />
         </div>
         {/* TODO: BusinessSkillとQ&Aタグの関連付け後、OPEN・本人以外の推薦APIへ変更する。現状は一覧先頭3件。 */}
