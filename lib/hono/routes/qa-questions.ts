@@ -20,7 +20,7 @@ import {
   LikeStatusSchema,
   SavedStatusSchema,
 } from '@/lib/hono/openapi/schemas'
-import { MOCK_ANSWERS, MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
+import { MOCK_ANSWERS, MOCK_POSTS, MOCK_TAGS, mockPostHasTagId } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import {
   getMostLikedAnswerId,
@@ -290,7 +290,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         questions = questions.filter((q) => q.status === QuestionStatus.OPEN)
       if (status === 'resolved')
         questions = questions.filter((q) => q.status === QuestionStatus.RESOLVED)
-      if (tagId) questions = questions.filter((q) => q.tag?.id === tagId)
+      if (tagId) questions = questions.filter((q) => mockPostHasTagId(q.id, tagId))
       questions.sort(
         (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || b.id.localeCompare(a.id),
       )

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { formatDateJst, formatDateTimeJst, getJstDateRange } from '@/lib/date-time'
+import {
+  formatDateJst,
+  formatDateTimeJst,
+  formatRelativeTime,
+  getJstDateRange,
+} from '@/lib/date-time'
 
 describe('JST日時ユーティリティ', () => {
   it('UTC日時をJSTの日時へ変換する', () => {
@@ -15,5 +20,11 @@ describe('JST日時ユーティリティ', () => {
       start: Date.parse('2026-08-09T00:00:00.000+09:00'),
       end: Date.parse('2026-08-09T23:59:59.999+09:00'),
     })
+  })
+
+  it('相対時刻を返す', () => {
+    const now = Date.now()
+    expect(formatRelativeTime(now - 5 * 60_000)).toBe('5分前')
+    expect(formatRelativeTime(now - 3 * 60 * 60_000)).toBe('3時間前')
   })
 })
