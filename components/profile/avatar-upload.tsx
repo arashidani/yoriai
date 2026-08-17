@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button'
 import { client } from '@/lib/hono/client'
 
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const MAX_ORIGINAL_BYTES = 10 * 1024 * 1024
+// サーバーレス環境（Vercel等）のリクエストボディ上限(~4.5MB)に合わせる
+const MAX_ORIGINAL_BYTES = 4.5 * 1024 * 1024
 
 async function uploadAvatarRequest(file: File): Promise<string | null> {
   const res = await client.api.users.me.avatar.$put({ form: { file } })
@@ -74,7 +75,7 @@ export function AvatarUpload({
       return
     }
     if (file.size > MAX_ORIGINAL_BYTES) {
-      setClientError('ファイルサイズが大きすぎます（10MB以下にしてください）')
+      setClientError('ファイルサイズが大きすぎます（4.5MB以下にしてください）')
       return
     }
     setClientError(null)

@@ -24,7 +24,8 @@ import { createUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { AvatarUploadError, deleteAvatar, uploadAvatar } from '@/lib/supabase/storage/avatar'
 
-const AVATAR_ORIGINAL_MAX_BYTES = 10 * 1024 * 1024
+// サーバーレス環境（Vercel等）のリクエストボディ上限(~4.5MB)に合わせる
+const AVATAR_ORIGINAL_MAX_BYTES = 4.5 * 1024 * 1024
 
 const createRoute_ = createRoute({
   method: 'post',
@@ -100,7 +101,7 @@ const uploadAvatarRoute = createRoute({
     bodyLimit({
       maxSize: AVATAR_ORIGINAL_MAX_BYTES,
       onError: (c) =>
-        c.json({ error: 'ファイルサイズが大きすぎます（10MB以下にしてください）' }, 413),
+        c.json({ error: 'ファイルサイズが大きすぎます（4.5MB以下にしてください）' }, 413),
     }),
   ] as const,
   request: {
@@ -124,7 +125,7 @@ const uploadAvatarRoute = createRoute({
     401: errorResponse('未認証', 'Unauthorized'),
     413: errorResponse(
       'ファイルサイズ超過',
-      'ファイルサイズが大きすぎます（10MB以下にしてください）',
+      'ファイルサイズが大きすぎます（4.5MB以下にしてください）',
     ),
     422: errorResponse('画像処理に失敗', '画像を処理できませんでした'),
     502: errorResponse('アップロード失敗', '画像のアップロードに失敗しました'),
