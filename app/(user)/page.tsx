@@ -1,4 +1,5 @@
 import { Role } from '@/app/generated/prisma/enums'
+import { HeaderSection } from '@/components/design-system/ui/header-section'
 import { AnswerableQuestions } from '@/components/posts/answerable-questions'
 import { QaCover } from '@/components/posts/qa-cover'
 import { QaFeed } from '@/components/posts/qa-feed'
@@ -26,10 +27,11 @@ export default async function QaHomePage() {
       <QaCover />
       <div className="flex flex-1">
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-25 items-center justify-between bg-background p-8">
-            <h1 className="font-heading text-heading-3">なんでもQ&A</h1>
-            <QuestionComposeDialog displayName={user?.username || 'ユーザー'} />
-          </header>
+          <HeaderSection
+            className="sticky top-0 z-30 h-25 p-8"
+            title="なんでもQ&A"
+            actions={<QuestionComposeDialog displayName={user?.username || 'ユーザー'} />}
+          />
           <QaFeed
             posts={posts}
             isAdmin={user?.role === Role.ADMIN}
