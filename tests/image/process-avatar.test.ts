@@ -1,6 +1,7 @@
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import {
+  AVATAR_MAX_BYTES,
   AVATAR_SIZE,
   AvatarProcessingError,
   processAvatarImage,
@@ -36,12 +37,12 @@ describe('processAvatarImage', () => {
     expect(metadata.height).toBe(AVATAR_SIZE)
   })
 
-  it('出力サイズは5MB以下になる', async () => {
+  it('出力サイズは上限（AVATAR_MAX_BYTES）以下になる', async () => {
     const input = await makeTestImage({ width: 3000, height: 3000 })
 
     const output = await processAvatarImage(input)
 
-    expect(output.byteLength).toBeLessThanOrEqual(5 * 1024 * 1024)
+    expect(output.byteLength).toBeLessThanOrEqual(AVATAR_MAX_BYTES)
   })
 
   it('EXIFの向き情報を反映してからリサイズする（回転後も正方形になる）', async () => {

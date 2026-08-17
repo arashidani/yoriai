@@ -57,6 +57,7 @@ export function AvatarUpload({
 
   const uploadMutation = useMutation({
     mutationFn: uploadAvatarRequest,
+    onMutate: () => setClientError(null),
     onSuccess: (url) => {
       onAvatarUrlChange(url)
       queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
@@ -66,6 +67,7 @@ export function AvatarUpload({
 
   const deleteMutation = useMutation({
     mutationFn: deleteAvatarRequest,
+    onMutate: () => setClientError(null),
     onSuccess: (url) => {
       onAvatarUrlChange(url)
       queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
@@ -90,7 +92,6 @@ export function AvatarUpload({
       setClientError('ファイルサイズが大きすぎます（4.5MB以下にしてください）')
       return
     }
-    setClientError(null)
     uploadMutation.mutate(file)
   }
 
