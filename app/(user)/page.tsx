@@ -5,93 +5,34 @@ import { AnswerableQuestions } from '@/components/posts/answerable-questions'
 import { QaFeed } from '@/components/posts/qa-feed'
 import { buttonVariants } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
-import { publicTagSelect } from '@/lib/prisma/selects'
+import { createServerApiClient } from '@/lib/hono/server-client'
 
-async function getRawPosts() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
-  const posts = await prisma.post.findMany({
-    where: { deletedAt: null },
-    include: {
-      author: true,
-      postAnonymousProfile: { include: { anonymousProfile: true } },
-      tags: {
-        where: { tag: { isWorkTag: true } },
-        include: { tag: { select: publicTagSelect } },
-      },
-    },
-    orderBy: { updatedAt: 'desc' },
-  })
-  return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
-}
-
-async function getAllTags() {
-  if (process.env.MOCK_MODE === 'true') {
-    return MOCK_TAGS.filter((tag) => tag.isWorkTag).map(({ id, name }) => ({ id, name }))
-  }
-  return prisma.tag.findMany({
-    where: { isWorkTag: true },
-    select: { id: true, name: true },
-    orderBy: { name: 'asc' },
-  })
-}
-
-async function getViewerState(userId: string | undefined, postIds: string[]) {
-  if (!userId || process.env.MOCK_MODE === 'true' || postIds.length === 0) {
-    return { likedPostIds: new Set<string>(), savedPostIds: new Set<string>() }
-  }
-  const [likes, bookmarks] = await Promise.all([
-    prisma.questionLike.findMany({
-      where: { userId, postId: { in: postIds } },
-      select: { postId: true },
-    }),
-    prisma.postBookmark.findMany({
-      where: { userId, postId: { in: postIds } },
-      select: { postId: true },
-    }),
+export default async function QaHomePage() {
+  const api = await createServerApiClient()
+  const [questionsResponse, tagsResponse, user] = await Promise.all([
+    api.questions.index.$get({ query: { page: '1', pageSize: '10', status: 'all' } }),
+    api.questionTags.index.$get(),
+    getCurrentUser(),
   ])
-  return {
-    likedPostIds: new Set(likes.map((l) => l.postId)),
-    savedPostIds: new Set(bookmarks.map((b) => b.postId)),
-  }
-}
 
-async function getPosts(currentUserId: string | undefined) {
-  const rawPosts = await getRawPosts()
-  const { likedPostIds, savedPostIds } = await getViewerState(
-    currentUserId,
-    rawPosts.map((p) => p.id),
-  )
-
-  return rawPosts.map((post) => {
-    const isOwnQuestion = !!currentUserId && post.authorId === currentUserId
-    const displayName = isOwnQuestion
-      ? (post.author?.name ?? post.author?.email ?? '自分')
-      : (post.postAnonymousProfile?.anonymousProfile.displayName ?? '匿名')
-
-    return {
-      id: post.id,
-      title: post.title,
-      body: post.body,
-      displayName,
-      isOwnQuestion,
-      likeCount: post.likeCount,
-      liked: likedPostIds.has(post.id),
-      saved: savedPostIds.has(post.id),
-      status: post.status,
-      answerCount: post.answerCount,
-      tags: post.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-      createdAt: post.createdAt,
-    }
-  })
-}
-
-export default async function HomePage() {
-  const user = await getCurrentUser()
-  const posts = await getPosts(user?.id)
-  const allTags = await getAllTags()
-  const isAdmin = user?.role === Role.ADMIN
+  const questionsBody = questionsResponse.ok
+    ? await questionsResponse.json()
+    : { questions: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } }
+  const tagsBody = tagsResponse.ok ? await tagsResponse.json() : { tags: [] }
+  const posts = questionsBody.questions.map((question) => ({
+    id: question.id,
+    title: question.title,
+    body: question.body,
+    displayName: question.displayAuthor.displayName,
+    isOwnQuestion: question.isOwnQuestion,
+    likeCount: question.likeCount,
+    liked: question.liked,
+    saved: question.saved,
+    status: question.status,
+    answerCount: question.answerCount,
+    tags: question.tag ? [question.tag] : [],
+    createdAt: question.createdAt,
+  }))
 
   return (
     <div className="flex flex-1">
@@ -106,8 +47,14 @@ export default async function HomePage() {
             質問する
           </Link>
         </header>
-        <QaFeed posts={posts} isAdmin={isAdmin} allTags={allTags} />
+        <QaFeed
+          posts={posts}
+          isAdmin={user?.role === Role.ADMIN}
+          allTags={tagsBody.tags}
+          initialTotalPages={questionsBody.pagination.totalPages}
+        />
       </div>
+      {/* TODO: BusinessSkillとQ&Aタグの関連付け後、OPEN・本人以外の推薦APIへ変更する。現状は一覧先頭3件。 */}
       <AnswerableQuestions posts={posts} />
     </div>
   )

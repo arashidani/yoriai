@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { formatDateJst } from '@/lib/date-time'
 import { cn } from '@/lib/utils'
 
 type User = {
@@ -94,7 +95,7 @@ export function UserTable({ users: initialUsers, currentUserId }: UserTableProps
                       {user.role}
                     </span>
                   </TableCell>
-                  <TableCell>{new Date(user.createdAt).toLocaleDateString('ja-JP')}</TableCell>
+                  <TableCell>{formatDateJst(user.createdAt)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <EditUserDialog

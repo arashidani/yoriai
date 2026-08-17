@@ -1,8 +1,10 @@
 'use client'
 
 import { Search } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { client } from '@/lib/hono/client'
 import type { Post } from './post-list'
 import { PostList } from './post-list'
 import { QaFeedStatusFilter, QaFeedTagFilter } from './qa-feed-controls'
@@ -10,31 +12,92 @@ import { QaFeedStatusFilter, QaFeedTagFilter } from './qa-feed-controls'
 const STATUS_FILTERS = [
   { id: 'all', label: 'すべて' },
   { id: 'resolved', label: '解決済み' },
-  { id: 'unanswered', label: '未回答' },
+  { id: 'unanswered', label: '回答募集中' },
 ]
-
-const STATUS_PREDICATES: Record<string, (post: Post) => boolean> = {
-  all: () => true,
-  resolved: (post) => post.status === 'RESOLVED',
-  unanswered: (post) => post.status === 'OPEN',
-}
 
 type QaFeedProps = {
   posts: Post[]
   isAdmin: boolean
   allTags: { id: string; name: string }[]
+  initialTotalPages?: number
 }
 
-/** 検索・フィルタ行と質問一覧。キーワードはタイトル・本文に対する部分一致、ステータスは post.status との一致、タグはAND条件（選択した全タグを持つ投稿のみ）で絞り込む。 */
-export function QaFeed({ posts, isAdmin, allTags }: QaFeedProps) {
+function toPost(question: {
+  id: string
+  title: string
+  body: string
+  displayAuthor: { displayName: string }
+  isOwnQuestion: boolean
+  likeCount: number
+  liked: boolean
+  saved: boolean
+  status: 'OPEN' | 'RESOLVED'
+  answerCount: number
+  tag: { id: string; name: string } | null
+  createdAt: Date | string
+}): Post {
+  return {
+    id: question.id,
+    title: question.title,
+    body: question.body,
+    displayName: question.displayAuthor.displayName,
+    isOwnQuestion: question.isOwnQuestion,
+    likeCount: question.likeCount,
+    liked: question.liked,
+    saved: question.saved,
+    status: question.status,
+    answerCount: question.answerCount,
+    tags: question.tag ? [question.tag] : [],
+    createdAt: question.createdAt,
+  }
+}
+
+/** 検索・状態・単一タグ・ページをAPI Queryへ反映する質問一覧。 */
+export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFeedProps) {
   const [keyword, setKeyword] = useState('')
   const [status, setStatus] = useState('all')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(initialTotalPages)
+  const [visiblePosts, setVisiblePosts] = useState(posts)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const latestRequestId = useRef(0)
 
-  const filteredPosts = posts
-    .filter(STATUS_PREDICATES[status] ?? STATUS_PREDICATES.all)
-    .filter((post) => !keyword || post.title.includes(keyword) || post.body.includes(keyword))
-    .filter((post) => selectedTagIds.every((id) => post.tags.some((tag) => tag.id === id)))
+  useEffect(() => {
+    const requestId = ++latestRequestId.current
+    const timer = window.setTimeout(async () => {
+      setLoading(true)
+      setError(null)
+      try {
+        const response = await client.api.questions.$get({
+          query: {
+            page: String(page),
+            pageSize: '10',
+            status: status as 'all' | 'unanswered' | 'resolved',
+            keyword: keyword || undefined,
+            tagId: selectedTagIds[0],
+          },
+        })
+        if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
+        const body = await response.json()
+        if (requestId !== latestRequestId.current) return
+        setVisiblePosts(body.questions.map(toPost))
+        setTotalPages(body.pagination.totalPages)
+      } catch {
+        if (requestId !== latestRequestId.current) return
+        setError('質問一覧の取得に失敗しました。もう一度お試しください。')
+      } finally {
+        if (requestId === latestRequestId.current) setLoading(false)
+      }
+    }, 250)
+    return () => window.clearTimeout(timer)
+  }, [keyword, page, selectedTagIds, status])
+
+  function resetPage(action: () => void) {
+    setPage(1)
+    action()
+  }
 
   return (
     <>
@@ -44,7 +107,7 @@ export function QaFeed({ posts, isAdmin, allTags }: QaFeedProps) {
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
+              onChange={(event) => resetPage(() => setKeyword(event.target.value))}
               placeholder="キーワードを入力"
               aria-label="キーワード検索"
               className="h-10 bg-background pl-9"
@@ -53,13 +116,46 @@ export function QaFeed({ posts, isAdmin, allTags }: QaFeedProps) {
           <QaFeedTagFilter
             tags={allTags}
             selectedTagIds={selectedTagIds}
-            onChange={setSelectedTagIds}
+            onChange={(ids) => resetPage(() => setSelectedTagIds(ids.slice(-1)))}
           />
-          <QaFeedStatusFilter filters={STATUS_FILTERS} value={status} onValueChange={setStatus} />
+          <QaFeedStatusFilter
+            filters={STATUS_FILTERS}
+            value={status}
+            onValueChange={(value) => resetPage(() => setStatus(value))}
+          />
         </div>
       </div>
-      <div className="flex-1 px-8 py-6">
-        <PostList posts={filteredPosts} isAdmin={isAdmin} />
+      <div className="flex-1 px-8 py-6" aria-busy={loading}>
+        {error ? (
+          <p role="alert" className="text-destructive">
+            {error}
+          </p>
+        ) : (
+          <PostList posts={visiblePosts} isAdmin={isAdmin} />
+        )}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1 || loading}
+              onClick={() => setPage((value) => value - 1)}
+            >
+              前へ
+            </Button>
+            <span className="text-paragraph-small">
+              {page} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages || loading}
+              onClick={() => setPage((value) => value + 1)}
+            >
+              次へ
+            </Button>
+          </div>
+        )}
       </div>
     </>
   )

@@ -23,7 +23,6 @@ import {
   TagCategorySchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
-import { toAnswerResponse } from '@/lib/hono/routes/posts'
 import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
@@ -38,6 +37,7 @@ import {
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { toAdminAnswerResponse } from '@/lib/questions/admin-answer-response'
 import {
   createAnonymousProfileSchema,
   updateAnonymousProfileSchema,
@@ -167,6 +167,20 @@ const listPostsRoute = createRoute({
       description: '投稿一覧',
       content: { 'application/json': { schema: z.object({ posts: z.array(PostSchema) }) } },
     },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const deletePostRoute = createRoute({
+  method: 'delete',
+  path: '/posts/{id}',
+  tags: ['admin'],
+  summary: '投稿を削除（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
@@ -692,6 +706,21 @@ export const adminRoute = $(
     })
     return c.json({ posts }, 200)
   })
+  .openapi(deletePostRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') return c.json({ success: true }, 200)
+
+    try {
+      await prisma.post.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
+    return c.json({ success: true }, 200)
+  })
   .openapi(restorePostRoute, async (c) => {
     const { id } = c.req.valid('param')
 
@@ -728,7 +757,7 @@ export const adminRoute = $(
       data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
       include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
     })
-    return c.json({ answer: toAnswerResponse(answer) }, 200)
+    return c.json({ answer: toAdminAnswerResponse(answer) }, 200)
   })
   .openapi(patchUserRoute, async (c) => {
     const currentUser = c.get('user')
@@ -869,7 +898,12 @@ export const adminRoute = $(
       orderBy: { createdAt: 'desc' },
     })
     return c.json(
-      { flags: flags.map((f) => ({ ...f, answer: f.answer ? toAnswerResponse(f.answer) : null })) },
+      {
+        flags: flags.map((f) => ({
+          ...f,
+          answer: f.answer ? toAdminAnswerResponse(f.answer) : null,
+        })),
+      },
       200,
     )
   })
@@ -892,7 +926,7 @@ export const adminRoute = $(
       },
     })
     return c.json(
-      { flag: { ...flag, answer: flag.answer ? toAnswerResponse(flag.answer) : null } },
+      { flag: { ...flag, answer: flag.answer ? toAdminAnswerResponse(flag.answer) : null } },
       200,
     )
   })

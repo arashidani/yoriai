@@ -5,6 +5,7 @@ import { AlertTriangle, Loader2, MessageSquareWarning, ShieldAlert } from 'lucid
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { DeletePostButton } from '@/components/posts/delete-post-button'
+import { formatDateTimeJst } from '@/lib/date-time'
 import { client } from '@/lib/hono/client'
 
 const SEVERITY_ICONS = {
@@ -164,7 +165,7 @@ export function AiFlagList() {
                 <p className="text-sm text-muted-foreground">{flag.detail}</p>
                 <p className="text-xs text-muted-foreground">
                   対象ユーザー: {flag.targetUser?.name ?? '不明'} ・{' '}
-                  {new Date(flag.createdAt).toLocaleString('ja-JP')}
+                  {formatDateTimeJst(flag.createdAt)}
                 </p>
                 {flag.post && (
                   <Link
