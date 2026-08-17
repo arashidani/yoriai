@@ -62,8 +62,16 @@ describe('uploadAvatar / deleteAvatar', () => {
   })
 
   it('削除失敗時はAvatarUploadErrorを投げる', async () => {
-    adminClientMock.bucket.remove.mockResolvedValue({ error: { message: 'boom' } })
+    adminClientMock.bucket.remove.mockResolvedValue({ error: { message: 'boom', status: 500 } })
 
     await expect(deleteAvatar('user-1')).rejects.toThrow(AvatarUploadError)
+  })
+
+  it('ファイルが既に存在しない(404)場合はエラーを投げない', async () => {
+    adminClientMock.bucket.remove.mockResolvedValue({
+      error: { message: 'not found', status: 404 },
+    })
+
+    await expect(deleteAvatar('user-1')).resolves.toBeUndefined()
   })
 })
