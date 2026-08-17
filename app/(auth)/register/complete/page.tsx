@@ -7,7 +7,7 @@ import { RegisterSidePanel } from '@/components/register/register-side-panel'
 export default function CompletePage() {
   return (
     <div className="relative flex h-screen items-center justify-center bg-background-subtle">
-      <RegisterImagePanel image={completeRightImage} />
+      <RegisterImagePanel image={completeRightImage} priority />
 
       <RegisterSidePanel className="gap-16">
         <div className="flex flex-col gap-4 items-center">
