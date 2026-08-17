@@ -244,6 +244,12 @@ export const MOCK_POSTS = [
   },
 ]
 
+/** MOCK の PostTag いずれかが tagId と一致するか。本番 Prisma の tags: { some: { tagId } } と同じ判定。 */
+export function mockPostHasTagId(postId: string, tagId: string): boolean {
+  const post = MOCK_POSTS.find((item) => item.id === postId)
+  return post?.tags.some((tag) => tag.id === tagId) ?? false
+}
+
 export const MOCK_HIROBAS = [
   {
     id: 'hiroba-1',

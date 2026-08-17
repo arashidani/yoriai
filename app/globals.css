@@ -41,6 +41,9 @@
   --color-destructive-text: var(--destructive-text);
   --color-destructive-subtle: var(--destructive-subtle);
   --color-success: var(--success);
+  --color-informative: var(--informative);
+  --color-informative-foreground: var(--informative-foreground);
+  --color-informative-background: var(--informative-background);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -521,6 +524,9 @@
   --destructive-text: #f87171;
   --destructive-subtle: #fef2f2; /* red-50 */
   --success: #34d399; /* emerald-400 */
+  --informative: #33c1ed; /* sky-500 */
+  --informative-foreground: #fffefc;
+  --informative-background: #f0fcff; /* sky-50 */
   --border: #f6f3ed; /* neutral-200 */
   /* NOTE: Figma は input=#ffffff（背景色定義）だが、shadcn の border-input
      は入力欄の枠線色のため視認できる値にする（ユーザー確認済み）。 */
@@ -588,6 +594,9 @@
   --destructive-text: #f87171; /* red-400 */
   --destructive-subtle: #450a0a; /* red-950 */
   --success: #d1fae5; /* emerald-100 */
+  --informative: #33c1ed; /* sky-500（Light と固定・上部 NOTE 参照） */
+  --informative-foreground: #fffefc;
+  --informative-background: #0a4a5e; /* sky-900 */
   --border: #7d746a; /* neutral-700 */
   --input: #7d746a; /* neutral-700（Figma は 白5%。light 側の NOTE 参照） */
   --ring: #7d746a;
