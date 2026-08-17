@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import confirmRightImage from '@/assets/register-confirm-right.png'
+import confirmRightImage from '@/assets/register-confirm-right.svg'
 import { Button } from '@/components/design-system/button'
 import { RegisterImagePanel } from '@/components/register/register-image-panel'
 import { RegisterSidePanel } from '@/components/register/register-side-panel'
@@ -83,7 +83,7 @@ export default function RegisterConfirmPage() {
 
   return (
     <div className="relative flex h-screen items-center justify-center bg-background-subtle">
-      <RegisterImagePanel image={confirmRightImage} />
+      <RegisterImagePanel image={confirmRightImage} priority />
 
       <RegisterSidePanel>
         <div className="w-full max-w-95 h-139 flex flex-col justify-between">

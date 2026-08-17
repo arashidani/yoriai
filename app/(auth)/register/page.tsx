@@ -9,6 +9,7 @@ import eyeIcon from '@/assets/eye.png'
 import eyeOffIcon from '@/assets/eye-off.png'
 import passwordInsufficientIcon from '@/assets/password-insufficient.png'
 import passwordOkIcon from '@/assets/password-ok.png'
+import rightImage from '@/assets/register-right.svg'
 import { Button } from '@/components/design-system/button'
 import { FormField } from '@/components/design-system/form-field'
 import { OnboardingForm } from '@/components/onboarding/onboarding-form'
@@ -124,7 +125,7 @@ function RegisterForm() {
   if (accountCreated) {
     return (
       <div className="relative flex h-screen items-center bg-background-subtle overflow-hidden">
-        <RegisterImagePanel />
+        <RegisterImagePanel priority />
 
         <RegisterSidePanel className="justify-start overflow-y-auto p-8">
           <OnboardingForm />
@@ -135,7 +136,7 @@ function RegisterForm() {
 
   return (
     <div className="relative flex h-screen items-center bg-background-subtle overflow-hidden">
-      <RegisterImagePanel />
+      <RegisterImagePanel image={rightImage} priority />
 
       <RegisterSidePanel>
         <div className="w-full max-w-95 h-139 flex flex-col justify-between">
