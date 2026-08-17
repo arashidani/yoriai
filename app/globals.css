@@ -20,6 +20,7 @@
   --color-background: var(--background);
   --color-background-subtle: var(--background-subtle);
   --color-foreground: var(--foreground);
+  --color-foreground-alt: var(--foreground-alt);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -57,6 +58,14 @@
   --color-display-name-blue: var(--display-name-blue);
   --color-display-name-purple: var(--display-name-purple);
   --color-display-name-gray: var(--display-name-gray);
+  --color-mbti-green: var(--mbti-green);
+  --color-mbti-yellow: var(--mbti-yellow);
+  --color-mbti-blue: var(--mbti-blue);
+  --color-mbti-purple: var(--mbti-purple);
+  --color-mbti-green-bg: var(--mbti-green-bg);
+  --color-mbti-yellow-bg: var(--mbti-yellow-bg);
+  --color-mbti-blue-bg: var(--mbti-blue-bg);
+  --color-mbti-purple-bg: var(--mbti-purple-bg);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-sidebar: var(--sidebar);
@@ -367,6 +376,10 @@
   --color-brand-2-foreground: #b84221;
   --color-brand-3: #7d2a15;
   --color-brand-3-foreground: #ffb19a;
+  /* Figma: unofficial/border-3。Light/Dark 共通の固定色 */
+  --color-border-3: #ece7df;
+  /* Figma: unofficial/border-4。Light/Dark 共通の固定色 */
+  --color-border-4: #ddd6cc;
 }
 
 /* ── alpha プリミティブ ──
@@ -450,14 +463,24 @@
   --text-paragraph-mini: 0.75rem;
   --text-paragraph-mini--line-height: 1rem;
   --text-paragraph-mini--font-weight: 400;
-  --text-caption: 0.875rem;
-  --text-caption--line-height: 1.3125rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
   --text-caption--letter-spacing: 1.5px;
   --text-caption--font-weight: 400;
+  --text-caption-bold: 0.75rem;
+  --text-caption-bold--line-height: 1rem;
+  --text-caption-bold--letter-spacing: 1.5px;
+  --text-caption-bold--font-weight: 700;
   --text-monospaced: 1rem;
   --text-monospaced--line-height: 1.5rem;
   --text-monospaced--letter-spacing: 0.5px;
   --text-monospaced--font-weight: 400;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.25rem;
+  --text-label--font-weight: 700;
+  --text-body-small: 0.875rem;
+  --text-body-small--line-height: 1.25rem;
+  --text-body-small--font-weight: 500;
 
   /* Shadow: デザインシステムスケール。2xs〜xl は Tailwind 既定と同値、
      2xl のみ不透明度がデザインシステム準拠（0.1）で既定（0.25）を上書き。 */
@@ -477,6 +500,7 @@
   --background: #fffefc; /* neutral-50 */
   --background-subtle: #fdfbf7; /* neutral-100 */
   --foreground: #2f2b27; /* neutral-900 */
+  --foreground-alt: #7d746a;
   --card: #ffffff;
   --card-foreground: #2f2b27;
   /* NOTE: Figma は popover を反転（黒地に白文字）で定義しているが、
@@ -520,6 +544,16 @@
   --display-name-blue: #2563eb; /* blue-600 */
   --display-name-purple: #9333ea; /* purple-600 */
   --display-name-gray: #6b7280; /* gray-500 */
+  /* Figma: square-mbti-foreground 系。MBTI色選択チップ（onboarding）専用 */
+  --mbti-green: #059669;
+  --mbti-yellow: #d97706;
+  --mbti-blue: #0891b2;
+  --mbti-purple: #a855f7;
+  /* Figma: square-mbti-background 系。選択済みチップの薄い背景色 */
+  --mbti-green-bg: #d1fae5;
+  --mbti-yellow-bg: #fef3c7;
+  --mbti-blue-bg: #cffafe;
+  --mbti-purple-bg: #f3e8ff;
   --positive: #009689;
   --negative: #f54a00;
 
@@ -549,6 +583,7 @@
   --secondary: #544d46;
   --secondary-foreground: #fdfbf7;
   --secondary-hover: #ece7df;
+  --foreground-alt: #fdfbf7;
   --muted: #544d46;
   --muted-foreground: #a59a8d; /* neutral-600 */
   --accent: #2f2b27;
@@ -577,6 +612,14 @@
   --display-name-blue: #60a5fa; /* blue-400 */
   --display-name-purple: #c084fc; /* purple-400 */
   --display-name-gray: #9ca3af; /* gray-400 */
+  --mbti-green: #059669;
+  --mbti-yellow: #d97706;
+  --mbti-blue: #0891b2;
+  --mbti-purple: #a855f7;
+  --mbti-green-bg: #d1fae5;
+  --mbti-yellow-bg: #fef3c7;
+  --mbti-blue-bg: #cffafe;
+  --mbti-purple-bg: #f3e8ff;
   --positive: #00bc7d;
   --negative: #ff2056;
 
@@ -604,5 +647,23 @@
   html {
     /* 本文フォント。font-sans は Inter → Noto Sans JP の順にフォールバックする */
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* Figma: unofficial/accent-3。幅6px・角丸のカスタムスクロールバー（webkit系ブラウザのみ） */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-3) transparent;
+  }
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-3);
+    border-radius: 4px;
   }
 }
