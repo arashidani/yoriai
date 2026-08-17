@@ -6392,7 +6392,7 @@
                   "$ref": "#/components/schemas/Error"
                 },
                 "example": {
-                  "error": "ファイルサイズが大きすぎます（10MB以下にしてください）"
+                  "error": "ファイルサイズが大きすぎます（4.5MB以下にしてください）"
                 }
               }
             }
