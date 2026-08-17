@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { delay, HttpResponse, http } from 'msw'
 import { expect, screen, userEvent, waitFor } from 'storybook/test'
+import { formatRelativeTime } from '@/lib/date-time'
 import { QaFeed } from './qa-feed'
 
 const meta = {
@@ -37,6 +38,8 @@ const basePosts = [
     answerCount: 1,
     tags: [{ id: 'tag-1', name: 'Next.js' }],
     createdAt: '2024-01-10T00:00:00Z',
+    updatedAt: '2024-01-10T00:00:00Z',
+    timestamp: formatRelativeTime('2024-01-10T00:00:00Z'),
   },
   {
     id: 'post-2',
@@ -51,6 +54,8 @@ const basePosts = [
     answerCount: 0,
     tags: [{ id: 'tag-2', name: 'TypeScript' }],
     createdAt: '2024-01-11T00:00:00Z',
+    updatedAt: '2024-01-11T00:00:00Z',
+    timestamp: formatRelativeTime('2024-01-11T00:00:00Z'),
   },
 ]
 
