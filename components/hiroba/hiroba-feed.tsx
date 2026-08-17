@@ -1,6 +1,5 @@
 'use client'
 
-import { SelectCategories } from '@/components/design-system/ui/select-categories'
 import Link from 'next/link'
 import { useState } from 'react'
 import { KeywordInput } from '@/components/design-system/ui/keyword-input'
@@ -12,17 +11,15 @@ type HirobaFeedProps = {
   hirobaSlug: string
   posts: HirobaPost[]
   isAdmin: boolean
-  allTags: { id: string; name: string }[]
 }
 
-/** 検索・フィルタ行とひろば投稿一覧。キーワードはタイトル・本文に対する部分一致、タグは択一で絞り込む。 */
-export function HirobaFeed({ hirobaSlug, posts, isAdmin, allTags }: HirobaFeedProps) {
+/** 検索行とひろば投稿一覧。キーワードはタイトル・本文に対する部分一致で絞り込む。 */
+export function HirobaFeed({ hirobaSlug, posts, isAdmin }: HirobaFeedProps) {
   const [keyword, setKeyword] = useState('')
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
 
-  const filteredPosts = posts
-    .filter((post) => !keyword || post.title.includes(keyword) || post.body.includes(keyword))
-    .filter((post) => selectedTagIds.every((id) => post.tags.some((tag) => tag.id === id)))
+  const filteredPosts = posts.filter(
+    (post) => !keyword || post.title.includes(keyword) || post.body.includes(keyword),
+  )
 
   return (
     <>
@@ -35,11 +32,6 @@ export function HirobaFeed({ hirobaSlug, posts, isAdmin, allTags }: HirobaFeedPr
               aria-label="キーワード検索"
             />
           </div>
-          <SelectCategories
-            categories={allTags}
-            value={selectedTagIds[0] ?? null}
-            onValueChange={(tagId) => setSelectedTagIds(tagId ? [tagId] : [])}
-          />
           <Link
             href={`/hiroba/${hirobaSlug}/new`}
             className={buttonVariants({ size: 'default', className: 'shrink-0 rounded-full' })}
