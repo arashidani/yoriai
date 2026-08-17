@@ -12,11 +12,24 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 // サーバーレス環境（Vercel等）のリクエストボディ上限(~4.5MB)に合わせる
 const MAX_ORIGINAL_BYTES = 4.5 * 1024 * 1024
 
+/**
+ * プラットフォームのリクエストボディ上限超過など、Honoまで到達せずに
+ * インフラ側が返す非JSONエラー（HTML等）が来てもres.json()で例外を投げないようにする
+ */
+async function parseErrorMessage(res: Response, fallback: string): Promise<string> {
+  if (!res.headers.get('content-type')?.includes('application/json')) return fallback
+  try {
+    const body: unknown = await res.json()
+    return body && typeof body === 'object' && 'error' in body ? String(body.error) : fallback
+  } catch {
+    return fallback
+  }
+}
+
 async function uploadAvatarRequest(file: File): Promise<string | null> {
   const res = await client.api.users.me.avatar.$put({ form: { file } })
   if (!res.ok) {
-    const body = await res.json()
-    throw new Error('error' in body ? body.error : 'アップロードに失敗しました')
+    throw new Error(await parseErrorMessage(res, 'アップロードに失敗しました'))
   }
   const { user } = await res.json()
   return user.avatarUrl
@@ -25,8 +38,7 @@ async function uploadAvatarRequest(file: File): Promise<string | null> {
 async function deleteAvatarRequest(): Promise<string | null> {
   const res = await client.api.users.me.avatar.$delete()
   if (!res.ok) {
-    const body = await res.json()
-    throw new Error('error' in body ? body.error : '削除に失敗しました')
+    throw new Error(await parseErrorMessage(res, '削除に失敗しました'))
   }
   const { user } = await res.json()
   return user.avatarUrl
