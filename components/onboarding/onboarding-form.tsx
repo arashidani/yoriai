@@ -2,11 +2,12 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { ImageIcon, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, type FieldPath, useForm } from 'react-hook-form'
 import { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
+import { AvatarUpload } from '@/components/profile/avatar-upload'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
@@ -119,10 +120,17 @@ function CheckboxList({
   )
 }
 
-export function OnboardingForm({ initialUsername = '' }: { initialUsername?: string }) {
+export function OnboardingForm({
+  initialUsername = '',
+  initialAvatarUrl = null,
+}: {
+  initialUsername?: string
+  initialAvatarUrl?: string | null
+}) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
   const {
     data: options,
     isLoading,
@@ -429,12 +437,9 @@ export function OnboardingForm({ initialUsername = '' }: { initialUsername?: str
       )}
 
       {step === 5 && (
-        <section className="flex min-h-72 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-input text-center">
-          <ImageIcon className="size-12 text-muted-foreground" />
+        <section className="flex min-h-72 flex-col items-center justify-center gap-6 rounded-xl border border-dashed border-input p-8 text-center">
           <h1 className="text-heading-2">アイコン設定</h1>
-          <p className="text-paragraph-small text-muted-foreground">
-            アイコンアップロードは今後追加予定です。
-          </p>
+          <AvatarUpload avatarUrl={avatarUrl} onAvatarUrlChange={setAvatarUrl} />
         </section>
       )}
 
@@ -471,7 +476,7 @@ export function OnboardingForm({ initialUsername = '' }: { initialUsername?: str
             <dt className="font-bold">MBTI色</dt>
             <dd>{colorChoices.find((item) => item.value === values.displayNameColor)?.label}</dd>
             <dt className="font-bold">アイコン</dt>
-            <dd>未設定</dd>
+            <dd>{avatarUrl ? '設定済み' : '未設定'}</dd>
           </dl>
           {submitError && <p className="text-sm text-destructive">{submitError}</p>}
         </section>
