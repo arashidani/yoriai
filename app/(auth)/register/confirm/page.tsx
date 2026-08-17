@@ -83,7 +83,7 @@ export default function RegisterConfirmPage() {
 
   return (
     <div className="relative flex h-screen items-center justify-center bg-background-subtle">
-      <RegisterImagePanel image={confirmRightImage} />
+      <RegisterImagePanel image={confirmRightImage} priority />
 
       <RegisterSidePanel>
         <div className="w-full max-w-95 h-139 flex flex-col justify-between">

@@ -157,7 +157,7 @@ export function OnboardingForm({ initialUsername = '' }: { initialUsername?: str
 
   return (
     <div className="relative flex h-screen items-center justify-center overflow-hidden bg-background-subtle">
-      <RegisterImagePanel image={leftImages[step]} />
+      <RegisterImagePanel image={leftImages[step]} priority={step === 0} />
 
       <RegisterSidePanel>
         <form

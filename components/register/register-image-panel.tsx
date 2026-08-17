@@ -4,9 +4,13 @@ import defaultRightImage from '@/assets/register-right.png'
 
 type RegisterImagePanelProps = {
   image?: StaticImageData
+  priority?: boolean
 }
 
-export function RegisterImagePanel({ image = defaultRightImage }: RegisterImagePanelProps) {
+export function RegisterImagePanel({
+  image = defaultRightImage,
+  priority = false,
+}: RegisterImagePanelProps) {
   return (
     <div className="w-1/2 ">
       <header>
@@ -16,7 +20,14 @@ export function RegisterImagePanel({ image = defaultRightImage }: RegisterImageP
         </h1>
       </header>
 
-      <Image src={image} width={732} height={900} alt="" className="w-full h-auto object-cover" />
+      <Image
+        src={image}
+        priority={priority}
+        width={732}
+        height={900}
+        alt=""
+        className="w-full h-auto object-cover"
+      />
     </div>
   )
 }

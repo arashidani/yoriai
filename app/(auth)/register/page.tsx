@@ -125,7 +125,7 @@ function RegisterForm() {
   if (accountCreated) {
     return (
       <div className="relative flex h-screen items-center bg-background-subtle overflow-hidden">
-        <RegisterImagePanel />
+        <RegisterImagePanel priority />
 
         <RegisterSidePanel className="justify-start overflow-y-auto p-8">
           <OnboardingForm />
@@ -136,7 +136,7 @@ function RegisterForm() {
 
   return (
     <div className="relative flex h-screen items-center bg-background-subtle overflow-hidden">
-      <RegisterImagePanel image={rightImage} />
+      <RegisterImagePanel image={rightImage} priority />
 
       <RegisterSidePanel>
         <div className="w-full max-w-95 h-139 flex flex-col justify-between">
