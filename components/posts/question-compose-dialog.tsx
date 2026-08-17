@@ -1,12 +1,13 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { PencilLine } from 'lucide-react'
+import { Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { QuestionCompletionModal } from '@/components/design-system/question-completion-modal'
 import { QuestionFormModal } from '@/components/design-system/question-form-modal'
-import { buttonVariants } from '@/components/ui/button'
+import { ActionButtons } from '@/components/design-system/ui/action-buttons'
+import { Button } from '@/components/design-system/button'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { client } from '@/lib/hono/client'
 import type { CreatePostInput } from '@/lib/schemas/post'
@@ -101,16 +102,23 @@ export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProp
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} disablePointerDismissal>
-      <DialogTrigger
-        render={
-          <button
-            type="button"
-            className={buttonVariants({ size: 'lg', className: 'rounded-full px-5' })}
-          >
-            <PencilLine />
-            質問する
-          </button>
+      <ActionButtons
+        primaryAction={
+          <DialogTrigger
+            render={
+              <Button
+                type="button"
+                size="large"
+                className="shrink-0"
+                leftIcon={<Pencil className="size-4" />}
+              >
+                質問する
+              </Button>
+            }
+          />
         }
+        secondaryLabel="Q&A管理"
+        onSecondaryClick={() => router.push('/my-questions')}
       />
       <DialogContent
         showCloseButton={false}
