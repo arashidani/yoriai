@@ -21,6 +21,17 @@ export const Primary: Story = {
   },
 }
 
+export const Secondary: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'secondary',
+    size: 'extraLarge',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeVisible()
+  },
+}
+
 export const Disabled: Story = {
   args: {
     children: 'ボタン',
@@ -41,5 +52,60 @@ export const LongLabel: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'プロフィール設定に進む' })).toBeVisible()
+  },
+}
+
+export const Large: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'primary',
+    size: 'large',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeVisible()
+  },
+}
+
+export const Default: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'primary',
+    size: 'default',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeVisible()
+  },
+}
+
+export const Ghost: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'ghost',
+    size: 'large',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeVisible()
+  },
+}
+
+export const GhostDefault: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'ghost',
+    size: 'default',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeVisible()
+  },
+}
+
+export const SecondaryDisabled: Story = {
+  args: {
+    children: 'ボタン',
+    variant: 'secondary',
+    isDisabled: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeDisabled()
   },
 }

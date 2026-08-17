@@ -1,162 +1,229 @@
 'use client'
 
-import { Search } from 'lucide-react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
-import type { Post } from './post-list'
-import { PostList } from './post-list'
-import { QaFeedStatusFilter, QaFeedTagFilter } from './qa-feed-controls'
+import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
+import { Pagination } from '@/components/design-system/ui/pagination'
+import { PostCard } from './post-card'
+import { QaFeedStatusFilter } from './qa-feed-controls'
+import { QaFilterBar } from './qa-filter-bar'
 
 const STATUS_FILTERS = [
-  { id: 'all', label: 'すべて' },
+  { id: 'all', label: '全て' },
   { id: 'resolved', label: '解決済み' },
   { id: 'unanswered', label: '回答募集中' },
-]
+] as const
+
+const PAGE_SIZE = 10
+const KEYWORD_DEBOUNCE_MS = 250
+
+type StatusFilter = (typeof STATUS_FILTERS)[number]['id']
 
 type QaFeedProps = {
-  posts: Post[]
+  posts?: QaPost[]
   isAdmin: boolean
   allTags: { id: string; name: string }[]
   initialTotalPages?: number
+  initialTotal?: number
 }
 
-function toPost(question: {
-  id: string
-  title: string
-  body: string
-  displayAuthor: { displayName: string }
-  isOwnQuestion: boolean
-  likeCount: number
-  liked: boolean
-  saved: boolean
-  status: 'OPEN' | 'RESOLVED'
-  answerCount: number
-  tag: { id: string; name: string } | null
-  createdAt: Date | string
-}): Post {
+type QuestionsResult = {
+  posts: QaPost[]
+  totalPages: number
+  total: number
+}
+
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedValue(value), delay)
+    return () => window.clearTimeout(timer)
+  }, [delay, value])
+
+  return debouncedValue
+}
+
+async function fetchQuestions(params: {
+  page: number
+  status: StatusFilter
+  keyword: string
+  tagId?: string
+}): Promise<QuestionsResult> {
+  const response = await client.api.questions.$get({
+    query: {
+      page: String(params.page),
+      pageSize: String(PAGE_SIZE),
+      status: params.status,
+      keyword: params.keyword || undefined,
+      tagId: params.tagId,
+    },
+  })
+  if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
+  const body = await response.json()
   return {
-    id: question.id,
-    title: question.title,
-    body: question.body,
-    displayName: question.displayAuthor.displayName,
-    isOwnQuestion: question.isOwnQuestion,
-    likeCount: question.likeCount,
-    liked: question.liked,
-    saved: question.saved,
-    status: question.status,
-    answerCount: question.answerCount,
-    tags: question.tag ? [question.tag] : [],
-    createdAt: question.createdAt,
+    posts: body.questions.map(toQaPost),
+    totalPages: body.pagination.totalPages,
+    total: body.pagination.total,
   }
 }
 
+function QaPostListSkeleton() {
+  return (
+    <div className="flex w-full flex-col divide-y divide-border" role="status" aria-label="読み込み中">
+      {['skeleton-1', 'skeleton-2', 'skeleton-3'].map((key) => (
+        <div key={key} className="flex flex-col gap-4 p-6" aria-hidden>
+          <div className="flex items-start gap-4">
+            <Skeleton className="size-12.5 shrink-0 rounded-md" />
+            <div className="min-w-0 flex-1 space-y-3">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+              <div className="flex gap-4">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-4 w-12" />
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+type QaQuestionListProps = {
+  posts: QaPost[]
+  isAdmin: boolean
+}
+
+function QaQuestionList({ posts, isAdmin }: QaQuestionListProps) {
+  const [deletedIds, setDeletedIds] = useState<string[]>([])
+  const visiblePosts = posts.filter((post) => !deletedIds.includes(post.id))
+
+  if (visiblePosts.length === 0) {
+    return <p className="text-secondary-foreground">まだ質問がありません。</p>
+  }
+
+  return (
+    <div className="flex w-full flex-col divide-y divide-border">
+      {visiblePosts.map((post) => (
+        <PostCard
+          key={post.id}
+          post={post}
+          isAdmin={isAdmin}
+          onDeleted={(id) => setDeletedIds((prev) => [...prev, id])}
+        />
+      ))}
+    </div>
+  )
+}
+
 /** 検索・状態・単一タグ・ページをAPI Queryへ反映する質問一覧。 */
-export function QaFeed({ posts, isAdmin, allTags, initialTotalPages = 1 }: QaFeedProps) {
+export function QaFeed({
+  posts,
+  isAdmin,
+  allTags,
+  initialTotalPages = 1,
+  initialTotal = 0,
+}: QaFeedProps) {
   const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState('all')
+  const [status, setStatus] = useState<StatusFilter>('all')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(initialTotalPages)
-  const [visiblePosts, setVisiblePosts] = useState(posts)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const latestRequestId = useRef(0)
+  const listRef = useRef<HTMLDivElement>(null)
+  const debouncedKeyword = useDebouncedValue(keyword, KEYWORD_DEBOUNCE_MS)
+  const tagId = selectedTagIds[0]
+  const isDefaultQuery =
+    page === 1 && status === 'all' && debouncedKeyword === '' && selectedTagIds.length === 0
 
-  useEffect(() => {
-    const requestId = ++latestRequestId.current
-    const timer = window.setTimeout(async () => {
-      setLoading(true)
-      setError(null)
-      try {
-        const response = await client.api.questions.$get({
-          query: {
-            page: String(page),
-            pageSize: '10',
-            status: status as 'all' | 'unanswered' | 'resolved',
-            keyword: keyword || undefined,
-            tagId: selectedTagIds[0],
-          },
-        })
-        if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
-        const body = await response.json()
-        if (requestId !== latestRequestId.current) return
-        setVisiblePosts(body.questions.map(toPost))
-        setTotalPages(body.pagination.totalPages)
-      } catch {
-        if (requestId !== latestRequestId.current) return
-        setError('質問一覧の取得に失敗しました。もう一度お試しください。')
-      } finally {
-        if (requestId === latestRequestId.current) setLoading(false)
-      }
-    }, 250)
-    return () => window.clearTimeout(timer)
-  }, [keyword, page, selectedTagIds, status])
+  const { data, isPending, isFetching, isPlaceholderData, error } = useQuery({
+    queryKey: ['questions', { page, status, keyword: debouncedKeyword, tagId }],
+    queryFn: () =>
+      fetchQuestions({
+        page,
+        status,
+        keyword: debouncedKeyword,
+        tagId,
+      }),
+    initialData:
+      posts && isDefaultQuery
+        ? { posts, totalPages: initialTotalPages, total: initialTotal }
+        : undefined,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  })
+
+  const visiblePosts = data?.posts ?? []
+  const totalPages = data?.totalPages ?? initialTotalPages
+  const total = data?.total ?? initialTotal
+  const showSkeleton = isPending
+  // クエリキー変更で前データを残している再取得のみ。SSR の isFetching 差による hydration mismatch を避ける
+  const showSpinner = isFetching && isPlaceholderData
 
   function resetPage(action: () => void) {
     setPage(1)
     action()
   }
 
+  function handlePageChange(nextPage: number) {
+    setPage(nextPage)
+    listRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
+  }
+
   return (
-    <>
-      <div className="sticky top-25 z-20 border-b border-input bg-background px-4 py-4 sm:px-8 sm:py-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative w-full min-w-0 sm:flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={keyword}
-              onChange={(event) => resetPage(() => setKeyword(event.target.value))}
-              placeholder="キーワードを入力"
-              aria-label="キーワード検索"
-              className="h-10 bg-background pl-9"
-            />
+    <div className="relative flex flex-1 flex-col">
+      {showSpinner && (
+        <div className="absolute inset-0 z-40 bg-background/70">
+          {/* リストが長くてもスピナーが視界に入るよう、ビューポート中央に留める */}
+          <div className="sticky top-1/2 flex -translate-y-1/2 justify-center">
+            <Spinner className="size-8 text-primary" aria-label="読み込み中" />
           </div>
-          <QaFeedTagFilter
+        </div>
+      )}
+      <div className="sticky top-25 z-20 bg-background px-4 py-4 sm:px-8 sm:py-5">
+        <div className="flex flex-col gap-6">
+          <QaFilterBar
+            keyword={keyword}
+            onKeywordChange={(value) => resetPage(() => setKeyword(value))}
             tags={allTags}
             selectedTagIds={selectedTagIds}
-            onChange={(ids) => resetPage(() => setSelectedTagIds(ids.slice(-1)))}
+            onSelectedTagIdsChange={(ids) => resetPage(() => setSelectedTagIds(ids))}
           />
           <QaFeedStatusFilter
-            filters={STATUS_FILTERS}
+            filters={[...STATUS_FILTERS]}
             value={status}
-            onValueChange={(value) => resetPage(() => setStatus(value))}
+            onValueChange={(value) => resetPage(() => setStatus(value as StatusFilter))}
           />
         </div>
       </div>
-      <div className="flex-1 px-8 py-6" aria-busy={loading}>
+      <div ref={listRef} className="flex-1 scroll-mt-[17rem] px-8 py-6" aria-busy={showSpinner}>
         {error ? (
           <p role="alert" className="text-destructive">
-            {error}
+            質問一覧の取得に失敗しました。もう一度お試しください。
           </p>
+        ) : showSkeleton ? (
+          <QaPostListSkeleton />
         ) : (
-          <PostList posts={visiblePosts} isAdmin={isAdmin} />
+          <QaQuestionList posts={visiblePosts} isAdmin={isAdmin} />
         )}
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1 || loading}
-              onClick={() => setPage((value) => value - 1)}
-            >
-              前へ
-            </Button>
-            <span className="text-paragraph-small">
-              {page} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages || loading}
-              onClick={() => setPage((value) => value + 1)}
-            >
-              次へ
-            </Button>
+        {total >= 1 && (
+          <div className="mt-6 flex flex-col items-center gap-2">
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              disabled={showSpinner}
+              onPageChange={handlePageChange}
+            />
+            <p className="text-paragraph-small text-muted-foreground">
+              {total}件中 {(page - 1) * PAGE_SIZE + 1}~{Math.min(page * PAGE_SIZE, total)}件を表示
+            </p>
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }
