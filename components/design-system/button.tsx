@@ -13,7 +13,7 @@ const buttonVariants = cva(
           'inline-flex w-fit min-h-10 items-center justify-center gap-2 px-6 py-4 font-bold text-paragraph',
       },
       variant: {
-        primary: 'bg-primary text-white hover:bg-primary/80',
+        primary: 'bg-primary text-white hover:opacity-50 transition-opacity',
         secondary:
           'border-2 border-input bg-background text-secondary-foreground hover:bg-secondary-hover',
         disabled: 'bg-muted text-muted-foreground',
