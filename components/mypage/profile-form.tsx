@@ -6,6 +6,7 @@ import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { type Control, Controller, useForm } from 'react-hook-form'
 import { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
+import { AvatarUpload } from '@/components/profile/avatar-upload'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -148,6 +149,7 @@ function ProfileEditor({
 }) {
   const queryClient = useQueryClient()
   const [saved, setSaved] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl)
   const form = useForm<UpdateProfileInput>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -186,6 +188,11 @@ function ProfileEditor({
       <Card>
         <CardContent className="space-y-6 p-6">
           <fieldset className="space-y-4">
+            <legend className="text-heading-4">アイコン</legend>
+            <AvatarUpload avatarUrl={avatarUrl} onAvatarUrlChange={setAvatarUrl} />
+          </fieldset>
+
+          <fieldset className="space-y-4 border-t border-border pt-6">
             <legend className="text-heading-4">基本情報</legend>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
