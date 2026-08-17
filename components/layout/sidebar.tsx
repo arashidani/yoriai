@@ -1,6 +1,6 @@
 'use client'
 
-import { BellDot, MessageSquare, Settings, Swords, UsersRound } from 'lucide-react'
+import { BellDot, ListChecks, MessageSquare, Settings, Swords, UsersRound } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Logo } from '@/components/brand/logo'
@@ -12,6 +12,7 @@ const navItems = [
   { href: '/hiroba', label: 'ひろば', icon: UsersRound },
   { href: '/', label: 'おせっかいQA', icon: MessageSquare },
   { href: '/missions', label: 'ミッション', icon: Swords },
+  { href: '/my-questions', label: '投稿・保存した質問', icon: ListChecks },
   { href: '/mypage', label: 'マイページ', icon: Settings },
 ]
 

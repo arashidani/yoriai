@@ -84,7 +84,7 @@ export const StatusFilter: Story = {
     await expect(canvas.getByText(/Next\.js App Router/)).toBeVisible()
     await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
 
-    const unanswered = canvas.getByRole('button', { name: '未回答' })
+    const unanswered = canvas.getByRole('button', { name: '回答募集中' })
     await userEvent.click(unanswered)
     await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
     await expect(canvas.getByText(/TypeScriptの型エラー/)).toBeVisible()
