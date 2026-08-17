@@ -31,5 +31,6 @@ export async function uploadAvatar(userId: string, image: Buffer): Promise<strin
 export async function deleteAvatar(userId: string): Promise<void> {
   const admin = createSupabaseAdminClient()
   const { error } = await admin.storage.from(AVATAR_BUCKET).remove([avatarPath(userId)])
-  if (error) throw new AvatarUploadError(error.message)
+  // ファイルが既に存在しない場合(404)は「アバターが無い」という目的が既に達成されているので正常系として扱う
+  if (error && error.status !== 404) throw new AvatarUploadError(error.message)
 }
