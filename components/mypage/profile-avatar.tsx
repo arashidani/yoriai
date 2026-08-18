@@ -38,12 +38,14 @@ async function deleteAvatarRequest(): Promise<string | null> {
   return user.avatarUrl
 }
 
-export function OnboardingAvatarUpload({
-  avatarUrl,
+export function ProfileAvatar({
+  avatarUrl = null,
   onAvatarUrlChange,
+  isEditable = false,
 }: {
-  avatarUrl: string | null
-  onAvatarUrlChange: (avatarUrl: string | null) => void
+  avatarUrl?: string | null
+  onAvatarUrlChange?: (avatarUrl: string | null) => void
+  isEditable?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
@@ -58,7 +60,7 @@ export function OnboardingAvatarUpload({
     },
     onMutate: () => setClientError(null),
     onSuccess: (url) => {
-      onAvatarUrlChange(url)
+      onAvatarUrlChange?.(url)
       queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
     },
     onError: (error) => toast.error(error.message),
@@ -88,46 +90,48 @@ export function OnboardingAvatarUpload({
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        disabled={isPending}
-        className="relative size-40.5 cursor-pointer disabled:cursor-not-allowed"
-        aria-label="アイコン画像を選択"
-      >
+    <div className="shrink-0">
+      <div className="relative size-35">
         {avatarUrl ? (
-          <Image
-            src={avatarUrl}
-            alt="アイコン"
-            fill
-            unoptimized
-            className="z-0 rounded-2xl object-cover"
-          />
+          <Image src={avatarUrl} alt="" fill unoptimized className="rounded-lg object-cover" />
         ) : (
-          <Image src={imageNone} alt="" width={162} height={162} className="z-0 object-cover" />
+          <Image
+            src={imageNone}
+            alt=""
+            width={140}
+            height={140}
+            className="size-35 rounded-lg object-cover"
+          />
         )}
+
         {isPending && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/60">
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-background/60">
             <Loader2 className="size-6 animate-spin" aria-label="処理中" />
           </div>
         )}
-        <Image
-          src={plusRound}
-          alt=""
-          width={48}
-          height={48}
-          className="absolute -right-5 bottom-5 z-20"
-        />
-      </button>
 
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED_AVATAR_TYPES.join(',')}
-        className="hidden"
-        onChange={handleFileChange}
-      />
+        {isEditable && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={isPending}
+            className="absolute -right-3.25 bottom-[6.5px] cursor-pointer disabled:cursor-not-allowed"
+            aria-label="アイコン画像を選択"
+          >
+            <Image src={plusRound} alt="" width={41} height={41} />
+          </button>
+        )}
+      </div>
+
+      {isEditable && (
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED_AVATAR_TYPES.join(',')}
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      )}
 
       {clientError && (
         <p className="text-paragraph-small text-destructive" role="alert">
