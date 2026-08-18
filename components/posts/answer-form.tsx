@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
+import { AnswerForm as AnswerFormUI } from '@/components/design-system/ui/answer-form'
 import { client } from '@/lib/hono/client'
 import { type CreateAnswerInput, createAnswerSchema } from '@/lib/schemas/answer'
 
@@ -65,28 +64,27 @@ export function AnswerForm({ postId }: AnswerFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-      {isPostUnavailable && (
-        <Link href="/" className="text-sm font-medium text-primary underline underline-offset-4">
-          一覧に戻る
-        </Link>
-      )}
-      <Textarea
-        placeholder="回答を入力してください"
-        rows={4}
-        disabled={isPostUnavailable}
-        {...register('body')}
-        aria-invalid={!!errors.body}
-      />
-      {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
-      <Button type="submit" disabled={isSubmitting || isPostUnavailable}>
-        {isSubmitting ? '送信中...' : '回答する'}
-      </Button>
-    </form>
+    <section id="answer-form" className="mt-8 scroll-mt-8">
+      <div className="space-y-3">
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        {isPostUnavailable && (
+          <Link href="/" className="text-sm font-medium text-primary underline underline-offset-4">
+            一覧に戻る
+          </Link>
+        )}
+        <AnswerFormUI
+          onSubmit={handleSubmit(onSubmit)}
+          placeholder="回答を入力する"
+          submitLabel={isSubmitting ? '送信中...' : '回答する'}
+          disabled={isSubmitting || isPostUnavailable}
+          textareaProps={{ rows: 4, ...register('body'), 'aria-invalid': !!errors.body }}
+        />
+        {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
+      </div>
+    </section>
   )
 }
