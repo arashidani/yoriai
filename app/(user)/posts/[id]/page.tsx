@@ -45,6 +45,7 @@ export default async function QaDetailPage({ params }: Props) {
       <Separator />
       <div className="flex w-full flex-col gap-3">
         <QuestionCard
+          avatarSrc={question.displayAuthor.avatarUrl ?? undefined}
           authorName={question.displayAuthor.displayName}
           date={new Date(question.createdAt).toLocaleDateString('ja-JP')}
           category={question.tag?.name}
