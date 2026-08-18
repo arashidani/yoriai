@@ -6,6 +6,7 @@ export type QaPost = {
   title: string
   body: string
   displayName: string
+  avatarUrl?: string | null
   isOwnQuestion: boolean
   likeCount: number
   liked: boolean
@@ -20,7 +21,7 @@ type ApiQuestion = {
   id: string
   title: string
   body: string
-  displayAuthor: { displayName: string }
+  displayAuthor: { displayName: string; avatarUrl?: string | null }
   isOwnQuestion: boolean
   likeCount: number
   liked: boolean
@@ -37,6 +38,7 @@ export function toQaPost(question: ApiQuestion): QaPost {
     title: question.title,
     body: question.body,
     displayName: question.displayAuthor.displayName,
+    avatarUrl: question.displayAuthor.avatarUrl,
     isOwnQuestion: question.isOwnQuestion,
     likeCount: question.likeCount,
     liked: question.liked,
@@ -58,6 +60,7 @@ export function toQuestionItemData(post: QaPost): QuestionItemData {
     postId: post.id,
     href: `/posts/${post.id}`,
     authorName: post.displayName,
+    avatarSrc: post.avatarUrl ?? undefined,
     category: post.tags[0]?.name,
     status: post.status,
     timestamp: formatRelativeTime(post.createdAt),
