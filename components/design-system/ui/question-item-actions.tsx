@@ -94,13 +94,15 @@ function QuestionItemActions({
   return (
     <div className="flex w-full items-center gap-4">
       <CommentCount count={commentCount} size={size} />
-      <LikeButton
-        count={likeCount}
-        size={size}
-        pressed={liked}
-        onPressedChange={handleLikedChange}
-        disabled={isOwnQuestion || likePending}
-      />
+      {!isOwnQuestion && (
+        <LikeButton
+          count={likeCount}
+          size={size}
+          pressed={liked}
+          onPressedChange={handleLikedChange}
+          disabled={likePending}
+        />
+      )}
       <BookmarkButton
         count={bookmarkCount}
         size={size}
