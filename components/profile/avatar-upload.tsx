@@ -88,7 +88,6 @@ export function AvatarUpload({
     setIsPreparing(true)
     try {
       const preparedFile = await prepareAvatarFileForUpload(file)
-      uploadMutation.mutate(preparedFile)
     } catch (error) {
       if (error instanceof AvatarClientValidationError) {
         setClientError(error.message)
