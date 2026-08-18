@@ -529,6 +529,13 @@
             ],
             "example": "BLUE"
           },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "https://xxxx.supabase.co/storage/v1/object/public/profiles/user-1.webp?v=1"
+          },
           "role": {
             "type": "string",
             "enum": [
@@ -550,6 +557,7 @@
           "name",
           "username",
           "displayNameColor",
+          "avatarUrl",
           "role",
           "createdAt"
         ]
@@ -6751,8 +6759,7 @@
                     "items": {
                       "type": "string",
                       "minLength": 1
-                    },
-                    "minItems": 1
+                    }
                   },
                   "lunchPreference": {
                     "type": "string",
@@ -6793,9 +6800,7 @@
                   "joinedYear",
                   "joinedMonth",
                   "businessSkillIds",
-                  "interestIds",
                   "lunchPreference",
-                  "displayNameColor",
                   "name"
                 ]
               }
@@ -6835,6 +6840,180 @@
                 },
                 "example": {
                   "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me/avatar": {
+      "put": {
+        "tags": [
+          "users"
+        ],
+        "summary": "アバター画像をアップロード（512x512のWebPに変換して保存）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "更新後のユーザー",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "対応していない画像形式",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "対応していない画像形式です"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "ファイルサイズ超過",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ファイルサイズが大きすぎます（4.5MB以下にしてください）"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "画像処理に失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "画像を処理できませんでした"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "アップロード失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "画像のアップロードに失敗しました"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "アバター画像を削除",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "更新後のユーザー",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "削除失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "画像の削除に失敗しました"
                 }
               }
             }
@@ -6966,8 +7145,7 @@
                     "items": {
                       "type": "string",
                       "minLength": 1
-                    },
-                    "minItems": 1
+                    }
                   },
                   "lunchPreference": {
                     "type": "string",
@@ -7003,9 +7181,7 @@
                   "joinedYear",
                   "joinedMonth",
                   "businessSkillIds",
-                  "interestIds",
-                  "lunchPreference",
-                  "displayNameColor"
+                  "lunchPreference"
                 ]
               }
             }
