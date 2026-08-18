@@ -8,9 +8,11 @@ import { toast } from 'sonner'
 import imageNone from '@/assets/image-none.svg'
 import plusRound from '@/assets/plus-round.svg'
 import { client } from '@/lib/hono/client'
-
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-const MAX_ORIGINAL_BYTES = 4.5 * 1024 * 1024
+import {
+  ACCEPTED_AVATAR_TYPES,
+  AvatarClientValidationError,
+  prepareAvatarFileForUpload,
+} from '@/lib/image/process-avatar-client'
 
 async function parseErrorMessage(res: Response, fallback: string): Promise<string> {
   if (!res.headers.get('content-type')?.includes('application/json')) return fallback
@@ -45,6 +47,7 @@ export function OnboardingAvatarUpload({
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
+  const [isPreparing, setIsPreparing] = useState(false)
   const queryClient = useQueryClient()
 
   const uploadMutation = useMutation({
@@ -61,24 +64,27 @@ export function OnboardingAvatarUpload({
     onError: (error) => toast.error(error.message),
   })
 
-  const isPending = uploadMutation.isPending
+  const isPending = uploadMutation.isPending || isPreparing
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
 
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      setClientError(
-        '対応していない画像形式です（JPEG, PNG, WebP, GIFのいずれかを選択してください）',
-      )
-      return
+    setClientError(null)
+    setIsPreparing(true)
+    try {
+      const preparedFile = await prepareAvatarFileForUpload(file)
+      uploadMutation.mutate(preparedFile)
+    } catch (error) {
+      if (error instanceof AvatarClientValidationError) {
+        setClientError(error.message)
+      } else {
+        setClientError('画像の圧縮に失敗しました。別の画像でお試しください')
+      }
+    } finally {
+      setIsPreparing(false)
     }
-    if (file.size > MAX_ORIGINAL_BYTES) {
-      setClientError('ファイルサイズが大きすぎます（4.5MB以下にしてください）')
-      return
-    }
-    uploadMutation.mutate(file)
   }
 
   return (
@@ -106,7 +112,7 @@ export function OnboardingAvatarUpload({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED_TYPES.join(',')}
+        accept={ACCEPTED_AVATAR_TYPES.join(',')}
         className="hidden"
         onChange={handleFileChange}
       />

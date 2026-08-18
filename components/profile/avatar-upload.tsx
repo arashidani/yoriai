@@ -7,10 +7,11 @@ import { type ChangeEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { client } from '@/lib/hono/client'
-
-const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-// サーバーレス環境（Vercel等）のリクエストボディ上限(~4.5MB)に合わせる
-const MAX_ORIGINAL_BYTES = 4.5 * 1024 * 1024
+import {
+  ACCEPTED_AVATAR_TYPES,
+  prepareAvatarFileForUpload,
+  AvatarClientValidationError,
+} from '@/lib/image/process-avatar-client'
 
 /**
  * プラットフォームのリクエストボディ上限超過など、Honoまで到達せずに
@@ -53,6 +54,7 @@ export function AvatarUpload({
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
+  const [isPreparing, setIsPreparing] = useState(false)
   const queryClient = useQueryClient()
 
   const uploadMutation = useMutation({
@@ -75,24 +77,27 @@ export function AvatarUpload({
     onError: (error) => toast.error(error.message),
   })
 
-  const isPending = uploadMutation.isPending || deleteMutation.isPending
+  const isPending = uploadMutation.isPending || deleteMutation.isPending || isPreparing
 
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     event.target.value = ''
     if (!file) return
 
-    if (!ACCEPTED_TYPES.includes(file.type)) {
-      setClientError(
-        '対応していない画像形式です（JPEG, PNG, WebP, GIFのいずれかを選択してください）',
-      )
-      return
+    setClientError(null)
+    setIsPreparing(true)
+    try {
+      const preparedFile = await prepareAvatarFileForUpload(file)
+      uploadMutation.mutate(preparedFile)
+    } catch (error) {
+      if (error instanceof AvatarClientValidationError) {
+        setClientError(error.message)
+      } else {
+        setClientError('画像の圧縮に失敗しました。別の画像でお試しください')
+      }
+    } finally {
+      setIsPreparing(false)
     }
-    if (file.size > MAX_ORIGINAL_BYTES) {
-      setClientError('ファイルサイズが大きすぎます（4.5MB以下にしてください）')
-      return
-    }
-    uploadMutation.mutate(file)
   }
 
   return (
@@ -119,7 +124,7 @@ export function AvatarUpload({
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED_TYPES.join(',')}
+        accept={ACCEPTED_AVATAR_TYPES.join(',')}
         className="hidden"
         onChange={handleFileChange}
       />
