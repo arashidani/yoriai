@@ -6759,8 +6759,7 @@
                     "items": {
                       "type": "string",
                       "minLength": 1
-                    },
-                    "minItems": 1
+                    }
                   },
                   "lunchPreference": {
                     "type": "string",
@@ -6801,9 +6800,7 @@
                   "joinedYear",
                   "joinedMonth",
                   "businessSkillIds",
-                  "interestIds",
                   "lunchPreference",
-                  "displayNameColor",
                   "name"
                 ]
               }
@@ -7148,8 +7145,7 @@
                     "items": {
                       "type": "string",
                       "minLength": 1
-                    },
-                    "minItems": 1
+                    }
                   },
                   "lunchPreference": {
                     "type": "string",
@@ -7185,9 +7181,7 @@
                   "joinedYear",
                   "joinedMonth",
                   "businessSkillIds",
-                  "interestIds",
-                  "lunchPreference",
-                  "displayNameColor"
+                  "lunchPreference"
                 ]
               }
             }
