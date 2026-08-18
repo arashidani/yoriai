@@ -1,8 +1,5 @@
 import sharp from 'sharp'
-
-// アップロード元ファイルの上限（AVATAR_ORIGINAL_MAX_BYTES, lib/hono/routes/users.ts）と統一
-export const AVATAR_MAX_BYTES = 4.5 * 1024 * 1024
-export const AVATAR_SIZE = 512
+import { AVATAR_MAX_BYTES, AVATAR_SIZE } from '@/lib/image/avatar-limits'
 
 /** アップロードされたバイナリが画像としてデコードできない場合 */
 export class UnsupportedImageError extends Error {}
