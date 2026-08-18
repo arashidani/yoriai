@@ -47,6 +47,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
       if (!res.ok) {
         const body = await res.json()
         if (res.status === 404 || res.status === 410) setIsPostUnavailable(true)
+        if (res.status === 409) router.refresh()
         setError('error' in body ? body.error : '回答の投稿に失敗しました')
         return
       }
