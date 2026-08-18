@@ -97,16 +97,28 @@ export function OnboardingAvatarUpload({
         aria-label="アイコン画像を選択"
       >
         {avatarUrl ? (
-          <Image src={avatarUrl} alt="アイコン" fill unoptimized className="rounded-2xl object-cover" />
+          <Image
+            src={avatarUrl}
+            alt="アイコン"
+            fill
+            unoptimized
+            className="z-0 rounded-2xl object-cover"
+          />
         ) : (
-          <Image src={imageNone} alt="" width={162} height={162} className="object-cover" />
+          <Image src={imageNone} alt="" width={162} height={162} className="z-0 object-cover" />
         )}
-        <Image src={plusRound} alt="" width={48} height={48} className="absolute -right-5 bottom-5" />
         {isPending && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/60">
+          <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-background/60">
             <Loader2 className="size-6 animate-spin" aria-label="処理中" />
           </div>
         )}
+        <Image
+          src={plusRound}
+          alt=""
+          width={48}
+          height={48}
+          className="absolute -right-5 bottom-5 z-20"
+        />
       </button>
 
       <input
