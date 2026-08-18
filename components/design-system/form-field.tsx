@@ -24,7 +24,12 @@ export function FormField({
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <FormLabel label={label} isRequired={isRequired} id={inputProps.id} />
+      <div className="flex gap-1 items-center">
+        <FormLabel label={label} isRequired={isRequired} id={inputProps.id} />
+        {error && (
+          <p className="text-destructive-text text-caption tracking-normal font-medium">{error}</p>
+        )}
+      </div>
 
       <Input
         {...restInputProps}
@@ -33,7 +38,11 @@ export function FormField({
         maxLength={maxLength}
       />
 
-      {caption && <p className="text-caption text-secondary-foreground">{caption}</p>}
+      {caption && (
+        <p className="text-caption text-secondary-foreground tracking-normal font-medium">
+          {caption}
+        </p>
+      )}
     </div>
   )
 }

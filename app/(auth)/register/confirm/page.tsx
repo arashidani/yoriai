@@ -125,7 +125,7 @@ export default function RegisterConfirmPage() {
             </a>
             <div className="flex-1">
               <Button type="button" isDisabled={isSubmitting} onClick={handleRegister}>
-                {isSubmitting ? '登録中...' : '登録する'}
+                {isSubmitting ? '登録中...' : '登録へ進む'}
               </Button>
             </div>
           </div>
