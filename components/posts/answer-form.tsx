@@ -64,7 +64,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
   }
 
   return (
-    <section id="answer-form" className="mt-8 scroll-mt-8">
+    <section id="answer-form" className="w-full scroll-mt-8">
       <div className="space-y-3">
         {error && (
           <p role="alert" className="text-sm text-destructive">
