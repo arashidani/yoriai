@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { Textarea } from '../ui/textarea'
 
 type FormTextAreaProps = {
-  label: string
+  label?: string
   error?: string
   isRequired?: boolean
   caption?: string
@@ -24,7 +24,7 @@ export function FormTextarea({
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <FormLabel label={label} isRequired={isRequired} id={textareaProps.id} />
+      {label && <FormLabel label={label} isRequired={isRequired} id={textareaProps.id} />}
 
       <Textarea
         {...restTextareaProps}

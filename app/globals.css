@@ -19,6 +19,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-background-subtle: var(--background-subtle);
+  --color-background-2: var(--background-2);
   --color-foreground: var(--foreground);
   --color-foreground-alt: var(--foreground-alt);
   --color-card: var(--card);
@@ -77,6 +78,8 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-muted: var(--sidebar-muted);
+  --color-tenurechip: var(--tenurechip);
+  --color-tenurechip-foreground: var(--tenurechip-foreground);
 
   /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
      3種類に限定し、独自の font-* ユーティリティは増やさない。
@@ -443,8 +446,8 @@
   --text-heading-2--line-height: 1.875rem;
   --text-heading-2--letter-spacing: 0.5px;
   --text-heading-2--font-weight: 700;
-  --text-heading-3: 1.5rem;
-  --text-heading-3--line-height: 1.8rem;
+  --text-heading-3: 1.125rem;
+  --text-heading-3--line-height: 1.5rem;
   --text-heading-3--letter-spacing: 0.5px;
   --text-heading-3--font-weight: 700;
   --text-heading-4: 1.25rem;
@@ -478,9 +481,15 @@
   --text-label: 0.875rem;
   --text-label--line-height: 1.25rem;
   --text-label--font-weight: 700;
+  --text-label-small: 0.75rem;
+  --text-label-small--line-height: 1.25rem;
+  --text-label-small--font-weight: 700;
   --text-body-small: 0.875rem;
   --text-body-small--line-height: 1.25rem;
   --text-body-small--font-weight: 500;
+  --text-body-small-bold: 0.875rem;
+  --text-body-small-bold--line-height: 1.25rem;
+  --text-body-small-bold--font-weight: 700;
 
   /* Shadow: デザインシステムスケール。2xs〜xl は Tailwind 既定と同値、
      2xl のみ不透明度がデザインシステム準拠（0.1）で既定（0.25）を上書き。 */
@@ -499,6 +508,7 @@
 
   --background: #fffefc; /* neutral-50 */
   --background-subtle: #fdfbf7; /* neutral-100 */
+  --background-2: #fdfbf7;
   --foreground: #2f2b27; /* neutral-900 */
   --foreground-alt: #7d746a;
   --card: #ffffff;
@@ -566,12 +576,17 @@
   --sidebar-border: #f6f3ed;
   --sidebar-ring: #ece7df;
   --sidebar-muted: #ddd6cc;
+
+  /* Figma: badge/tenurechip, badge/tenurechip-foreground。Light/Dark 共通の固定色 */
+  --tenurechip: #ecfccb;
+  --tenurechip-foreground: #65a30d;
 }
 
 /* ── Dark ── */
 .dark {
   --background: #2f2b27; /* neutral-900 */
   --background-subtle: #544d46; /* neutral-800 */
+  --background-2: #544d46;
   --foreground: #fffefc; /* neutral-50 */
   --card: #2f2b27;
   --card-foreground: #ffffff;
@@ -632,6 +647,9 @@
   --sidebar-border: #544d46; /* neutral-800 */
   --sidebar-ring: #7d746a;
   --sidebar-muted: #c9c0b5;
+
+  --tenurechip: #ecfccb; /* Light と固定 */
+  --tenurechip-foreground: #65a30d; /* Light と固定 */
 }
 
 @layer base {
