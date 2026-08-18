@@ -20,7 +20,7 @@ export function MultiSelectButton({ text, isSelected = false, onClick }: MultiSe
           : 'border-muted-foreground bg-secondary text-muted-foreground',
       )}
     >
-      {text}
+      <span className="text-label font-bold">{text}</span>
     </ButtonPrimitive>
   )
 }
