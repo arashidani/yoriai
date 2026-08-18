@@ -1,12 +1,12 @@
 import { Medal } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Button } from '@/components/design-system/button'
 import { QuestionCard } from '@/components/design-system/ui/question-card'
 import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { AnswerCard } from '@/components/posts/answer-card'
 import { AnswerForm } from '@/components/posts/answer-form'
 import { ResolveButton } from '@/components/posts/resolve-button'
-import { Button } from '@/components/ui/button'
 import { createServerApiClient } from '@/lib/hono/server-client'
 
 type Props = {
@@ -31,8 +31,8 @@ export default async function QaDetailPage({ params }: Props) {
     <article className="mx-auto w-full max-w-4xl px-4 py-8">
       <div className="mb-6">
         <Link href="/">
-          <Button variant="ghost" size="sm">
-            ← 一覧に戻る
+          <Button type="button" variant="secondary" size="large">
+            一覧に戻る
           </Button>
         </Link>
       </div>
