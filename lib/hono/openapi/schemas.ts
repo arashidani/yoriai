@@ -103,9 +103,9 @@ export const PostSchema = z
 
 export const HirobaSchema = z
   .object({
-    id: z.string().openapi({ example: 'hiroba-1' }),
-    slug: z.string().openapi({ example: 'hiroba-1' }),
-    name: z.string().openapi({ example: '広場１' }),
+    id: z.string().openapi({ example: 'hiroba-alcohol' }),
+    slug: z.string().openapi({ example: 'alcohol' }),
+    name: z.string().openapi({ example: 'お酒' }),
     description: z.string().openapi({ example: 'みんなで気軽に話せる広場です。' }),
     createdAt: dateTime(),
   })
@@ -114,7 +114,7 @@ export const HirobaSchema = z
 export const HirobaPostSchema = z
   .object({
     id: z.string().openapi({ example: 'hiroba-post-1' }),
-    hirobaId: z.string().openapi({ example: 'hiroba-1' }),
+    hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
     title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
     body: z.string().openapi({ example: '近くに新しくできたお店に行ってみました。' }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
@@ -299,7 +299,7 @@ export const IdParamSchema = z.object({
 
 /** パスパラメータ :slug */
 export const SlugParamSchema = z.object({
-  slug: z.string().openapi({ param: { name: 'slug', in: 'path' }, example: 'hiroba-1' }),
+  slug: z.string().openapi({ param: { name: 'slug', in: 'path' }, example: 'alcohol' }),
 })
 
 /** よく使うエラーレスポンス定義 */
