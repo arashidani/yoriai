@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import Image from 'next/image'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import eyeIcon from '@/assets/eye.png'
@@ -12,25 +12,22 @@ import passwordOkIcon from '@/assets/password-ok.png'
 import rightImage from '@/assets/register-right.svg'
 import { Button } from '@/components/design-system/button'
 import { FormField } from '@/components/design-system/form-field'
-import { OnboardingForm } from '@/components/onboarding/onboarding-form'
 import { RegisterImagePanel } from '@/components/register/register-image-panel'
 import { RegisterSidePanel } from '@/components/register/register-side-panel'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { client } from '@/lib/hono/client'
 import { type RegisterFormInput, registerFormSchema } from '@/lib/schemas/register'
-import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 
 type Invite = { name: string | null; role: string }
 
 function RegisterForm() {
+  const router = useRouter()
   const token = useSearchParams().get('token')
   const [invite, setInvite] = useState<Invite | null>(null)
   const [inviteError, setInviteError] = useState(false)
   const [checking, setChecking] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [accountCreated, setAccountCreated] = useState(false)
   const [passwordVisible, setPasswordVisible] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
   const {
@@ -38,7 +35,7 @@ function RegisterForm() {
     handleSubmit,
     reset,
     watch,
-    formState: { errors, isSubmitting, isValid },
+    formState: { errors, isValid },
   } = useForm<RegisterFormInput>({
     resolver: zodResolver(registerFormSchema),
     mode: 'onChange',
@@ -66,42 +63,26 @@ function RegisterForm() {
       }
       const { invite } = await res.json()
       setInvite(invite)
+
+      const raw = sessionStorage.getItem('registerFormData')
+      if (raw) {
+        const stored = JSON.parse(raw) as RegisterFormInput & { token: string }
+        if (stored.token === token) {
+          reset({ name: stored.name, email: stored.email, password: stored.password })
+          setChecking(false)
+          return
+        }
+      }
+
       reset()
       setChecking(false)
     })
   }, [token, reset])
 
-  async function onSubmit(data: RegisterFormInput) {
+  function onSubmit(data: RegisterFormInput) {
     if (!invite || !token) return
-    setError(null)
-
-    const supabase = createClient()
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: { data: { name: data.name } },
-    })
-
-    if (signUpError) {
-      setError(signUpError.message)
-      return
-    }
-
-    if (!signUpData.user) {
-      setError('アカウント登録に失敗しました')
-      return
-    }
-
-    const res = await client.api.users.$post({
-      json: { name: data.name, inviteToken: token },
-    })
-    if (!res.ok) {
-      const body = await res.json()
-      setError('error' in body ? body.error : 'ユーザー情報の保存に失敗しました')
-      return
-    }
-
-    setAccountCreated(true)
+    sessionStorage.setItem('registerFormData', JSON.stringify({ ...data, token }))
+    router.push('/register/confirm')
   }
 
   if (checking) return null
@@ -118,18 +99,6 @@ function RegisterForm() {
             ログインはこちら
           </a>
         </div>
-      </div>
-    )
-  }
-
-  if (accountCreated) {
-    return (
-      <div className="relative flex h-screen items-center bg-background-subtle overflow-hidden">
-        <RegisterImagePanel priority />
-
-        <RegisterSidePanel className="justify-start overflow-y-auto p-8">
-          <OnboardingForm />
-        </RegisterSidePanel>
       </div>
     )
   }
@@ -249,9 +218,8 @@ function RegisterForm() {
             </div>
 
             <div className="flex flex-col gap-4">
-              {error && <p className="">{error}</p>}
-              <Button type="submit" isDisabled={!isValid || isSubmitting}>
-                {isSubmitting ? '登録中...' : '登録してプロフィール設定へ'}
+              <Button type="submit" isDisabled={!isValid}>
+                確認へ進む
               </Button>
             </div>
           </form>

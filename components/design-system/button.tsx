@@ -14,11 +14,11 @@ const buttonVariants = cva(
       },
       variant: {
         primary:
-          'bg-primary text-primary-foreground hover:bg-primary-hover focus-visible:ring-3 focus-visible:ring-ring',
+          'bg-primary text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:ring-3 focus-visible:ring-ring',
         secondary:
-          'border-2 border-input bg-secondary text-secondary-foreground hover:border-transparent hover:bg-secondary-hover focus-visible:border-transparent focus-visible:bg-secondary-hover focus-visible:ring-3 focus-visible:ring-ring disabled:border-transparent',
+          'border-2 border-input bg-secondary transition-colors text-secondary-foreground hover:border-transparent hover:bg-secondary-hover focus-visible:border-transparent focus-visible:bg-secondary-hover focus-visible:ring-3 focus-visible:ring-ring disabled:border-transparent',
         ghost:
-          'bg-transparent text-neutral-800 hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring',
+          'bg-transparent text-neutral-800 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring',
       },
     },
     compoundVariants: [

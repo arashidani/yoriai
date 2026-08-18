@@ -33,7 +33,11 @@ export function FormTextarea({
         maxLength={maxLength}
       />
 
-      {caption && <p className="text-caption text-secondary-foreground">{caption}</p>}
+      {caption && (
+        <p className="text-caption text-secondary-foreground tracking-normal font-medium">
+          {caption}
+        </p>
+      )}
     </div>
   )
 }
