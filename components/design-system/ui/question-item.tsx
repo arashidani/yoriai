@@ -1,6 +1,6 @@
-import Image from 'next/image'
 import Link from 'next/link'
 
+import { AuthorAvatar } from '@/components/design-system/ui/author-avatar'
 import { CategoryChip } from '@/components/design-system/ui/category-chip'
 import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { StatusChip, type StatusChipStatus } from '@/components/design-system/ui/status-chip'
@@ -51,9 +51,7 @@ function QuestionItem({
       className={cn('flex w-full flex-col gap-4 p-6 hover:bg-muted', className)}
     >
       <div className="flex w-full items-start gap-4">
-        <div className="relative size-12.5 shrink-0 overflow-hidden rounded-md bg-informative">
-          {avatarSrc && <Image src={avatarSrc} alt={avatarAlt} fill className="object-cover" />}
-        </div>
+        <AuthorAvatar src={avatarSrc} alt={avatarAlt} />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex w-full flex-col gap-2">
             <div className="flex w-full flex-wrap items-center gap-2">

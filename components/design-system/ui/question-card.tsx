@@ -1,6 +1,6 @@
-import Image from 'next/image'
 import type { ReactNode } from 'react'
 
+import { AuthorAvatar } from '@/components/design-system/ui/author-avatar'
 import { BookmarkButton } from '@/components/design-system/ui/bookmark-button'
 import { CategoryChip } from '@/components/design-system/ui/category-chip'
 import { CommentCount } from '@/components/design-system/ui/comment-count'
@@ -50,9 +50,7 @@ function QuestionCard({
   return (
     <div data-slot="question-card" className={cn('flex w-full flex-col gap-6', className)}>
       <div className="flex w-full items-center gap-4">
-        <div className="relative size-12.5 shrink-0 overflow-hidden rounded-md bg-informative">
-          {avatarSrc && <Image src={avatarSrc} alt={avatarAlt} fill className="object-cover" />}
-        </div>
+        <AuthorAvatar src={avatarSrc} alt={avatarAlt} />
         <div className="flex w-full flex-1 items-center justify-between gap-4">
           <div className="flex min-w-0 flex-col gap-1">
             <span className="text-paragraph-mini text-muted-foreground">{date}</span>
