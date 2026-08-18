@@ -309,13 +309,13 @@ components:
       properties:
         id:
           type: string
-          example: hiroba-1
+          example: hiroba-alcohol
         slug:
           type: string
-          example: hiroba-1
+          example: alcohol
         name:
           type: string
-          example: 広場１
+          example: お酒
         description:
           type: string
           example: みんなで気軽に話せる広場です。
@@ -337,7 +337,7 @@ components:
           example: hiroba-post-1
         hirobaId:
           type: string
-          example: hiroba-1
+          example: hiroba-alcohol
         title:
           type: string
           example: 今日のランチどこ行きました？
@@ -1718,7 +1718,7 @@ paths:
       parameters:
         - schema:
             type: string
-            example: hiroba-1
+            example: alcohol
           required: true
           name: slug
           in: path
@@ -1747,6 +1747,89 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Not found
+  /api/hiroba/{slug}/membership:
+    post:
+      tags:
+        - hiroba
+      summary: ひろばに参加する
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: alcohol
+          required: true
+          name: slug
+          in: path
+      responses:
+        "200":
+          description: 参加後の状態
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  joined:
+                    type: boolean
+                required:
+                  - joined
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: ひろばが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+    delete:
+      tags:
+        - hiroba
+      summary: ひろばから退出する
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: alcohol
+          required: true
+          name: slug
+          in: path
+      responses:
+        "200":
+          description: 退出後の状態
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  joined:
+                    type: boolean
+                required:
+                  - joined
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "404":
+          description: ひろばが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
   /api/hiroba/{slug}/posts:
     post:
       tags:
@@ -1757,7 +1840,7 @@ paths:
       parameters:
         - schema:
             type: string
-            example: hiroba-1
+            example: alcohol
           required: true
           name: slug
           in: path
@@ -3618,7 +3701,7 @@ paths:
     get:
       tags:
         - admin
-      summary: ひろば一覧を取得（管理者専用）
+      summary: 固定ひろば一覧を取得（管理者専用）
       security: *a2
       responses:
         "200":
@@ -3650,109 +3733,6 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
-    post:
-      tags:
-        - admin
-      summary: ひろばを作成（管理者専用）
-      security: *a2
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  minLength: 1
-                  maxLength: 50
-                description:
-                  type: string
-                  minLength: 1
-                  maxLength: 200
-              required:
-                - name
-                - description
-      responses:
-        "201":
-          description: 作成されたひろば
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  hiroba:
-                    $ref: "#/components/schemas/Hiroba"
-                required:
-                  - hiroba
-        "401":
-          description: 未認証
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
-        "403":
-          description: 権限不足（管理者専用）
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Forbidden
-        "500":
-          description: ひろばの作成に失敗した
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: ひろばの作成に失敗しました
-  /api/admin/hiroba/{id}:
-    delete:
-      tags:
-        - admin
-      summary: ひろばを削除（管理者専用、配下の投稿・回答も削除される）
-      security: *a2
-      parameters:
-        - schema:
-            type: string
-            example: post-1
-          required: true
-          name: id
-          in: path
-      responses:
-        "200":
-          description: 削除成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Success"
-        "401":
-          description: 未認証
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
-        "403":
-          description: 権限不足（管理者専用）
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Forbidden
-        "404":
-          description: ひろばが見つからない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Not found
   /api/users:
     post:
       tags:

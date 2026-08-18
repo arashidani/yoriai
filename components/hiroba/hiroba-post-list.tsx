@@ -32,12 +32,13 @@ export function HirobaPostList({ posts, isAdmin }: HirobaPostListProps) {
   }
 
   return (
-    <div className="grid gap-4">
-      {visiblePosts.map((post) => (
+    <div className="grid min-w-0 grid-cols-1 gap-4">
+      {visiblePosts.map((post, index) => (
         <HirobaPostCard
           key={post.id}
           post={post}
           isAdmin={isAdmin}
+          showImagePlaceholder={index === 0 || index === 4}
           onDeleted={(id) => setDeletedIds((prev) => [...prev, id])}
         />
       ))}

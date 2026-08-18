@@ -3,6 +3,8 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { requireEnv } from '@/lib/env'
 
 export async function proxy(request: NextRequest) {
+  if (process.env.MOCK_MODE === 'true') return NextResponse.next({ request })
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
