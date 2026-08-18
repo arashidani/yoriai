@@ -4243,7 +4243,6 @@ paths:
                   items:
                     type: string
                     minLength: 1
-                  minItems: 1
                 lunchPreference:
                   type: string
                   enum:
@@ -4275,9 +4274,7 @@ paths:
                 - joinedYear
                 - joinedMonth
                 - businessSkillIds
-                - interestIds
                 - lunchPreference
-                - displayNameColor
                 - name
       responses:
         "200":
@@ -4493,7 +4490,6 @@ paths:
                   items:
                     type: string
                     minLength: 1
-                  minItems: 1
                 lunchPreference:
                   type: string
                   enum:
@@ -4521,9 +4517,7 @@ paths:
                 - joinedYear
                 - joinedMonth
                 - businessSkillIds
-                - interestIds
                 - lunchPreference
-                - displayNameColor
       responses:
         "200":
           description: 登録完了
