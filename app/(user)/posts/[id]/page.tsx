@@ -1,15 +1,13 @@
 import { Medal } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { QuestionCard } from '@/components/design-system/ui/question-card'
+import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { AnswerCard } from '@/components/posts/answer-card'
 import { AnswerForm } from '@/components/posts/answer-form'
-import { QuestionLikeButton } from '@/components/posts/question-like-button'
 import { ResolveButton } from '@/components/posts/resolve-button'
-import { SaveButton } from '@/components/posts/save-button'
 import { Button } from '@/components/ui/button'
 import { createServerApiClient } from '@/lib/hono/server-client'
-
-const STATUS_LABEL = { OPEN: '回答募集中', RESOLVED: '解決済み' } as const
 
 type Props = {
   params: Promise<{ id: string }>
@@ -38,33 +36,36 @@ export default async function QaDetailPage({ params }: Props) {
           </Button>
         </Link>
       </div>
-      <div className="mb-4 flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-paragraph-mini font-medium text-muted-foreground">
-          {STATUS_LABEL[question.status]}
-        </span>
-        {question.tag && (
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-paragraph-mini">
-            {question.tag.name}
-          </span>
-        )}
-      </div>
-      <h1 className="mb-4 text-2xl font-bold">{question.title}</h1>
-      <div className="mb-6 flex items-center gap-4 text-sm text-muted-foreground">
-        <span>{question.displayAuthor.displayName}</span>
-        <span>{new Date(question.createdAt).toLocaleDateString('ja-JP')}</span>
-      </div>
-      <p className="whitespace-pre-wrap">{question.body}</p>
-      <div className="mt-6 flex items-center gap-3">
-        {!question.isOwnQuestion && (
-          <QuestionLikeButton
+      <QuestionCard
+        authorName={question.displayAuthor.displayName}
+        date={new Date(question.createdAt).toLocaleDateString('ja-JP')}
+        category={question.tag?.name}
+        status={question.status}
+        title={question.title}
+        body={question.body}
+        commentCount={question.answerCount}
+        likeCount={question.likeCount}
+        liked={question.liked}
+        bookmarkCount={0}
+        bookmarked={question.saved}
+        actions={
+          <QuestionItemActions
             postId={question.id}
-            initialLiked={question.liked}
-            initialLikeCount={question.likeCount}
+            commentCount={question.answerCount}
+            likeCount={question.likeCount}
+            liked={question.liked}
+            bookmarkCount={0}
+            bookmarked={question.saved}
+            isOwnQuestion={question.isOwnQuestion}
+            size="large"
           />
-        )}
-        <SaveButton postId={question.id} initialSaved={question.saved} />
-        {question.isOwnQuestion && canAnswer && <ResolveButton postId={question.id} />}
-      </div>
+        }
+      />
+      {question.isOwnQuestion && canAnswer && (
+        <div className="mt-3">
+          <ResolveButton postId={question.id} />
+        </div>
+      )}
       <section className="mt-10">
         <h2 className="mb-4 text-heading-4">回答 {answers.length}件</h2>
         {answers.length === 0 ? (
