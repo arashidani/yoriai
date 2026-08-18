@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import type { ComponentProps } from 'react'
-import { Medal } from 'lucide-react'
 
+import { BestAnswerBadge } from '@/components/design-system/ui/best-answer-badge'
 import { LikeButton } from '@/components/design-system/ui/like-button'
 import { TenureChip } from '@/components/design-system/ui/tenure-chip'
 import { cn } from '@/lib/utils'
@@ -36,7 +36,8 @@ function AnswerItem({
   onLikedChange,
 }: AnswerItemProps) {
   return (
-    <div data-slot="answer-item" className={cn('flex w-full flex-col gap-4', className)}>
+    <div data-slot="answer-item" className={cn('relative flex w-full flex-col gap-4', className)}>
+      {isMostLiked && <BestAnswerBadge className="absolute top-0 right-0 w-[54px]" />}
       <div className="flex w-full items-start gap-4">
         <div className="relative size-10 shrink-0 overflow-hidden rounded-md bg-informative">
           {avatarSrc && <Image src={avatarSrc} alt={avatarAlt} fill className="object-cover" />}
@@ -46,7 +47,6 @@ function AnswerItem({
             <div className="flex w-full flex-wrap items-center gap-2">
               <span className="text-paragraph-small font-medium text-foreground">{authorName}</span>
               {tenure && <TenureChip>{tenure}</TenureChip>}
-              {isMostLiked && <Medal className="h-4 w-4 text-primary" aria-label="最多いいね回答" />}
               <span className="text-paragraph-mini text-muted-foreground">{timestamp}</span>
             </div>
             <p className="w-full whitespace-pre-line text-paragraph text-foreground">{body}</p>
