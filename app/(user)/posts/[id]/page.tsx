@@ -29,10 +29,15 @@ export default async function QaDetailPage({ params }: Props) {
 
   return (
     <article className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-6">
+      <div className="mb-6 flex w-full items-center justify-between">
         <Link href="/">
           <Button type="button" variant="secondary" size="large">
             一覧に戻る
+          </Button>
+        </Link>
+        <Link href="/my-questions">
+          <Button type="button" variant="secondary" size="large">
+            Q&A管理
           </Button>
         </Link>
       </div>
