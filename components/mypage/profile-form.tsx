@@ -95,7 +95,8 @@ function CheckboxList({
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             {options.map((option) => {
-              const checked = field.value.includes(option.id)
+              const selectedIds = field.value ?? []
+              const checked = selectedIds.includes(option.id)
               return (
                 <label
                   key={option.id}
@@ -108,8 +109,8 @@ function CheckboxList({
                     onCheckedChange={(nextChecked) =>
                       field.onChange(
                         nextChecked
-                          ? [...field.value, option.id]
-                          : field.value.filter((id) => id !== option.id),
+                          ? [...selectedIds, option.id]
+                          : selectedIds.filter((id) => id !== option.id),
                       )
                     }
                   />

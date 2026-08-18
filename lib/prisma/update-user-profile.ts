@@ -8,6 +8,8 @@ export async function updateUserProfile(
   data: ProfileInput,
   completeOnboarding = false,
 ) {
+  const interestIds = data.interestIds ?? []
+
   return prisma.$transaction(async (tx) => {
     const [department, businessArea, businessSkillCount, interestCount] = await Promise.all([
       tx.department.findFirst({
@@ -30,7 +32,7 @@ export async function updateUserProfile(
       }),
       tx.interest.count({
         where: {
-          id: { in: data.interestIds },
+          id: { in: interestIds },
           OR: [{ isActive: true }, { users: { some: { userId } } }],
         },
       }),
@@ -40,7 +42,7 @@ export async function updateUserProfile(
       !department ||
       !businessArea ||
       businessSkillCount !== data.businessSkillIds.length ||
-      interestCount !== data.interestIds.length
+      interestCount !== interestIds.length
     ) {
       return false
     }
@@ -65,7 +67,7 @@ export async function updateUserProfile(
         },
         interests: {
           deleteMany: {},
-          create: data.interestIds.map((interestId) => ({ interestId })),
+          create: interestIds.map((interestId) => ({ interestId })),
         },
       },
     })
