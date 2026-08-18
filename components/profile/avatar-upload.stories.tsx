@@ -3,10 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
 import { expect, fn, screen, waitFor } from 'storybook/test'
 import { MOCK_AVATAR_URL } from '@/lib/mocks/fixtures'
-import { OnboardingAvatarUpload } from './onboarding-avatar-upload'
+import { AvatarUpload } from './avatar-upload'
 
 const meta = {
-  component: OnboardingAvatarUpload,
+  component: AvatarUpload,
   parameters: {
     nextjs: { appDirectory: true },
   },
@@ -27,7 +27,7 @@ const meta = {
       </QueryClientProvider>
     ),
   ],
-} satisfies Meta<typeof OnboardingAvatarUpload>
+} satisfies Meta<typeof AvatarUpload>
 
 export default meta
 type Story = StoryObj<typeof meta>
