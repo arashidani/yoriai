@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { FormLabel } from '@/components/design-system/form-label'
 import { FormSelect } from '@/components/design-system/form-select'
+import { cn } from '@/lib/utils'
 
 const CAREER_THRESHOLDS: { max: number; name: string }[] = [
   { max: 1, name: 'チャレンジャー' },
@@ -9,8 +10,22 @@ const CAREER_THRESHOLDS: { max: number; name: string }[] = [
 ]
 const CAREER_FALLBACK_NAME = 'ヌシ'
 
+export function getIbjCareerName(yearValue: string, monthValue: string): string {
+  if (!yearValue || !monthValue) return ''
+
+  const today = new Date()
+  const year = today.getFullYear() - Number(yearValue)
+  const month = today.getMonth() + 1 - Number(monthValue)
+
+  // 入社月がまだ来ていなければ、その年の勤続年数は切り捨てる（誕生日未到来の年齢計算と同じ考え方）
+  const employmentYears = month >= 0 ? year : year - 1
+
+  const matched = CAREER_THRESHOLDS.find((threshold) => employmentYears <= threshold.max)
+  return matched?.name ?? CAREER_FALLBACK_NAME
+}
+
 type FormTitleSelectRowProps = {
-  label: string
+  label?: string
   isRequired?: boolean
   years: string[]
   months: string[]
@@ -26,6 +41,7 @@ type FormTitleSelectRowProps = {
   isInfoIcon?: boolean
   setIbjCareerName: Dispatch<SetStateAction<string>>
   ibjCareerName: string
+  wrapperHeightClassName?: string
 }
 
 export function FormTitleSelectRow({
@@ -45,41 +61,21 @@ export function FormTitleSelectRow({
   isInfoIcon,
   ibjCareerName,
   setIbjCareerName,
+  wrapperHeightClassName = 'h-24.5',
 }: FormTitleSelectRowProps) {
-  const toIbjCareer = (
-    nextYearValue: FormTitleSelectRowProps['yearValue'],
-    nextMonthValue: FormTitleSelectRowProps['monthValue'],
-  ) => {
-    if (!nextYearValue || !nextMonthValue) return
-
-    const today = new Date()
-    const year = today.getFullYear() - Number(nextYearValue)
-    const month = today.getMonth() + 1 - Number(nextMonthValue)
-
-    // 入社月がまだ来ていなければ、その年の勤続年数は切り捨てる（誕生日未到来の年齢計算と同じ考え方）
-    const employmentYears = month >= 0 ? year : year - 1
-
-    toIbjCareerName(employmentYears)
-  }
-
-  const toIbjCareerName = (employmentYears: number) => {
-    const matched = CAREER_THRESHOLDS.find((threshold) => employmentYears <= threshold.max)
-    setIbjCareerName(matched?.name ?? CAREER_FALLBACK_NAME)
-  }
-
   const handleYearChange = (value: string) => {
     onYearChange(value)
-    toIbjCareer(value, monthValue)
+    setIbjCareerName(getIbjCareerName(value, monthValue))
   }
 
   const handleMonthChange = (value: string) => {
     onMonthChange(value)
-    toIbjCareer(yearValue, value)
+    setIbjCareerName(getIbjCareerName(yearValue, value))
   }
 
   return (
-    <div className="flex flex-col gap-2 w-full h-24.5">
-      <FormLabel label={label} isRequired={isRequired} isInfoIcon={isInfoIcon} />
+    <div className={cn('flex flex-col gap-2 w-full', wrapperHeightClassName)}>
+      {label && <FormLabel label={label} isRequired={isRequired} isInfoIcon={isInfoIcon} />}
 
       <div className="flex items-center gap-2 w-full">
         <div className="flex flex-1 items-center gap-2">

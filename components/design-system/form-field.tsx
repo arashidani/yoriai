@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
 type FormFieldProps = {
-  label: string
+  label?: string
   error?: string
   inputProps: ComponentProps<typeof Input>
   isRequired?: boolean
@@ -24,12 +24,16 @@ export function FormField({
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <div className="flex gap-1 items-center">
-        <FormLabel label={label} isRequired={isRequired} id={inputProps.id} />
-        {error && (
-          <p className="text-destructive-text text-caption tracking-normal font-medium">{error}</p>
-        )}
-      </div>
+      {label && (
+        <div className="flex gap-1 items-center">
+          <FormLabel label={label} isRequired={isRequired} id={inputProps.id} />
+          {error && (
+            <p className="text-destructive-text text-caption tracking-normal font-medium">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
 
       <Input
         {...restInputProps}

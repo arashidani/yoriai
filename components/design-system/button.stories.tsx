@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import Image from 'next/image'
 import { expect } from 'storybook/test'
+import pen from '@/assets/pen-white.svg'
 import { Button } from './button'
 
 const meta = {
@@ -107,5 +109,19 @@ export const SecondaryDisabled: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeDisabled()
+  },
+}
+
+export const WithIcon: Story = {
+  args: {
+    children: '参加する',
+    variant: 'primary',
+    size: 'extraLarge',
+    leftIcon: <Image src={pen} alt="" />,
+  },
+  play: async ({ canvas }) => {
+    const button = canvas.getByRole('button', { name: '参加する' })
+    await expect(button).toBeVisible()
+    await expect(button.querySelector('img')).toBeVisible()
   },
 }
