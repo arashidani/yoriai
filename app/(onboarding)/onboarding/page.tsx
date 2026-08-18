@@ -9,7 +9,7 @@ export default async function OnboardingPage() {
 
   return (
     <main>
-      <OnboardingForm initialUsername={user.username ?? ''} />
+      <OnboardingForm initialUsername={user.username ?? ''} initialAvatarUrl={user.avatarUrl} />
     </main>
   )
 }

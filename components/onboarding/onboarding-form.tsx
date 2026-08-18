@@ -3,12 +3,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, type FieldPath, useForm } from 'react-hook-form'
 import { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
-import imageNone from '@/assets/image-none.svg'
 import leftImageStep01 from '@/assets/onboarding-left-step01.svg'
 import leftImageStep02 from '@/assets/onboarding-left-step02.svg'
 import leftImageStep03 from '@/assets/onboarding-left-step03.svg'
@@ -16,12 +14,12 @@ import leftImageStep04 from '@/assets/onboarding-left-step04.svg'
 import leftImageStep05 from '@/assets/onboarding-left-step05.svg'
 import leftImageStep06 from '@/assets/onboarding-left-step06.svg'
 import leftImageStep07 from '@/assets/onboarding-left-step07.svg'
-import plusRound from '@/assets/plus-round.svg'
 import { FormField } from '@/components/design-system/form-field'
 import { FormTextarea } from '@/components/design-system/form-textarea'
 import { MbtiButton } from '@/components/design-system/mbti-button'
 import { MultiSelectButton } from '@/components/design-system/multi-select-button'
 import { FormBottomButtons } from '@/components/onboarding/form-bottom-buttons'
+import { OnboardingAvatarUpload } from '@/components/onboarding/onboarding-avatar-upload'
 import { FormTitleMultiSelect } from '@/components/onboarding/form-title-multi-select'
 import { FormTitleRadioButton } from '@/components/onboarding/form-title-radio-button'
 import { FormTitleSelect } from '@/components/onboarding/form-title-select'
@@ -97,11 +95,18 @@ async function fetchOptions(): Promise<Options> {
   return res.json()
 }
 
-export function OnboardingForm({ initialUsername = '' }: { initialUsername?: string }) {
+export function OnboardingForm({
+  initialUsername = '',
+  initialAvatarUrl = null,
+}: {
+  initialUsername?: string
+  initialAvatarUrl?: string | null
+}) {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [ibjCareerName, setIbjCareerName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(initialAvatarUrl)
   const {
     data: options,
     isLoading,
@@ -456,22 +461,7 @@ export function OnboardingForm({ initialUsername = '' }: { initialUsername?: str
                 <FormTitle title="アイコン" description="ひろばでのアイコン写真を設定しましょう" />
 
                 <div className="flex items-center justify-center">
-                  <div className="relative size-40.5">
-                    <Image
-                      src={imageNone}
-                      alt=""
-                      width={162}
-                      height={162}
-                      className="object-cover"
-                    />
-                    <Image
-                      src={plusRound}
-                      alt=""
-                      width={48}
-                      height={48}
-                      className="absolute -right-5 bottom-5"
-                    />
-                  </div>
+                  <OnboardingAvatarUpload avatarUrl={avatarUrl} onAvatarUrlChange={setAvatarUrl} />
                 </div>
 
                 <FormBottomButtons
@@ -544,7 +534,7 @@ export function OnboardingForm({ initialUsername = '' }: { initialUsername?: str
                   </dd>
 
                   <dt className="text-label text-foreground font-bold">アイコン</dt>
-                  <dd className="text-body-small text-foreground">未設定</dd>
+                  <dd className="text-body-small text-foreground">{avatarUrl ? '設定済み' : '未設定'}</dd>
                 </dl>
                 {submitError && <p className="text-sm text-destructive">{submitError}</p>}
 

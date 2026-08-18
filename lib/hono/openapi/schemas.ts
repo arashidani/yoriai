@@ -21,6 +21,9 @@ export const UserSchema = z
       .enum(['GREEN', 'YELLOW', 'BLUE', 'PURPLE', 'GRAY'])
       .nullable()
       .openapi({ example: 'BLUE' }),
+    avatarUrl: z.string().nullable().openapi({
+      example: 'https://xxxx.supabase.co/storage/v1/object/public/profiles/user-1.webp?v=1',
+    }),
     role: z.enum(['USER', 'ADMIN']).openapi({ example: 'USER' }),
     createdAt: dateTime(),
   })

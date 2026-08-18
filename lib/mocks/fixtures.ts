@@ -25,6 +25,7 @@ export const MOCK_USERS = [
     recommendedLunchSpot: null,
     bio: 'よろしくお願いします',
     displayNameColor: DisplayNameColor.GREEN,
+    avatarUrl: null,
     onboardingCompletedAt: new Date('2024-01-01'),
     createdAt: new Date('2024-01-01'),
   },
@@ -43,6 +44,7 @@ export const MOCK_USERS = [
     recommendedLunchSpot: '駅前食堂',
     bio: null,
     displayNameColor: DisplayNameColor.BLUE,
+    avatarUrl: null,
     onboardingCompletedAt: new Date('2024-01-02'),
     createdAt: new Date('2024-01-02'),
   },
@@ -53,6 +55,9 @@ export const MOCK_USER_PROFILE = {
   businessSkillIds: ['business-skill-1'],
   interestIds: ['interest-1'],
 }
+
+/** アバターアップロードAPIのMOCK_MODE応答用 */
+export const MOCK_AVATAR_URL = '/anonymous-profiles/cat.svg?v=mock'
 
 const optionDates = {
   createdAt: new Date('2024-01-01'),
