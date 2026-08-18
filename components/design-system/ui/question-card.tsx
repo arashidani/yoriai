@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react'
 
 import { AuthorAvatar } from '@/components/design-system/ui/author-avatar'
-import { BookmarkButton } from '@/components/design-system/ui/bookmark-button'
 import { CategoryChip } from '@/components/design-system/ui/category-chip'
-import { CommentCount } from '@/components/design-system/ui/comment-count'
-import { LikeButton } from '@/components/design-system/ui/like-button'
 import { StatusChip, type StatusChipStatus } from '@/components/design-system/ui/status-chip'
 import { cn } from '@/lib/utils'
 
@@ -18,13 +15,6 @@ type QuestionCardProps = {
   status: StatusChipStatus
   title: string
   body: string
-  commentCount: number
-  likeCount: number
-  liked?: boolean
-  onLikedChange?: (liked: boolean) => void
-  bookmarkCount: number
-  bookmarked?: boolean
-  onBookmarkedChange?: (bookmarked: boolean) => void
   actions?: ReactNode
 }
 
@@ -38,13 +28,6 @@ function QuestionCard({
   status,
   title,
   body,
-  commentCount,
-  likeCount,
-  liked,
-  onLikedChange,
-  bookmarkCount,
-  bookmarked,
-  onBookmarkedChange,
   actions,
 }: QuestionCardProps) {
   return (
@@ -64,23 +47,7 @@ function QuestionCard({
       </div>
       <p className="font-heading text-heading-1">{title}</p>
       <p className="w-full whitespace-pre-line text-paragraph text-foreground">{body}</p>
-      {actions ?? (
-        <div className="flex items-center gap-4">
-          <CommentCount count={commentCount} size="large" />
-          <LikeButton
-            count={likeCount}
-            size="large"
-            pressed={liked}
-            onPressedChange={onLikedChange}
-          />
-          <BookmarkButton
-            count={bookmarkCount}
-            size="large"
-            pressed={bookmarked}
-            onPressedChange={onBookmarkedChange}
-          />
-        </div>
-      )}
+      {actions}
     </div>
   )
 }
