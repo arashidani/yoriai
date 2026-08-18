@@ -52,3 +52,11 @@ export const WithCounts: Story = {
     await expect(canvas.getByText('2')).toBeVisible()
   },
 }
+
+export const OwnQuestion: Story = {
+  args: { isOwnQuestion: true, likeCount: 7, bookmarkCount: 0 },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: '7' })).not.toBeInTheDocument()
+    await expect(canvas.getByRole('button', { name: '0' })).toBeVisible()
+  },
+}
