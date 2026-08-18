@@ -102,10 +102,7 @@ export default async function QaDetailPage({ params }: Props) {
         )}
       </section>
       {canAnswer ? (
-        <section id="answer-form" className="mt-8 scroll-mt-8">
-          <h2 className="mb-3 text-heading-4">回答する</h2>
-          <AnswerForm postId={question.id} />
-        </section>
+        <AnswerForm postId={question.id} />
       ) : (
         <p className="mt-8 text-secondary-foreground">この質問は回答を受け付けていません。</p>
       )}
