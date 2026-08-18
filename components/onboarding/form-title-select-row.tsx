@@ -110,7 +110,7 @@ export function FormTitleSelectRow({
       </div>
 
       {ibjCareerName !== '' && (
-        <p className="text-caption font-medium text-secondary-foreground">
+        <p className="text-caption font-medium text-secondary-foreground tracking-normal">
           あなたは{ibjCareerName}です。
         </p>
       )}
