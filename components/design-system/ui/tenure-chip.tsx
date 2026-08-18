@@ -3,7 +3,7 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const tenureChipVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap bg-lime-100 font-bold text-lime-600',
+  'inline-flex items-center justify-center whitespace-nowrap bg-tenurechip font-bold text-tenurechip-foreground',
   {
     variants: {
       size: {
