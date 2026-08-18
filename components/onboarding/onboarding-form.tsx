@@ -3,27 +3,35 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, type FieldPath, useForm } from 'react-hook-form'
 import { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
-import { AvatarUpload } from '@/components/profile/avatar-upload'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
+import imageNone from '@/assets/image-none.svg'
+import leftImageStep01 from '@/assets/onboarding-left-step01.svg'
+import leftImageStep02 from '@/assets/onboarding-left-step02.svg'
+import leftImageStep03 from '@/assets/onboarding-left-step03.svg'
+import leftImageStep04 from '@/assets/onboarding-left-step04.svg'
+import leftImageStep05 from '@/assets/onboarding-left-step05.svg'
+import leftImageStep06 from '@/assets/onboarding-left-step06.svg'
+import leftImageStep07 from '@/assets/onboarding-left-step07.svg'
+import plusRound from '@/assets/plus-round.svg'
+import { FormField } from '@/components/design-system/form-field'
+import { FormTextarea } from '@/components/design-system/form-textarea'
+import { MbtiButton } from '@/components/design-system/mbti-button'
+import { MultiSelectButton } from '@/components/design-system/multi-select-button'
+import { FormBottomButtons } from '@/components/onboarding/form-bottom-buttons'
+import { FormTitleMultiSelect } from '@/components/onboarding/form-title-multi-select'
+import { FormTitleRadioButton } from '@/components/onboarding/form-title-radio-button'
+import { FormTitleSelect } from '@/components/onboarding/form-title-select'
+import { FormTitleSelectRow } from '@/components/onboarding/form-title-select-row'
 import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { client } from '@/lib/hono/client'
 import { type OnboardingInput, onboardingSchema } from '@/lib/schemas/onboarding'
-import { cn } from '@/lib/utils'
+import { RegisterImagePanel } from '../register/register-image-panel'
+import { RegisterSidePanel } from '../register/register-side-panel'
+import { FormTitle } from './form-title'
 
 type Option = { id: string; name: string }
 type Options = {
@@ -36,11 +44,21 @@ type Options = {
 const stepFields: FieldPath<OnboardingInput>[][] = [
   ['username', 'departmentId', 'businessAreaId'],
   ['joinedYear', 'joinedMonth', 'businessSkillIds'],
-  ['interestIds'],
+  [],
   ['lunchPreference', 'recommendedLunchSpot'],
   ['bio', 'displayNameColor'],
   [],
   [],
+]
+
+const leftImages = [
+  leftImageStep01,
+  leftImageStep02,
+  leftImageStep03,
+  leftImageStep04,
+  leftImageStep05,
+  leftImageStep06,
+  leftImageStep07,
 ]
 
 const lunchChoices = [
@@ -50,74 +68,33 @@ const lunchChoices = [
 ]
 
 const colorChoices = [
-  { value: DisplayNameColor.GREEN, label: '緑', className: 'text-display-name-green' },
-  { value: DisplayNameColor.YELLOW, label: '黄色', className: 'text-display-name-yellow' },
-  { value: DisplayNameColor.BLUE, label: '青', className: 'text-display-name-blue' },
-  { value: DisplayNameColor.PURPLE, label: '紫', className: 'text-display-name-purple' },
+  { value: DisplayNameColor.GREEN, label: 'みどり', className: 'text-display-name-green' },
+  { value: DisplayNameColor.YELLOW, label: 'きいろ', className: 'text-display-name-yellow' },
+  { value: DisplayNameColor.BLUE, label: 'あお', className: 'text-display-name-blue' },
+  { value: DisplayNameColor.PURPLE, label: 'むらさき', className: 'text-display-name-purple' },
   { value: DisplayNameColor.GRAY, label: '回答しない', className: 'text-display-name-gray' },
+]
+
+const mbtiColorChoices: {
+  value: DisplayNameColor
+  label: string
+  color: 'green' | 'yellow' | 'blue' | 'purple'
+}[] = [
+  { value: DisplayNameColor.GREEN, label: 'みどり', color: 'green' },
+  { value: DisplayNameColor.YELLOW, label: 'きいろ', color: 'yellow' },
+  { value: DisplayNameColor.BLUE, label: 'あお', color: 'blue' },
+  { value: DisplayNameColor.PURPLE, label: 'むらさき', color: 'purple' },
 ]
 
 const years = Array.from({ length: new Date().getFullYear() - 1899 }, (_, index) =>
   String(new Date().getFullYear() - index),
 )
+const months = Array.from({ length: 12 }, (_, index) => String(index + 1))
 
 async function fetchOptions(): Promise<Options> {
   const res = await client.api.onboarding.options.$get()
   if (!res.ok) throw new Error('選択肢の取得に失敗しました')
   return res.json()
-}
-
-function FieldError({ message }: { message?: string }) {
-  return message ? <p className="text-sm text-destructive">{message}</p> : null
-}
-
-function CheckboxList({
-  name,
-  options,
-  control,
-  error,
-}: {
-  name: 'businessSkillIds' | 'interestIds'
-  options: Option[]
-  control: ReturnType<typeof useForm<OnboardingInput>>['control']
-  error?: string
-}) {
-  return (
-    <Controller
-      name={name}
-      control={control}
-      render={({ field }) => (
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {options.map((option) => {
-              const checked = field.value.includes(option.id)
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={`${name}-${option.id}`}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4"
-                >
-                  <Checkbox
-                    id={`${name}-${option.id}`}
-                    checked={checked}
-                    onCheckedChange={(nextChecked) =>
-                      field.onChange(
-                        nextChecked
-                          ? [...field.value, option.id]
-                          : field.value.filter((id) => id !== option.id),
-                      )
-                    }
-                  />
-                  <span className="text-paragraph-small">{option.name}</span>
-                </label>
-              )
-            })}
-          </div>
-          <FieldError message={error} />
-        </div>
-      )}
-    />
-  )
 }
 
 export function OnboardingForm({
@@ -130,7 +107,8 @@ export function OnboardingForm({
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [submitError, setSubmitError] = useState<string | null>(null)
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl)
+  const [ibjCareerName, setIbjCareerName] = useState('')
+  const [avatarUrl] = useState(initialAvatarUrl)
   const {
     data: options,
     isLoading,
@@ -141,6 +119,7 @@ export function OnboardingForm({
   })
   const form = useForm<OnboardingInput>({
     resolver: zodResolver(onboardingSchema),
+    mode: 'onBlur',
     defaultValues: {
       username: initialUsername,
       departmentId: '',
@@ -152,7 +131,6 @@ export function OnboardingForm({
       lunchPreference: LunchPreference.NO_PREFERENCE,
       recommendedLunchSpot: '',
       bio: '',
-      displayNameColor: DisplayNameColor.GRAY,
     },
   })
 
@@ -161,10 +139,6 @@ export function OnboardingForm({
   }
   if (error || !options)
     return <p className="text-sm text-destructive">選択肢の取得に失敗しました</p>
-
-  async function goNext() {
-    if (await form.trigger(stepFields[step])) setStep((current) => Math.min(current + 1, 6))
-  }
 
   async function onSubmit(data: OnboardingInput) {
     setSubmitError(null)
@@ -180,333 +154,421 @@ export function OnboardingForm({
 
   const values = form.watch()
   const findName = (items: Option[], id: string) =>
-    items.find((item) => item.id === id)?.name ?? '—'
-  const findNames = (items: Option[], ids: string[]) =>
-    ids.map((id) => findName(items, id)).join('、') || '—'
+    items.find((item) => item.id === id)?.name ?? '未選択'
+  const findNames = (items: Option[], ids: string[]) => {
+    const names = ids
+      .map((id) => items.find((item) => item.id === id)?.name)
+      .filter((name): name is string => !!name)
+    return names.length > 0 ? names : ['未選択']
+  }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-2xl space-y-8">
-      <header className="space-y-2">
-        <p className="text-caption text-muted-foreground">{step + 1} / 7</p>
-        <div className="h-2 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full bg-primary transition-all"
-            style={{ width: `${((step + 1) / 7) * 100}%` }}
-          />
-        </div>
-      </header>
+    <div className="relative flex h-screen items-center justify-center overflow-hidden bg-background-subtle">
+      <RegisterImagePanel image={leftImages[step]} priority={step === 0} />
 
-      {step === 0 && (
-        <section className="space-y-6">
-          <h1 className="text-heading-2">まずは基本情報を教えてください</h1>
-          <div className="space-y-2">
-            <Label htmlFor="username">ニックネーム</Label>
-            <Input
-              id="username"
-              {...form.register('username')}
-              aria-invalid={!!form.formState.errors.username}
-            />
-            <FieldError message={form.formState.errors.username?.message} />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Controller
-              name="departmentId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className="space-y-2">
-                  <Label htmlFor="department">所属部署</Label>
-                  <Select
-                    items={options.departments.map((item) => ({
-                      value: item.id,
-                      label: item.name,
-                    }))}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger
-                      id="department"
-                      className="w-full"
-                      aria-invalid={fieldState.invalid}
-                    >
-                      <SelectValue placeholder="選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.departments.map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError message={fieldState.error?.message} />
-                </div>
-              )}
-            />
-            <Controller
-              name="businessAreaId"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className="space-y-2">
-                  <Label htmlFor="business-area">業務エリア</Label>
-                  <Select
-                    items={options.businessAreas.map((item) => ({
-                      value: item.id,
-                      label: item.name,
-                    }))}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
-                    <SelectTrigger
-                      id="business-area"
-                      className="w-full"
-                      aria-invalid={fieldState.invalid}
-                    >
-                      <SelectValue placeholder="選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.businessAreas.map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError message={fieldState.error?.message} />
-                </div>
-              )}
-            />
-          </div>
-        </section>
-      )}
+      <RegisterSidePanel>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="max-w-95 w-full h-150 flex flex-col justify-between pb-8"
+        >
+          <div className="flex flex-1 flex-col gap-16 items-center">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-primary transition-all duration-300"
+                style={{ width: `${((step + 1) / 7) * 100}%` }}
+              />
+            </div>
 
-      {step === 1 && (
-        <section className="space-y-6">
-          <h1 className="text-heading-2">入社年月とスキル</h1>
-          <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="joinedYear"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className="space-y-2">
-                  <Label htmlFor="joined-year">入社年</Label>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                  >
-                    <SelectTrigger
-                      id="joined-year"
-                      className="w-full"
-                      aria-invalid={fieldState.invalid}
-                    >
-                      <SelectValue placeholder="選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {years.map((year) => (
-                        <SelectItem key={year} value={year}>
-                          {year}年
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError message={fieldState.error?.message} />
-                </div>
-              )}
-            />
-            <Controller
-              name="joinedMonth"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <div className="space-y-2">
-                  <Label htmlFor="joined-month">入社月</Label>
-                  <Select
-                    value={field.value ? String(field.value) : ''}
-                    onValueChange={(value) => field.onChange(Number(value))}
-                  >
-                    <SelectTrigger
-                      id="joined-month"
-                      className="w-full"
-                      aria-invalid={fieldState.invalid}
-                    >
-                      <SelectValue placeholder="選択してください" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, index) => String(index + 1)).map((month) => (
-                        <SelectItem key={month} value={month}>
-                          {month}月
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError message={fieldState.error?.message} />
-                </div>
-              )}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>ビジネススキル</Label>
-            <CheckboxList
-              name="businessSkillIds"
-              options={options.businessSkills}
-              control={form.control}
-              error={form.formState.errors.businessSkillIds?.message}
-            />
-          </div>
-        </section>
-      )}
+            {step === 0 && (
+              <section className="flex flex-1 flex-col justify-between w-full">
+                <FormTitle title="基本情報" description="あとから変更することができます" />
 
-      {step === 2 && (
-        <section className="space-y-6">
-          <h1 className="text-heading-2">興味のあること</h1>
-          <CheckboxList
-            name="interestIds"
-            options={options.interests}
-            control={form.control}
-            error={form.formState.errors.interestIds?.message}
-          />
-        </section>
-      )}
+                <div className="space-y-6">
+                  <FormField
+                    label="ニックネーム"
+                    isRequired
+                    caption="※10字以内で入力してください。"
+                    error={form.formState.errors.username?.message}
+                    inputProps={{
+                      id: 'username',
+                      ...form.register('username'),
+                      placeholder: '呼び名を入力する',
+                    }}
+                    maxLength={10}
+                  />
 
-      {step === 3 && (
-        <section className="space-y-6">
-          <h1 className="text-heading-2">ランチタイムについて</h1>
-          <Controller
-            name="lunchPreference"
-            control={form.control}
-            render={({ field }) => (
-              <RadioGroup
-                value={field.value}
-                onValueChange={field.onChange}
-                className="grid gap-3 sm:grid-cols-3"
-              >
-                {lunchChoices.map((choice) => (
-                  <label
-                    key={choice.value}
-                    htmlFor={`lunch-${choice.value}`}
-                    className="flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4"
-                  >
-                    <RadioGroupItem id={`lunch-${choice.value}`} value={choice.value} />
-                    {choice.label}
-                  </label>
-                ))}
-              </RadioGroup>
+                  <Controller
+                    name="departmentId"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <FormTitleSelect
+                        id="department"
+                        label="所属部署"
+                        isRequired
+                        placeholder="所属部署を選択する"
+                        options={options.departments}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    name="businessAreaId"
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                      <FormTitleSelect
+                        id="business-area"
+                        label="勤務エリア"
+                        isRequired
+                        options={options.businessAreas}
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        onBlur={field.onBlur}
+                        error={fieldState.error?.message}
+                      />
+                    )}
+                  />
+                </div>
+
+                <FormBottomButtons
+                  step={step}
+                  setStep={setStep}
+                  form={form}
+                  stepFields={stepFields}
+                  isNextDisabled={
+                    !values.username || !values.departmentId || !values.businessAreaId
+                  }
+                />
+              </section>
             )}
-          />
-          <div className="space-y-2">
-            <Label htmlFor="lunch-spot">おすすめランチスポット（任意）</Label>
-            <Input id="lunch-spot" maxLength={20} {...form.register('recommendedLunchSpot')} />
-            <FieldError message={form.formState.errors.recommendedLunchSpot?.message} />
+
+            {step === 1 && (
+              <section className="flex flex-1 flex-col justify-between w-full">
+                <FormTitle title="基本情報" description="あとから変更することができます" />
+
+                <div className="space-y-6">
+                  <Controller
+                    name="joinedYear"
+                    control={form.control}
+                    render={({ field: yearField, fieldState: yearFieldState }) => (
+                      <Controller
+                        name="joinedMonth"
+                        control={form.control}
+                        render={({ field: monthField, fieldState: monthFieldState }) => (
+                          <FormTitleSelectRow
+                            label="入社年月"
+                            isRequired
+                            years={years}
+                            months={months}
+                            yearValue={yearField.value ? String(yearField.value) : ''}
+                            monthValue={monthField.value ? String(monthField.value) : ''}
+                            onYearChange={(value) => yearField.onChange(Number(value))}
+                            onMonthChange={(value) => monthField.onChange(Number(value))}
+                            onYearBlur={yearField.onBlur}
+                            onMonthBlur={monthField.onBlur}
+                            yearError={yearFieldState.error?.message}
+                            monthError={monthFieldState.error?.message}
+                            placeholder={['2001', '1']}
+                            isInfoIcon
+                            ibjCareerName={ibjCareerName}
+                            setIbjCareerName={setIbjCareerName}
+                          />
+                        )}
+                      />
+                    )}
+                  />
+
+                  <div className="space-y-2">
+                    <Controller
+                      name="businessSkillIds"
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormTitleMultiSelect
+                          label="ビジネススキル"
+                          isRequired
+                          options={options.businessSkills}
+                          selectedIds={field.value}
+                          onToggle={(id) =>
+                            field.onChange(
+                              field.value.includes(id)
+                                ? field.value.filter((selectedId) => selectedId !== id)
+                                : [...field.value, id],
+                            )
+                          }
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <FormBottomButtons
+                  step={step}
+                  setStep={setStep}
+                  form={form}
+                  stepFields={stepFields}
+                  isNextDisabled={
+                    !values.joinedYear ||
+                    !values.joinedMonth ||
+                    values.businessSkillIds.length === 0
+                  }
+                />
+              </section>
+            )}
+
+            {step === 2 && (
+              <section className="flex flex-1 flex-col justify-between w-full">
+                <FormTitle title="趣味" description="複数選択できます" />
+
+                <div className="space-y-2 h-61 overflow-y-scroll scrollbar-custom">
+                  <Controller
+                    name="interestIds"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormTitleMultiSelect
+                        options={options.interests}
+                        selectedIds={field.value ?? []}
+                        onToggle={(id) => {
+                          const current = field.value ?? []
+                          field.onChange(
+                            current.includes(id)
+                              ? current.filter((selectedId) => selectedId !== id)
+                              : [...current, id],
+                          )
+                        }}
+                        className="mr-[22px]"
+                      />
+                    )}
+                  />
+                </div>
+
+                <FormBottomButtons
+                  step={step}
+                  setStep={setStep}
+                  form={form}
+                  stepFields={stepFields}
+                />
+              </section>
+            )}
+
+            {step === 3 && (
+              <section className="flex flex-1 flex-col justify-between w-full">
+                <FormTitle title="ランチ" description="お昼の過ごし方を教えてください" />
+
+                <div className="space-y-6">
+                  <Controller
+                    name="lunchPreference"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormTitleRadioButton
+                        name="lunch"
+                        label="ランチスタイル"
+                        options={lunchChoices}
+                        value={field.value}
+                        onValueChange={(value) => field.onChange(value as LunchPreference)}
+                      />
+                    )}
+                  />
+
+                  <FormField
+                    label="ランチスポット"
+                    caption="※20字以内で入力してください。"
+                    inputProps={{
+                      id: 'lanch-spot',
+                      ...form.register('recommendedLunchSpot'),
+                      placeholder: '例：inton',
+                    }}
+                    maxLength={20}
+                  />
+                </div>
+
+                <FormBottomButtons
+                  step={step}
+                  setStep={setStep}
+                  form={form}
+                  stepFields={stepFields}
+                />
+              </section>
+            )}
+
+            {step === 4 && (
+              <section className="flex flex-1 flex-col justify-between w-full">
+                <FormTitle title="その他" description="ひとことやMBTIの色を教えてください" />
+
+                <div className="space-y-6">
+                  <FormTextarea
+                    label="ひとこと"
+                    caption="※30字以内で入力してください。"
+                    error={form.formState.errors.bio?.message}
+                    maxLength={30}
+                    textareaProps={{
+                      id: 'bio',
+                      ...form.register('bio'),
+                      placeholder: '例：エンジニアの〇〇です！新しい繋がりを増やしたいです！',
+                      rows: 5,
+                    }}
+                  />
+
+                  <div className="space-y-2">
+                    <Label>MBTIの色</Label>
+                    <Controller
+                      name="displayNameColor"
+                      control={form.control}
+                      render={({ field }) => (
+                        <div className="flex flex-wrap gap-3">
+                          {mbtiColorChoices.map((choice) => (
+                            <MbtiButton
+                              key={choice.value}
+                              text={choice.label}
+                              color={choice.color}
+                              isSelected={field.value === choice.value}
+                              onClick={() =>
+                                field.onChange(
+                                  field.value === choice.value ? undefined : choice.value,
+                                )
+                              }
+                            />
+                          ))}
+
+                          <MultiSelectButton
+                            text="回答しない"
+                            isSelected={field.value === DisplayNameColor.GRAY}
+                            onClick={() =>
+                              field.onChange(
+                                field.value === DisplayNameColor.GRAY
+                                  ? undefined
+                                  : DisplayNameColor.GRAY,
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <FormBottomButtons
+                  step={step}
+                  setStep={setStep}
+                  form={form}
+                  stepFields={stepFields}
+                />
+              </section>
+            )}
+
+            {step === 5 && (
+              <section className="flex flex-1 flex-col justify-between w-full">
+                <FormTitle title="アイコン" description="ひろばでのアイコン写真を設定しましょう" />
+
+                <div className="flex items-center justify-center">
+                  <div className="relative size-40.5">
+                    <Image
+                      src={imageNone}
+                      alt=""
+                      width={162}
+                      height={162}
+                      className="object-cover"
+                    />
+                    <Image
+                      src={plusRound}
+                      alt=""
+                      width={48}
+                      height={48}
+                      className="absolute -right-5 bottom-5"
+                    />
+                  </div>
+                </div>
+
+                <FormBottomButtons
+                  step={step}
+                  setStep={setStep}
+                  form={form}
+                  stepFields={stepFields}
+                  rightLabel="確認へ進む"
+                />
+              </section>
+            )}
+
+            {step === 6 && (
+              <section className="flex flex-1 flex-col justify-between w-full">
+                <FormTitle
+                  title="登録内容の確認"
+                  description="以下の内容で登録してよろしいでしょうか"
+                />
+
+                <dl className="grid gap-x-4 gap-y-4 h-73 overflow-y-scroll scrollbar-custom grid-cols-[100px_1fr] pr-2 ">
+                  <dt className="text-label text-foreground font-bold">ニックネーム</dt>
+                  <dd className="text-body-small text-foreground">{values.username}</dd>
+
+                  <dt className="text-label text-foreground font-bold">所属部署</dt>
+                  <dd className="text-body-small text-foreground">
+                    {findName(options.departments, values.departmentId)}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">勤務エリア</dt>
+                  <dd className="text-body-small text-foreground">
+                    {findName(options.businessAreas, values.businessAreaId)}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">入社年月</dt>
+                  <dd className="text-body-small text-foreground">
+                    {values.joinedYear}年{values.joinedMonth}月
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">ビジネススキル</dt>
+                  <dd className="text-body-small text-foreground">
+                    {findNames(options.businessSkills, values.businessSkillIds).map((name) => (
+                      <p key={name}>{name}</p>
+                    ))}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">趣味</dt>
+                  <dd className="text-body-small text-foreground">
+                    {findNames(options.interests, values.interestIds ?? []).join(' ')}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">ランチスタイル</dt>
+                  <dd className="text-body-small text-foreground">
+                    {lunchChoices.find((item) => item.value === values.lunchPreference)?.label}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">おすすめランチスポット</dt>
+                  <dd className="text-body-small text-foreground">
+                    {values.recommendedLunchSpot || '未入力'}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">ひとこと</dt>
+                  <dd className="text-body-small text-foreground whitespace-pre-wrap">
+                    {values.bio || '未入力'}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">MBTIの色</dt>
+                  <dd className="text-body-small text-foreground">
+                    {colorChoices.find((item) => item.value === values.displayNameColor)?.label ??
+                      '未選択'}
+                  </dd>
+
+                  <dt className="text-label text-foreground font-bold">アイコン</dt>
+                  <dd className="text-body-small text-foreground">
+                    {avatarUrl ? '設定済み' : '未設定'}
+                  </dd>
+                </dl>
+                {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+
+                <FormBottomButtons
+                  step={step}
+                  setStep={setStep}
+                  form={form}
+                  stepFields={stepFields}
+                  rightLabel="登録を完了"
+                />
+              </section>
+            )}
           </div>
-        </section>
-      )}
-
-      {step === 4 && (
-        <section className="space-y-6">
-          <h1 className="text-heading-2">あなたらしさを教えてください</h1>
-          <div className="space-y-2">
-            <Label htmlFor="bio">一言（任意）</Label>
-            <Textarea id="bio" maxLength={200} rows={5} {...form.register('bio')} />
-            <p className="text-caption text-muted-foreground">{values.bio?.length ?? 0} / 200</p>
-            <FieldError message={form.formState.errors.bio?.message} />
-          </div>
-          <div className="space-y-2">
-            <Label>MBTI色</Label>
-            <Controller
-              name="displayNameColor"
-              control={form.control}
-              render={({ field }) => (
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="grid gap-3 sm:grid-cols-5"
-                >
-                  {colorChoices.map((choice) => (
-                    <label
-                      key={choice.value}
-                      htmlFor={`color-${choice.value}`}
-                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-input p-3"
-                    >
-                      <RadioGroupItem id={`color-${choice.value}`} value={choice.value} />
-                      <span className={cn('font-bold', choice.className)}>{choice.label}</span>
-                    </label>
-                  ))}
-                </RadioGroup>
-              )}
-            />
-          </div>
-        </section>
-      )}
-
-      {step === 5 && (
-        <section className="flex min-h-72 flex-col items-center justify-center gap-6 rounded-xl border border-dashed border-input p-8 text-center">
-          <h1 className="text-heading-2">アイコン設定</h1>
-          <AvatarUpload avatarUrl={avatarUrl} onAvatarUrlChange={setAvatarUrl} />
-        </section>
-      )}
-
-      {step === 6 && (
-        <section className="space-y-6">
-          <h1 className="text-heading-2">登録内容の確認</h1>
-          <dl className="grid gap-4 rounded-xl border border-input p-6 sm:grid-cols-[12rem_1fr]">
-            <dt className="font-bold">ニックネーム</dt>
-            <dd
-              className={
-                colorChoices.find((item) => item.value === values.displayNameColor)?.className
-              }
-            >
-              {values.username}
-            </dd>
-            <dt className="font-bold">所属部署</dt>
-            <dd>{findName(options.departments, values.departmentId)}</dd>
-            <dt className="font-bold">業務エリア</dt>
-            <dd>{findName(options.businessAreas, values.businessAreaId)}</dd>
-            <dt className="font-bold">入社年月</dt>
-            <dd>
-              {values.joinedYear}年{values.joinedMonth}月
-            </dd>
-            <dt className="font-bold">ビジネススキル</dt>
-            <dd>{findNames(options.businessSkills, values.businessSkillIds)}</dd>
-            <dt className="font-bold">興味</dt>
-            <dd>{findNames(options.interests, values.interestIds)}</dd>
-            <dt className="font-bold">ランチタイム</dt>
-            <dd>{lunchChoices.find((item) => item.value === values.lunchPreference)?.label}</dd>
-            <dt className="font-bold">おすすめランチスポット</dt>
-            <dd>{values.recommendedLunchSpot || '未入力'}</dd>
-            <dt className="font-bold">一言</dt>
-            <dd className="whitespace-pre-wrap">{values.bio || '未入力'}</dd>
-            <dt className="font-bold">MBTI色</dt>
-            <dd>{colorChoices.find((item) => item.value === values.displayNameColor)?.label}</dd>
-            <dt className="font-bold">アイコン</dt>
-            <dd>{avatarUrl ? '設定済み' : '未設定'}</dd>
-          </dl>
-          {submitError && <p className="text-sm text-destructive">{submitError}</p>}
-        </section>
-      )}
-
-      <footer className="flex items-center justify-between gap-3">
-        {step > 0 ? (
-          <Button type="button" variant="outline" onClick={() => setStep((current) => current - 1)}>
-            戻る
-          </Button>
-        ) : (
-          <span />
-        )}
-        <div className="flex gap-2">
-          {step === 5 && (
-            <Button type="button" variant="ghost" onClick={goNext}>
-              スキップ
-            </Button>
-          )}
-          {step < 6 ? (
-            <Button type="button" onClick={goNext}>
-              次へ
-            </Button>
-          ) : (
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? '登録中...' : '登録する'}
-            </Button>
-          )}
-        </div>
-      </footer>
-    </form>
+        </form>
+      </RegisterSidePanel>
+    </div>
   )
 }
