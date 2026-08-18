@@ -52,11 +52,6 @@ export default async function QaDetailPage({ params }: Props) {
           status={question.status}
           title={question.title}
           body={question.body}
-          commentCount={question.answerCount}
-          likeCount={question.likeCount}
-          liked={question.liked}
-          bookmarkCount={0}
-          bookmarked={question.saved}
           actions={
             <QuestionItemActions
               postId={question.id}

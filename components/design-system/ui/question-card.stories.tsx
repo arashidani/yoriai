@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { expect } from 'storybook/test'
 import { QuestionCard } from './question-card'
+import { QuestionItemActions } from './question-item-actions'
 
 const meta = {
   component: QuestionCard,
@@ -11,9 +12,6 @@ const meta = {
     status: 'OPEN',
     title: 'キングオブタイムの有給申請について',
     body: 'お疲れ様です！！！\n質問したいのですが、何時間労働で申請するんですか？\n\n何卒よろしくお願いいたします。',
-    commentCount: 2,
-    likeCount: 0,
-    bookmarkCount: 0,
   },
 } satisfies Meta<typeof QuestionCard>
 
@@ -27,6 +25,7 @@ export const Default: Story = {
     await expect(canvas.getByText('カテゴリー')).toBeVisible()
     await expect(canvas.getByText('回答募集中')).toBeVisible()
     await expect(canvas.getByText('2026/9/1')).toBeVisible()
+    await expect(canvas.queryByRole('button')).not.toBeInTheDocument()
   },
 }
 
@@ -44,10 +43,22 @@ export const NoCategory: Story = {
   },
 }
 
-export const WithCounts: Story = {
-  args: { likeCount: 5, liked: true, bookmarkCount: 3, bookmarked: true },
+export const WithActions: Story = {
+  args: {
+    actions: (
+      <QuestionItemActions
+        commentCount={3}
+        likeCount={5}
+        liked
+        bookmarkCount={2}
+        bookmarked
+        size="large"
+      />
+    ),
+  },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('3')).toBeVisible()
     await expect(canvas.getByText('5')).toBeVisible()
+    await expect(canvas.getByText('2')).toBeVisible()
   },
 }
