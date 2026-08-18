@@ -37,3 +37,10 @@ export const Liked: Story = {
     await expect(canvas.getByText('3')).toBeVisible()
   },
 }
+
+export const MostLiked: Story = {
+  args: { likeCount: 14, isMostLiked: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByAltText('ベストアンサー')).toBeVisible()
+  },
+}
