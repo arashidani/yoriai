@@ -8,7 +8,7 @@ export default async function OnboardingPage() {
   if (user.onboardingCompletedAt) redirect('/')
 
   return (
-    <main className="flex min-h-screen justify-center bg-background px-4 py-12">
+    <main>
       <OnboardingForm initialUsername={user.username ?? ''} initialAvatarUrl={user.avatarUrl} />
     </main>
   )
