@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { Bookmark } from 'lucide-react'
 import { expect } from 'storybook/test'
+import { BookmarkTabIcon } from '@/components/icons/bookmark-tab-icon'
 import { TabButton } from './tab-button'
 
 const meta = {
   component: TabButton,
   args: {
-    icon: <Bookmark className="size-full" />,
+    icon: <BookmarkTabIcon className="size-full text-amber-400" />,
     children: 'tab',
   },
 } satisfies Meta<typeof TabButton>

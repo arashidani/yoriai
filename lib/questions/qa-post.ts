@@ -1,5 +1,7 @@
+import type { BookmarkQuestionItemData } from '@/components/design-system/ui/bookmark-question-item-list'
+import type { MyQuestionItemData } from '@/components/design-system/ui/my-question-item-list'
 import type { QuestionItemData } from '@/components/design-system/ui/question-item-list'
-import { formatRelativeTime } from '@/lib/date-time'
+import { formatDateJst, formatRelativeTime } from '@/lib/date-time'
 
 export type QaPost = {
   id: string
@@ -72,5 +74,31 @@ export function toQuestionItemData(post: QaPost): QuestionItemData {
     bookmarkCount: 0,
     bookmarked: post.saved,
     isOwnQuestion: post.isOwnQuestion,
+  }
+}
+
+export function toMyQuestionItemData(post: QaPost): MyQuestionItemData {
+  return {
+    id: post.id,
+    href: `/posts/${post.id}`,
+    date: formatDateJst(post.createdAt),
+    title: post.title,
+    category: post.tags[0]?.name,
+    excerpt: excerpt(post.body),
+    commentCount: post.answerCount,
+    status: post.status,
+  }
+}
+
+export function toBookmarkQuestionItemData(post: QaPost): BookmarkQuestionItemData {
+  return {
+    id: post.id,
+    href: `/posts/${post.id}`,
+    date: formatDateJst(post.createdAt),
+    title: post.title,
+    category: post.tags[0]?.name,
+    status: post.status,
+    excerpt: excerpt(post.body),
+    commentCount: post.answerCount,
   }
 }
