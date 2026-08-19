@@ -1,33 +1,35 @@
-import { UsersRound } from 'lucide-react'
 import Link from 'next/link'
-
-export type Hiroba = {
-  slug: string
-  name: string
-  description: string
-}
+import type { HirobaCatalogItem } from '@/lib/hiroba/catalog'
+import { cn } from '@/lib/utils'
+import { HirobaIcon } from './hiroba-icon'
 
 type HirobaCardProps = {
-  hiroba: Hiroba
+  hiroba: HirobaCatalogItem
+  compact?: boolean
 }
 
-export function HirobaCard({ hiroba }: HirobaCardProps) {
+const tones = {
+  yellow: 'border-hiroba-yellow-border bg-hiroba-yellow-soft text-hiroba-yellow-foreground',
+  blue: 'border-hiroba-blue-border bg-hiroba-blue-soft text-hiroba-blue-foreground',
+  purple: 'border-hiroba-purple-border bg-hiroba-purple-soft text-hiroba-purple-foreground',
+  rose: 'border-hiroba-rose-border bg-hiroba-rose-soft text-hiroba-rose-foreground',
+  lime: 'border-hiroba-lime-border bg-hiroba-lime-soft text-hiroba-lime-foreground',
+  mint: 'border-hiroba-mint-border bg-hiroba-mint-soft text-hiroba-mint-foreground',
+} as const
+
+export function HirobaCard({ hiroba, compact = false }: HirobaCardProps) {
   return (
     <Link
       href={`/hiroba/${hiroba.slug}`}
-      className="block rounded-xl border border-input bg-background p-5 shadow-xs transition-shadow hover:shadow-md"
+      className={cn(
+        'group flex min-h-13 items-center gap-3 rounded-lg border-2 px-3 py-2 font-heading text-paragraph-small font-bold transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        compact && 'min-w-58 py-4',
+        tones[hiroba.tone],
+      )}
     >
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-muted">
-          <UsersRound className="size-5 text-secondary-foreground" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="font-heading text-paragraph font-bold">{hiroba.name}</p>
-          <p className="line-clamp-2 text-paragraph-small text-secondary-foreground">
-            {hiroba.description}
-          </p>
-        </div>
-      </div>
+      <span className="h-7 w-1 shrink-0 rounded-full bg-current opacity-50" aria-hidden />
+      <HirobaIcon name={hiroba.icon} className="size-5 shrink-0" aria-hidden />
+      <span className="truncate">{hiroba.name}</span>
     </Link>
   )
 }

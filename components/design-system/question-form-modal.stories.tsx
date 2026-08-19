@@ -74,7 +74,7 @@ export const Submitting: Story = {
   },
 }
 
-export const Error: Story = {
+export const ErrorState: Story = {
   args: {
     displayName: '名無しのおせワニ',
     onSubmit: fn(),
