@@ -14,7 +14,7 @@ type Story = StoryObj<typeof meta>
 
 const basePost = {
   id: 'hiroba-post-1',
-  hirobaSlug: 'hiroba-1',
+  hirobaSlug: 'alcohol',
   title: '今日のランチどこ行きました？',
   body: '近くに新しくできたお店に行ってみたら、とても美味しかったです。おすすめのお店があれば教えてください。',
   displayName: '田中太郎',

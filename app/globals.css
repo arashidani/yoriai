@@ -29,6 +29,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-subtle: var(--primary-subtle);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary-hover: var(--secondary-hover);
@@ -78,6 +79,24 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-muted: var(--sidebar-muted);
+  --color-hiroba-yellow-soft: var(--hiroba-yellow-soft);
+  --color-hiroba-yellow-border: var(--hiroba-yellow-border);
+  --color-hiroba-yellow-foreground: var(--hiroba-yellow-foreground);
+  --color-hiroba-blue-soft: var(--hiroba-blue-soft);
+  --color-hiroba-blue-border: var(--hiroba-blue-border);
+  --color-hiroba-blue-foreground: var(--hiroba-blue-foreground);
+  --color-hiroba-purple-soft: var(--hiroba-purple-soft);
+  --color-hiroba-purple-border: var(--hiroba-purple-border);
+  --color-hiroba-purple-foreground: var(--hiroba-purple-foreground);
+  --color-hiroba-rose-soft: var(--hiroba-rose-soft);
+  --color-hiroba-rose-border: var(--hiroba-rose-border);
+  --color-hiroba-rose-foreground: var(--hiroba-rose-foreground);
+  --color-hiroba-lime-soft: var(--hiroba-lime-soft);
+  --color-hiroba-lime-border: var(--hiroba-lime-border);
+  --color-hiroba-lime-foreground: var(--hiroba-lime-foreground);
+  --color-hiroba-mint-soft: var(--hiroba-mint-soft);
+  --color-hiroba-mint-border: var(--hiroba-mint-border);
+  --color-hiroba-mint-foreground: var(--hiroba-mint-foreground);
   --color-tenurechip: var(--tenurechip);
   --color-tenurechip-foreground: var(--tenurechip-foreground);
 
@@ -521,6 +540,7 @@
   --primary: #ff8560; /* orange-500 */
   --primary-foreground: #fffefc;
   --primary-hover: #f36e49; /* orange-600 */
+  --primary-subtle: #ffb19a; /* orange-300 */
   --secondary: #fffefc;
   --secondary-foreground: #7d746a; /* neutral-600 */
   --secondary-hover: #ece7df; /* neutral-300 */
@@ -577,6 +597,25 @@
   --sidebar-ring: #ece7df;
   --sidebar-muted: #ddd6cc;
 
+  --hiroba-yellow-soft: #fef3c7;
+  --hiroba-yellow-border: #fbbf24;
+  --hiroba-yellow-foreground: #d97706;
+  --hiroba-blue-soft: #dbeafe;
+  --hiroba-blue-border: #93c5fd;
+  --hiroba-blue-foreground: #3b82f6;
+  --hiroba-purple-soft: #f3e8ff;
+  --hiroba-purple-border: #d8b4fe;
+  --hiroba-purple-foreground: #a855f7;
+  --hiroba-rose-soft: #ffe4e6;
+  --hiroba-rose-border: #fda4af;
+  --hiroba-rose-foreground: #f43f5e;
+  --hiroba-lime-soft: #ecfccb;
+  --hiroba-lime-border: #a3e635;
+  --hiroba-lime-foreground: #4d7c0f;
+  --hiroba-mint-soft: #d1fae5;
+  --hiroba-mint-border: #6ee7b7;
+  --hiroba-mint-foreground: #059669;
+
   /* Figma: badge/tenurechip, badge/tenurechip-foreground。Light/Dark 共通の固定色 */
   --tenurechip: #ecfccb;
   --tenurechip-foreground: #65a30d;
@@ -595,6 +634,7 @@
   --primary: #fff4f1; /* orange-50 */
   --primary-foreground: #2f2b27;
   --primary-hover: #ffe7df; /* orange-100 */
+  --primary-subtle: #7d2a15; /* orange-900 */
   --secondary: #544d46;
   --secondary-foreground: #fdfbf7;
   --secondary-hover: #ece7df;

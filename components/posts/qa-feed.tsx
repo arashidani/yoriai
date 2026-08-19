@@ -2,11 +2,11 @@
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
+import { Pagination } from '@/components/design-system/ui/pagination'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
 import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
-import { Pagination } from '@/components/design-system/ui/pagination'
 import { PostCard } from './post-card'
 import { QaFeedStatusFilter } from './qa-feed-controls'
 import { QaFilterBar } from './qa-filter-bar'
@@ -73,7 +73,11 @@ async function fetchQuestions(params: {
 
 function QaPostListSkeleton() {
   return (
-    <div className="flex w-full flex-col divide-y divide-border" role="status" aria-label="読み込み中">
+    <div
+      className="flex w-full flex-col divide-y divide-border"
+      role="status"
+      aria-label="読み込み中"
+    >
       {['skeleton-1', 'skeleton-2', 'skeleton-3'].map((key) => (
         <div key={key} className="flex flex-col gap-4 p-6" aria-hidden>
           <div className="flex items-start gap-4">
