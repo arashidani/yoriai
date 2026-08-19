@@ -110,6 +110,10 @@ MOCK_MODE=true
 # DIRECT_URL=postgresql://...
 # NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
+
+# Dify 埋め込みチャット（未設定ならウィジェット非表示）
+# NEXT_PUBLIC_DIFY_BASE_URL=https://your-dify-host
+# NEXT_PUBLIC_DIFY_CHATBOT_TOKEN=
 ```
 
 ## 開発
