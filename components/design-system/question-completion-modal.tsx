@@ -1,6 +1,6 @@
 import { X } from 'lucide-react'
 import Image from 'next/image'
-import mascotImage from '@/assets/Mascot.png'
+import mascotImage from '@/assets/mascots/moscot_happy.svg'
 import { Button } from '@/components/design-system/button'
 import { ToolChip } from '@/components/design-system/ui/tool-chip'
 import { Separator } from '@/components/ui/separator'
