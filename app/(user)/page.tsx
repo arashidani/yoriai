@@ -1,114 +1,48 @@
-import { PencilLine } from 'lucide-react'
-import Link from 'next/link'
 import { Role } from '@/app/generated/prisma/enums'
+import { HeaderSection } from '@/components/design-system/ui/header-section'
 import { AnswerableQuestions } from '@/components/posts/answerable-questions'
+import { QaCover } from '@/components/posts/qa-cover'
 import { QaFeed } from '@/components/posts/qa-feed'
-import { buttonVariants } from '@/components/ui/button'
+import { QuestionComposeDialog } from '@/components/posts/question-compose-dialog'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
-import { publicTagSelect } from '@/lib/prisma/selects'
+import { createServerApiClient } from '@/lib/hono/server-client'
+import { toQaPost } from '@/lib/questions/qa-post'
 
-async function getRawPosts() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
-  const posts = await prisma.post.findMany({
-    where: { deletedAt: null },
-    include: {
-      author: true,
-      postAnonymousProfile: { include: { anonymousProfile: true } },
-      tags: {
-        where: { tag: { isWorkTag: true } },
-        include: { tag: { select: publicTagSelect } },
-      },
-    },
-    orderBy: { updatedAt: 'desc' },
-  })
-  return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
-}
-
-async function getAllTags() {
-  if (process.env.MOCK_MODE === 'true') {
-    return MOCK_TAGS.filter((tag) => tag.isWorkTag).map(({ id, name }) => ({ id, name }))
-  }
-  return prisma.tag.findMany({
-    where: { isWorkTag: true },
-    select: { id: true, name: true },
-    orderBy: { name: 'asc' },
-  })
-}
-
-async function getViewerState(userId: string | undefined, postIds: string[]) {
-  if (!userId || process.env.MOCK_MODE === 'true' || postIds.length === 0) {
-    return { likedPostIds: new Set<string>(), savedPostIds: new Set<string>() }
-  }
-  const [likes, bookmarks] = await Promise.all([
-    prisma.questionLike.findMany({
-      where: { userId, postId: { in: postIds } },
-      select: { postId: true },
-    }),
-    prisma.postBookmark.findMany({
-      where: { userId, postId: { in: postIds } },
-      select: { postId: true },
-    }),
+export default async function QaHomePage() {
+  const api = await createServerApiClient()
+  const [questionsResponse, tagsResponse, user] = await Promise.all([
+    api.questions.index.$get({ query: { page: '1', pageSize: '10', status: 'all' } }),
+    api.questionTags.index.$get(),
+    getCurrentUser(),
   ])
-  return {
-    likedPostIds: new Set(likes.map((l) => l.postId)),
-    savedPostIds: new Set(bookmarks.map((b) => b.postId)),
-  }
-}
 
-async function getPosts(currentUserId: string | undefined) {
-  const rawPosts = await getRawPosts()
-  const { likedPostIds, savedPostIds } = await getViewerState(
-    currentUserId,
-    rawPosts.map((p) => p.id),
-  )
-
-  return rawPosts.map((post) => {
-    const isOwnQuestion = !!currentUserId && post.authorId === currentUserId
-    const displayName = isOwnQuestion
-      ? (post.author?.name ?? post.author?.email ?? '自分')
-      : (post.postAnonymousProfile?.anonymousProfile.displayName ?? '匿名')
-
-    return {
-      id: post.id,
-      title: post.title,
-      body: post.body,
-      displayName,
-      isOwnQuestion,
-      likeCount: post.likeCount,
-      liked: likedPostIds.has(post.id),
-      saved: savedPostIds.has(post.id),
-      status: post.status,
-      answerCount: post.answerCount,
-      tags: post.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-      createdAt: post.createdAt,
-    }
-  })
-}
-
-export default async function HomePage() {
-  const user = await getCurrentUser()
-  const posts = await getPosts(user?.id)
-  const allTags = await getAllTags()
-  const isAdmin = user?.role === Role.ADMIN
+  const questionsBody = questionsResponse.ok
+    ? await questionsResponse.json()
+    : { questions: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } }
+  const tagsBody = tagsResponse.ok ? await tagsResponse.json() : { tags: [] }
+  const posts = questionsBody.questions.map(toQaPost)
 
   return (
-    <div className="flex flex-1">
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-25 items-center justify-between border-b border-input bg-background p-8">
-          <h1 className="font-heading text-heading-3">おせっかいQA</h1>
-          <Link
-            href="/posts/new"
-            className={buttonVariants({ size: 'lg', className: 'rounded-full px-5' })}
-          >
-            <PencilLine />
-            質問する
-          </Link>
-        </header>
-        <QaFeed posts={posts} isAdmin={isAdmin} allTags={allTags} />
+    <div className="flex min-w-0 flex-1 flex-col">
+      <QaCover />
+      <div className="flex flex-1">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <HeaderSection
+            className="sticky top-0 z-30 h-25 p-8"
+            title="なんでもQ&A"
+            actions={<QuestionComposeDialog displayName={user?.username || 'ユーザー'} />}
+          />
+          <QaFeed
+            posts={posts}
+            isAdmin={user?.role === Role.ADMIN}
+            allTags={tagsBody.tags}
+            initialTotalPages={questionsBody.pagination.totalPages}
+            initialTotal={questionsBody.pagination.total}
+          />
+        </div>
+        {/* TODO: BusinessSkillとQ&Aタグの関連付け後、OPEN・本人以外の推薦APIへ変更する。現状は一覧先頭3件。 */}
+        <AnswerableQuestions posts={posts} />
       </div>
-      <AnswerableQuestions posts={posts} />
     </div>
   )
 }

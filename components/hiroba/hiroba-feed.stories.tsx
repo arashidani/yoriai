@@ -34,7 +34,6 @@ export const Default: Story = {
     hirobaSlug: 'hiroba-1',
     posts,
     isAdmin: false,
-    allTags: [{ id: 'tag-1', name: 'Next.js' }],
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText(/今日のランチ/)).toBeVisible()
