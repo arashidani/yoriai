@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 
 type HeaderSectionProps = {
   className?: string
-  title: string
+  title?: string
   actions?: ReactNode
   primaryLabel?: string
   onPrimaryClick?: () => void
@@ -27,7 +27,7 @@ function HeaderSection({
       data-slot="header-section"
       className={cn('flex w-full items-center justify-between bg-card', className)}
     >
-      <h1 className="font-heading text-heading-1">{title}</h1>
+      {title && <h1 className="font-heading text-heading-1">{title}</h1>}
       {actions ?? (
         <ActionButtons
           primaryLabel={primaryLabel ?? ''}
