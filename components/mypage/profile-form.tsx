@@ -1,28 +1,37 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
-import { type Control, Controller, useForm } from 'react-hook-form'
-import { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
+  type UseMutationResult,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import { type Dispatch, type SetStateAction, useState } from 'react'
+import { type Control, Controller, type UseFormReturn, useForm } from 'react-hook-form'
+import { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
+import badge from '@/assets/badge-secondary-foreground.svg'
+import bubble from '@/assets/bubble-secondary-foreground.svg'
+import human from '@/assets/human-secondary-foreground.svg'
+import pen from '@/assets/pen-white.svg'
 import { client } from '@/lib/hono/client'
 import { type UpdateProfileInput, updateProfileSchema } from '@/lib/schemas/profile'
-import { cn } from '@/lib/utils'
+import { Button } from '../design-system/button'
+import { FormField } from '../design-system/form-field'
+import { FormSelect } from '../design-system/form-select'
+import { FormTextarea } from '../design-system/form-textarea'
+import { MbtiButton } from '../design-system/mbti-button'
+import { MultiSelectButton } from '../design-system/multi-select-button'
+import { RadioButton } from '../design-system/radio-button'
+import { TenureChip } from '../design-system/ui/tenure-chip'
+import { FormTitleMultiSelect } from '../onboarding/form-title-multi-select'
+import { FormTitleSelectRow, getIbjCareerName } from '../onboarding/form-title-select-row'
+import { ActivityHistory, type ActivityItem } from './activity-history'
+import { ProfileAvatar } from './profile-avatar'
+import { ProfileEditField } from './profile-edit-field'
+import { ProfileField } from './profile-field'
 
 type Option = { id: string; name: string }
 type Options = {
@@ -38,17 +47,35 @@ const lunchChoices = [
   { value: LunchPreference.ALONE, label: '一人で' },
 ]
 
-const colorChoices = [
-  { value: DisplayNameColor.GREEN, label: '緑', className: 'text-display-name-green' },
-  { value: DisplayNameColor.YELLOW, label: '黄色', className: 'text-display-name-yellow' },
-  { value: DisplayNameColor.BLUE, label: '青', className: 'text-display-name-blue' },
-  { value: DisplayNameColor.PURPLE, label: '紫', className: 'text-display-name-purple' },
-  { value: DisplayNameColor.GRAY, label: '回答しない', className: 'text-display-name-gray' },
+const mbtiColorChoices = [
+  { value: DisplayNameColor.GREEN, text: 'みどり', color: 'green' as const },
+  { value: DisplayNameColor.YELLOW, text: 'きいろ', color: 'yellow' as const },
+  { value: DisplayNameColor.BLUE, text: 'あお', color: 'blue' as const },
+  { value: DisplayNameColor.PURPLE, text: 'むらさき', color: 'purple' as const },
+]
+
+const ACTIVITY_ITEMS: ActivityItem[] = [
+  { id: 'activity-1', icon: badge, text: 'ひろばに10回参加を達成しました', time: '2時間前' },
+  {
+    id: 'activity-2',
+    icon: bubble,
+    text: 'チームビルディングについて質問しました',
+    time: '2時間前',
+  },
+  { id: 'activity-3', icon: human, text: '料理に参加しました', time: '2時間前' },
+  { id: 'activity-4', icon: human, text: '料理に参加しました', time: '2時間前' },
+  {
+    id: 'activity-5',
+    icon: bubble,
+    text: 'チームビルディングについて質問しました',
+    time: '2時間前',
+  },
 ]
 
 const years = Array.from({ length: new Date().getFullYear() - 1899 }, (_, index) =>
   String(new Date().getFullYear() - index),
 )
+const months = Array.from({ length: 12 }, (_, index) => String(index + 1))
 
 async function fetchProfile() {
   const res = await client.api.users.me.$get()
@@ -75,7 +102,7 @@ function FieldError({ message }: { message?: string }) {
   return message ? <p className="text-paragraph-small text-destructive">{message}</p> : null
 }
 
-function CheckboxList({
+function MultiSelectList({
   name,
   options,
   control,
@@ -90,37 +117,96 @@ function CheckboxList({
     <Controller
       name={name}
       control={control}
-      render={({ field }) => (
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {options.map((option) => {
-              const checked = field.value.includes(option.id)
-              return (
-                <label
-                  key={option.id}
-                  htmlFor={`${name}-${option.id}`}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4"
-                >
-                  <Checkbox
-                    id={`${name}-${option.id}`}
-                    checked={checked}
-                    onCheckedChange={(nextChecked) =>
-                      field.onChange(
-                        nextChecked
-                          ? [...field.value, option.id]
-                          : field.value.filter((id) => id !== option.id),
-                      )
-                    }
-                  />
-                  <span className="text-paragraph-small">{option.name}</span>
-                </label>
-              )
-            })}
+      render={({ field }) => {
+        const selectedIds = field.value ?? []
+        return (
+          <div className="flex-1">
+            <FormTitleMultiSelect
+              options={options}
+              selectedIds={selectedIds}
+              onToggle={(id) =>
+                field.onChange(
+                  selectedIds.includes(id)
+                    ? selectedIds.filter((selectedId) => selectedId !== id)
+                    : [...selectedIds, id],
+                )
+              }
+            />
+            <FieldError message={error} />
           </div>
-          <FieldError message={error} />
-        </div>
-      )}
+        )
+      }}
     />
+  )
+}
+
+function ProfileView({
+  profile,
+  options,
+  avatarUrl,
+}: {
+  profile: Awaited<ReturnType<typeof fetchProfile>>
+  options: Options
+  avatarUrl: string | null
+}) {
+  const departmentName = options.departments.find((item) => item.id === profile.departmentId)?.name
+  const businessAreaName = options.businessAreas.find(
+    (item) => item.id === profile.businessAreaId,
+  )?.name
+  const businessSkillNames = options.businessSkills.filter((item) =>
+    profile.businessSkillIds.includes(item.id),
+  )
+  const interestNames = options.interests.filter((item) => profile.interestIds.includes(item.id))
+  const lunchLabel = lunchChoices.find((choice) => choice.value === profile.lunchPreference)?.label
+  const mbtiLabel =
+    profile.displayNameColor === DisplayNameColor.GRAY
+      ? '回答しない'
+      : mbtiColorChoices.find((choice) => choice.value === profile.displayNameColor)?.text
+
+  return (
+    <div className="flex gap-8">
+      <ProfileAvatar avatarUrl={avatarUrl} />
+
+      <div className="flex-1">
+        <ProfileField label="ニックネーム" value={profile.username || '未入力'} />
+
+        <ProfileField label="所属部署" value={departmentName ?? '未選択'} />
+
+        <ProfileField label="勤務エリア" value={businessAreaName ?? '未選択'} />
+
+        <div className="flex items-center gap-2">
+          <ProfileField
+            label="入社年月"
+            value={
+              profile.joinedYear && profile.joinedMonth
+                ? `${profile.joinedYear}年 ${profile.joinedMonth}月`
+                : '未選択'
+            }
+          />
+          <TenureChip size="default">IBJ歴</TenureChip>
+        </div>
+
+        <ProfileField
+          label="ビジネススキル"
+          value={
+            businessSkillNames.length > 0 ? businessSkillNames.map((item) => item.name) : '未選択'
+          }
+        />
+
+        <ProfileField
+          label="趣味"
+          value={interestNames.length > 0 ? interestNames.map((item) => item.name) : '未選択'}
+        />
+
+        <ProfileField label="ランチスタイル" value={lunchLabel ?? '未選択'} />
+
+        <ProfileField label="ランチスポット" value={profile.recommendedLunchSpot || '未入力'} />
+
+        <ProfileField label="ひとこと" value={profile.bio ? profile.bio.split('\n') : '未入力'} />
+
+        <ProfileField label="MBTIの色" value={mbtiLabel ?? '未選択'} />
+      </div>
+    </div>
   )
 }
 
@@ -136,10 +222,211 @@ export function ProfileForm() {
     return <p className="text-paragraph-small text-destructive">プロフィールの取得に失敗しました</p>
   }
 
-  return <ProfileEditor profile={profileQuery.data} options={optionsQuery.data} />
+  return <ProfileContainer profile={profileQuery.data} options={optionsQuery.data} />
 }
 
-function ProfileEditor({
+function ProfileEditForm({
+  form,
+  options,
+  mutation,
+  avatarUrl,
+  onAvatarUrlChange,
+  ibjCareerName,
+  setIbjCareerName,
+  onSubmit,
+}: {
+  form: UseFormReturn<UpdateProfileInput>
+  options: Options
+  mutation: UseMutationResult<void, Error, UpdateProfileInput>
+  avatarUrl: string | null
+  onAvatarUrlChange: (avatarUrl: string | null) => void
+  ibjCareerName: string
+  setIbjCareerName: Dispatch<SetStateAction<string>>
+  onSubmit: (data: UpdateProfileInput) => void
+}) {
+  return (
+    <form id="profile-edit-form" onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="flex gap-8">
+        <ProfileAvatar avatarUrl={avatarUrl} onAvatarUrlChange={onAvatarUrlChange} isEditable />
+
+        <div className="flex-1">
+          <ProfileEditField label="ニックネーム" htmlFor="username">
+            <FormField
+              error={form.formState.errors.username?.message}
+              inputProps={{
+                id: 'username',
+                ...form.register('username'),
+                className: 'flex-1',
+              }}
+            />
+          </ProfileEditField>
+
+          <Controller
+            name="departmentId"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <ProfileEditField label="所属部署" htmlFor="department">
+                <div className="flex-1">
+                  <FormSelect
+                    id="department"
+                    options={options.departments}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                  <FieldError message={fieldState.error?.message} />
+                </div>
+              </ProfileEditField>
+            )}
+          />
+
+          <Controller
+            name="businessAreaId"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <ProfileEditField label="勤務エリア" htmlFor="business-area">
+                <div className="flex-1">
+                  <FormSelect
+                    id="business-area"
+                    options={options.businessAreas}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    onBlur={field.onBlur}
+                    error={fieldState.error?.message}
+                  />
+                  <FieldError message={fieldState.error?.message} />
+                </div>
+              </ProfileEditField>
+            )}
+          />
+
+          <Controller
+            name="joinedYear"
+            control={form.control}
+            render={({ field: yearField, fieldState: yearFieldState }) => (
+              <Controller
+                name="joinedMonth"
+                control={form.control}
+                render={({ field: monthField, fieldState: monthFieldState }) => (
+                  <ProfileEditField label="入社年月">
+                    <div className="flex-1">
+                      <FormTitleSelectRow
+                        years={years}
+                        months={months}
+                        yearValue={yearField.value ? String(yearField.value) : ''}
+                        monthValue={monthField.value ? String(monthField.value) : ''}
+                        onYearChange={(value) => yearField.onChange(Number(value))}
+                        onMonthChange={(value) => monthField.onChange(Number(value))}
+                        onYearBlur={yearField.onBlur}
+                        onMonthBlur={monthField.onBlur}
+                        yearError={yearFieldState.error?.message}
+                        monthError={monthFieldState.error?.message}
+                        ibjCareerName={ibjCareerName}
+                        setIbjCareerName={setIbjCareerName}
+                        wrapperHeightClassName="h-auto"
+                      />
+                    </div>
+                  </ProfileEditField>
+                )}
+              />
+            )}
+          />
+
+          <ProfileEditField label="ビジネススキル">
+            <MultiSelectList
+              name="businessSkillIds"
+              options={options.businessSkills}
+              control={form.control}
+              error={form.formState.errors.businessSkillIds?.message}
+            />
+          </ProfileEditField>
+
+          <ProfileEditField label="趣味">
+            <MultiSelectList
+              name="interestIds"
+              options={options.interests}
+              control={form.control}
+            />
+          </ProfileEditField>
+
+          <ProfileEditField label="ランチスタイル">
+            <Controller
+              name="lunchPreference"
+              control={form.control}
+              render={({ field }) => (
+                <RadioButton
+                  name="lunch-preference"
+                  options={lunchChoices}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                />
+              )}
+            />
+          </ProfileEditField>
+
+          <ProfileEditField label="ランチスポット" htmlFor="lunch-spot">
+            <FormField
+              error={form.formState.errors.recommendedLunchSpot?.message}
+              inputProps={{
+                id: 'lunch-spot',
+                ...form.register('recommendedLunchSpot'),
+                className: 'flex-1',
+              }}
+              maxLength={20}
+            />
+          </ProfileEditField>
+
+          <ProfileEditField label="ひとこと" htmlFor="bio">
+            <div className="flex-1">
+              <FormTextarea
+                error={form.formState.errors.bio?.message}
+                maxLength={30}
+                textareaProps={{ id: 'bio', rows: 5, ...form.register('bio') }}
+              />
+              <FieldError message={form.formState.errors.bio?.message} />
+            </div>
+          </ProfileEditField>
+
+          <ProfileEditField label="MBTIの色">
+            <Controller
+              name="displayNameColor"
+              control={form.control}
+              render={({ field }) => (
+                <div className="flex flex-1 flex-wrap gap-3">
+                  {mbtiColorChoices.map((choice) => (
+                    <MbtiButton
+                      key={choice.value}
+                      text={choice.text}
+                      color={choice.color}
+                      isSelected={field.value === choice.value}
+                      onClick={() => field.onChange(choice.value)}
+                    />
+                  ))}
+                  <MultiSelectButton
+                    text="回答しない"
+                    isSelected={field.value === DisplayNameColor.GRAY}
+                    onClick={() => field.onChange(DisplayNameColor.GRAY)}
+                  />
+                </div>
+              )}
+            />
+          </ProfileEditField>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-end gap-4 pt-6">
+        {mutation.error && (
+          <p className="text-paragraph-small text-destructive" role="alert">
+            {mutation.error.message}
+          </p>
+        )}
+      </div>
+    </form>
+  )
+}
+
+function ProfileContainer({
   profile,
   options,
 }: {
@@ -147,7 +434,14 @@ function ProfileEditor({
   options: Options
 }) {
   const queryClient = useQueryClient()
-  const [saved, setSaved] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl)
+  const [ibjCareerName, setIbjCareerName] = useState(() =>
+    getIbjCareerName(
+      profile.joinedYear ? String(profile.joinedYear) : '',
+      profile.joinedMonth ? String(profile.joinedMonth) : '',
+    ),
+  )
   const form = useForm<UpdateProfileInput>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
@@ -168,289 +462,57 @@ function ProfileEditor({
   const mutation = useMutation({
     mutationFn: saveProfile,
     onSuccess: async () => {
-      setSaved(true)
       await queryClient.invalidateQueries({ queryKey: ['users', 'me'] })
+      setIsEditing(false)
     },
-    onError: () => setSaved(false),
   })
-  const bio = form.watch('bio')
 
   return (
-    <form
-      onSubmit={form.handleSubmit((data) => {
-        setSaved(false)
-        mutation.mutate(data)
-      })}
-      className="space-y-6"
-    >
-      <Card>
-        <CardContent className="space-y-6 p-6">
-          <fieldset className="space-y-4">
-            <legend className="text-heading-4">基本情報</legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="email">メールアドレス</Label>
-                <Input id="email" type="email" value={profile.email} disabled />
-                <p className="text-caption text-muted-foreground">
-                  メールアドレスは変更できません。
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">氏名</Label>
-                <Input
-                  id="name"
-                  {...form.register('name')}
-                  aria-invalid={!!form.formState.errors.name}
-                />
-                <FieldError message={form.formState.errors.name?.message} />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor="username">ニックネーム</Label>
-                <Input
-                  id="username"
-                  {...form.register('username')}
-                  aria-invalid={!!form.formState.errors.username}
-                />
-                <FieldError message={form.formState.errors.username?.message} />
-              </div>
-            </div>
-          </fieldset>
+    <div className="flex gap-8">
+      <div className="flex-1">
+        <div className="flex justify-between mb-6">
+          <h2 className="text-heading-1 text-foreground">プロフィール</h2>
+          {isEditing ? (
+            <Button
+              key="save"
+              type="submit"
+              form="profile-edit-form"
+              isDisabled={mutation.isPending}
+              leftIcon={<Image src={pen} alt="" />}
+              className="w-auto px-6 py-4"
+            >
+              {mutation.isPending ? '保存中' : '保存'}
+            </Button>
+          ) : (
+            <Button
+              key="edit"
+              type="button"
+              onClick={() => setIsEditing(true)}
+              leftIcon={<Image src={pen} alt="" />}
+              className="w-auto px-6 py-4"
+            >
+              編集
+            </Button>
+          )}
+        </div>
 
-          <fieldset className="space-y-4 border-t border-border pt-6">
-            <legend className="text-heading-4">所属・入社情報</legend>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Controller
-                name="departmentId"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="department">所属部署</Label>
-                    <Select
-                      items={options.departments.map((item) => ({
-                        value: item.id,
-                        label: item.name,
-                      }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger
-                        id="department"
-                        className="w-full"
-                        aria-invalid={fieldState.invalid}
-                      >
-                        <SelectValue placeholder="選択してください" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {options.departments.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FieldError message={fieldState.error?.message} />
-                  </div>
-                )}
-              />
-              <Controller
-                name="businessAreaId"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="business-area">業務エリア</Label>
-                    <Select
-                      items={options.businessAreas.map((item) => ({
-                        value: item.id,
-                        label: item.name,
-                      }))}
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
-                      <SelectTrigger
-                        id="business-area"
-                        className="w-full"
-                        aria-invalid={fieldState.invalid}
-                      >
-                        <SelectValue placeholder="選択してください" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {options.businessAreas.map((item) => (
-                          <SelectItem key={item.id} value={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FieldError message={fieldState.error?.message} />
-                  </div>
-                )}
-              />
-              <Controller
-                name="joinedYear"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="joined-year">入社年</Label>
-                    <Select
-                      value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => field.onChange(Number(value))}
-                    >
-                      <SelectTrigger
-                        id="joined-year"
-                        className="w-full"
-                        aria-invalid={fieldState.invalid}
-                      >
-                        <SelectValue placeholder="選択してください" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}年
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FieldError message={fieldState.error?.message} />
-                  </div>
-                )}
-              />
-              <Controller
-                name="joinedMonth"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <div className="space-y-2">
-                    <Label htmlFor="joined-month">入社月</Label>
-                    <Select
-                      value={field.value ? String(field.value) : ''}
-                      onValueChange={(value) => field.onChange(Number(value))}
-                    >
-                      <SelectTrigger
-                        id="joined-month"
-                        className="w-full"
-                        aria-invalid={fieldState.invalid}
-                      >
-                        <SelectValue placeholder="選択してください" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 12 }, (_, index) => String(index + 1)).map(
-                          (month) => (
-                            <SelectItem key={month} value={month}>
-                              {month}月
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <FieldError message={fieldState.error?.message} />
-                  </div>
-                )}
-              />
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-4 border-t border-border pt-6">
-            <legend className="text-heading-4">ビジネススキル</legend>
-            <CheckboxList
-              name="businessSkillIds"
-              options={options.businessSkills}
-              control={form.control}
-              error={form.formState.errors.businessSkillIds?.message}
-            />
-          </fieldset>
-
-          <fieldset className="space-y-4 border-t border-border pt-6">
-            <legend className="text-heading-4">興味のあること</legend>
-            <CheckboxList
-              name="interestIds"
-              options={options.interests}
-              control={form.control}
-              error={form.formState.errors.interestIds?.message}
-            />
-          </fieldset>
-
-          <fieldset className="space-y-4 border-t border-border pt-6">
-            <legend className="text-heading-4">ランチタイム</legend>
-            <Controller
-              name="lunchPreference"
-              control={form.control}
-              render={({ field }) => (
-                <RadioGroup
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  className="grid gap-3 sm:grid-cols-3"
-                >
-                  {lunchChoices.map((choice) => (
-                    <label
-                      key={choice.value}
-                      htmlFor={`profile-lunch-${choice.value}`}
-                      className="flex cursor-pointer items-center gap-3 rounded-lg border border-input p-4"
-                    >
-                      <RadioGroupItem id={`profile-lunch-${choice.value}`} value={choice.value} />
-                      {choice.label}
-                    </label>
-                  ))}
-                </RadioGroup>
-              )}
-            />
-            <div className="space-y-2">
-              <Label htmlFor="lunch-spot">おすすめランチスポット（任意）</Label>
-              <Input id="lunch-spot" maxLength={20} {...form.register('recommendedLunchSpot')} />
-              <FieldError message={form.formState.errors.recommendedLunchSpot?.message} />
-            </div>
-          </fieldset>
-
-          <fieldset className="space-y-4 border-t border-border pt-6">
-            <legend className="text-heading-4">自己紹介</legend>
-            <div className="space-y-2">
-              <Label htmlFor="bio">一言（任意）</Label>
-              <Textarea id="bio" maxLength={200} rows={5} {...form.register('bio')} />
-              <p className="text-caption text-muted-foreground">{bio?.length ?? 0} / 200</p>
-              <FieldError message={form.formState.errors.bio?.message} />
-            </div>
-            <div className="space-y-2">
-              <Label>MBTI色</Label>
-              <Controller
-                name="displayNameColor"
-                control={form.control}
-                render={({ field }) => (
-                  <RadioGroup
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    className="grid gap-3 sm:grid-cols-5"
-                  >
-                    {colorChoices.map((choice) => (
-                      <label
-                        key={choice.value}
-                        htmlFor={`profile-color-${choice.value}`}
-                        className="flex cursor-pointer items-center gap-2 rounded-lg border border-input p-3"
-                      >
-                        <RadioGroupItem id={`profile-color-${choice.value}`} value={choice.value} />
-                        <span className={cn('font-bold', choice.className)}>{choice.label}</span>
-                      </label>
-                    ))}
-                  </RadioGroup>
-                )}
-              />
-            </div>
-          </fieldset>
-        </CardContent>
-      </Card>
-
-      <div className="flex flex-wrap items-center justify-end gap-4">
-        {saved && (
-          <p className="text-paragraph-small" role="status">
-            プロフィールを更新しました。
-          </p>
+        {isEditing ? (
+          <ProfileEditForm
+            form={form}
+            options={options}
+            mutation={mutation}
+            avatarUrl={avatarUrl}
+            onAvatarUrlChange={setAvatarUrl}
+            ibjCareerName={ibjCareerName}
+            setIbjCareerName={setIbjCareerName}
+            onSubmit={(data) => mutation.mutate(data)}
+          />
+        ) : (
+          <ProfileView profile={profile} options={options} avatarUrl={avatarUrl} />
         )}
-        {mutation.error && (
-          <p className="text-paragraph-small text-destructive" role="alert">
-            {mutation.error.message}
-          </p>
-        )}
-        <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? '保存中...' : '変更を保存'}
-        </Button>
       </div>
-    </form>
+
+      <ActivityHistory items={ACTIVITY_ITEMS} />
+    </div>
   )
 }

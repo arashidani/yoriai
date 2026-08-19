@@ -25,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { formatDateTimeJst, getJstDateRange } from '@/lib/date-time'
 import { client } from '@/lib/hono/client'
 import { cn } from '@/lib/utils'
 
@@ -68,8 +69,8 @@ export function InviteTable({ initialInvites }: InviteTableProps) {
   }, [initialInvites])
 
   const filteredInvites = useMemo(() => {
-    const startTime = startDate ? new Date(`${startDate}T00:00:00`).getTime() : null
-    const endTime = endDate ? new Date(`${endDate}T23:59:59.999`).getTime() : null
+    const startTime = startDate ? getJstDateRange(startDate).start : null
+    const endTime = endDate ? getJstDateRange(endDate).end : null
 
     return invites.filter((invite) => {
       const createdAt = new Date(invite.createdAt).getTime()
@@ -182,10 +183,10 @@ export function InviteTable({ initialInvites }: InviteTableProps) {
                     </span>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(invite.createdAt).toLocaleString('ja-JP')}
+                    {formatDateTimeJst(invite.createdAt)}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {new Date(invite.expiresAt).toLocaleString('ja-JP')}
+                    {formatDateTimeJst(invite.expiresAt)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">

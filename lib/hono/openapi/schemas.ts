@@ -21,6 +21,9 @@ export const UserSchema = z
       .enum(['GREEN', 'YELLOW', 'BLUE', 'PURPLE', 'GRAY'])
       .nullable()
       .openapi({ example: 'BLUE' }),
+    avatarUrl: z.string().nullable().openapi({
+      example: 'https://xxxx.supabase.co/storage/v1/object/public/profiles/user-1.webp?v=1',
+    }),
     role: z.enum(['USER', 'ADMIN']).openapi({ example: 'USER' }),
     createdAt: dateTime(),
   })
@@ -89,7 +92,7 @@ export const PostSchema = z
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
     // .nullable() だと登録済みコンポーネント User 自体が nullable になるため union で書く
     author: z.union([UserSchema, z.null()]).optional(),
-    status: z.enum(['OPEN', 'ANSWERED', 'RESOLVED', 'HIDDEN']).openapi({ example: 'OPEN' }),
+    status: z.enum(['OPEN', 'RESOLVED', 'HIDDEN']).openapi({ example: 'OPEN' }),
     answerCount: z.number().openapi({ example: 0 }),
     likeCount: z.number().openapi({ example: 0 }),
     resolvedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
