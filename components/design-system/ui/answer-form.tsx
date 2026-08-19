@@ -1,0 +1,42 @@
+import { Pencil } from 'lucide-react'
+import type { ComponentProps } from 'react'
+
+import { Button } from '@/components/design-system/button'
+import { Textarea } from '@/components/design-system/ui/textarea'
+import { cn } from '@/lib/utils'
+
+type AnswerFormProps = {
+  className?: string
+  placeholder?: string
+  submitLabel?: string
+  disabled?: boolean
+  textareaProps?: Omit<ComponentProps<typeof Textarea>, 'placeholder' | 'disabled' | 'className'>
+} & Omit<ComponentProps<'form'>, 'className'>
+
+function AnswerForm({
+  className,
+  placeholder = '回答を入力する',
+  submitLabel = '送信',
+  disabled = false,
+  textareaProps,
+  ...formProps
+}: AnswerFormProps) {
+  return (
+    <form data-slot="answer-form" className={cn('relative w-full', className)} {...formProps}>
+      <Textarea placeholder={placeholder} disabled={disabled} rows={4} {...textareaProps} />
+      <Button
+        type="submit"
+        size="default"
+        variant="primary"
+        leftIcon={<Pencil className="size-4" />}
+        isDisabled={disabled}
+        className="absolute right-4 bottom-3.5"
+      >
+        {submitLabel}
+      </Button>
+    </form>
+  )
+}
+
+export type { AnswerFormProps }
+export { AnswerForm }

@@ -19,11 +19,11 @@ import { FormTextarea } from '@/components/design-system/form-textarea'
 import { MbtiButton } from '@/components/design-system/mbti-button'
 import { MultiSelectButton } from '@/components/design-system/multi-select-button'
 import { FormBottomButtons } from '@/components/onboarding/form-bottom-buttons'
-import { OnboardingAvatarUpload } from '@/components/onboarding/onboarding-avatar-upload'
 import { FormTitleMultiSelect } from '@/components/onboarding/form-title-multi-select'
 import { FormTitleRadioButton } from '@/components/onboarding/form-title-radio-button'
 import { FormTitleSelect } from '@/components/onboarding/form-title-select'
 import { FormTitleSelectRow } from '@/components/onboarding/form-title-select-row'
+import { AvatarUpload } from '@/components/profile/avatar-upload'
 import { Label } from '@/components/ui/label'
 import { client } from '@/lib/hono/client'
 import { type OnboardingInput, onboardingSchema } from '@/lib/schemas/onboarding'
@@ -461,7 +461,7 @@ export function OnboardingForm({
                 <FormTitle title="アイコン" description="ひろばでのアイコン写真を設定しましょう" />
 
                 <div className="flex items-center justify-center">
-                  <OnboardingAvatarUpload avatarUrl={avatarUrl} onAvatarUrlChange={setAvatarUrl} />
+                  <AvatarUpload avatarUrl={avatarUrl} onAvatarUrlChange={setAvatarUrl} />
                 </div>
 
                 <FormBottomButtons
@@ -534,7 +534,9 @@ export function OnboardingForm({
                   </dd>
 
                   <dt className="text-label text-foreground font-bold">アイコン</dt>
-                  <dd className="text-body-small text-foreground">{avatarUrl ? '設定済み' : '未設定'}</dd>
+                  <dd className="text-body-small text-foreground">
+                    {avatarUrl ? '設定済み' : '未設定'}
+                  </dd>
                 </dl>
                 {submitError && <p className="text-sm text-destructive">{submitError}</p>}
 

@@ -1,15 +1,14 @@
-import { Medal } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { AnswerCard } from '@/components/posts/answer-card'
+import { Button } from '@/components/design-system/button'
+import { AssistBanner } from '@/components/design-system/ui/assist-banner'
+import { QuestionCard } from '@/components/design-system/ui/question-card'
+import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { AnswerForm } from '@/components/posts/answer-form'
-import { QuestionLikeButton } from '@/components/posts/question-like-button'
+import { QaAnswerItemList } from '@/components/posts/qa-answer-item-list'
 import { ResolveButton } from '@/components/posts/resolve-button'
-import { SaveButton } from '@/components/posts/save-button'
-import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { createServerApiClient } from '@/lib/hono/server-client'
-
-const STATUS_LABEL = { OPEN: '回答募集中', RESOLVED: '解決済み' } as const
 
 type Props = {
   params: Promise<{ id: string }>
@@ -30,79 +29,70 @@ export default async function QaDetailPage({ params }: Props) {
   const canAnswer = question.status === 'OPEN'
 
   return (
-    <article className="mx-auto w-full max-w-4xl px-4 py-8">
-      <div className="mb-6">
+    <article className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-8">
+      <div className="flex w-full items-center justify-between">
         <Link href="/">
-          <Button variant="ghost" size="sm">
-            ← 一覧に戻る
+          <Button type="button" variant="secondary" size="large">
+            一覧に戻る
+          </Button>
+        </Link>
+        <Link href="/my-questions">
+          <Button type="button" variant="secondary" size="large">
+            Q&A管理
           </Button>
         </Link>
       </div>
-      <div className="mb-4 flex items-center gap-2">
-        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-paragraph-mini font-medium text-muted-foreground">
-          {STATUS_LABEL[question.status]}
-        </span>
-        {question.tag && (
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-paragraph-mini">
-            {question.tag.name}
-          </span>
-        )}
-      </div>
-      <h1 className="mb-4 text-2xl font-bold">{question.title}</h1>
-      <div className="mb-6 flex items-center gap-4 text-sm text-muted-foreground">
-        <span>{question.displayAuthor.displayName}</span>
-        <span>{new Date(question.createdAt).toLocaleDateString('ja-JP')}</span>
-      </div>
-      <p className="whitespace-pre-wrap">{question.body}</p>
-      <div className="mt-6 flex items-center gap-3">
-        {!question.isOwnQuestion && (
-          <QuestionLikeButton
-            postId={question.id}
-            initialLiked={question.liked}
-            initialLikeCount={question.likeCount}
-          />
-        )}
-        <SaveButton postId={question.id} initialSaved={question.saved} />
+      <Separator />
+      <div className="flex w-full flex-col gap-3">
+        <QuestionCard
+          avatarSrc={question.displayAuthor.avatarUrl ?? undefined}
+          authorName={question.displayAuthor.displayName}
+          date={new Date(question.createdAt).toLocaleDateString('ja-JP')}
+          category={question.tag?.name}
+          status={question.status}
+          title={question.title}
+          body={question.body}
+          actions={
+            <QuestionItemActions
+              postId={question.id}
+              commentCount={question.answerCount}
+              likeCount={question.likeCount}
+              liked={question.liked}
+              bookmarkCount={0}
+              bookmarked={question.saved}
+              isOwnQuestion={question.isOwnQuestion}
+              size="large"
+            />
+          }
+        />
+        {/* TODO: Q&A管理の実装時にここを修正する */}
         {question.isOwnQuestion && canAnswer && <ResolveButton postId={question.id} />}
       </div>
-      <section className="mt-10">
-        <h2 className="mb-4 text-heading-4">回答 {answers.length}件</h2>
+      <div className="flex w-full flex-col gap-2">
+        <div className="flex w-full flex-col gap-4">
+          {canAnswer ? (
+            <AnswerForm postId={question.id} />
+          ) : (
+            <p className="text-paragraph text-secondary-foreground">
+              この質問は回答を受け付けていません。
+            </p>
+          )}
+          <AssistBanner>
+            AIが自動でカテゴリタグを付与し、回答されやすくします。
+          </AssistBanner>
+        </div>
+        <p className="text-caption text-secondary-foreground">
+          ※回答にはIBJ歴が表示されます。
+        </p>
+      </div>
+      <div className="flex w-full flex-col gap-6">
+        <Separator />
         {answers.length === 0 ? (
-          <p className="text-secondary-foreground">まだ回答がありません。</p>
+          <p className="text-paragraph text-secondary-foreground">まだ回答がありません。</p>
         ) : (
-          <div className="grid gap-3">
-            {answers.map((answer) => (
-              <div key={answer.id} className="relative">
-                {answer.isMostLiked && (
-                  <Medal
-                    className="absolute top-3 right-3 z-10 text-primary"
-                    aria-label="最多いいね回答"
-                  />
-                )}
-                <AnswerCard
-                  answer={{
-                    id: answer.id,
-                    body: answer.body,
-                    displayName: answer.displayAuthor.displayName,
-                    isOwnAnswer: answer.isOwnAnswer,
-                    likeCount: answer.likeCount,
-                    createdAt: answer.createdAt,
-                  }}
-                  liked={answer.liked}
-                />
-              </div>
-            ))}
-          </div>
+          <QaAnswerItemList answers={answers} />
         )}
-      </section>
-      {canAnswer ? (
-        <section id="answer-form" className="mt-8 scroll-mt-8">
-          <h2 className="mb-3 text-heading-4">回答する</h2>
-          <AnswerForm postId={question.id} />
-        </section>
-      ) : (
-        <p className="mt-8 text-secondary-foreground">この質問は回答を受け付けていません。</p>
-      )}
+      </div>
     </article>
   )
 }

@@ -1,8 +1,7 @@
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
+import { AVATAR_MAX_BYTES, AVATAR_SIZE } from '@/lib/image/avatar-limits'
 import {
-  AVATAR_MAX_BYTES,
-  AVATAR_SIZE,
   AvatarProcessingError,
   processAvatarImage,
   UnsupportedImageError,
