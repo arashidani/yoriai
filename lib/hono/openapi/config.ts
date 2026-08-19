@@ -12,9 +12,10 @@ export const openApiConfig = {
   servers: [{ url: '/', description: 'デフォルト' }],
   tags: [
     {
-      name: 'posts',
+      name: 'questions',
       description: '質問（投稿）の閲覧・作成・削除、回答の投稿・一覧取得、解決済み操作',
     },
+    { name: 'question-tags', description: 'Q&Aの質問タグ候補' },
     { name: 'answers', description: '回答へのいいね' },
     {
       name: 'hiroba',

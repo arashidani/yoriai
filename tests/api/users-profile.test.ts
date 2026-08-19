@@ -79,6 +79,7 @@ describe('自分のプロフィールAPI', () => {
       recommendedLunchSpot: null,
       bio: 'よろしくお願いします',
       displayNameColor: DisplayNameColor.GREEN,
+      avatarUrl: null,
       businessSkills: [{ businessSkillId: 'business-skill-1' }],
       interests: [{ interestId: 'interest-1' }],
     })

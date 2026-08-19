@@ -1,26 +1,52 @@
 import type { ComponentProps } from 'react'
+import { FormLabel } from '@/components/design-system/form-label'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
 type FormFieldProps = {
-  label: string
+  label?: string
   error?: string
   inputProps: ComponentProps<typeof Input>
+  isRequired?: boolean
+  caption?: string
+  maxLength?: number
 }
 
-export function FormField({ label, error, inputProps }: FormFieldProps) {
+export function FormField({
+  label,
+  error,
+  inputProps,
+  isRequired = false,
+  caption,
+  maxLength,
+}: FormFieldProps) {
   const { className, ...restInputProps } = inputProps
 
   return (
     <div className="flex flex-col gap-2 w-full">
-      <div className="flex gap-1">
-        <Label htmlFor={inputProps.id}>
-          <p className="text-sm font-bold text-foreground">{label}</p>
-        </Label>
-        {error && <p className="text-sm text-destructive">{error}</p>}
-      </div>
-      <Input {...restInputProps} aria-invalid={!!error} className={cn('p-3 h-11', className)} />
+      {label && (
+        <div className="flex gap-1 items-center">
+          <FormLabel label={label} isRequired={isRequired} id={inputProps.id} />
+          {error && (
+            <p className="text-destructive-text text-caption tracking-normal font-medium">
+              {error}
+            </p>
+          )}
+        </div>
+      )}
+
+      <Input
+        {...restInputProps}
+        aria-invalid={!!error}
+        className={cn('p-3 h-11', className)}
+        maxLength={maxLength}
+      />
+
+      {caption && (
+        <p className="text-caption text-secondary-foreground tracking-normal font-medium">
+          {caption}
+        </p>
+      )}
     </div>
   )
 }

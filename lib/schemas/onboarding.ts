@@ -27,8 +27,8 @@ export const onboardingSchema = z.object({
     .refine(uniqueIds, '同じビジネススキルを重複して選択できません'),
   interestIds: z
     .array(z.string().min(1))
-    .min(1, '興味を1つ以上選択してください')
-    .refine(uniqueIds, '同じ興味を重複して選択できません'),
+    .refine(uniqueIds, '同じ興味を重複して選択できません')
+    .optional(),
   lunchPreference: z.nativeEnum(LunchPreference),
   recommendedLunchSpot: z
     .string()
@@ -36,7 +36,7 @@ export const onboardingSchema = z.object({
     .max(20, 'おすすめランチスポットは20文字以内で入力してください')
     .optional(),
   bio: z.string().trim().max(200, '一言は200文字以内で入力してください').optional(),
-  displayNameColor: z.nativeEnum(DisplayNameColor),
+  displayNameColor: z.nativeEnum(DisplayNameColor).optional(),
 })
 
 export type OnboardingInput = z.infer<typeof onboardingSchema>

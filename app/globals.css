@@ -19,7 +19,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-background-subtle: var(--background-subtle);
+  --color-background-2: var(--background-2);
   --color-foreground: var(--foreground);
+  --color-foreground-alt: var(--foreground-alt);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
   --color-popover: var(--popover);
@@ -41,6 +43,9 @@
   --color-destructive-text: var(--destructive-text);
   --color-destructive-subtle: var(--destructive-subtle);
   --color-success: var(--success);
+  --color-informative: var(--informative);
+  --color-informative-foreground: var(--informative-foreground);
+  --color-informative-background: var(--informative-background);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -55,6 +60,14 @@
   --color-display-name-blue: var(--display-name-blue);
   --color-display-name-purple: var(--display-name-purple);
   --color-display-name-gray: var(--display-name-gray);
+  --color-mbti-green: var(--mbti-green);
+  --color-mbti-yellow: var(--mbti-yellow);
+  --color-mbti-blue: var(--mbti-blue);
+  --color-mbti-purple: var(--mbti-purple);
+  --color-mbti-green-bg: var(--mbti-green-bg);
+  --color-mbti-yellow-bg: var(--mbti-yellow-bg);
+  --color-mbti-blue-bg: var(--mbti-blue-bg);
+  --color-mbti-purple-bg: var(--mbti-purple-bg);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-sidebar: var(--sidebar);
@@ -84,6 +97,8 @@
   --color-hiroba-mint-soft: var(--hiroba-mint-soft);
   --color-hiroba-mint-border: var(--hiroba-mint-border);
   --color-hiroba-mint-foreground: var(--hiroba-mint-foreground);
+  --color-tenurechip: var(--tenurechip);
+  --color-tenurechip-foreground: var(--tenurechip-foreground);
 
   /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
      3種類に限定し、独自の font-* ユーティリティは増やさない。
@@ -383,6 +398,10 @@
   --color-brand-2-foreground: #b84221;
   --color-brand-3: #7d2a15;
   --color-brand-3-foreground: #ffb19a;
+  /* Figma: unofficial/border-3。Light/Dark 共通の固定色 */
+  --color-border-3: #ece7df;
+  /* Figma: unofficial/border-4。Light/Dark 共通の固定色 */
+  --color-border-4: #ddd6cc;
 }
 
 /* ── alpha プリミティブ ──
@@ -446,8 +465,8 @@
   --text-heading-2--line-height: 1.875rem;
   --text-heading-2--letter-spacing: 0.5px;
   --text-heading-2--font-weight: 700;
-  --text-heading-3: 1.5rem;
-  --text-heading-3--line-height: 1.8rem;
+  --text-heading-3: 1.125rem;
+  --text-heading-3--line-height: 1.5rem;
   --text-heading-3--letter-spacing: 0.5px;
   --text-heading-3--font-weight: 700;
   --text-heading-4: 1.25rem;
@@ -466,14 +485,30 @@
   --text-paragraph-mini: 0.75rem;
   --text-paragraph-mini--line-height: 1rem;
   --text-paragraph-mini--font-weight: 400;
-  --text-caption: 0.875rem;
-  --text-caption--line-height: 1.3125rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
   --text-caption--letter-spacing: 1.5px;
   --text-caption--font-weight: 400;
+  --text-caption-bold: 0.75rem;
+  --text-caption-bold--line-height: 1rem;
+  --text-caption-bold--letter-spacing: 1.5px;
+  --text-caption-bold--font-weight: 700;
   --text-monospaced: 1rem;
   --text-monospaced--line-height: 1.5rem;
   --text-monospaced--letter-spacing: 0.5px;
   --text-monospaced--font-weight: 400;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.25rem;
+  --text-label--font-weight: 700;
+  --text-label-small: 0.75rem;
+  --text-label-small--line-height: 1.25rem;
+  --text-label-small--font-weight: 700;
+  --text-body-small: 0.875rem;
+  --text-body-small--line-height: 1.25rem;
+  --text-body-small--font-weight: 500;
+  --text-body-small-bold: 0.875rem;
+  --text-body-small-bold--line-height: 1.25rem;
+  --text-body-small-bold--font-weight: 700;
 
   /* Shadow: デザインシステムスケール。2xs〜xl は Tailwind 既定と同値、
      2xl のみ不透明度がデザインシステム準拠（0.1）で既定（0.25）を上書き。 */
@@ -492,7 +527,9 @@
 
   --background: #fffefc; /* neutral-50 */
   --background-subtle: #fdfbf7; /* neutral-100 */
+  --background-2: #fdfbf7;
   --foreground: #2f2b27; /* neutral-900 */
+  --foreground-alt: #7d746a;
   --card: #ffffff;
   --card-foreground: #2f2b27;
   /* NOTE: Figma は popover を反転（黒地に白文字）で定義しているが、
@@ -517,6 +554,9 @@
   --destructive-text: #f87171;
   --destructive-subtle: #fef2f2; /* red-50 */
   --success: #34d399; /* emerald-400 */
+  --informative: #33c1ed; /* sky-500 */
+  --informative-foreground: #fffefc;
+  --informative-background: #f0fcff; /* sky-50 */
   --border: #f6f3ed; /* neutral-200 */
   /* NOTE: Figma は input=#ffffff（背景色定義）だが、shadcn の border-input
      は入力欄の枠線色のため視認できる値にする（ユーザー確認済み）。 */
@@ -534,6 +574,16 @@
   --display-name-blue: #2563eb; /* blue-600 */
   --display-name-purple: #9333ea; /* purple-600 */
   --display-name-gray: #6b7280; /* gray-500 */
+  /* Figma: square-mbti-foreground 系。MBTI色選択チップ（onboarding）専用 */
+  --mbti-green: #059669;
+  --mbti-yellow: #d97706;
+  --mbti-blue: #0891b2;
+  --mbti-purple: #a855f7;
+  /* Figma: square-mbti-background 系。選択済みチップの薄い背景色 */
+  --mbti-green-bg: #d1fae5;
+  --mbti-yellow-bg: #fef3c7;
+  --mbti-blue-bg: #cffafe;
+  --mbti-purple-bg: #f3e8ff;
   --positive: #009689;
   --negative: #f54a00;
 
@@ -565,12 +615,17 @@
   --hiroba-mint-soft: #d1fae5;
   --hiroba-mint-border: #6ee7b7;
   --hiroba-mint-foreground: #059669;
+
+  /* Figma: badge/tenurechip, badge/tenurechip-foreground。Light/Dark 共通の固定色 */
+  --tenurechip: #ecfccb;
+  --tenurechip-foreground: #65a30d;
 }
 
 /* ── Dark ── */
 .dark {
   --background: #2f2b27; /* neutral-900 */
   --background-subtle: #544d46; /* neutral-800 */
+  --background-2: #544d46;
   --foreground: #fffefc; /* neutral-50 */
   --card: #2f2b27;
   --card-foreground: #ffffff;
@@ -583,6 +638,7 @@
   --secondary: #544d46;
   --secondary-foreground: #fdfbf7;
   --secondary-hover: #ece7df;
+  --foreground-alt: #fdfbf7;
   --muted: #544d46;
   --muted-foreground: #a59a8d; /* neutral-600 */
   --accent: #2f2b27;
@@ -593,6 +649,9 @@
   --destructive-text: #f87171; /* red-400 */
   --destructive-subtle: #450a0a; /* red-950 */
   --success: #d1fae5; /* emerald-100 */
+  --informative: #33c1ed; /* sky-500（Light と固定・上部 NOTE 参照） */
+  --informative-foreground: #fffefc;
+  --informative-background: #0a4a5e; /* sky-900 */
   --border: #7d746a; /* neutral-700 */
   --input: #7d746a; /* neutral-700（Figma は 白5%。light 側の NOTE 参照） */
   --ring: #7d746a;
@@ -608,6 +667,14 @@
   --display-name-blue: #60a5fa; /* blue-400 */
   --display-name-purple: #c084fc; /* purple-400 */
   --display-name-gray: #9ca3af; /* gray-400 */
+  --mbti-green: #059669;
+  --mbti-yellow: #d97706;
+  --mbti-blue: #0891b2;
+  --mbti-purple: #a855f7;
+  --mbti-green-bg: #d1fae5;
+  --mbti-yellow-bg: #fef3c7;
+  --mbti-blue-bg: #cffafe;
+  --mbti-purple-bg: #f3e8ff;
   --positive: #00bc7d;
   --negative: #ff2056;
 
@@ -620,6 +687,9 @@
   --sidebar-border: #544d46; /* neutral-800 */
   --sidebar-ring: #7d746a;
   --sidebar-muted: #c9c0b5;
+
+  --tenurechip: #ecfccb; /* Light と固定 */
+  --tenurechip-foreground: #65a30d; /* Light と固定 */
 }
 
 @layer base {
@@ -635,5 +705,23 @@
   html {
     /* 本文フォント。font-sans は Inter → Noto Sans JP の順にフォールバックする */
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* Figma: unofficial/accent-3。幅6px・角丸のカスタムスクロールバー（webkit系ブラウザのみ） */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-3) transparent;
+  }
+  .scrollbar-custom::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-3);
+    border-radius: 4px;
   }
 }
