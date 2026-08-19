@@ -10,6 +10,7 @@ import {
   UserProfileSchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
+import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_MESSAGE } from '@/lib/image/avatar-limits'
 import {
   AvatarProcessingError,
   processAvatarImage,
@@ -23,9 +24,6 @@ import { COMPANY_EMAIL_ERROR, companyEmailSchema } from '@/lib/schemas/register'
 import { createUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
 import { AvatarUploadError, deleteAvatar, uploadAvatar } from '@/lib/supabase/storage/avatar'
-
-// サーバーレス環境（Vercel等）のリクエストボディ上限(~4.5MB)に合わせる
-const AVATAR_ORIGINAL_MAX_BYTES = 4.5 * 1024 * 1024
 
 const createRoute_ = createRoute({
   method: 'post',
@@ -99,9 +97,8 @@ const uploadAvatarRoute = createRoute({
   middleware: [
     authMiddleware,
     bodyLimit({
-      maxSize: AVATAR_ORIGINAL_MAX_BYTES,
-      onError: (c) =>
-        c.json({ error: 'ファイルサイズが大きすぎます（4.5MB以下にしてください）' }, 413),
+      maxSize: AVATAR_MAX_BYTES,
+      onError: (c) => c.json({ error: AVATAR_TOO_LARGE_MESSAGE }, 413),
     }),
   ] as const,
   request: {
@@ -123,10 +120,7 @@ const uploadAvatarRoute = createRoute({
     },
     400: errorResponse('対応していない画像形式', '対応していない画像形式です'),
     401: errorResponse('未認証', 'Unauthorized'),
-    413: errorResponse(
-      'ファイルサイズ超過',
-      'ファイルサイズが大きすぎます（4.5MB以下にしてください）',
-    ),
+    413: errorResponse('ファイルサイズ超過', AVATAR_TOO_LARGE_MESSAGE),
     422: errorResponse('画像処理に失敗', '画像を処理できませんでした'),
     502: errorResponse('アップロード失敗', '画像のアップロードに失敗しました'),
   },

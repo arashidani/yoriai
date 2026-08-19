@@ -96,7 +96,7 @@ export default async function HirobaPostDetailPage({ params }: Props) {
       <div className="mb-6">
         <Link href={`/hiroba/${slug}`}>
           <Button variant="ghost" size="sm">
-            ← 一覧に戻る
+            一覧に戻る
           </Button>
         </Link>
       </div>

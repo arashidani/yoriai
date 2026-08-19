@@ -3,6 +3,7 @@ import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
+  MOCK_AVATAR_URL,
   MOCK_BADGES,
   MOCK_BUSINESS_AREAS,
   MOCK_BUSINESS_SKILLS,
@@ -32,6 +33,12 @@ export const mswHandlers = {
   users: [
     http.get('/api/users/me', () => HttpResponse.json({ user: MOCK_USER_PROFILE })),
     http.patch('/api/users/me', () => HttpResponse.json({ success: true })),
+    http.put('/api/users/me/avatar', () =>
+      HttpResponse.json({ user: { ...MOCK_USERS[0], avatarUrl: MOCK_AVATAR_URL } }),
+    ),
+    http.delete('/api/users/me/avatar', () =>
+      HttpResponse.json({ user: { ...MOCK_USERS[0], avatarUrl: null } }),
+    ),
   ],
   onboarding: [
     http.get('/api/onboarding/options', () =>

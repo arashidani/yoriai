@@ -16,6 +16,7 @@ type QuestionItemActionsProps = {
   bookmarkCount: number
   bookmarked?: boolean
   isOwnQuestion?: boolean
+  size?: 'default' | 'large'
 }
 
 function QuestionItemActions({
@@ -26,6 +27,7 @@ function QuestionItemActions({
   bookmarkCount: initialBookmarkCount,
   bookmarked: initialBookmarked = false,
   isOwnQuestion = false,
+  size = 'default',
 }: QuestionItemActionsProps) {
   const [liked, setLiked] = useState(initialLiked)
   const [likeCount, setLikeCount] = useState(initialLikeCount)
@@ -91,15 +93,19 @@ function QuestionItemActions({
 
   return (
     <div className="flex w-full items-center gap-4">
-      <CommentCount count={commentCount} />
-      <LikeButton
-        count={likeCount}
-        pressed={liked}
-        onPressedChange={handleLikedChange}
-        disabled={isOwnQuestion || likePending}
-      />
+      <CommentCount count={commentCount} size={size} />
+      {!isOwnQuestion && (
+        <LikeButton
+          count={likeCount}
+          size={size}
+          pressed={liked}
+          onPressedChange={handleLikedChange}
+          disabled={likePending}
+        />
+      )}
       <BookmarkButton
         count={bookmarkCount}
+        size={size}
         pressed={bookmarked}
         onPressedChange={handleBookmarkedChange}
         disabled={bookmarkPending}
