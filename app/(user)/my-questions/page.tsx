@@ -1,8 +1,17 @@
 import Link from 'next/link'
-import { QuestionItemList } from '@/components/design-system/ui/question-item-list'
-import { buttonVariants } from '@/components/ui/button'
+
+import { Button } from '@/components/design-system/button'
+import { BookmarkQuestionItemList } from '@/components/design-system/ui/bookmark-question-item-list'
+import { EmptyState } from '@/components/design-system/ui/empty-state'
+import { HeaderSection } from '@/components/design-system/ui/header-section'
+import { TabBar } from '@/components/design-system/ui/tab-bar'
+import { BookmarkTabIcon } from '@/components/icons/bookmark-tab-icon'
+import { PencilIcon } from '@/components/icons/pencil-icon'
+import { MyQuestionsPagination } from '@/components/my-questions/my-questions-pagination'
+import { PostedQuestionList } from '@/components/my-questions/posted-question-list'
+import { Separator } from '@/components/ui/separator'
 import { createServerApiClient } from '@/lib/hono/server-client'
-import { toQaPost, toQuestionItemData } from '@/lib/questions/qa-post'
+import { toBookmarkQuestionItemData, toMyQuestionItemData, toQaPost } from '@/lib/questions/qa-post'
 
 type Props = {
   searchParams: Promise<{ tab?: string; page?: string }>
@@ -27,69 +36,70 @@ export default async function MyQuestionsPage({ searchParams }: Props) {
   const response = await request
   if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
   const body = await response.json()
-  const totalPages = body.pagination.totalPages
-  const queryForPage = (targetPage: number) => `/my-questions?tab=${tab}&page=${targetPage}`
-  const items = body.questions.map((question) => toQuestionItemData(toQaPost(question)))
+  const { totalPages, total, pageSize } = body.pagination
+  const posts = body.questions.map(toQaPost)
 
   return (
     <main className="mx-auto w-full max-w-4xl px-4 py-8">
-      <h1 className="font-heading text-heading-3">投稿・保存した質問</h1>
-      <nav className="my-6 flex gap-2" aria-label="質問一覧の切り替え">
-        <Link
-          href="/my-questions?tab=posted&page=1"
-          className={buttonVariants({ variant: tab === 'posted' ? 'default' : 'outline' })}
-        >
-          投稿した質問
-        </Link>
-        <Link
-          href="/my-questions?tab=saved&page=1"
-          className={buttonVariants({ variant: tab === 'saved' ? 'default' : 'outline' })}
-        >
-          保存した質問
-        </Link>
-      </nav>
-      <section aria-labelledby="question-list-heading">
-        <h2 id="question-list-heading" className="mb-4 text-heading-4">
-          {tab === 'saved' ? '保存した質問' : '投稿した質問'}
-        </h2>
-        {/* TODO: 質問がない場合のUIを後で追加する */}
-        {items.length === 0 ? (
-          <p className="text-secondary-foreground">まだ質問がありません。</p>
+      <HeaderSection
+        className="h-14"
+        actions={
+          <Button variant="secondary" size="large" render={<Link href="/" />} nativeButton={false}>
+            一覧に戻る
+          </Button>
+        }
+      />
+      <div className="mt-8 flex flex-col items-start">
+        <TabBar
+          value={tab}
+          items={[
+            {
+              value: 'posted',
+              label: '投稿した質問',
+              icon: <PencilIcon aria-hidden className="size-full text-primary" />,
+              href: '/my-questions?tab=posted&page=1',
+            },
+            {
+              value: 'saved',
+              label: '保存した質問',
+              icon: <BookmarkTabIcon aria-hidden className="size-full text-amber-400" />,
+              href: '/my-questions?tab=saved&page=1',
+            },
+          ]}
+        />
+        <Separator />
+        {posts.length === 0 ? (
+          tab === 'saved' ? (
+            <EmptyState
+              variant="closeEye"
+              message="ボクはすぐ忘れちゃうワン"
+              title="まだ何も保存していません"
+              description="見返したい質問や自分が回答した質問を保存しましょう"
+            />
+          ) : (
+            <EmptyState
+              variant="uruuru"
+              message="ボクが質問を届けるワン！"
+              title="まだ何も投稿していません"
+              description="質問一覧ページから質問を投稿することができます"
+            />
+          )
+        ) : tab === 'saved' ? (
+          <BookmarkQuestionItemList items={posts.map(toBookmarkQuestionItemData)} />
         ) : (
-          <QuestionItemList items={items} />
+          <PostedQuestionList items={posts.map(toMyQuestionItemData)} />
         )}
-        {totalPages > 1 && (
-          <nav className="mt-6 flex items-center justify-center gap-3" aria-label="ページ送り">
-            {page > 1 ? (
-              <Link
-                href={queryForPage(page - 1)}
-                className={buttonVariants({ variant: 'outline' })}
-              >
-                前へ
-              </Link>
-            ) : (
-              <span className={buttonVariants({ variant: 'outline' })} aria-disabled="true">
-                前へ
-              </span>
-            )}
-            <span className="text-paragraph-small">
-              {page} / {totalPages}
-            </span>
-            {page < totalPages ? (
-              <Link
-                href={queryForPage(page + 1)}
-                className={buttonVariants({ variant: 'outline' })}
-              >
-                次へ
-              </Link>
-            ) : (
-              <span className={buttonVariants({ variant: 'outline' })} aria-disabled="true">
-                次へ
-              </span>
-            )}
-          </nav>
-        )}
-      </section>
+      </div>
+      {total >= 1 && (
+        <MyQuestionsPagination
+          className="mt-6"
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={pageSize}
+          tab={tab}
+        />
+      )}
     </main>
   )
 }

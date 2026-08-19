@@ -6,7 +6,6 @@ import { QuestionCard } from '@/components/design-system/ui/question-card'
 import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { AnswerForm } from '@/components/posts/answer-form'
 import { QaAnswerItemList } from '@/components/posts/qa-answer-item-list'
-import { ResolveButton } from '@/components/posts/resolve-button'
 import { Separator } from '@/components/ui/separator'
 import { createServerApiClient } from '@/lib/hono/server-client'
 
@@ -65,8 +64,6 @@ export default async function QaDetailPage({ params }: Props) {
             />
           }
         />
-        {/* TODO: Q&A管理の実装時にここを修正する */}
-        {question.isOwnQuestion && canAnswer && <ResolveButton postId={question.id} />}
       </div>
       <div className="flex w-full flex-col gap-2">
         <div className="flex w-full flex-col gap-4">
