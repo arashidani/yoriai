@@ -3,6 +3,7 @@ import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
+  MOCK_AVATAR_URL,
   MOCK_BADGES,
   MOCK_BUSINESS_AREAS,
   MOCK_BUSINESS_SKILLS,
@@ -19,12 +20,25 @@ import {
   MOCK_TAGS,
   MOCK_USER_PROFILE,
   MOCK_USERS,
+  mockPostHasTagId,
 } from '../lib/mocks/fixtures'
+
+import { toQuestionResponse } from '../lib/questions/api-mappers'
+
+const MOCK_QUESTIONS = MOCK_POSTS.map((post) =>
+  toQuestionResponse({ ...post, likes: [], bookmarks: [] }, MOCK_USERS[0].id),
+)
 
 export const mswHandlers = {
   users: [
     http.get('/api/users/me', () => HttpResponse.json({ user: MOCK_USER_PROFILE })),
     http.patch('/api/users/me', () => HttpResponse.json({ success: true })),
+    http.put('/api/users/me/avatar', () =>
+      HttpResponse.json({ user: { ...MOCK_USERS[0], avatarUrl: MOCK_AVATAR_URL } }),
+    ),
+    http.delete('/api/users/me/avatar', () =>
+      HttpResponse.json({ user: { ...MOCK_USERS[0], avatarUrl: null } }),
+    ),
   ],
   onboarding: [
     http.get('/api/onboarding/options', () =>
@@ -38,34 +52,62 @@ export const mswHandlers = {
     http.post('/api/onboarding', () => HttpResponse.json({ success: true })),
   ],
   posts: [
-    http.get('/api/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
-    http.get('/api/posts/:id', ({ params }) => {
-      const post = MOCK_POSTS.find((p) => p.id === params.id)
-      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
-      return HttpResponse.json({ post })
+    http.get('/api/questions', ({ request }) => {
+      const url = new URL(request.url)
+      const keyword = url.searchParams.get('keyword') ?? ''
+      const status = url.searchParams.get('status') ?? 'all'
+      const tagId = url.searchParams.get('tagId')
+      const page = Number(url.searchParams.get('page') ?? '1')
+      const pageSize = Number(url.searchParams.get('pageSize') ?? '10')
+
+      let questions = MOCK_QUESTIONS.filter((question) => {
+        const post = MOCK_POSTS.find((item) => item.id === question.id)
+        return post && !post.deletedAt
+      })
+      if (keyword) {
+        questions = questions.filter(
+          (question) => question.title.includes(keyword) || question.body.includes(keyword),
+        )
+      }
+      if (status === 'unanswered') {
+        questions = questions.filter((question) => question.status === 'OPEN')
+      }
+      if (status === 'resolved') {
+        questions = questions.filter((question) => question.status === 'RESOLVED')
+      }
+      if (tagId) {
+        questions = questions.filter((question) => mockPostHasTagId(question.id, tagId))
+      }
+
+      const total = questions.length
+      const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize)
+      return HttpResponse.json({
+        questions: questions.slice((page - 1) * pageSize, page * pageSize),
+        pagination: { page, pageSize, total, totalPages },
+      })
     }),
-    http.post('/api/posts', async ({ request }) => {
+    http.get('/api/questions/:id', ({ params }) => {
+      const post = MOCK_QUESTIONS.find((p) => p.id === params.id)
+      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      return HttpResponse.json({ question: post })
+    }),
+    http.post('/api/questions', async ({ request }) => {
       const body = (await request.json()) as { title: string; body: string }
       return HttpResponse.json(
         {
-          post: {
-            id: 'post-new',
-            title: body.title,
-            body: body.body,
-            authorId: 'user-1',
-            author: MOCK_USERS[0],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          },
+          question: { ...MOCK_QUESTIONS[0], id: 'post-new', title: body.title, body: body.body },
+          moderation: { isHidden: false },
         },
         { status: 201 },
       )
     }),
-    http.delete('/api/posts/:id', () => HttpResponse.json({ success: true })),
-    http.post('/api/posts/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
-    http.delete('/api/posts/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
-    http.post('/api/posts/:id/bookmarks', () => HttpResponse.json({ saved: true })),
-    http.delete('/api/posts/:id/bookmarks', () => HttpResponse.json({ saved: false })),
+    http.delete('/api/admin/posts/:id', () => HttpResponse.json({ success: true })),
+    http.post('/api/questions/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
+    http.delete('/api/questions/:id/likes', () =>
+      HttpResponse.json({ liked: false, likeCount: 0 }),
+    ),
+    http.post('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: true })),
+    http.delete('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: false })),
   ],
   answers: [
     http.post('/api/answers/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),

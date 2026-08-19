@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { Role } from '@/app/generated/prisma/enums'
 import { HirobaFeed } from '@/components/hiroba/hiroba-feed'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_HIROBA_POSTS, MOCK_HIROBAS, MOCK_TAGS } from '@/lib/mocks/fixtures'
+import { MOCK_HIROBA_POSTS, MOCK_HIROBAS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
 
@@ -23,11 +23,6 @@ async function getRawPosts(hirobaId: string) {
     orderBy: { updatedAt: 'desc' },
   })
   return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
-}
-
-async function getAllTags() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_TAGS.map(({ id, name }) => ({ id, name }))
-  return prisma.tag.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } })
 }
 
 async function getViewerState(userId: string | undefined, postIds: string[]) {
@@ -83,18 +78,17 @@ export default async function HirobaDetailPage({ params }: { params: Promise<{ s
 
   const user = await getCurrentUser()
   const posts = await getPosts(hiroba.id, hiroba.slug, user?.id)
-  const allTags = await getAllTags()
   const isAdmin = user?.role === Role.ADMIN
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      <header className="sticky top-0 z-30 flex h-25 items-center justify-between border-b border-input bg-background p-8">
+      <header className="sticky top-0 z-30 flex h-25 items-center justify-between bg-background p-8">
         <div>
           <h1 className="font-heading text-heading-3">{hiroba.name}</h1>
           <p className="text-paragraph-small text-secondary-foreground">{hiroba.description}</p>
         </div>
       </header>
-      <HirobaFeed hirobaSlug={hiroba.slug} posts={posts} isAdmin={isAdmin} allTags={allTags} />
+      <HirobaFeed hirobaSlug={hiroba.slug} posts={posts} isAdmin={isAdmin} />
     </div>
   )
 }

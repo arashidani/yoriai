@@ -25,6 +25,7 @@ export const MOCK_USERS = [
     recommendedLunchSpot: null,
     bio: 'よろしくお願いします',
     displayNameColor: DisplayNameColor.GREEN,
+    avatarUrl: null,
     onboardingCompletedAt: new Date('2024-01-01'),
     createdAt: new Date('2024-01-01'),
   },
@@ -43,6 +44,7 @@ export const MOCK_USERS = [
     recommendedLunchSpot: '駅前食堂',
     bio: null,
     displayNameColor: DisplayNameColor.BLUE,
+    avatarUrl: null,
     onboardingCompletedAt: new Date('2024-01-02'),
     createdAt: new Date('2024-01-02'),
   },
@@ -53,6 +55,9 @@ export const MOCK_USER_PROFILE = {
   businessSkillIds: ['business-skill-1'],
   interestIds: ['interest-1'],
 }
+
+/** アバターアップロードAPIのMOCK_MODE応答用 */
+export const MOCK_AVATAR_URL = '/anonymous-profiles/cat.svg?v=mock'
 
 const optionDates = {
   createdAt: new Date('2024-01-01'),
@@ -164,7 +169,7 @@ export const MOCK_POSTS = [
     authorId: 'user-2',
     author: MOCK_USERS[1],
     postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
-    status: QuestionStatus.ANSWERED,
+    status: QuestionStatus.OPEN,
     answerCount: 1,
     likeCount: 5,
     resolvedAt: null,
@@ -221,7 +226,29 @@ export const MOCK_POSTS = [
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
   },
+  {
+    id: 'post-deleted',
+    title: '削除済みの質問',
+    body: 'AI判定によって論理削除された質問です。',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
+    status: QuestionStatus.OPEN,
+    answerCount: 0,
+    likeCount: 0,
+    resolvedAt: null,
+    deletedAt: new Date('2024-01-14'),
+    tags: [],
+    createdAt: new Date('2024-01-14'),
+    updatedAt: new Date('2024-01-14'),
+  },
 ]
+
+/** MOCK の PostTag いずれかが tagId と一致するか。本番 Prisma の tags: { some: { tagId } } と同じ判定。 */
+export function mockPostHasTagId(postId: string, tagId: string): boolean {
+  const post = MOCK_POSTS.find((item) => item.id === postId)
+  return post?.tags.some((tag) => tag.id === tagId) ?? false
+}
 
 export const MOCK_HIROBAS = [
   {

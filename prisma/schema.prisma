@@ -26,6 +26,7 @@ model User {
   recommendedLunchSpot  String?                @db.VarChar(20)
   bio                   String?                @db.VarChar(200)
   displayNameColor      DisplayNameColor?
+  avatarUrl             String?
   onboardingCompletedAt DateTime?
   posts                 Post[]
   answers               Answer[]               @relation("AnswerAuthor")
@@ -486,7 +487,6 @@ enum FlagStatus {
 
 enum QuestionStatus {
   OPEN
-  ANSWERED
   RESOLVED
   HIDDEN
 }
