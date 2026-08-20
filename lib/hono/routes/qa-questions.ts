@@ -427,7 +427,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         postById.get(question.id)?.tags.some((tag) => businessSkillNames.includes(tag.category)),
       )
       const otherQuestions = candidates.filter((question) =>
-        postById.get(question.id)?.tags.some((tag) => tag.name === 'その他'),
+        postById.get(question.id)?.tags.some((tag) => tag.name.startsWith('その他')),
       )
 
       return c.json({ questions: selectAnswerableQuestions(skillQuestions, otherQuestions) }, 200)
@@ -459,7 +459,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
             include: questionInclude(user.id),
           }),
       prisma.post.findMany({
-        where: { ...baseWhere, tags: { some: { tag: { name: 'その他' } } } },
+        where: { ...baseWhere, tags: { some: { tag: { name: { startsWith: 'その他' } } } } },
         include: questionInclude(user.id),
       }),
     ])
