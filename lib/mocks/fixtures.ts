@@ -79,6 +79,11 @@ export const MOCK_BUSINESS_SKILLS = [
   { id: 'business-skill-2', name: 'プレゼンテーション', isActive: true, ...optionDates },
 ]
 
+export const MOCK_BUSINESS_SKILL_TAG_CATEGORY_IDS: Record<string, string[]> = {
+  'business-skill-1': ['tag-category-1'],
+  'business-skill-2': ['tag-category-2'],
+}
+
 export const MOCK_INTERESTS = [
   { id: 'interest-1', name: '生成AI', isActive: true, ...optionDates },
   { id: 'interest-2', name: '組織づくり', isActive: true, ...optionDates },
@@ -228,8 +233,8 @@ export const MOCK_POSTS = [
     id: 'post-4',
     title: 'Next.jsのエラーを解決したい',
     body: '`Error: Invalid hook call. Hooks can only be called inside of the body of a function component.` というエラーが出て困っています。',
-    authorId: 'user-1',
-    author: MOCK_USERS[0],
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
     postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[1] },
     status: QuestionStatus.OPEN,
     answerCount: 0,
@@ -239,6 +244,22 @@ export const MOCK_POSTS = [
     tags: [MOCK_PUBLIC_TAGS[0], MOCK_PUBLIC_TAGS[3]],
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
+  },
+  {
+    id: 'post-5',
+    title: 'どの小ジャンルにも当てはまらない質問',
+    body: 'その他として分類された質問です。',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[2] },
+    status: QuestionStatus.OPEN,
+    answerCount: 0,
+    likeCount: 0,
+    resolvedAt: null,
+    deletedAt: null,
+    tags: [MOCK_PUBLIC_TAGS[5]],
+    createdAt: new Date('2024-01-14'),
+    updatedAt: new Date('2024-01-14'),
   },
   {
     id: 'post-deleted',

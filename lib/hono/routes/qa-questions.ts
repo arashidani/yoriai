@@ -22,9 +22,11 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import {
   MOCK_ANSWERS,
+  MOCK_BUSINESS_SKILL_TAG_CATEGORY_IDS,
   MOCK_POSTS,
   MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
+  MOCK_USER_PROFILE,
   mockPostHasTagId,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
@@ -34,6 +36,7 @@ import {
   toQuestionResponse,
 } from '@/lib/questions/api-mappers'
 import { getOrAssignAnonymousProfile } from '@/lib/questions/assign-anonymous-profile'
+import { selectAnswerableQuestions } from '@/lib/questions/select-answerable-questions'
 import { createAnswerSchema } from '@/lib/schemas/answer'
 import { createPostSchema } from '@/lib/schemas/post'
 
@@ -100,6 +103,23 @@ const listRoute = createRoute({
     200: {
       description: '質問一覧',
       content: { 'application/json': { schema: QuestionListResponseSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+  },
+})
+
+const answerableRoute = createRoute({
+  method: 'get',
+  path: '/answerable',
+  tags: ['questions'],
+  summary: 'ログインユーザーが回答できそうな質問をランダム取得',
+  ...auth,
+  responses: {
+    200: {
+      description: 'ビジネススキル関連を優先し、「その他」で最大3件まで補完した質問',
+      content: {
+        'application/json': { schema: z.object({ questions: z.array(QuestionSchema).max(3) }) },
+      },
     },
     401: errorResponse('未認証', 'Unauthorized'),
   },
@@ -390,6 +410,71 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       },
       200,
     )
+  })
+  .openapi(answerableRoute, async (c) => {
+    const user = c.get('user')
+    c.header('Cache-Control', 'no-store')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const skillCategoryIds = MOCK_USER_PROFILE.businessSkillIds.flatMap(
+        (businessSkillId) => MOCK_BUSINESS_SKILL_TAG_CATEGORY_IDS[businessSkillId] ?? [],
+      )
+      const categoryIdsByName = new Map(
+        MOCK_TAG_CATEGORIES.map((category) => [category.name, category.id]),
+      )
+      const candidates = mockQuestions(user.id).filter(
+        (question) => question.status === QuestionStatus.OPEN && !question.isOwnQuestion,
+      )
+      const postById = new Map(MOCK_POSTS.map((post) => [post.id, post]))
+      const skillQuestions = candidates.filter((question) =>
+        postById
+          .get(question.id)
+          ?.tags.some((tag) =>
+            skillCategoryIds.includes(categoryIdsByName.get(tag.category) ?? ''),
+          ),
+      )
+      const otherQuestions = candidates.filter((question) =>
+        postById.get(question.id)?.tags.some((tag) => tag.name === 'その他'),
+      )
+
+      return c.json({ questions: selectAnswerableQuestions(skillQuestions, otherQuestions) }, 200)
+    }
+
+    const businessSkillIds = (
+      await prisma.userBusinessSkill.findMany({
+        where: { userId: user.id },
+        select: { businessSkillId: true },
+      })
+    ).map(({ businessSkillId }) => businessSkillId)
+    const baseWhere: Prisma.PostWhereInput = {
+      deletedAt: null,
+      status: QuestionStatus.OPEN,
+      OR: [{ authorId: null }, { authorId: { not: user.id } }],
+    }
+    const [skillQuestions, otherQuestions] = await Promise.all([
+      businessSkillIds.length === 0
+        ? []
+        : prisma.post.findMany({
+            where: {
+              ...baseWhere,
+              tags: {
+                some: {
+                  tag: { categoryDefinition: { businessSkillId: { in: businessSkillIds } } },
+                },
+              },
+            },
+            include: questionInclude(user.id),
+          }),
+      prisma.post.findMany({
+        where: { ...baseWhere, tags: { some: { tag: { name: 'その他' } } } },
+        include: questionInclude(user.id),
+      }),
+    ])
+    const questions = selectAnswerableQuestions(skillQuestions, otherQuestions).map((post) =>
+      toQuestionResponse(post, user.id),
+    )
+
+    return c.json({ questions }, 200)
   })
   .openapi(getRoute, async (c) => {
     const user = c.get('user')

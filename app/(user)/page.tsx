@@ -10,9 +10,10 @@ import { toQaPost } from '@/lib/questions/qa-post'
 
 export default async function QaHomePage() {
   const api = await createServerApiClient()
-  const [questionsResponse, tagsResponse, user] = await Promise.all([
+  const [questionsResponse, tagsResponse, answerableResponse, user] = await Promise.all([
     api.questions.index.$get({ query: { page: '1', pageSize: '10', status: 'all' } }),
     api.questionTags.index.$get(),
+    api.questions.answerable.$get(),
     getCurrentUser(),
   ])
 
@@ -20,6 +21,7 @@ export default async function QaHomePage() {
     ? await questionsResponse.json()
     : { questions: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } }
   const tagsBody = tagsResponse.ok ? await tagsResponse.json() : { categories: [] }
+  const answerableBody = answerableResponse.ok ? await answerableResponse.json() : { questions: [] }
   const posts = questionsBody.questions.map(toQaPost)
 
   return (
@@ -40,8 +42,7 @@ export default async function QaHomePage() {
             initialTotal={questionsBody.pagination.total}
           />
         </div>
-        {/* TODO: BusinessSkillとQ&Aタグの関連付け後、OPEN・本人以外の推薦APIへ変更する。現状は一覧先頭3件。 */}
-        <AnswerableQuestions posts={posts} />
+        <AnswerableQuestions posts={answerableBody.questions} />
       </div>
     </div>
   )

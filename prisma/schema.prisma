@@ -64,12 +64,13 @@ model BusinessArea {
 }
 
 model BusinessSkill {
-  id        String              @id @default(uuid(7))
-  name      String              @unique
-  isActive  Boolean             @default(true)
-  users     UserBusinessSkill[]
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
+  id            String              @id @default(uuid(7))
+  name          String              @unique
+  isActive      Boolean             @default(true)
+  users         UserBusinessSkill[]
+  tagCategories TagCategory[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
 }
 
 model Interest {
@@ -302,10 +303,14 @@ model Tag {
 
 /// タグカテゴリーのマスタ。管理者が管理し、Tag.categoryの選択肢になる
 model TagCategory {
-  id        String   @id @default(uuid(7))
-  name      String   @unique
-  tags      Tag[]
-  createdAt DateTime @default(now())
+  id              String         @id @default(uuid(7))
+  name            String         @unique
+  businessSkillId String?
+  businessSkill   BusinessSkill? @relation(fields: [businessSkillId], references: [id], onDelete: SetNull)
+  tags            Tag[]
+  createdAt       DateTime       @default(now())
+
+  @@index([businessSkillId])
 }
 
 /// 投稿とタグの中間テーブル（AI自動付与、1投稿あたり最大3件）
