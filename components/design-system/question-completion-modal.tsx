@@ -1,8 +1,8 @@
 import Image from 'next/image'
 import mascotImage from '@/assets/mascots/moscot_happy.svg'
 import { Button } from '@/components/design-system/button'
+import { IconClose } from '@/components/design-system/icons/icon-close'
 import { ToolChip } from '@/components/design-system/ui/tool-chip'
-import { CloseIcon } from '@/components/icons/close-icon'
 import { Separator } from '@/components/ui/separator'
 
 type QuestionCompletionModalProps = {
@@ -22,7 +22,7 @@ export function QuestionCompletionModal({ onConfirm, onClose }: QuestionCompleti
             onClick={onClose}
             className="flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted"
           >
-            <CloseIcon />
+            <IconClose className="text-foreground" />
           </button>
         )}
       </div>

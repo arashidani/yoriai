@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { MessageCircle } from 'lucide-react'
 
+import { IconBubble } from '@/components/design-system/icons/icon-bubble'
 import { cn } from '@/lib/utils'
 
 const commentCountVariants = cva(
@@ -26,7 +26,7 @@ type CommentCountProps = VariantProps<typeof commentCountVariants> & {
 function CommentCount({ className, size = 'default', count }: CommentCountProps) {
   return (
     <span data-slot="comment-count" className={cn(commentCountVariants({ size }), className)}>
-      <MessageCircle
+      <IconBubble
         aria-hidden
         className={cn('shrink-0', size === 'large' ? 'size-4.5' : 'size-3.5')}
       />

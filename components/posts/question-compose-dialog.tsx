@@ -1,10 +1,10 @@
 'use client'
 
 import { useQueryClient } from '@tanstack/react-query'
-import { Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { Button } from '@/components/design-system/button'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { QuestionCompletionModal } from '@/components/design-system/question-completion-modal'
 import { QuestionFormModal } from '@/components/design-system/question-form-modal'
 import { ActionButtons } from '@/components/design-system/ui/action-buttons'
@@ -110,7 +110,7 @@ export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProp
                 type="button"
                 size="large"
                 className="shrink-0"
-                leftIcon={<Pencil className="size-4" />}
+                leftIcon={<IconPencil className="size-full" />}
               >
                 質問する
               </Button>

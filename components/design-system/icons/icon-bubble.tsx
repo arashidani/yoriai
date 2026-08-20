@@ -1,0 +1,21 @@
+import type { SVGProps } from 'react'
+
+import { cn } from '@/lib/utils'
+
+export function IconBubble({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      {...props}
+      className={cn('size-5', className)}
+    >
+      <path
+        d="M20 10C20 4.47727 15.5227 0 10 0C4.47727 0 0 4.47727 0 10C0 15.5227 4.47727 20 10 20H19.7273L17.7091 16.3691C19.1925 14.5784 20.003 12.3253 20 10Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
