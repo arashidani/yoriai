@@ -1,10 +1,11 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Pencil, Sparkles, X } from 'lucide-react'
+import { Pencil, Sparkles } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/design-system/button'
 import { FormField } from '@/components/design-system/form-field'
+import { CloseIcon } from '@/components/icons/close-icon'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
@@ -48,11 +49,11 @@ export function QuestionFormModal({
             disabled={isSubmitting}
             onClick={isSubmitting ? undefined : onClose}
             className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted',
+              'flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted',
               isSubmitting && 'pointer-events-none opacity-50',
             )}
           >
-            <X className="size-4" />
+            <CloseIcon />
           </button>
         )}
       </div>
