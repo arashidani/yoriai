@@ -23,7 +23,7 @@ describe('Q&A API contract (MOCK_MODE)', () => {
 
   it('keyword・status・tagIdで絞り込む', async () => {
     const response = await app.request(
-      '/api/questions?keyword=TypeScript&status=unanswered&tagId=tag-2',
+      '/api/questions?keyword=経費精算&status=unanswered&tagId=tag-2',
     )
     const body = await response.json()
 
@@ -53,12 +53,17 @@ describe('Q&A API contract (MOCK_MODE)', () => {
         expect.objectContaining({
           id: 'tag-category-6',
           name: 'その他',
-          tags: [expect.objectContaining({ id: 'tag-6', name: 'その他' })],
+          tags: [
+            expect.objectContaining({
+              id: 'tag-18',
+              name: 'その他（雑談に近い質問）',
+            }),
+          ],
         }),
       ]),
     )
     expect(body.categories.flatMap((category: { tags: unknown[] }) => category.tags)).toHaveLength(
-      6,
+      18,
     )
   })
 
