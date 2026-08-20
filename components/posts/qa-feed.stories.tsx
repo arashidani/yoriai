@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { delay, HttpResponse, http } from 'msw'
-import { expect, screen, userEvent, waitFor } from 'storybook/test'
+import { expect, userEvent, waitFor } from 'storybook/test'
 import { formatRelativeTime } from '@/lib/date-time'
 import { QaFeed } from './qa-feed'
 
@@ -59,17 +59,23 @@ const basePosts = [
   },
 ]
 
-const baseTags = [
-  { id: 'tag-1', name: 'Next.js' },
-  { id: 'tag-2', name: 'TypeScript' },
-  { id: 'tag-3', name: 'Prisma' },
+const baseCategories = [
+  {
+    id: 'category-1',
+    name: '技術',
+    tags: [
+      { id: 'tag-1', name: 'Next.js' },
+      { id: 'tag-2', name: 'TypeScript' },
+      { id: 'tag-3', name: 'Prisma' },
+    ],
+  },
 ]
 
 export const Default: Story = {
   args: {
     posts: basePosts,
     isAdmin: false,
-    allTags: baseTags,
+    tagCategories: baseCategories,
     initialTotal: 4,
     initialTotalPages: 1,
   },
@@ -87,7 +93,7 @@ export const Default: Story = {
 }
 
 export const Loading: Story = {
-  args: { isAdmin: false, allTags: baseTags },
+  args: { isAdmin: false, tagCategories: baseCategories },
   parameters: {
     msw: {
       handlers: [
@@ -107,7 +113,7 @@ export const Loading: Story = {
 }
 
 export const Refetching: Story = {
-  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  args: { posts: basePosts, isAdmin: false, tagCategories: baseCategories },
   parameters: {
     msw: {
       handlers: [
@@ -129,10 +135,10 @@ export const Refetching: Story = {
 }
 
 export const TagFilter: Story = {
-  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  args: { posts: basePosts, isAdmin: false, tagCategories: baseCategories },
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('combobox'))
-    await userEvent.click(await screen.findByRole('option', { name: 'Next.js' }))
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'Next.js' }))
     await expect(await canvas.findByText(/Next\.jsのエラーを解決したい/)).toBeVisible()
     await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
   },
@@ -140,17 +146,17 @@ export const TagFilter: Story = {
 
 /** post-3 は公開 tag が Prisma だが、第2 PostTag に TypeScript がある。some 判定で返ること。 */
 export const TagFilterSecondaryTag: Story = {
-  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  args: { posts: basePosts, isAdmin: false, tagCategories: baseCategories },
   play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('combobox'))
-    await userEvent.click(await screen.findByRole('option', { name: 'TypeScript' }))
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'TypeScript' }))
     await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
     await expect(await canvas.findByText(/Prismaでリレーション/)).toBeVisible()
   },
 }
 
 export const StatusFilter: Story = {
-  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  args: { posts: basePosts, isAdmin: false, tagCategories: baseCategories },
   play: async ({ canvas }) => {
     const resolved = canvas.getByRole('button', { name: '解決済み' })
     await userEvent.click(resolved)
@@ -171,7 +177,7 @@ export const StatusFilter: Story = {
 }
 
 export const KeywordFilter: Story = {
-  args: { posts: basePosts, isAdmin: false, allTags: baseTags },
+  args: { posts: basePosts, isAdmin: false, tagCategories: baseCategories },
   play: async ({ canvas }) => {
     await userEvent.type(canvas.getByPlaceholderText('キーワードを入力'), 'TypeScript')
     await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
@@ -183,7 +189,7 @@ export const NoMatch: Story = {
   args: {
     posts: basePosts,
     isAdmin: false,
-    allTags: baseTags,
+    tagCategories: baseCategories,
     initialTotal: 4,
     initialTotalPages: 1,
   },
@@ -195,7 +201,13 @@ export const NoMatch: Story = {
 }
 
 export const Empty: Story = {
-  args: { posts: [], isAdmin: false, allTags: baseTags, initialTotal: 0, initialTotalPages: 0 },
+  args: {
+    posts: [],
+    isAdmin: false,
+    tagCategories: baseCategories,
+    initialTotal: 0,
+    initialTotalPages: 0,
+  },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('まだ質問がありません。')).toBeVisible()
     await expect(canvas.queryByText(/件中/)).not.toBeInTheDocument()

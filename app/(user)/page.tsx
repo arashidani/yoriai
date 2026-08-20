@@ -19,7 +19,7 @@ export default async function QaHomePage() {
   const questionsBody = questionsResponse.ok
     ? await questionsResponse.json()
     : { questions: [], pagination: { page: 1, pageSize: 10, total: 0, totalPages: 0 } }
-  const tagsBody = tagsResponse.ok ? await tagsResponse.json() : { tags: [] }
+  const tagsBody = tagsResponse.ok ? await tagsResponse.json() : { categories: [] }
   const posts = questionsBody.questions.map(toQaPost)
 
   return (
@@ -35,7 +35,7 @@ export default async function QaHomePage() {
           <QaFeed
             posts={posts}
             isAdmin={user?.role === Role.ADMIN}
-            allTags={tagsBody.tags}
+            tagCategories={tagsBody.categories}
             initialTotalPages={questionsBody.pagination.totalPages}
             initialTotal={questionsBody.pagination.total}
           />

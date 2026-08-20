@@ -149,6 +149,14 @@ export const MOCK_TAGS = [
     isWorkTag: false,
     createdAt: new Date('2024-01-01'),
   },
+  {
+    id: 'tag-6',
+    name: 'その他',
+    category: 'その他',
+    description: 'ほかの小ジャンルに当てはまらない投稿',
+    isWorkTag: false,
+    createdAt: new Date('2024-01-01'),
+  },
 ]
 
 export const MOCK_TAG_CATEGORIES = [
@@ -157,9 +165,15 @@ export const MOCK_TAG_CATEGORIES = [
   { id: 'tag-category-3', name: 'データベース', createdAt: new Date('2024-01-01') },
   { id: 'tag-category-4', name: 'UIライブラリ', createdAt: new Date('2024-01-01') },
   { id: 'tag-category-5', name: '交流', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-6', name: 'その他', createdAt: new Date('2024-01-01') },
 ]
 
-const MOCK_PUBLIC_TAGS = MOCK_TAGS.map(({ id, name, createdAt }) => ({ id, name, createdAt }))
+const MOCK_PUBLIC_TAGS = MOCK_TAGS.map(({ id, name, category, createdAt }) => ({
+  id,
+  name,
+  category,
+  createdAt,
+}))
 
 export const MOCK_POSTS = [
   {

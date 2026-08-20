@@ -3,13 +3,17 @@ import type { QuestionStatus } from '@/app/generated/prisma/enums'
 // biome-ignore lint/suspicious/noExplicitAny: mapper accepts Prisma include and mock shapes
 type LooseRecord = Record<string, any>
 
-function firstTag(post: LooseRecord) {
+function firstTagCategory(post: LooseRecord) {
   const tags = [...(post.tags ?? [])].sort((a, b) => {
     const time = new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime()
     return time || String(a.id ?? '').localeCompare(String(b.id ?? ''))
   })
   const value = tags[0]?.tag ?? tags[0]
-  return value ? { id: value.id, name: value.name } : null
+  if (!value) return null
+  return {
+    id: value.categoryDefinition?.id ?? value.category,
+    name: value.categoryDefinition?.name ?? value.category,
+  }
 }
 
 function displayAuthor(record: LooseRecord, isOwn: boolean) {
@@ -39,7 +43,7 @@ export function toQuestionResponse(post: LooseRecord, viewerId: string) {
     saved: (post.bookmarks ?? []).some((bookmark: LooseRecord) => bookmark.userId === viewerId),
     isOwnQuestion,
     displayAuthor: displayAuthor(post, isOwnQuestion),
-    tag: firstTag(post),
+    tag: firstTagCategory(post),
     resolvedAt: post.resolvedAt ?? null,
     createdAt: post.createdAt,
     updatedAt: post.updatedAt,
