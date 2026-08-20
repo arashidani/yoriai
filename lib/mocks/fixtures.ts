@@ -548,3 +548,9 @@ export const MOCK_PASSWORD_RESETS = [
     createdAt: new Date('2024-01-01'),
   },
 ]
+
+export const MOCK_CHAT_CONVERSATION_ID = 'mock-conversation'
+
+export function getMockChatResponseChunks(query: string) {
+  return [`「${query}」`, 'についてのモック回答です。', '\n\nMOCK_MODEで動作中。']
+}
