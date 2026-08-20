@@ -30,6 +30,38 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(body.questions.map((question: { id: string }) => question.id)).toEqual(['post-2'])
   })
 
+  it('親カテゴリーIDと小ジャンルIDを複数指定してOR検索する', async () => {
+    const response = await app.request(
+      '/api/questions?categoryIds=tag-category-1&tagIds=tag-2,tag-3',
+    )
+    const body = await response.json()
+
+    expect(body.questions.map((question: { id: string }) => question.id).sort()).toEqual([
+      'post-1',
+      'post-2',
+      'post-3',
+      'post-4',
+    ])
+  })
+
+  it('質問タグ候補を親カテゴリー配下にまとめ、「その他」を含む全小ジャンルを返す', async () => {
+    const response = await app.request('/api/question-tags')
+    const body = await response.json()
+
+    expect(body.categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'tag-category-6',
+          name: 'その他',
+          tags: [expect.objectContaining({ id: 'tag-6', name: 'その他' })],
+        }),
+      ]),
+    )
+    expect(body.categories.flatMap((category: { tags: unknown[] }) => category.tags)).toHaveLength(
+      6,
+    )
+  })
+
   it('page/pageSizeを適用する', async () => {
     const response = await app.request('/api/questions?page=2&pageSize=2')
     const body = await response.json()

@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { client } from '@/lib/hono/client'
 import {
@@ -232,19 +231,6 @@ function TagFields({ register, control, errors, categories, prefix }: TagFieldsP
           <p className="text-sm text-destructive">{errors.description.message}</p>
         )}
       </div>
-      <Controller
-        name="isWorkTag"
-        control={control}
-        render={({ field }) => (
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div>
-              <Label htmlFor={`${prefix}-work`}>QAで使用可能</Label>
-              <p className="text-sm text-muted-foreground">有効なタグだけQAの候補になります。</p>
-            </div>
-            <Switch id={`${prefix}-work`} checked={field.value} onCheckedChange={field.onChange} />
-          </div>
-        )}
-      />
     </>
   )
 }
@@ -354,11 +340,6 @@ export function TagList() {
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium">{tag.name}</span>
                   <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{tag.category}</span>
-                  {tag.isWorkTag && (
-                    <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
-                      QA
-                    </span>
-                  )}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
                   {tag.description || 'AI向け説明なし'}

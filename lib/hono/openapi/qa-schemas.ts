@@ -10,6 +10,14 @@ export const QuestionTagSchema = z
   })
   .openapi('QuestionTag')
 
+export const QuestionTagCategorySchema = z
+  .object({
+    id: z.string().openapi({ example: 'tag-category-1' }),
+    name: z.string().openapi({ example: '業務' }),
+    tags: z.array(QuestionTagSchema),
+  })
+  .openapi('QuestionTagCategory')
+
 export const DisplayAuthorSchema = z
   .object({
     displayName: z.string().openapi({ example: 'ねこ' }),
@@ -82,4 +90,6 @@ export const QuestionListQuerySchema = PageQuerySchema.extend({
   keyword: z.string().trim().max(100).optional(),
   status: z.enum(['all', 'unanswered', 'resolved']).default('all'),
   tagId: z.string().optional(),
+  categoryIds: z.string().optional().openapi({ example: 'tag-category-1,tag-category-2' }),
+  tagIds: z.string().optional().openapi({ example: 'tag-1,tag-2' }),
 })

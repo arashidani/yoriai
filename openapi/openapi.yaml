@@ -224,6 +224,23 @@ components:
           example: true
       required:
         - saved
+    QuestionTagCategory:
+      type: object
+      properties:
+        id:
+          type: string
+          example: tag-category-1
+        name:
+          type: string
+          example: 業務
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionTag"
+      required:
+        - id
+        - name
+        - tags
     ProfileOption:
       type: object
       properties:
@@ -1068,6 +1085,18 @@ paths:
           required: false
           name: tagId
           in: query
+        - schema:
+            type: string
+            example: tag-category-1,tag-category-2
+          required: false
+          name: categoryIds
+          in: query
+        - schema:
+            type: string
+            example: tag-1,tag-2
+          required: false
+          name: tagIds
+          in: query
       responses:
         "200":
           description: 質問一覧
@@ -1604,12 +1633,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  tags:
+                  categories:
                     type: array
                     items:
-                      $ref: "#/components/schemas/QuestionTag"
+                      $ref: "#/components/schemas/QuestionTagCategory"
                 required:
-                  - tags
+                  - categories
         "401":
           description: 未認証
           content:
