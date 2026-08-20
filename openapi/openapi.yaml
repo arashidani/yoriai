@@ -1205,6 +1205,35 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 投稿の作成に失敗しました
+  /api/questions/answerable:
+    get:
+      tags:
+        - questions
+      summary: ログインユーザーが回答できそうな質問をランダム取得
+      security: *a1
+      responses:
+        "200":
+          description: ビジネススキル関連を優先し、「その他」で最大3件まで補完した質問
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  questions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Question"
+                    maxItems: 3
+                required:
+                  - questions
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
   /api/questions/{id}:
     get:
       tags:

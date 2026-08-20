@@ -14,8 +14,8 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(response.status).toBe(200)
     const body = await response.json()
 
-    expect(body.pagination).toMatchObject({ page: 1, pageSize: 10, total: 4, totalPages: 1 })
-    expect(body.questions).toHaveLength(4)
+    expect(body.pagination).toMatchObject({ page: 1, pageSize: 10, total: 5, totalPages: 1 })
+    expect(body.questions).toHaveLength(5)
     expect(body.questions[0]).toHaveProperty('tag')
     expect(Array.isArray(body.questions[0].tag)).toBe(false)
     expect(body.questions[0]).not.toHaveProperty('tags')
@@ -62,12 +62,31 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     )
   })
 
+  it('回答できる質問をビジネススキル優先・その他補完で最大3件返す', async () => {
+    const response = await app.request('/api/questions/answerable')
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.questions).toHaveLength(3)
+    expect(body.questions.map((question: { id: string }) => question.id).sort()).toEqual([
+      'post-1',
+      'post-4',
+      'post-5',
+    ])
+    expect(
+      body.questions.every(
+        (question: { status: string; isOwnQuestion: boolean }) =>
+          question.status === 'OPEN' && !question.isOwnQuestion,
+      ),
+    ).toBe(true)
+  })
+
   it('page/pageSizeを適用する', async () => {
     const response = await app.request('/api/questions?page=2&pageSize=2')
     const body = await response.json()
 
     expect(body.questions).toHaveLength(2)
-    expect(body.pagination).toEqual({ page: 2, pageSize: 2, total: 4, totalPages: 2 })
+    expect(body.pagination).toEqual({ page: 2, pageSize: 2, total: 5, totalPages: 3 })
   })
 
   it('解決済みかつ1票以上の最多回答だけisMostLiked=trueにする', async () => {
