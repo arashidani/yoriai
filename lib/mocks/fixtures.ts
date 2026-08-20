@@ -75,14 +75,9 @@ export const MOCK_BUSINESS_AREAS = [
 ]
 
 export const MOCK_BUSINESS_SKILLS = [
-  { id: 'business-skill-1', name: 'プロジェクト管理', isActive: true, ...optionDates },
-  { id: 'business-skill-2', name: 'プレゼンテーション', isActive: true, ...optionDates },
+  { id: 'business-skill-1', name: 'フレームワーク', isActive: true, ...optionDates },
+  { id: 'business-skill-2', name: '言語', isActive: true, ...optionDates },
 ]
-
-export const MOCK_BUSINESS_SKILL_TAG_CATEGORY_IDS: Record<string, string[]> = {
-  'business-skill-1': ['tag-category-1'],
-  'business-skill-2': ['tag-category-2'],
-}
 
 export const MOCK_INTERESTS = [
   { id: 'interest-1', name: '生成AI', isActive: true, ...optionDates },

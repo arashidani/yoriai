@@ -22,7 +22,7 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import {
   MOCK_ANSWERS,
-  MOCK_BUSINESS_SKILL_TAG_CATEGORY_IDS,
+  MOCK_BUSINESS_SKILLS,
   MOCK_POSTS,
   MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
@@ -416,22 +416,15 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     c.header('Cache-Control', 'no-store')
 
     if (process.env.MOCK_MODE === 'true') {
-      const skillCategoryIds = MOCK_USER_PROFILE.businessSkillIds.flatMap(
-        (businessSkillId) => MOCK_BUSINESS_SKILL_TAG_CATEGORY_IDS[businessSkillId] ?? [],
-      )
-      const categoryIdsByName = new Map(
-        MOCK_TAG_CATEGORIES.map((category) => [category.name, category.id]),
-      )
+      const businessSkillNames = MOCK_BUSINESS_SKILLS.filter((skill) =>
+        MOCK_USER_PROFILE.businessSkillIds.includes(skill.id),
+      ).map((skill) => skill.name)
       const candidates = mockQuestions(user.id).filter(
         (question) => question.status === QuestionStatus.OPEN && !question.isOwnQuestion,
       )
       const postById = new Map(MOCK_POSTS.map((post) => [post.id, post]))
       const skillQuestions = candidates.filter((question) =>
-        postById
-          .get(question.id)
-          ?.tags.some((tag) =>
-            skillCategoryIds.includes(categoryIdsByName.get(tag.category) ?? ''),
-          ),
+        postById.get(question.id)?.tags.some((tag) => businessSkillNames.includes(tag.category)),
       )
       const otherQuestions = candidates.filter((question) =>
         postById.get(question.id)?.tags.some((tag) => tag.name === 'その他'),
@@ -440,26 +433,26 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       return c.json({ questions: selectAnswerableQuestions(skillQuestions, otherQuestions) }, 200)
     }
 
-    const businessSkillIds = (
+    const businessSkillNames = (
       await prisma.userBusinessSkill.findMany({
         where: { userId: user.id },
-        select: { businessSkillId: true },
+        select: { businessSkill: { select: { name: true } } },
       })
-    ).map(({ businessSkillId }) => businessSkillId)
+    ).map(({ businessSkill }) => businessSkill.name)
     const baseWhere: Prisma.PostWhereInput = {
       deletedAt: null,
       status: QuestionStatus.OPEN,
       OR: [{ authorId: null }, { authorId: { not: user.id } }],
     }
     const [skillQuestions, otherQuestions] = await Promise.all([
-      businessSkillIds.length === 0
+      businessSkillNames.length === 0
         ? []
         : prisma.post.findMany({
             where: {
               ...baseWhere,
               tags: {
                 some: {
-                  tag: { categoryDefinition: { businessSkillId: { in: businessSkillIds } } },
+                  tag: { category: { in: businessSkillNames } },
                 },
               },
             },
