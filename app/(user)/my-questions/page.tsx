@@ -1,12 +1,12 @@
 import Link from 'next/link'
 
 import { Button } from '@/components/design-system/button'
+import { IconBookmark } from '@/components/design-system/icons/icon-bookmark'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { BookmarkQuestionItemList } from '@/components/design-system/ui/bookmark-question-item-list'
 import { EmptyState } from '@/components/design-system/ui/empty-state'
 import { HeaderSection } from '@/components/design-system/ui/header-section'
 import { TabBar } from '@/components/design-system/ui/tab-bar'
-import { BookmarkTabIcon } from '@/components/icons/bookmark-tab-icon'
-import { PencilIcon } from '@/components/icons/pencil-icon'
 import { MyQuestionsPagination } from '@/components/my-questions/my-questions-pagination'
 import { PostedQuestionList } from '@/components/my-questions/posted-question-list'
 import { Separator } from '@/components/ui/separator'
@@ -56,13 +56,13 @@ export default async function MyQuestionsPage({ searchParams }: Props) {
             {
               value: 'posted',
               label: '投稿した質問',
-              icon: <PencilIcon aria-hidden className="size-full text-primary" />,
+              icon: <IconPencil className="size-full text-primary" />,
               href: '/my-questions?tab=posted&page=1',
             },
             {
               value: 'saved',
               label: '保存した質問',
-              icon: <BookmarkTabIcon aria-hidden className="size-full text-amber-400" />,
+              icon: <IconBookmark className="size-full text-amber-400" />,
               href: '/my-questions?tab=saved&page=1',
             },
           ]}

@@ -1,12 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { expect } from 'storybook/test'
-import { BookmarkTabIcon } from '@/components/icons/bookmark-tab-icon'
+import { IconBookmark } from '@/components/design-system/icons/icon-bookmark'
 import { TabButton } from './tab-button'
 
 const meta = {
   component: TabButton,
   args: {
-    icon: <BookmarkTabIcon className="size-full text-amber-400" />,
+    icon: <IconBookmark className="size-full text-amber-400" />,
     children: 'tab',
   },
 } satisfies Meta<typeof TabButton>

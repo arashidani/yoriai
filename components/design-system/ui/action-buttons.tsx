@@ -1,7 +1,7 @@
-import { Pencil } from 'lucide-react'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/design-system/button'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { cn } from '@/lib/utils'
 
 type ActionButtonsProps = {
@@ -32,7 +32,7 @@ function ActionButtons({
           size="large"
           variant="primary"
           className="shrink-0"
-          leftIcon={<Pencil />}
+          leftIcon={<IconPencil className="size-full" />}
           onClick={onPrimaryClick}
         >
           {primaryLabel}

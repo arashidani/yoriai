@@ -1,6 +1,6 @@
-import { Sparkles } from 'lucide-react'
 import type { ReactNode } from 'react'
 
+import { IconAi } from '@/components/design-system/icons/icon-ai'
 import { cn } from '@/lib/utils'
 
 type AssistBannerProps = {
@@ -17,7 +17,7 @@ function AssistBanner({ className, children }: AssistBannerProps) {
         className,
       )}
     >
-      <Sparkles className="size-4 shrink-0 text-informative" aria-hidden />
+      <IconAi className="size-4 shrink-0 text-informative" />
       <p className="text-paragraph-small font-bold text-informative">{children}</p>
     </div>
   )

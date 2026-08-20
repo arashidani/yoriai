@@ -1,11 +1,12 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Pencil, Sparkles } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Button } from '@/components/design-system/button'
 import { FormField } from '@/components/design-system/form-field'
-import { CloseIcon } from '@/components/icons/close-icon'
+import { IconAi } from '@/components/design-system/icons/icon-ai'
+import { IconClose } from '@/components/design-system/icons/icon-close'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
@@ -53,7 +54,7 @@ export function QuestionFormModal({
               isSubmitting && 'pointer-events-none opacity-50',
             )}
           >
-            <CloseIcon />
+            <IconClose className="text-foreground" />
           </button>
         )}
       </div>
@@ -104,7 +105,7 @@ export function QuestionFormModal({
             </p>
           </div>
           <div className="flex w-full items-center gap-2 rounded-lg bg-informative-background p-3">
-            <Sparkles className="size-4 shrink-0 text-informative" aria-hidden />
+            <IconAi className="size-4 shrink-0 text-informative" />
             <p className="text-paragraph-small font-bold text-informative">
               AIが自動でカテゴリタグを付与し、回答されやすくします。
             </p>
@@ -114,7 +115,7 @@ export function QuestionFormModal({
             isDisabled={isSubmitting || isFormSubmitting}
             className="flex items-center justify-center gap-2 px-6 py-4"
           >
-            <Pencil className="size-4" />
+            <IconPencil className="size-4" />
             投稿する
           </Button>
         </form>
