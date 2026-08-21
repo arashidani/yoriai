@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { displayNameColorClass } from '@/components/hiroba/display-name-color'
 import { HirobaAnswerCard } from '@/components/hiroba/hiroba-answer-card'
 import { HirobaAnswerForm } from '@/components/hiroba/hiroba-answer-form'
 import { HirobaPostLikeButton } from '@/components/hiroba/hiroba-post-like-button'
@@ -31,7 +32,9 @@ async function getAnswers(postId: string, currentUserId: string | undefined) {
       .map((a) => ({
         id: a.id,
         body: a.body,
+        authorId: a.authorId,
         displayName: a.author?.name ?? a.author?.email ?? '削除されたユーザー',
+        displayNameColor: a.author?.displayNameColor ?? null,
         isOwnAnswer: !!currentUserId && a.authorId === currentUserId,
         likeCount: a.likeCount,
         createdAt: a.createdAt,
@@ -45,7 +48,9 @@ async function getAnswers(postId: string, currentUserId: string | undefined) {
   return answers.map((answer) => ({
     id: answer.id,
     body: answer.body,
+    authorId: answer.authorId,
     displayName: answer.author?.name ?? answer.author?.email ?? '削除されたユーザー',
+    displayNameColor: answer.author?.displayNameColor ?? null,
     isOwnAnswer: !!currentUserId && answer.authorId === currentUserId,
     likeCount: answer.likeCount,
     createdAt: answer.createdAt,
@@ -104,7 +109,18 @@ export default async function HirobaPostDetailPage({ params }: Props) {
 
       <h1 className="mb-4 text-2xl font-bold">{post.title}</h1>
       <div className="mb-6 flex items-center gap-4 text-sm text-muted-foreground">
-        <span>{displayName}</span>
+        {post.authorId ? (
+          <Link
+            href={`/mypage/${post.authorId}`}
+            className={`${displayNameColorClass(post.author?.displayNameColor)} hover:underline`}
+          >
+            {displayName}
+          </Link>
+        ) : (
+          <span className={displayNameColorClass(post.author?.displayNameColor)}>
+            {displayName}
+          </span>
+        )}
         <span>{new Date(post.createdAt).toLocaleDateString('ja-JP')}</span>
       </div>
       <div className="prose max-w-none">
