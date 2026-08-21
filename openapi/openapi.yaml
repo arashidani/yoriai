@@ -32,6 +32,8 @@ tags:
     description: 自分宛て通知の一覧取得・既読化・未読件数取得
   - name: password-resets
     description: パスワードリセットリンクの確認・実行
+  - name: chat
+    description: Dify Chatflow 連携チャット（SSE ストリーム。Swagger UI からは試行不可）
 components:
   securitySchemes:
     supabaseSession:
@@ -1813,6 +1815,89 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: いいね取り消しの処理に失敗しました
+  /api/chat:
+    post:
+      tags:
+        - chat
+      summary: Dify Chatflow にメッセージを送信し、AI応答をSSEで返す
+      description: 会話履歴は Dify 側が conversationId で保持するため、リクエストには最新のユーザー発話のみ含める。レスポンスは
+        AI SDK UI Message Stream 形式の SSE。Swagger UI からは試行不可。
+      security:
+        - supabaseSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                messages:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum:
+                          - user
+                          - assistant
+                          - system
+                      parts:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                              enum:
+                                - text
+                            text:
+                              type: string
+                          required:
+                            - type
+                            - text
+                        minItems: 1
+                    required:
+                      - role
+                      - parts
+                  minItems: 1
+                conversationId:
+                  type: string
+              required:
+                - messages
+      responses:
+        "200":
+          description: AI SDK UI Message Stream（SSE）
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: "data: {...}\\n\\n 形式の SSE チャンク列"
+                example: 'data: {"type":"start"}\n\n'
+        "400":
+          description: リクエスト不正または空メッセージ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: メッセージが空です
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "502":
+          description: Dify 通信失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIとの通信に失敗しました
   /api/admin/profile-options/{category}:
     get:
       tags:
