@@ -3,23 +3,14 @@
 import { MessageCircle, X } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useId, useState } from 'react'
+import { ChatPanel } from '@/components/chat/chat-panel'
 import { cn } from '@/lib/utils'
 
-type DifyChatWidgetProps = {
-  baseUrl?: string
-  token?: string
-}
-
 /** ログイン後の全画面に表示するAIチャットの起動ボタン兼ウィンドウ。 */
-export function DifyChatWidget({
-  baseUrl = process.env.NEXT_PUBLIC_DIFY_BASE_URL,
-  token = process.env.NEXT_PUBLIC_DIFY_CHATBOT_TOKEN,
-}: DifyChatWidgetProps) {
+export function AiChatWidget() {
   const panelId = useId()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-
-  if (!baseUrl || !token) return null
 
   function handleToggle() {
     if (!open) setMounted(true)
@@ -32,18 +23,18 @@ export function DifyChatWidget({
         <div
           id={panelId}
           className={cn(
-            'absolute right-0 bottom-18 h-160 max-h-[80vh] w-96 max-w-[90vw] overflow-hidden rounded-2xl bg-popover shadow-xl',
+            'absolute right-0 bottom-18 flex h-160 max-h-[80vh] w-128 max-w-[90vw] flex-col overflow-hidden rounded-2xl border border-border bg-popover shadow-xl',
             !open && 'invisible pointer-events-none',
           )}
           aria-hidden={!open}
           inert={!open}
         >
-          <iframe
-            src={`${baseUrl.replace(/\/$/, '')}/chatbot/${token}`}
-            title="AIチャットサポート"
-            allow="microphone"
-            className="h-full w-full"
-          />
+          <div className="border-border border-b px-4 py-3">
+            <p className="font-medium text-paragraph-small">よりあいぬの小屋</p>
+          </div>
+          <div className="min-h-0 flex-1">
+            <ChatPanel />
+          </div>
         </div>
       )}
       <motion.div
