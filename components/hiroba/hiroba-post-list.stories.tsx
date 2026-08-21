@@ -18,6 +18,7 @@ const posts = [
     hirobaSlug: 'alcohol',
     title: '今日のランチどこ行きました？',
     body: '近くに新しくできたお店に行ってみました。',
+    imageUrl: null,
     displayName: '田中太郎',
     isOwnPost: false,
     likeCount: 2,

@@ -4,6 +4,11 @@ import { useParams, useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { HirobaPostForm } from '@/components/hiroba/hiroba-post-form'
 import { client } from '@/lib/hono/client'
+import {
+  HirobaPostImageClientProcessingError,
+  HirobaPostImageClientValidationError,
+  prepareHirobaPostImageForUpload,
+} from '@/lib/image/process-hiroba-post-image-client'
 import type { CreateHirobaPostInput } from '@/lib/schemas/hiroba'
 
 export default function NewHirobaPostPage() {
@@ -14,7 +19,7 @@ export default function NewHirobaPostPage() {
   const isSubmittingRef = useRef(false)
   const idempotencyKeyRef = useRef<{ key: string; requestBody: string } | null>(null)
 
-  async function handleSubmit(data: CreateHirobaPostInput) {
+  async function handleSubmit(data: CreateHirobaPostInput, image: File | null) {
     if (isSubmittingRef.current) return
 
     isSubmittingRef.current = true
@@ -38,8 +43,29 @@ export default function NewHirobaPostPage() {
         return
       }
 
+      if (image) {
+        const { post } = await res.json()
+        const preparedImage = await prepareHirobaPostImageForUpload(image)
+        const imageRes = await client.api['hiroba-posts'][':id'].image.$put({
+          param: { id: post.id },
+          form: { file: preparedImage },
+        })
+        if (!imageRes.ok) {
+          const body = await imageRes.json()
+          setError('error' in body ? body.error : '画像のアップロードに失敗しました')
+          return
+        }
+      }
+
       router.push(`/hiroba/${params.slug}`)
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof HirobaPostImageClientValidationError ||
+        error instanceof HirobaPostImageClientProcessingError
+      ) {
+        setError(error.message)
+        return
+      }
       setError('通信に失敗しました。画面をリロードせず、もう一度お試しください')
     } finally {
       isSubmittingRef.current = false

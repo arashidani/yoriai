@@ -207,6 +207,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
             id: `hiroba-post-${Date.now()}`,
             hirobaId: hiroba.id,
             ...data,
+            imageUrl: null,
             authorId: user.id,
             author: user,
             answerCount: 0,
