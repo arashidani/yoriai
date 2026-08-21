@@ -46,6 +46,13 @@ async function selectFile(canvasElement: HTMLElement, file: File) {
   input.dispatchEvent(new Event('change', { bubbles: true }))
 }
 
+async function dropFile(target: HTMLElement, file: File) {
+  const dataTransfer = new DataTransfer()
+  dataTransfer.items.add(file)
+  target.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer }))
+  target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }))
+}
+
 export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: 'アイコン画像を選択' })).toBeVisible()
@@ -72,6 +79,16 @@ export const ValidationErrors: Story = {
 export const Uploaded: Story = {
   play: async ({ args, canvasElement }) => {
     await selectFile(canvasElement, new File(['avatar'], 'avatar.jpg', { type: 'image/jpeg' }))
+    await waitFor(() => expect(args.onAvatarUrlChange).toHaveBeenCalledWith(MOCK_AVATAR_URL))
+  },
+}
+
+export const Dropped: Story = {
+  play: async ({ args, canvas }) => {
+    await dropFile(
+      canvas.getByRole('button', { name: 'アイコン画像を選択' }),
+      new File(['avatar'], 'avatar.jpg', { type: 'image/jpeg' }),
+    )
     await waitFor(() => expect(args.onAvatarUrlChange).toHaveBeenCalledWith(MOCK_AVATAR_URL))
   },
 }

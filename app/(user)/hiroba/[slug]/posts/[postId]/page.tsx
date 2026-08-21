@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { HirobaAnswerCard } from '@/components/hiroba/hiroba-answer-card'
@@ -108,6 +109,16 @@ export default async function HirobaPostDetailPage({ params }: Props) {
       </div>
       <div className="prose max-w-none">
         <p className="whitespace-pre-wrap">{post.body}</p>
+        {post.imageUrl && (
+          <Image
+            src={post.imageUrl}
+            alt="投稿画像"
+            width={1200}
+            height={900}
+            unoptimized
+            className="mt-4 rounded-lg"
+          />
+        )}
       </div>
 
       <div className="mt-6 flex items-center gap-3">

@@ -1,6 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { Prisma } from '@/app/generated/prisma/client'
-import { FlagSeverity, QuestionStatus } from '@/app/generated/prisma/enums'
+import { FlagSeverity, NotificationType, QuestionStatus } from '@/app/generated/prisma/enums'
 import { assignTags } from '@/lib/ai/assign-tags'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
@@ -630,6 +630,20 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         console.error('Failed to create AI flag', { answerId: answer.id, error })
       }
     }
+    if (!answer.isHidden && post.authorId && post.authorId !== user.id) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: post.authorId,
+            type: NotificationType.POST_ANSWERED,
+            postId: post.id,
+            answerId: answer.id,
+          },
+        })
+      } catch (error) {
+        console.error('Failed to create reply notification', { postId: post.id, error })
+      }
+    }
     return c.json(
       {
         answer: toQaAnswerResponse(answer, user.id, null),
@@ -679,10 +693,15 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (process.env.MOCK_MODE === 'true')
       return c.json({ liked: true, likeCount: post.likeCount + 1 }, 200)
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.questionLike.createMany({
+      const created = await tx.questionLike.createMany({
         data: [{ postId: id, userId: user.id }],
         skipDuplicates: true,
       })
+      if (created.count > 0 && post.authorId) {
+        await tx.notification.create({
+          data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
+        })
+      }
       const count = await tx.questionLike.count({ where: { postId: id } })
       await tx.post.update({ where: { id }, data: { likeCount: count } })
       return count

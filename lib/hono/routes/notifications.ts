@@ -35,6 +35,8 @@ const listQuerySchema = z.object({
 const notificationInclude = {
   post: true,
   answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
+  hirobaPost: true,
+  hirobaAnswer: true,
 } satisfies Prisma.NotificationInclude
 
 type NotificationWithRelations = Prisma.NotificationGetPayload<{

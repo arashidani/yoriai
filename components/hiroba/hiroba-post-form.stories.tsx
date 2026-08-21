@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn } from 'storybook/test'
+import { expect, fn, waitFor } from 'storybook/test'
 import { HirobaPostForm } from './hiroba-post-form'
 
 const meta = {
@@ -14,6 +14,7 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByLabelText('タイトル')).toBeVisible()
     await expect(canvas.getByLabelText('本文')).toBeVisible()
+    await expect(canvas.getByLabelText('画像（任意）')).toBeVisible()
   },
 }
 
@@ -29,5 +30,17 @@ export const ValidationErrors: Story = {
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(canvas.getByRole('button', { name: /投稿する/ }))
     await expect(await canvas.findByText('タイトルは必須です')).toBeVisible()
+  },
+}
+
+export const DroppedImage: Story = {
+  args: { onSubmit: fn() },
+  play: async ({ canvas }) => {
+    const dataTransfer = new DataTransfer()
+    dataTransfer.items.add(new File(['image'], 'hiroba.png', { type: 'image/png' }))
+    const dropzone = canvas.getByRole('button', { name: /画像を追加/ })
+    dropzone.dispatchEvent(new DragEvent('dragenter', { bubbles: true, dataTransfer }))
+    dropzone.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }))
+    await waitFor(() => expect(canvas.getByAltText('選択した画像のプレビュー')).toBeVisible())
   },
 }

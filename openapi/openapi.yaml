@@ -292,6 +292,11 @@ components:
         body:
           type: string
           example: 近くに新しくできたお店に行ってみました。
+        imageUrl:
+          type:
+            - string
+            - "null"
+          example: null
         authorId:
           type:
             - string
@@ -332,6 +337,7 @@ components:
         - hirobaId
         - title
         - body
+        - imageUrl
         - authorId
         - answerCount
         - likeCount
@@ -993,6 +999,24 @@ components:
           anyOf:
             - $ref: "#/components/schemas/Answer"
             - type: "null"
+        hirobaPostId:
+          type:
+            - string
+            - "null"
+          example: null
+        hirobaPost:
+          anyOf:
+            - $ref: "#/components/schemas/HirobaPost"
+            - type: "null"
+        hirobaAnswerId:
+          type:
+            - string
+            - "null"
+          example: null
+        hirobaAnswer:
+          anyOf:
+            - $ref: "#/components/schemas/HirobaAnswer"
+            - type: "null"
         isRead:
           type: boolean
           example: false
@@ -1006,12 +1030,19 @@ components:
         - type
         - postId
         - answerId
+        - hirobaPostId
+        - hirobaAnswerId
         - isRead
         - createdAt
     NotificationType:
       type: string
       enum:
         - POST_ANSWERED
+        - POST_LIKED
+        - ANSWER_LIKED
+        - HIROBA_POST_ANSWERED
+        - HIROBA_POST_LIKED
+        - HIROBA_ANSWER_LIKED
         - POST_DELETED
         - ANSWER_HIDDEN
     UnreadNotificationCount:
@@ -2524,6 +2555,100 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 回答の作成に失敗しました
+  /api/hiroba-posts/{id}/image:
+    put:
+      tags:
+        - hiroba-posts
+      summary: ひろば投稿の画像をアップロード
+      security:
+        - supabaseSession: []
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "200":
+          description: 画像を設定した投稿
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  post:
+                    $ref: "#/components/schemas/HirobaPost"
+                required:
+                  - post
+        "400":
+          description: 対応していない画像形式
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 対応していない画像形式です
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 投稿者本人ではない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 投稿が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "413":
+          description: ファイルサイズ超過
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: ファイルサイズが大きすぎます（4.5MB以下にしてください）
+        "422":
+          description: 画像処理に失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 画像を処理できませんでした
+        "502":
+          description: アップロード失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 画像のアップロードに失敗しました
   /api/hiroba-posts/{id}/likes:
     post:
       tags:

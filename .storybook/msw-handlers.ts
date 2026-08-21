@@ -157,6 +157,7 @@ export const mswHandlers = {
             hirobaId: 'hiroba-1',
             title: body.title,
             body: body.body,
+            imageUrl: null,
             authorId: 'user-1',
             author: MOCK_USERS[0],
             answerCount: 0,
@@ -178,6 +179,11 @@ export const mswHandlers = {
     http.get('/api/hiroba-posts/:id/answers', ({ params }) =>
       HttpResponse.json({
         answers: MOCK_HIROBA_ANSWERS.filter((a) => a.hirobaPostId === params.id),
+      }),
+    ),
+    http.put('/api/hiroba-posts/:id/image', ({ params }) =>
+      HttpResponse.json({
+        post: { ...MOCK_HIROBA_POSTS[0], id: params.id, imageUrl: MOCK_AVATAR_URL },
       }),
     ),
     http.delete('/api/hiroba-posts/:id', () => HttpResponse.json({ success: true })),
