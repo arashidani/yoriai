@@ -8,6 +8,7 @@ import {
   QuestionStatus,
   Role,
 } from '@/app/generated/prisma/enums'
+import { HIROBA_CATALOG } from '@/lib/hiroba/catalog'
 
 export const MOCK_USERS = [
   {
@@ -49,6 +50,14 @@ export const MOCK_USERS = [
     createdAt: new Date('2024-01-02'),
   },
 ]
+
+export const MOCK_JOINED_HIROBA_SLUGS = [
+  'alcohol',
+  'photography',
+  'two-dimensional',
+  'gourmet',
+  'outdoor',
+] as const
 
 export const MOCK_USER_PROFILE = {
   ...MOCK_USERS[0],
@@ -250,27 +259,18 @@ export function mockPostHasTagId(postId: string, tagId: string): boolean {
   return post?.tags.some((tag) => tag.id === tagId) ?? false
 }
 
-export const MOCK_HIROBAS = [
-  {
-    id: 'hiroba-1',
-    slug: 'hiroba-1',
-    name: '広場１',
-    description: 'みんなで気軽に話せる広場です。',
-    createdAt: new Date('2024-01-01'),
-  },
-  {
-    id: 'hiroba-2',
-    slug: 'hiroba-2',
-    name: '広場２',
-    description: 'みんなで気軽に話せる広場です。',
-    createdAt: new Date('2024-01-01'),
-  },
-]
+export const MOCK_HIROBAS = HIROBA_CATALOG.map(({ id, slug, name, description }) => ({
+  id,
+  slug,
+  name,
+  description,
+  createdAt: new Date('2024-01-01'),
+}))
 
 export const MOCK_HIROBA_POSTS = [
   {
     id: 'hiroba-post-1',
-    hirobaId: 'hiroba-1',
+    hirobaId: 'hiroba-alcohol',
     title: '今日のランチどこ行きました？',
     body: '近くに新しくできたお店に行ってみたら、とても美味しかったです。',
     authorId: 'user-2',
@@ -284,7 +284,7 @@ export const MOCK_HIROBA_POSTS = [
   },
   {
     id: 'hiroba-post-2',
-    hirobaId: 'hiroba-1',
+    hirobaId: 'hiroba-alcohol',
     title: 'おすすめの本を教えてください',
     body: '最近読んで面白かった本があれば教えてほしいです。',
     authorId: 'user-1',
@@ -548,3 +548,9 @@ export const MOCK_PASSWORD_RESETS = [
     createdAt: new Date('2024-01-01'),
   },
 ]
+
+export const MOCK_CHAT_CONVERSATION_ID = 'mock-conversation'
+
+export function getMockChatResponseChunks(query: string) {
+  return [`「${query}」`, 'についてのモック回答です。', '\n\nMOCK_MODEで動作中。']
+}

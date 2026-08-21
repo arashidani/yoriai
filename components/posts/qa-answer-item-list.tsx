@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { AnswerItemList, type AnswerItemData } from '@/components/design-system/ui/answer-item-list'
+import { type AnswerItemData, AnswerItemList } from '@/components/design-system/ui/answer-item-list'
 import { client } from '@/lib/hono/client'
 
 type QaAnswerListItem = {
@@ -47,13 +47,17 @@ export function QaAnswerItemList({ answers }: QaAnswerItemListProps) {
       const result = await response.json()
       setItems((current) =>
         current.map((item) =>
-          item.id === answerId ? { ...item, liked: result.liked, likeCount: result.likeCount } : item,
+          item.id === answerId
+            ? { ...item, liked: result.liked, likeCount: result.likeCount }
+            : item,
         ),
       )
     } catch {
       setItems((current) =>
         current.map((item) =>
-          item.id === answerId ? { ...item, liked: before.liked, likeCount: before.likeCount } : item,
+          item.id === answerId
+            ? { ...item, liked: before.liked, likeCount: before.likeCount }
+            : item,
         ),
       )
       toast.error('いいねの処理に失敗しました')

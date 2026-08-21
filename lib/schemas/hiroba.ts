@@ -1,18 +1,5 @@
 import { z } from 'zod'
 
-export const createHirobaSchema = z.object({
-  name: z
-    .string()
-    .min(1, 'ひろば名を入力してください')
-    .max(50, 'ひろば名は50文字以内で入力してください'),
-  description: z
-    .string()
-    .min(1, '説明を入力してください')
-    .max(200, '説明は200文字以内で入力してください'),
-})
-
-export type CreateHirobaInput = z.infer<typeof createHirobaSchema>
-
 export const createHirobaPostSchema = z.object({
   title: z
     .string()

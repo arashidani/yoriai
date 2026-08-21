@@ -2,15 +2,20 @@ import { notFound } from 'next/navigation'
 import { Role } from '@/app/generated/prisma/enums'
 import { HirobaFeed } from '@/components/hiroba/hiroba-feed'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_HIROBA_POSTS, MOCK_HIROBAS } from '@/lib/mocks/fixtures'
+import { findHiroba } from '@/lib/hiroba/catalog'
+import { MOCK_HIROBA_POSTS, MOCK_JOINED_HIROBA_SLUGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
 
 async function getHiroba(slug: string) {
+  const catalogHiroba = findHiroba(slug)
+  if (!catalogHiroba) return null
+
   if (process.env.MOCK_MODE === 'true') {
-    return MOCK_HIROBAS.find((h) => h.slug === slug) ?? null
+    return catalogHiroba
   }
-  return prisma.hiroba.findUnique({ where: { slug } })
+  const persistedHiroba = await prisma.hiroba.findUnique({ where: { slug } })
+  return persistedHiroba ? { ...catalogHiroba, id: persistedHiroba.id } : null
 }
 
 async function getRawPosts(hirobaId: string) {
@@ -79,16 +84,14 @@ export default async function HirobaDetailPage({ params }: { params: Promise<{ s
   const user = await getCurrentUser()
   const posts = await getPosts(hiroba.id, hiroba.slug, user?.id)
   const isAdmin = user?.role === Role.ADMIN
+  const joined = user
+    ? process.env.MOCK_MODE === 'true'
+      ? MOCK_JOINED_HIROBA_SLUGS.includes(hiroba.slug as (typeof MOCK_JOINED_HIROBA_SLUGS)[number])
+      : !!(await prisma.hirobaMembership.findUnique({
+          where: { userId_hirobaId: { userId: user.id, hirobaId: hiroba.id } },
+          select: { userId: true },
+        }))
+    : false
 
-  return (
-    <div className="flex min-w-0 flex-1 flex-col">
-      <header className="sticky top-0 z-30 flex h-25 items-center justify-between bg-background p-8">
-        <div>
-          <h1 className="font-heading text-heading-3">{hiroba.name}</h1>
-          <p className="text-paragraph-small text-secondary-foreground">{hiroba.description}</p>
-        </div>
-      </header>
-      <HirobaFeed hirobaSlug={hiroba.slug} posts={posts} isAdmin={isAdmin} />
-    </div>
-  )
+  return <HirobaFeed hiroba={hiroba} posts={posts} isAdmin={isAdmin} initialJoined={joined} />
 }
