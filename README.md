@@ -111,9 +111,9 @@ MOCK_MODE=true
 # NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 
-# Dify 埋め込みチャット（未設定ならウィジェット非表示）
-# NEXT_PUBLIC_DIFY_BASE_URL=https://your-dify-host
-# NEXT_PUBLIC_DIFY_CHATBOT_TOKEN=
+# Dify Chatflow（AIチャット）。サーバー専用のためNEXT_PUBLIC_は付けない
+# DIFY_API_BASE_URL=https://your-dify-host/v1
+# DIFY_API_KEY=app-xxxxxxxxxxxx
 ```
 
 ## 開発
