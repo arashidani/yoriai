@@ -1,4 +1,5 @@
-import { ImageIcon, MessageCircle, UserRound, UsersRound } from 'lucide-react'
+import { MessageCircle, UserRound, UsersRound } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { HirobaDeletePostButton } from './hiroba-delete-post-button'
 import { HirobaPostLikeButton } from './hiroba-post-like-button'
@@ -8,7 +9,6 @@ import { HirobaSaveButton } from './hiroba-save-button'
 type HirobaPostCardProps = {
   post: HirobaPost
   isAdmin?: boolean
-  showImagePlaceholder?: boolean
   onDeleted?: (postId: string) => void
 }
 
@@ -27,12 +27,7 @@ function formatRelativeTime(input: Date | string) {
 const actionChipClass =
   'inline-flex items-center gap-1.5 rounded-full border border-input px-3 py-1 text-paragraph-mini font-medium text-secondary-foreground'
 
-export function HirobaPostCard({
-  post,
-  isAdmin = false,
-  showImagePlaceholder = false,
-  onDeleted,
-}: HirobaPostCardProps) {
+export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostCardProps) {
   const canDelete = isAdmin || (post.isOwnPost && post.answerCount === 0)
 
   return (
@@ -77,13 +72,15 @@ export function HirobaPostCard({
               )}
             </div>
           </div>
-          {showImagePlaceholder && (
-            <div className="mt-4 ml-12 flex aspect-[16/7] items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <div className="text-center">
-                <ImageIcon className="mx-auto mb-2 size-8" aria-hidden />
-                <p className="text-paragraph-small">投稿画像のプレースホルダー</p>
-              </div>
-            </div>
+          {post.imageUrl && (
+            <Image
+              src={post.imageUrl}
+              alt="投稿画像"
+              width={800}
+              height={600}
+              unoptimized
+              className="mt-4 ml-12 max-h-96 w-[calc(100%-3rem)] rounded-lg object-cover"
+            />
           )}
         </article>
       </Link>
