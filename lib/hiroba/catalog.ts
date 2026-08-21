@@ -63,6 +63,13 @@ export const HIROBA_SECTIONS: HirobaSection[] = [
       ),
       item('dogs', 'いぬ', '犬のかわいさや暮らしの知恵を共有するひろばです。', 'dog', 'lime'),
       item('cats', 'ねこ', '猫のかわいさや暮らしの知恵を共有するひろばです。', 'cat', 'lime'),
+      item(
+        'company-events',
+        '社内イベント',
+        '社内イベントの情報や感想を共有するひろばです。',
+        'party-popper',
+        'lime',
+      ),
     ],
   },
   {
