@@ -1,12 +1,11 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { ImagePlus, Loader2 } from 'lucide-react'
 import Image from 'next/image'
-import { type ChangeEvent, useRef, useState } from 'react'
+import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import imageNone from '@/assets/image-none.svg'
-import plusRound from '@/assets/plus-round.svg'
 import { client } from '@/lib/hono/client'
 import {
   ACCEPTED_AVATAR_TYPES,
@@ -50,6 +49,7 @@ export function ProfileAvatar({
   const inputRef = useRef<HTMLInputElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const [isPreparing, setIsPreparing] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const queryClient = useQueryClient()
 
   const uploadMutation = useMutation({
@@ -68,9 +68,7 @@ export function ProfileAvatar({
 
   const isPending = uploadMutation.isPending || isPreparing
 
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+  async function handleFile(file: File | undefined) {
     if (!file) return
 
     setClientError(null)
@@ -87,6 +85,17 @@ export function ProfileAvatar({
     } finally {
       setIsPreparing(false)
     }
+  }
+
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    void handleFile(event.target.files?.[0])
+    event.target.value = ''
+  }
+
+  function handleDrop(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+    if (!isPending) void handleFile(event.dataTransfer.files[0])
   }
 
   return (
@@ -115,11 +124,34 @@ export function ProfileAvatar({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={isPending}
-            className="absolute -right-3.25 bottom-[6.5px] cursor-pointer disabled:cursor-not-allowed"
+            onDragEnter={(event) => {
+              event.preventDefault()
+              if (!isPending && event.dataTransfer.types.includes('Files')) setIsDragging(true)
+            }}
+            onDragOver={(event) => event.preventDefault()}
+            onDragLeave={(event) => {
+              if (
+                !(event.relatedTarget instanceof Node) ||
+                !event.currentTarget.contains(event.relatedTarget)
+              ) {
+                setIsDragging(false)
+              }
+            }}
+            onDrop={handleDrop}
+            className="absolute inset-0 overflow-hidden rounded-lg border-2 border-dashed border-transparent transition-[border-color,background-color] hover:border-primary focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed motion-reduce:transition-none data-[dragging]:border-primary data-[dragging]:bg-primary/20"
+            data-dragging={isDragging || undefined}
             aria-label="アイコン画像を選択"
-          >
-            <Image src={plusRound} alt="" width={41} height={41} />
-          </button>
+          />
+        )}
+        {isEditable && (
+          <span className="pointer-events-none absolute -right-3.25 bottom-[6.5px] grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
+            <ImagePlus className="size-5" aria-hidden />
+          </span>
+        )}
+        {isDragging && (
+          <span className="pointer-events-none absolute inset-1 grid place-items-center rounded-md bg-primary text-label-small text-primary-foreground">
+            ドロップ
+          </span>
         )}
       </div>
 

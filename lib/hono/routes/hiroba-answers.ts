@@ -1,4 +1,5 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import { NotificationType } from '@/app/generated/prisma/enums'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, IdParamSchema, LikeStatusSchema } from '@/lib/hono/openapi/schemas'
@@ -62,10 +63,19 @@ export const hirobaAnswersRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
     if (answer.authorId === user.id) return c.json({ error: '自分の回答にはいいねできません' }, 403)
 
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.hirobaAnswerLike.createMany({
+      const created = await tx.hirobaAnswerLike.createMany({
         data: [{ hirobaAnswerId: id, userId: user.id }],
         skipDuplicates: true,
       })
+      if (created.count > 0 && answer.authorId) {
+        await tx.notification.create({
+          data: {
+            userId: answer.authorId,
+            type: NotificationType.HIROBA_ANSWER_LIKED,
+            hirobaAnswerId: id,
+          },
+        })
+      }
       const likeCount = await tx.hirobaAnswerLike.count({ where: { hirobaAnswerId: id } })
       await tx.hirobaAnswer.update({ where: { id }, data: { likeCount } })
       return likeCount

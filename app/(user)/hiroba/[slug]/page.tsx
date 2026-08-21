@@ -64,6 +64,7 @@ async function getPosts(hirobaId: string, hirobaSlug: string, currentUserId: str
       hirobaSlug,
       title: post.title,
       body: post.body,
+      imageUrl: post.imageUrl,
       displayName: post.author?.name ?? post.author?.email ?? '削除されたユーザー',
       isOwnPost,
       likeCount: post.likeCount,

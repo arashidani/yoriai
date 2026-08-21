@@ -17,6 +17,7 @@ const basePost = {
   hirobaSlug: 'alcohol',
   title: '今日のランチどこ行きました？',
   body: '近くに新しくできたお店に行ってみたら、とても美味しかったです。おすすめのお店があれば教えてください。',
+  imageUrl: null,
   displayName: '田中太郎',
   isOwnPost: false,
   likeCount: 2,
@@ -40,5 +41,12 @@ export const OwnPost: Story = {
   args: { post: { ...basePost, isOwnPost: true } },
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { pressed: false, name: /^\d+$/ })).toBeNull()
+  },
+}
+
+export const WithImage: Story = {
+  args: { post: { ...basePost, imageUrl: 'https://example.com/hiroba-post.webp' } },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('img')).toBeVisible()
   },
 }
