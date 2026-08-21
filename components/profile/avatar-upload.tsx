@@ -108,7 +108,12 @@ export function AvatarUpload({
         }}
         onDragOver={(event) => event.preventDefault()}
         onDragLeave={(event) => {
-          if (!event.currentTarget.contains(event.relatedTarget)) setIsDragging(false)
+          if (
+            !(event.relatedTarget instanceof Node) ||
+            !event.currentTarget.contains(event.relatedTarget)
+          ) {
+            setIsDragging(false)
+          }
         }}
         onDrop={handleDrop}
         className="group relative grid size-40.5 place-items-center overflow-hidden rounded-2xl border-2 border-dashed border-input bg-muted/50 p-1.5 transition-[border-color,background-color,box-shadow,transform] hover:border-primary hover:bg-primary/10 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"

@@ -97,7 +97,12 @@ export function HirobaPostForm({ onSubmit, isSubmitting = false }: HirobaPostFor
           }}
           onDragOver={(event) => event.preventDefault()}
           onDragLeave={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget)) setIsDragging(false)
+            if (
+              !(event.relatedTarget instanceof Node) ||
+              !event.currentTarget.contains(event.relatedTarget)
+            ) {
+              setIsDragging(false)
+            }
           }}
           onDrop={handleImageDrop}
           className={cn(

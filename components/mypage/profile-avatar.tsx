@@ -130,7 +130,12 @@ export function ProfileAvatar({
             }}
             onDragOver={(event) => event.preventDefault()}
             onDragLeave={(event) => {
-              if (!event.currentTarget.contains(event.relatedTarget)) setIsDragging(false)
+              if (
+                !(event.relatedTarget instanceof Node) ||
+                !event.currentTarget.contains(event.relatedTarget)
+              ) {
+                setIsDragging(false)
+              }
             }}
             onDrop={handleDrop}
             className="absolute inset-0 overflow-hidden rounded-lg border-2 border-dashed border-transparent transition-[border-color,background-color] hover:border-primary focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed motion-reduce:transition-none data-[dragging]:border-primary data-[dragging]:bg-primary/20"
