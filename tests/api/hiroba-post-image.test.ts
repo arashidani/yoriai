@@ -64,7 +64,7 @@ describe('ひろば投稿画像アップロードAPI', () => {
     }))
     processImageMock.mockResolvedValue(Buffer.from('processed-webp'))
     uploadImageMock.mockResolvedValue(
-      'https://storage.example.com/profiles/hiroba-posts/hiroba-post-1.webp?v=1',
+      'https://storage.example.com/posts/hiroba-posts/hiroba-post-1.webp?v=1',
     )
   })
 
@@ -76,7 +76,7 @@ describe('ひろば投稿画像アップロードAPI', () => {
     expect(prismaMock.hirobaPost.update).toHaveBeenCalledWith({
       where: { id: 'hiroba-post-1' },
       data: {
-        imageUrl: 'https://storage.example.com/profiles/hiroba-posts/hiroba-post-1.webp?v=1',
+        imageUrl: 'https://storage.example.com/posts/hiroba-posts/hiroba-post-1.webp?v=1',
       },
     })
     expect((await response.json()).post.imageUrl).toContain('hiroba-post-1.webp')
