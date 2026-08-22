@@ -105,6 +105,10 @@
           "liked": {
             "type": "boolean"
           },
+          "bookmarkCount": {
+            "type": "integer",
+            "minimum": 0
+          },
           "saved": {
             "type": "boolean"
           },
@@ -155,6 +159,7 @@
           "answerCount",
           "likeCount",
           "liked",
+          "bookmarkCount",
           "saved",
           "isOwnQuestion",
           "displayAuthor",
@@ -328,6 +333,11 @@
           "saved": {
             "type": "boolean",
             "example": true
+          },
+          "bookmarkCount": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 1
           }
         },
         "required": [

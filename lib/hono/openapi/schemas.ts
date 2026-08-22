@@ -215,6 +215,7 @@ export const LikeStatusSchema = z
 export const SavedStatusSchema = z
   .object({
     saved: z.boolean().openapi({ example: true }),
+    bookmarkCount: z.number().int().nonnegative().optional().openapi({ example: 1 }),
   })
   .openapi('SavedStatus')
 

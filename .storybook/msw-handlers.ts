@@ -128,8 +128,12 @@ export const mswHandlers = {
     http.delete('/api/questions/:id/likes', () =>
       HttpResponse.json({ liked: false, likeCount: 0 }),
     ),
-    http.post('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: true })),
-    http.delete('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: false })),
+    http.post('/api/questions/:id/bookmarks', () =>
+      HttpResponse.json({ saved: true, bookmarkCount: 1 }),
+    ),
+    http.delete('/api/questions/:id/bookmarks', () =>
+      HttpResponse.json({ saved: false, bookmarkCount: 0 }),
+    ),
     http.post('/api/questions/:id/resolve', ({ params }) => {
       const post = MOCK_QUESTIONS.find((p) => p.id === params.id)
       if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })

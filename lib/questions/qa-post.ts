@@ -12,6 +12,7 @@ export type QaPost = {
   isOwnQuestion: boolean
   likeCount: number
   liked: boolean
+  bookmarkCount: number
   saved: boolean
   status: 'OPEN' | 'RESOLVED'
   answerCount: number
@@ -27,6 +28,7 @@ type ApiQuestion = {
   isOwnQuestion: boolean
   likeCount: number
   liked: boolean
+  bookmarkCount: number
   saved: boolean
   status: 'OPEN' | 'RESOLVED'
   answerCount: number
@@ -44,6 +46,7 @@ export function toQaPost(question: ApiQuestion): QaPost {
     isOwnQuestion: question.isOwnQuestion,
     likeCount: question.likeCount,
     liked: question.liked,
+    bookmarkCount: question.bookmarkCount,
     saved: question.saved,
     status: question.status,
     answerCount: question.answerCount,
@@ -71,7 +74,7 @@ export function toQuestionItemData(post: QaPost): QuestionItemData {
     commentCount: post.answerCount,
     likeCount: post.likeCount,
     liked: post.liked,
-    bookmarkCount: 0,
+    bookmarkCount: post.bookmarkCount,
     bookmarked: post.saved,
     isOwnQuestion: post.isOwnQuestion,
   }

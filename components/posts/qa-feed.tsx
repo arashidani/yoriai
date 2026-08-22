@@ -64,8 +64,9 @@ async function fetchQuestions(params: {
   })
   if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
   const body = await response.json()
+  const posts = body.questions.map(toQaPost)
   return {
-    posts: body.questions.map(toQaPost),
+    posts,
     totalPages: body.pagination.totalPages,
     total: body.pagination.total,
   }
