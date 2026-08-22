@@ -71,6 +71,8 @@ export function toQaAnswerResponse(
     isOwnAnswer,
     isMostLiked: answer.id === mostLikedAnswerId,
     displayAuthor: displayAuthor(answer, isOwnAnswer),
+    joinedYear: answer.author?.joinedYear ?? null,
+    joinedMonth: answer.author?.joinedMonth ?? null,
     createdAt: answer.createdAt,
     updatedAt: answer.updatedAt,
   }

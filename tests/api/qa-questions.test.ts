@@ -43,14 +43,24 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     const body = await response.json()
 
     expect(body.answers).toHaveLength(1)
-    expect(body.answers[0]).toMatchObject({ id: 'answer-2', isMostLiked: true })
+    expect(body.answers[0]).toMatchObject({
+      id: 'answer-2',
+      isMostLiked: true,
+      joinedYear: 2020,
+      joinedMonth: 4,
+    })
   })
 
   it('未解決質問では最多回答でもメダルを付けない', async () => {
     const response = await app.request('/api/questions/post-1/answers')
     const body = await response.json()
 
-    expect(body.answers[0]).toMatchObject({ id: 'answer-1', isMostLiked: false })
+    expect(body.answers[0]).toMatchObject({
+      id: 'answer-1',
+      isMostLiked: false,
+      joinedYear: 2022,
+      joinedMonth: 10,
+    })
   })
 
   it('投稿した質問・保存した質問を専用APIで返す', async () => {
@@ -138,7 +148,9 @@ describe('Q&A API contract (MOCK_MODE)', () => {
 
     expect(question.status).toBe(201)
     expect(answer.status).toBe(201)
+    const answerBody = await answer.json()
     expect((await question.json()).moderation).toEqual({ isHidden: false })
-    expect((await answer.json()).moderation).toEqual({ isHidden: false })
+    expect(answerBody.moderation).toEqual({ isHidden: false })
+    expect(answerBody.answer).toMatchObject({ joinedYear: 2020, joinedMonth: 4 })
   })
 })
