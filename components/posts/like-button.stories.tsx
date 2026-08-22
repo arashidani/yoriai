@@ -19,8 +19,8 @@ export const Default: Story = {
     const button = canvas.getByRole('button')
     await expect(button).toHaveTextContent('3')
     await userEvent.click(button)
-    await expect(args.onToggle).toHaveBeenCalledWith(true)
     await expect(await canvas.findByText('4')).toBeVisible()
+    await expect(args.onToggle).toHaveBeenCalledWith(true)
   },
 }
 
