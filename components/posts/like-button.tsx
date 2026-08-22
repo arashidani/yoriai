@@ -44,7 +44,7 @@ export function LikeButton({
       )}
     >
       <IconPaw className="size-3.5" />
-      {likeCount}
+      {Math.max(0, likeCount ?? 0)}
     </Button>
   )
 }

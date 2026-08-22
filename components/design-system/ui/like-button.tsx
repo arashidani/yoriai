@@ -55,7 +55,7 @@ function LikeButton({
           <IconPaw aria-hidden className={cn(iconClassName, 'hidden group-aria-pressed:block')} />
         </>
       )}
-      {count}
+      {Math.max(0, count)}
     </TogglePrimitive>
   )
 }
