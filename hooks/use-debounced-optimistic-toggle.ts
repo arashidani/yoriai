@@ -2,6 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 const DEFAULT_DEBOUNCE_MS = 300
 
+function clampCount(value: number): number
+function clampCount(value: number | undefined): number | undefined
+function clampCount(value: number | undefined) {
+  if (value === undefined) return undefined
+  return Math.max(0, value)
+}
+
 type ParseResult = {
   pressed: boolean
   count?: number
@@ -27,10 +34,10 @@ export function useDebouncedOptimisticToggle<T>({
   onError,
 }: UseDebouncedOptimisticToggleOptions<T>) {
   const [pressed, setPressed] = useState(initialPressed)
-  const [count, setCount] = useState(initialCount)
+  const [count, setCount] = useState(clampCount(initialCount))
 
   const confirmedPressedRef = useRef(initialPressed)
-  const confirmedCountRef = useRef(initialCount)
+  const confirmedCountRef = useRef(clampCount(initialCount))
   const pressedRef = useRef(initialPressed)
   const inFlightRef = useRef(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -40,8 +47,9 @@ export function useDebouncedOptimisticToggle<T>({
     pressedRef.current = initialPressed
     setPressed(initialPressed)
     if (initialCount !== undefined) {
-      confirmedCountRef.current = initialCount
-      setCount(initialCount)
+      const nextCount = clampCount(initialCount)
+      confirmedCountRef.current = nextCount
+      setCount(nextCount)
     }
   }, [initialPressed, initialCount])
 
@@ -59,14 +67,15 @@ export function useDebouncedOptimisticToggle<T>({
       pressedRef.current = parsed.pressed
       setPressed(parsed.pressed)
       if (parsed.count !== undefined && initialCount !== undefined) {
-        confirmedCountRef.current = parsed.count
-        setCount(parsed.count)
+        const nextCount = clampCount(parsed.count)
+        confirmedCountRef.current = nextCount
+        setCount(nextCount)
       }
     } catch (error) {
       pressedRef.current = confirmedPressedRef.current
       setPressed(confirmedPressedRef.current)
       if (initialCount !== undefined) {
-        setCount(confirmedCountRef.current ?? initialCount)
+        setCount(clampCount(confirmedCountRef.current ?? initialCount))
       }
       onError?.(error)
     } finally {
@@ -97,7 +106,7 @@ export function useDebouncedOptimisticToggle<T>({
       pressedRef.current = next
       setPressed(next)
       if (initialCount !== undefined) {
-        setCount((current) => (current ?? 0) + delta)
+        setCount((current) => clampCount((current ?? 0) + delta))
       }
       scheduleSync()
     },

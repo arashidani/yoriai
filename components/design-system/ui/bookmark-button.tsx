@@ -40,7 +40,7 @@ function BookmarkButton({ className, size = 'default', count, ...props }: Bookma
           size === 'large' ? 'size-4.5' : 'size-3.5',
         )}
       />
-      {count}
+      {Math.max(0, count)}
     </TogglePrimitive>
   )
 }
