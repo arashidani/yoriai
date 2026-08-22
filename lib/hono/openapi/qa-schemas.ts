@@ -49,6 +49,8 @@ export const QaAnswerSchema = z
       .boolean()
       .openapi({ description: '募集終了済み質問の最多いいね回答1件だけtrue' }),
     displayAuthor: DisplayAuthorSchema,
+    joinedYear: z.number().int().nullable().openapi({ example: 2022 }),
+    joinedMonth: z.number().int().nullable().openapi({ example: 4 }),
     createdAt: dateTime(),
     updatedAt: dateTime(),
   })

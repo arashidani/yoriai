@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { AnswerItem } from '@/components/design-system/ui/answer-item'
 import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { client } from '@/lib/hono/client'
+import { getIbjCareerName } from '@/lib/users/ibj-career'
 
 type QaAnswerListItem = {
   id: string
@@ -16,11 +17,21 @@ type QaAnswerListItem = {
     displayName: string
     avatarUrl: string | null
   }
+  joinedYear: number | null
+  joinedMonth: number | null
   createdAt: Date | string
 }
 
 type QaAnswerItemListProps = {
   answers: QaAnswerListItem[]
+}
+
+function tenureLabel(answer: QaAnswerListItem) {
+  const name = getIbjCareerName(
+    answer.joinedYear ? String(answer.joinedYear) : '',
+    answer.joinedMonth ? String(answer.joinedMonth) : '',
+  )
+  return name || undefined
 }
 
 function QaAnswerRow({ answer }: { answer: QaAnswerListItem }) {
@@ -45,6 +56,7 @@ function QaAnswerRow({ answer }: { answer: QaAnswerListItem }) {
       avatarSrc={answer.displayAuthor.avatarUrl ?? undefined}
       avatarAlt=""
       authorName={answer.displayAuthor.displayName}
+      tenure={tenureLabel(answer)}
       timestamp={new Date(answer.createdAt).toLocaleDateString('ja-JP')}
       body={answer.body}
       likeCount={like.count ?? answer.likeCount}

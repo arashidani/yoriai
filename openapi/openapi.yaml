@@ -183,6 +183,16 @@ components:
           description: 募集終了済み質問の最多いいね回答1件だけtrue
         displayAuthor:
           $ref: "#/components/schemas/QuestionDisplayAuthor"
+        joinedYear:
+          type:
+            - integer
+            - "null"
+          example: 2022
+        joinedMonth:
+          type:
+            - integer
+            - "null"
+          example: 4
         createdAt:
           type: string
           format: date-time
@@ -200,6 +210,8 @@ components:
         - isOwnAnswer
         - isMostLiked
         - displayAuthor
+        - joinedYear
+        - joinedMonth
         - createdAt
         - updatedAt
     ModerationResult:
