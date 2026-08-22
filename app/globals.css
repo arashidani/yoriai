@@ -100,6 +100,8 @@
   --color-hiroba-mint-foreground: var(--hiroba-mint-foreground);
   --color-tenurechip: var(--tenurechip);
   --color-tenurechip-foreground: var(--tenurechip-foreground);
+  --color-statuschip-success: var(--statuschip-success);
+  --color-statuschip-success-foreground: var(--statuschip-success-foreground);
 
   /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
      3種類に限定し、独自の font-* ユーティリティは増やさない。
@@ -621,6 +623,10 @@
   /* Figma: badge/tenurechip, badge/tenurechip-foreground。Light/Dark 共通の固定色 */
   --tenurechip: #ecfccb;
   --tenurechip-foreground: #65a30d;
+
+  /* Figma: badge/statuschip-success, badge/statuschip-success-foreground（解決済みチップ）。Light/Dark 共通の固定色 */
+  --statuschip-success: #ece7df; /* neutral-300 */
+  --statuschip-success-foreground: #a59a8d; /* neutral-600 */
 }
 
 /* ── Dark ── */
@@ -693,6 +699,8 @@
 
   --tenurechip: #ecfccb; /* Light と固定 */
   --tenurechip-foreground: #65a30d; /* Light と固定 */
+  --statuschip-success: #ece7df; /* Light と固定 */
+  --statuschip-success-foreground: #a59a8d; /* Light と固定 */
 }
 
 @layer base {
