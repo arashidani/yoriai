@@ -16,7 +16,7 @@ type AnswerFormProps = {
 function AnswerForm({
   className,
   placeholder = '回答を入力する',
-  submitLabel = '送信',
+  submitLabel = '回答',
   disabled = false,
   textareaProps,
   ...formProps

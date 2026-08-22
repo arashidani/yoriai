@@ -74,7 +74,7 @@ export default async function QaDetailPage({ params }: Props) {
               この質問は回答を受け付けていません。
             </p>
           )}
-          <AssistBanner>AIが自動でカテゴリタグを付与し、回答されやすくします。</AssistBanner>
+          <AssistBanner>1週間経過後、一番いいねが多い回答にはにくきゅうバッジが付与されます。</AssistBanner>
         </div>
         <p className="text-caption text-secondary-foreground">※回答にはIBJ歴が表示されます。</p>
       </div>
