@@ -70,15 +70,6 @@ export function QuestionFormModal({
               {error}
             </p>
           )}
-          <div className="flex items-center gap-4">
-            <span className="size-[50px] shrink-0 overflow-clip rounded-md bg-informative">
-              {avatarUrl && (
-                // biome-ignore lint/performance/noImgElement: アバターはDB由来の動的URLのためnext/imageの最適化対象にしない
-                <img src={avatarUrl} alt="" className="size-full object-cover" />
-              )}
-            </span>
-            <p className="text-paragraph font-medium">{displayName}</p>
-          </div>
           <FormField
             label="質問のタイトル"
             error={errors.title?.message}
