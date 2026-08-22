@@ -86,7 +86,7 @@ export const Submitting: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('質問を投稿する')).toBeVisible()
-    await expect(canvas.getByRole('status', { name: 'Loading' })).toBeVisible()
+    await expect(canvas.getByRole('status', { name: '投稿中' })).toBeVisible()
     await expect(canvas.getByRole('button', { name: '閉じる' })).toBeDisabled()
     await expect(canvas.queryByLabelText('質問のタイトル')).not.toBeInTheDocument()
   },
