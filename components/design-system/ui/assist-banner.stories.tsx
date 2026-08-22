@@ -5,7 +5,7 @@ import { AssistBanner } from './assist-banner'
 const meta = {
   component: AssistBanner,
   args: {
-    children: 'AIが自動でカテゴリタグを付与し、回答されやすくします。',
+    children: '1週間経過後、一番いいねが多い回答にはにくきゅうバッジが付与されます。',
   },
 } satisfies Meta<typeof AssistBanner>
 
@@ -15,7 +15,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(
-      canvas.getByText('AIが自動でカテゴリタグを付与し、回答されやすくします。'),
+      canvas.getByText('1週間経過後、一番いいねが多い回答にはにくきゅうバッジが付与されます。'),
     ).toBeVisible()
   },
 }

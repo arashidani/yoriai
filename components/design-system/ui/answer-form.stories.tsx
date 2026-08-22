@@ -18,14 +18,14 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByPlaceholderText('回答を入力する')).toBeVisible()
-    await expect(canvas.getByRole('button', { name: /送信/ })).toBeVisible()
+    await expect(canvas.getByRole('button', { name: /回答/ })).toBeVisible()
   },
 }
 
 export const Submit: Story = {
   play: async ({ canvas, args }) => {
     await userEvent.type(canvas.getByPlaceholderText('回答を入力する'), 'テスト回答')
-    await userEvent.click(canvas.getByRole('button', { name: /送信/ }))
+    await userEvent.click(canvas.getByRole('button', { name: /回答/ }))
     await expect(args.onSubmit).toHaveBeenCalled()
   },
 }
@@ -34,6 +34,6 @@ export const Disabled: Story = {
   args: { disabled: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByPlaceholderText('回答を入力する')).toBeDisabled()
-    await expect(canvas.getByRole('button', { name: /送信/ })).toBeDisabled()
+    await expect(canvas.getByRole('button', { name: /回答/ })).toBeDisabled()
   },
 }
