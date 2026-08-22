@@ -57,7 +57,7 @@ export default async function QaDetailPage({ params }: Props) {
               commentCount={question.answerCount}
               likeCount={question.likeCount}
               liked={question.liked}
-              bookmarkCount={0}
+              bookmarkCount={question.bookmarkCount}
               bookmarked={question.saved}
               isOwnQuestion={question.isOwnQuestion}
               size="large"

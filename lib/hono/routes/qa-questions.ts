@@ -45,6 +45,7 @@ const questionInclude = (userId: string) => ({
   },
   likes: { where: { userId }, select: { userId: true } },
   bookmarks: { where: { userId }, select: { userId: true } },
+  _count: { select: { bookmarks: true } },
 })
 
 function pagination(page: number, pageSize: number, total: number) {
@@ -63,6 +64,7 @@ function mockQuestions(viewerId: string) {
         })),
         likes: [],
         bookmarks: [],
+        _count: { bookmarks: 0 },
       },
       viewerId,
     ),
@@ -734,12 +736,13 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         ? MOCK_POSTS.find((item) => item.id === id)
         : await prisma.post.findUnique({ where: { id } })
     if (!post) return c.json({ error: 'Not found' }, 404)
-    if (process.env.MOCK_MODE !== 'true')
-      await prisma.postBookmark.createMany({
-        data: [{ postId: id, userId: user.id }],
-        skipDuplicates: true,
-      })
-    return c.json({ saved: true }, 200)
+    if (process.env.MOCK_MODE === 'true') return c.json({ saved: true, bookmarkCount: 1 }, 200)
+    await prisma.postBookmark.createMany({
+      data: [{ postId: id, userId: user.id }],
+      skipDuplicates: true,
+    })
+    const bookmarkCount = await prisma.postBookmark.count({ where: { postId: id } })
+    return c.json({ saved: true, bookmarkCount }, 200)
   })
   .openapi(unbookmarkRoute, async (c) => {
     const user = c.get('user')
@@ -749,9 +752,10 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         ? MOCK_POSTS.find((item) => item.id === id)
         : await prisma.post.findUnique({ where: { id } })
     if (!post) return c.json({ error: 'Not found' }, 404)
-    if (process.env.MOCK_MODE !== 'true')
-      await prisma.postBookmark.deleteMany({ where: { postId: id, userId: user.id } })
-    return c.json({ saved: false }, 200)
+    if (process.env.MOCK_MODE === 'true') return c.json({ saved: false, bookmarkCount: 0 }, 200)
+    await prisma.postBookmark.deleteMany({ where: { postId: id, userId: user.id } })
+    const bookmarkCount = await prisma.postBookmark.count({ where: { postId: id } })
+    return c.json({ saved: false, bookmarkCount }, 200)
   })
 
 const tagsRouteDefinition = createRoute({
@@ -859,7 +863,7 @@ export const meQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (process.env.MOCK_MODE === 'true') {
       const all = mockQuestions(user.id)
         .slice(0, 2)
-        .map((q) => ({ ...q, saved: true }))
+        .map((q) => ({ ...q, saved: true, bookmarkCount: Math.max(1, q.bookmarkCount) }))
       return c.json(
         {
           questions: all.slice((page - 1) * pageSize, page * pageSize),

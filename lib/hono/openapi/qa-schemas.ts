@@ -26,6 +26,7 @@ export const QuestionSchema = z
     answerCount: z.number().int().nonnegative(),
     likeCount: z.number().int().nonnegative(),
     liked: z.boolean(),
+    bookmarkCount: z.number().int().nonnegative(),
     saved: z.boolean(),
     isOwnQuestion: z.boolean(),
     displayAuthor: DisplayAuthorSchema,
