@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { AshiatoIcon } from '@/components/icons/ashiato-icon'
+import { IconPaw } from '@/components/design-system/icons/icon-paw'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -56,7 +56,7 @@ export function LikeButton({
         liked && 'border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20',
       )}
     >
-      <AshiatoIcon className="size-3.5" />
+      <IconPaw className="size-3.5" />
       {likeCount}
     </Button>
   )

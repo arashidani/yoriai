@@ -42,3 +42,10 @@ export const Disabled: Story = {
     await expect(canvas.getByRole('button', { name: '1' })).toBeDisabled()
   },
 }
+
+export const Muted: Story = {
+  args: { size: 'default', count: 1, state: 'muted' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: '1' })).toBeVisible()
+  },
+}
