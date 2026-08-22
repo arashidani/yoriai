@@ -27,3 +27,13 @@ export const Selected: Story = {
     await expect(chip).toHaveAttribute('aria-pressed', 'true')
   },
 }
+
+export const Hover: Story = {
+  args: { defaultPressed: false },
+  play: async ({ canvas }) => {
+    const chip = canvas.getByRole('button', { name: '全て' })
+    // jsdom/ヘッドレスブラウザではCSSの:hover疑似クラスが実反映されないため、
+    // hover用ユーティリティクラスが付与されていることで代用検証する
+    await expect(chip.className).toContain('hover:bg-statuschip-success')
+  },
+}
