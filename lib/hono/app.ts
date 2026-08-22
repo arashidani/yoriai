@@ -4,6 +4,7 @@ import { openApiConfig } from './openapi/config'
 import { adminRoute } from './routes/admin'
 import { adminProfileOptionsRoute } from './routes/admin-profile-options'
 import { answersRoute } from './routes/answers'
+import { chatRoute } from './routes/chat'
 import { hirobaRoute } from './routes/hiroba'
 import { hirobaAnswersRoute } from './routes/hiroba-answers'
 import { hirobaPostsRoute } from './routes/hiroba-posts'
@@ -20,6 +21,7 @@ const app = new OpenAPIHono()
   .route('/question-tags', questionTagsRoute)
   .route('/users/me', meQuestionsRoute)
   .route('/answers', answersRoute)
+  .route('/chat', chatRoute)
   .route('/admin/profile-options', adminProfileOptionsRoute)
   .route('/hiroba', hirobaRoute)
   .route('/hiroba-posts', hirobaPostsRoute)

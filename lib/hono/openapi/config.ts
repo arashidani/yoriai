@@ -29,5 +29,9 @@ export const openApiConfig = {
     { name: 'invites', description: '招待リンクの発行・確認' },
     { name: 'notifications', description: '自分宛て通知の一覧取得・既読化・未読件数取得' },
     { name: 'password-resets', description: 'パスワードリセットリンクの確認・実行' },
+    {
+      name: 'chat',
+      description: 'Dify Chatflow 連携チャット（SSE ストリーム。Swagger UI からは試行不可）',
+    },
   ],
 }

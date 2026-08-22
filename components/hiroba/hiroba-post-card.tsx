@@ -1,5 +1,7 @@
-import { ImageIcon, MessageCircle, UserRound, UsersRound } from 'lucide-react'
+import { MessageCircle, UserRound, UsersRound } from 'lucide-react'
+import Image from 'next/image'
 import Link from 'next/link'
+import { displayNameColorClass } from './display-name-color'
 import { HirobaDeletePostButton } from './hiroba-delete-post-button'
 import { HirobaPostLikeButton } from './hiroba-post-like-button'
 import type { HirobaPost } from './hiroba-post-list'
@@ -8,7 +10,6 @@ import { HirobaSaveButton } from './hiroba-save-button'
 type HirobaPostCardProps = {
   post: HirobaPost
   isAdmin?: boolean
-  showImagePlaceholder?: boolean
   onDeleted?: (postId: string) => void
 }
 
@@ -27,12 +28,7 @@ function formatRelativeTime(input: Date | string) {
 const actionChipClass =
   'inline-flex items-center gap-1.5 rounded-full border border-input px-3 py-1 text-paragraph-mini font-medium text-secondary-foreground'
 
-export function HirobaPostCard({
-  post,
-  isAdmin = false,
-  showImagePlaceholder = false,
-  onDeleted,
-}: HirobaPostCardProps) {
+export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostCardProps) {
   const canDelete = isAdmin || (post.isOwnPost && post.answerCount === 0)
 
   return (
@@ -42,25 +38,38 @@ export function HirobaPostCard({
           <HirobaDeletePostButton postId={post.id} postTitle={post.title} onDeleted={onDeleted} />
         </div>
       )}
-      <Link href={`/hiroba/${post.hirobaSlug}/posts/${post.id}`} className="block p-4 pb-0">
-        <article>
-          <div className="flex gap-3">
-            <div
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
-              aria-hidden
-            >
-              <UserRound className="size-4" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-paragraph-small font-bold">{post.displayName}</span>
-                <span
-                  className="text-paragraph-mini text-secondary-foreground"
-                  suppressHydrationWarning
+      <article className="p-4 pb-0">
+        <div className="flex gap-3">
+          <div
+            className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground"
+            aria-hidden
+          >
+            <UserRound className="size-4" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              {post.authorId ? (
+                <Link
+                  href={`/mypage/${post.authorId}`}
+                  className={`text-paragraph-small font-bold hover:underline ${displayNameColorClass(post.displayNameColor)}`}
                 >
-                  {formatRelativeTime(post.createdAt)}
+                  {post.displayName}
+                </Link>
+              ) : (
+                <span
+                  className={`text-paragraph-small font-bold ${displayNameColorClass(post.displayNameColor)}`}
+                >
+                  {post.displayName}
                 </span>
-              </div>
+              )}
+              <span
+                className="text-paragraph-mini text-secondary-foreground"
+                suppressHydrationWarning
+              >
+                {formatRelativeTime(post.createdAt)}
+              </span>
+            </div>
+            <Link href={`/hiroba/${post.hirobaSlug}/posts/${post.id}`} className="block">
               <p className="pt-1 text-paragraph-small font-bold">{post.title}</p>
               <p className="text-paragraph-small">{post.body}</p>
               {post.tags.length > 0 && (
@@ -75,18 +84,20 @@ export function HirobaPostCard({
                   ))}
                 </div>
               )}
-            </div>
+              {post.imageUrl && (
+                <Image
+                  src={post.imageUrl}
+                  alt="投稿画像"
+                  width={800}
+                  height={600}
+                  unoptimized
+                  className="mt-4 max-h-96 w-full rounded-lg object-cover"
+                />
+              )}
+            </Link>
           </div>
-          {showImagePlaceholder && (
-            <div className="mt-4 ml-12 flex aspect-[16/7] items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              <div className="text-center">
-                <ImageIcon className="mx-auto mb-2 size-8" aria-hidden />
-                <p className="text-paragraph-small">投稿画像のプレースホルダー</p>
-              </div>
-            </div>
-          )}
-        </article>
-      </Link>
+        </div>
+      </article>
       <div className="flex items-center gap-3 px-4 pt-3 pb-4 pl-16">
         <Link
           href={`/hiroba/${post.hirobaSlug}/posts/${post.id}#answer-form`}

@@ -1,4 +1,5 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import { NotificationType } from '@/app/generated/prisma/enums'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, IdParamSchema, LikeStatusSchema } from '@/lib/hono/openapi/schemas'
@@ -62,10 +63,15 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
     if (answer.authorId === user.id) return c.json({ error: '自分の回答にはいいねできません' }, 403)
 
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.answerLike.createMany({
+      const created = await tx.answerLike.createMany({
         data: [{ answerId: id, userId: user.id }],
         skipDuplicates: true,
       })
+      if (created.count > 0 && answer.authorId) {
+        await tx.notification.create({
+          data: { userId: answer.authorId, type: NotificationType.ANSWER_LIKED, answerId: id },
+        })
+      }
       const likeCount = await tx.answerLike.count({ where: { answerId: id } })
       await tx.answer.update({ where: { id }, data: { likeCount } })
       return likeCount

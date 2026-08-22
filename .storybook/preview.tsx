@@ -28,6 +28,7 @@ const preview: Preview = {
         ...mswHandlers.admin,
         ...mswHandlers.invites,
         ...mswHandlers.passwordResets,
+        ...mswHandlers.chat,
       ],
     },
     controls: {

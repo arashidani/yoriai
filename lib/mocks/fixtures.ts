@@ -273,6 +273,7 @@ export const MOCK_HIROBA_POSTS = [
     hirobaId: 'hiroba-alcohol',
     title: '今日のランチどこ行きました？',
     body: '近くに新しくできたお店に行ってみたら、とても美味しかったです。',
+    imageUrl: null,
     authorId: 'user-2',
     author: MOCK_USERS[1],
     answerCount: 1,
@@ -287,6 +288,7 @@ export const MOCK_HIROBA_POSTS = [
     hirobaId: 'hiroba-alcohol',
     title: 'おすすめの本を教えてください',
     body: '最近読んで面白かった本があれば教えてほしいです。',
+    imageUrl: null,
     authorId: 'user-1',
     author: MOCK_USERS[0],
     answerCount: 0,
@@ -346,6 +348,10 @@ export const MOCK_NOTIFICATIONS = [
     post: MOCK_POSTS[1],
     answerId: null,
     answer: null,
+    hirobaPostId: null,
+    hirobaPost: null,
+    hirobaAnswerId: null,
+    hirobaAnswer: null,
     isRead: false,
     createdAt: new Date('2024-01-14T00:00:00Z'),
   },
@@ -357,6 +363,10 @@ export const MOCK_NOTIFICATIONS = [
     post: null,
     answerId: 'answer-2',
     answer: { ...MOCK_ANSWERS[1], isHidden: true },
+    hirobaPostId: null,
+    hirobaPost: null,
+    hirobaAnswerId: null,
+    hirobaAnswer: null,
     isRead: true,
     createdAt: new Date('2024-01-13T00:00:00Z'),
   },
@@ -368,6 +378,10 @@ export const MOCK_NOTIFICATIONS = [
     post: MOCK_POSTS[0],
     answerId: null,
     answer: null,
+    hirobaPostId: null,
+    hirobaPost: null,
+    hirobaAnswerId: null,
+    hirobaAnswer: null,
     isRead: false,
     createdAt: new Date('2024-01-12T00:00:00Z'),
   },
@@ -548,3 +562,9 @@ export const MOCK_PASSWORD_RESETS = [
     createdAt: new Date('2024-01-01'),
   },
 ]
+
+export const MOCK_CHAT_CONVERSATION_ID = 'mock-conversation'
+
+export function getMockChatResponseChunks(query: string) {
+  return [`「${query}」`, 'についてのモック回答です。', '\n\nMOCK_MODEで動作中。']
+}
