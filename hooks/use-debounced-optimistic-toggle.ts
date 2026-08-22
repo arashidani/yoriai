@@ -64,12 +64,16 @@ export function useDebouncedOptimisticToggle<T>({
       const result = await onSync(target)
       const parsed = parseResult(result)
       confirmedPressedRef.current = parsed.pressed
-      pressedRef.current = parsed.pressed
-      setPressed(parsed.pressed)
       if (parsed.count !== undefined && initialCount !== undefined) {
-        const nextCount = clampCount(parsed.count)
-        confirmedCountRef.current = nextCount
-        setCount(nextCount)
+        confirmedCountRef.current = clampCount(parsed.count)
+      }
+      // Keep optimistic UI if the user toggled again while this request was in flight.
+      if (pressedRef.current === target) {
+        pressedRef.current = parsed.pressed
+        setPressed(parsed.pressed)
+        if (parsed.count !== undefined && initialCount !== undefined) {
+          setCount(clampCount(parsed.count))
+        }
       }
     } catch (error) {
       pressedRef.current = confirmedPressedRef.current
@@ -117,11 +121,16 @@ export function useDebouncedOptimisticToggle<T>({
     setPressedValue(!pressedRef.current)
   }, [setPressedValue])
 
+  const syncIfNeededRef = useRef(syncIfNeeded)
+  syncIfNeededRef.current = syncIfNeeded
+
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = null
       }
+      void syncIfNeededRef.current()
     }
   }, [])
 
