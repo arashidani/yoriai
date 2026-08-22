@@ -13,8 +13,8 @@ import { QaFilterBar } from './qa-filter-bar'
 
 const STATUS_FILTERS = [
   { id: 'all', label: '全て' },
-  { id: 'resolved', label: '解決済み' },
   { id: 'unanswered', label: '回答募集中' },
+  { id: 'resolved', label: '解決済み' },
 ] as const
 
 const PAGE_SIZE = 10
