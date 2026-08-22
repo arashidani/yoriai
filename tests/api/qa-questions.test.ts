@@ -91,6 +91,35 @@ describe('Q&A API contract (MOCK_MODE)', () => {
       error: 'この投稿は削除されたため、回答できません',
     })
   })
+  it('存在しないtagIdを指定すると400を返す', async () => {
+    const response = await app.request('/api/questions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440002',
+      },
+      body: JSON.stringify({ title: '質問テスト', body: '本文テスト', tagId: 'invalid-tag' }),
+    })
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: '指定されたタグが見つかりません' })
+  })
+
+  it('有効なtagIdを指定するとタグ付きで作成する', async () => {
+    const response = await app.request('/api/questions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440003',
+      },
+      body: JSON.stringify({ title: '質問テスト', body: '本文テスト', tagId: 'tag-1' }),
+    })
+
+    expect(response.status).toBe(201)
+    const body = await response.json()
+    expect(body.question.tag).toMatchObject({ id: 'tag-1', name: 'Next.js' })
+  })
+
   it('質問・回答の作成レスポンスに公開状態を返す', async () => {
     const headers = {
       'content-type': 'application/json',
