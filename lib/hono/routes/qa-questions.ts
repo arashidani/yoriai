@@ -153,6 +153,7 @@ const createQuestionRoute = createRoute({
         },
       },
     },
+    400: errorResponse('タグが無効', '指定されたタグが見つかりません'),
     401: errorResponse('未認証', 'Unauthorized'),
     409: errorResponse('同じキーで異なる内容', '同じ投稿操作に異なる内容が指定されています'),
     500: errorResponse('作成失敗', '投稿の作成に失敗しました'),
@@ -403,9 +404,20 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
   })
   .openapi(createQuestionRoute, async (c) => {
     const user = c.get('user')
-    const data = c.req.valid('json')
+    const { tagId, ...data } = c.req.valid('json')
     const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
+    if (tagId) {
+      if (process.env.MOCK_MODE === 'true') {
+        if (!MOCK_TAGS.some((tag) => tag.id === tagId)) {
+          return c.json({ error: '指定されたタグが見つかりません' }, 400)
+        }
+      } else {
+        const selected = await prisma.tag.findUnique({ where: { id: tagId } })
+        if (!selected) return c.json({ error: '指定されたタグが見つかりません' }, 400)
+      }
+    }
     if (process.env.MOCK_MODE === 'true') {
+      const selectedTag = tagId ? MOCK_TAGS.find((tag) => tag.id === tagId) : undefined
       return c.json(
         {
           question: toQuestionResponse(
@@ -418,7 +430,15 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
               answerCount: 0,
               likeCount: 0,
               resolvedAt: null,
-              tags: [],
+              tags: selectedTag
+                ? [
+                    {
+                      id: `mock-post-tag-${selectedTag.id}`,
+                      createdAt: new Date(),
+                      tag: selectedTag,
+                    },
+                  ]
+                : [],
               likes: [],
               bookmarks: [],
               createdAt: new Date(),
@@ -494,18 +514,29 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     let tags: any[] = []
     if (!post.deletedAt) {
       try {
-        const allTags = await prisma.tag.findMany({
-          where: { isWorkTag: true },
-          select: { id: true, name: true, category: true, description: true, createdAt: true },
-        })
-        const names = await assignTags(post.title, post.body, allTags)
-        const selected = allTags.find((tag) => names.includes(tag.name))
-        if (selected) {
+        if (tagId) {
           await prisma.postTag.createMany({
-            data: [{ postId: post.id, tagId: selected.id }],
+            data: [{ postId: post.id, tagId }],
             skipDuplicates: true,
           })
-          tags = [{ id: `assigned-${selected.id}`, createdAt: selected.createdAt, tag: selected }]
+          const selected = await prisma.tag.findUnique({ where: { id: tagId } })
+          if (selected) {
+            tags = [{ id: `assigned-${selected.id}`, createdAt: selected.createdAt, tag: selected }]
+          }
+        } else {
+          const allTags = await prisma.tag.findMany({
+            where: { isWorkTag: true },
+            select: { id: true, name: true, category: true, description: true, createdAt: true },
+          })
+          const names = await assignTags(post.title, post.body, allTags)
+          const selected = allTags.find((tag) => names.includes(tag.name))
+          if (selected) {
+            await prisma.postTag.createMany({
+              data: [{ postId: post.id, tagId: selected.id }],
+              skipDuplicates: true,
+            })
+            tags = [{ id: `assigned-${selected.id}`, createdAt: selected.createdAt, tag: selected }]
+          }
         }
       } catch (error) {
         console.error('Failed to assign tags', { postId: post.id, error })

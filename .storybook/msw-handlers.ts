@@ -123,6 +123,13 @@ export const mswHandlers = {
         { status: 201 },
       )
     }),
+    http.get('/api/question-tags', () =>
+      HttpResponse.json({
+        tags: MOCK_TAGS.map(({ id, name }) => ({ id, name })).sort((a, b) =>
+          a.name.localeCompare(b.name, 'ja'),
+        ),
+      }),
+    ),
     http.delete('/api/admin/posts/:id', () => HttpResponse.json({ success: true })),
     http.post('/api/questions/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
     http.delete('/api/questions/:id/likes', () =>

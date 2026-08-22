@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
 import { expect, screen, userEvent } from 'storybook/test'
 import { QuestionComposeDialog } from './question-compose-dialog'
@@ -9,44 +8,26 @@ const meta = {
   parameters: {
     nextjs: { appDirectory: true },
   },
-  decorators: [
-    (Story) => (
-      <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-      >
-        <Story />
-      </QueryClientProvider>
-    ),
-  ],
 } satisfies Meta<typeof QuestionComposeDialog>
 
 export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: {
-    displayName: '名無しのおせワニ',
-  },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: '質問する' })).toBeVisible()
   },
 }
 
 export const OpenForm: Story = {
-  args: {
-    displayName: '名無しのおせワニ',
-  },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: '質問する' }))
-    await expect(await screen.findByText('名無しのおせワニ')).toBeVisible()
+    await expect(await screen.findByText('質問を投稿する')).toBeVisible()
     await expect(screen.getByLabelText('質問のタイトル')).toBeVisible()
   },
 }
 
 export const SubmitSuccess: Story = {
-  args: {
-    displayName: '名無しのおせワニ',
-  },
   parameters: {
     msw: {
       handlers: [

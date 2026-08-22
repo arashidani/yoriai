@@ -14,11 +14,7 @@ import type { CreatePostInput } from '@/lib/schemas/post'
 
 type Step = 'form' | 'completion'
 
-type QuestionComposeDialogProps = {
-  displayName: string
-}
-
-export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProps) {
+export function QuestionComposeDialog() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -101,7 +97,7 @@ export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProp
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange} disablePointerDismissal>
+    <Dialog open={open} onOpenChange={handleOpenChange} disablePointerDismissal modal="trap-focus">
       <ActionButtons
         primaryAction={
           <DialogTrigger
@@ -127,8 +123,6 @@ export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProp
         {step === 'form' ? (
           <QuestionFormModal
             key={formInstance}
-            displayName={displayName}
-            avatarUrl="/anonymous-profiles/wani.png"
             onSubmit={handleSubmit}
             onClose={handleClose}
             isSubmitting={isSubmitting}

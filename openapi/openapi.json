@@ -1654,6 +1654,9 @@
                   "body": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "tagId": {
+                    "type": "string"
                   }
                 },
                 "required": [
@@ -1705,6 +1708,19 @@
                     "question",
                     "moderation"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "タグが無効",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "指定されたタグが見つかりません"
                 }
               }
             }
