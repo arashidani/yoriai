@@ -1,12 +1,11 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { ImagePlus, Loader2 } from 'lucide-react'
 import Image from 'next/image'
-import { type ChangeEvent, useRef, useState } from 'react'
+import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import imageNone from '@/assets/image-none.svg'
-import plusRound from '@/assets/plus-round.svg'
 import { client } from '@/lib/hono/client'
 import {
   ACCEPTED_AVATAR_TYPES,
@@ -48,6 +47,7 @@ export function AvatarUpload({
   const inputRef = useRef<HTMLInputElement>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const [isPreparing, setIsPreparing] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const queryClient = useQueryClient()
 
   const uploadMutation = useMutation({
@@ -66,9 +66,7 @@ export function AvatarUpload({
 
   const isPending = uploadMutation.isPending || isPreparing
 
-  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
+  async function handleFile(file: File | undefined) {
     if (!file) return
 
     setClientError(null)
@@ -87,13 +85,39 @@ export function AvatarUpload({
     }
   }
 
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    void handleFile(event.target.files?.[0])
+    event.target.value = ''
+  }
+
+  function handleDrop(event: DragEvent<HTMLButtonElement>) {
+    event.preventDefault()
+    setIsDragging(false)
+    if (!isPending) void handleFile(event.dataTransfer.files[0])
+  }
+
   return (
-    <div className="flex flex-col items-center gap-4">
+    <div className="flex flex-col items-center gap-3">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={isPending}
-        className="relative size-40.5 disabled:cursor-not-allowed"
+        onDragEnter={(event) => {
+          event.preventDefault()
+          if (!isPending && event.dataTransfer.types.includes('Files')) setIsDragging(true)
+        }}
+        onDragOver={(event) => event.preventDefault()}
+        onDragLeave={(event) => {
+          if (
+            !(event.relatedTarget instanceof Node) ||
+            !event.currentTarget.contains(event.relatedTarget)
+          ) {
+            setIsDragging(false)
+          }
+        }}
+        onDrop={handleDrop}
+        className="group relative grid size-40.5 place-items-center overflow-hidden rounded-2xl border-2 border-dashed border-input bg-muted/50 p-1.5 transition-[border-color,background-color,box-shadow,transform] hover:border-primary hover:bg-primary/10 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+        data-dragging={isDragging || undefined}
         aria-label="アイコン画像を選択"
       >
         {avatarUrl ? (
@@ -102,24 +126,34 @@ export function AvatarUpload({
             alt="アイコン"
             fill
             unoptimized
-            className="rounded-2xl object-cover"
+            className="rounded-xl object-cover"
           />
         ) : (
-          <Image src={imageNone} alt="" width={162} height={162} className="object-cover" />
+          <Image
+            src={imageNone}
+            alt=""
+            width={162}
+            height={162}
+            className="rounded-xl object-cover"
+          />
         )}
-        <Image
-          src={plusRound}
-          alt=""
-          width={48}
-          height={48}
-          className="absolute -right-5 bottom-5"
-        />
+        <span className="absolute right-2 bottom-2 grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
+          <ImagePlus className="size-5" aria-hidden />
+        </span>
         {isPending && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/60">
+          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/70">
             <Loader2 className="size-6 animate-spin" aria-label="処理中" />
           </div>
         )}
+        {isDragging && (
+          <span className="absolute inset-1 grid place-items-center rounded-xl bg-primary text-label text-primary-foreground shadow-sm">
+            ここにドロップ
+          </span>
+        )}
       </button>
+      <p className="text-center text-paragraph-mini text-muted-foreground">
+        クリックまたはドラッグ&ドロップ
+      </p>
 
       <input
         ref={inputRef}

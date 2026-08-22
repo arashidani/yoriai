@@ -205,6 +205,10 @@ model Notification {
   post      Post?            @relation(fields: [postId], references: [id], onDelete: Cascade)
   answerId  String?
   answer    Answer?          @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  hirobaPostId String?
+  hirobaPost HirobaPost? @relation("NotificationHirobaPost", fields: [hirobaPostId], references: [id], onDelete: Cascade)
+  hirobaAnswerId String?
+  hirobaAnswer HirobaAnswer? @relation("NotificationHirobaAnswer", fields: [hirobaAnswerId], references: [id], onDelete: Cascade)
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
 
@@ -350,6 +354,7 @@ model HirobaPost {
   hiroba   Hiroba  @relation(fields: [hirobaId], references: [id], onDelete: Cascade)
   title    String
   body     String
+  imageUrl String?
   authorId String?
   author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
@@ -362,6 +367,7 @@ model HirobaPost {
   bookmarks HirobaPostBookmark[]
   aiFlags   AiFlag[]
   tags      HirobaPostTag[]
+  notifications Notification[] @relation("NotificationHirobaPost")
   createdAt DateTime             @default(now())
   updatedAt DateTime             @updatedAt
 
@@ -391,6 +397,7 @@ model HirobaAnswer {
 
   likes     HirobaAnswerLike[]
   aiFlags   AiFlag[]
+  notifications Notification[] @relation("NotificationHirobaAnswer")
   createdAt DateTime           @default(now())
   updatedAt DateTime           @updatedAt
 
@@ -506,6 +513,11 @@ enum QuestionStatus {
 
 enum NotificationType {
   POST_ANSWERED
+  POST_LIKED
+  ANSWER_LIKED
+  HIROBA_POST_ANSWERED
+  HIROBA_POST_LIKED
+  HIROBA_ANSWER_LIKED
   POST_DELETED
   ANSWER_HIDDEN
 }

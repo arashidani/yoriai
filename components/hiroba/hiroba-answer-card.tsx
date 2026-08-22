@@ -1,9 +1,14 @@
+import Link from 'next/link'
+import type { DisplayNameColor } from '@/app/generated/prisma/enums'
 import { HirobaAnswerLikeButton } from '@/components/hiroba/hiroba-answer-like-button'
+import { displayNameColorClass } from './display-name-color'
 
 export type HirobaAnswer = {
   id: string
   body: string
+  authorId: string | null
   displayName: string
+  displayNameColor: DisplayNameColor | null
   isOwnAnswer: boolean
   likeCount: number
   createdAt: Date | string
@@ -24,7 +29,20 @@ export function HirobaAnswerCard({ answer, liked }: HirobaAnswerCardProps) {
         >
           {answer.displayName.slice(0, 1)}
         </div>
-        <span className="text-paragraph-small font-bold">{answer.displayName}</span>
+        {answer.authorId ? (
+          <Link
+            href={`/mypage/${answer.authorId}`}
+            className={`text-paragraph-small font-bold hover:underline ${displayNameColorClass(answer.displayNameColor)}`}
+          >
+            {answer.displayName}
+          </Link>
+        ) : (
+          <span
+            className={`text-paragraph-small font-bold ${displayNameColorClass(answer.displayNameColor)}`}
+          >
+            {answer.displayName}
+          </span>
+        )}
         <span className="text-paragraph-mini text-secondary-foreground" suppressHydrationWarning>
           {new Date(answer.createdAt).toLocaleDateString('ja-JP')}
         </span>
