@@ -52,6 +52,7 @@ export function QuestionFormModal({
   const title = useWatch({ control, name: 'title' })
   const body = useWatch({ control, name: 'body' })
   const canSubmit = Boolean(title?.trim()) && Boolean(body?.trim())
+  const isLoading = isSubmitting || isFormSubmitting
 
   return (
     <div className="flex w-full max-w-[650px] flex-col gap-4 rounded-xl border border-border bg-background p-8">
@@ -61,11 +62,11 @@ export function QuestionFormModal({
           <button
             type="button"
             aria-label="閉じる"
-            disabled={isSubmitting}
-            onClick={isSubmitting ? undefined : onClose}
+            disabled={isLoading}
+            onClick={isLoading ? undefined : onClose}
             className={cn(
               'flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted',
-              isSubmitting && 'pointer-events-none opacity-50',
+              isLoading && 'pointer-events-none opacity-50',
             )}
           >
             <IconClose className="text-foreground" />
@@ -73,9 +74,9 @@ export function QuestionFormModal({
         )}
       </div>
       <Separator />
-      {isSubmitting ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Spinner className="size-8" />
+          <Spinner className="size-8 text-primary" aria-label="投稿中" />
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
@@ -139,7 +140,7 @@ export function QuestionFormModal({
           </p>
           <Button
             type="submit"
-            isDisabled={isSubmitting || isFormSubmitting || !canSubmit}
+            isDisabled={isLoading || !canSubmit}
             className="flex items-center justify-center gap-2 px-6 py-4"
           >
             <IconPencil className="size-4" />
