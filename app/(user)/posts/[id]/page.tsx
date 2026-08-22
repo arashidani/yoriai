@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/design-system/button'
-import { AssistBanner } from '@/components/design-system/ui/assist-banner'
 import { QuestionCard } from '@/components/design-system/ui/question-card'
 import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { AnswerForm } from '@/components/posts/answer-form'
 import { QaAnswerItemList } from '@/components/posts/qa-answer-item-list'
+import { QaAnswerSection } from '@/components/posts/qa-answer-section'
 import { Separator } from '@/components/ui/separator'
 import { createServerApiClient } from '@/lib/hono/server-client'
 
@@ -65,19 +65,9 @@ export default async function QaDetailPage({ params }: Props) {
           }
         />
       </div>
-      <div className="flex w-full flex-col gap-2">
-        <div className="flex w-full flex-col gap-4">
-          {canAnswer ? (
-            <AnswerForm postId={question.id} />
-          ) : (
-            <p className="text-paragraph text-secondary-foreground">
-              この質問は回答を受け付けていません。
-            </p>
-          )}
-          <AssistBanner>1週間経過後、一番いいねが多い回答にはにくきゅうバッジが付与されます。</AssistBanner>
-        </div>
-        <p className="text-caption text-secondary-foreground">※回答にはIBJ歴が表示されます。</p>
-      </div>
+      <QaAnswerSection canAnswer={canAnswer}>
+        <AnswerForm postId={question.id} />
+      </QaAnswerSection>
       <div className="flex w-full flex-col gap-6">
         <Separator />
         {answers.length === 0 ? (
