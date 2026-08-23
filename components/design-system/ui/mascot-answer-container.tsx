@@ -24,7 +24,7 @@ function MascotAnswerContainer({ className, variant, message }: MascotAnswerCont
   return (
     <div data-slot="mascot-answer-container" className={cn('flex items-start gap-2', className)}>
       {/* message に改行を含めた場合はデザイン通りに複数行で表示する */}
-      <ToolChip className="[&>p]:whitespace-pre-line" side="right" text={message} />
+      <ToolChip side="right" text={message} />
       <Image src={image} alt="" className={imageClass} priority />
     </div>
   )
