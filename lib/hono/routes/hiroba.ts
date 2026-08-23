@@ -290,7 +290,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
           select: { id: true, name: true, category: true, description: true, createdAt: true },
         })
         const selectedNames = await assignTags(post.title, post.body, allTags)
-        const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 3)
+        const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 1)
         if (selectedTags.length > 0) {
           await prisma.hirobaPostTag.createMany({
             data: selectedTags.map((t) => ({ hirobaPostId: post.id, tagId: t.id })),
