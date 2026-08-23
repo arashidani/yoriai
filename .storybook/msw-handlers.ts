@@ -29,6 +29,28 @@ const MOCK_QUESTIONS = MOCK_POSTS.map((post) =>
   toQuestionResponse({ ...post, likes: [], bookmarks: [] }, MOCK_USERS[0].id),
 )
 
+/** AI SDK の UI Message Stream 形式(SSE)のレスポンスを組み立てる。 */
+export function uiMessageStreamResponse(chunks: object[]) {
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    start(controller) {
+      // ストリームのチャンクを順番に追加していく
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`))
+      }
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+      controller.close()
+    },
+  })
+
+  return new HttpResponse(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'x-vercel-ai-ui-message-stream': 'v1',
+    },
+  })
+}
+
 export const mswHandlers = {
   users: [
     http.get('/api/users/me', () => HttpResponse.json({ user: MOCK_USER_PROFILE })),
@@ -135,6 +157,7 @@ export const mswHandlers = {
             hirobaId: 'hiroba-1',
             title: body.title,
             body: body.body,
+            imageUrl: null,
             authorId: 'user-1',
             author: MOCK_USERS[0],
             answerCount: 0,
@@ -156,6 +179,11 @@ export const mswHandlers = {
     http.get('/api/hiroba-posts/:id/answers', ({ params }) =>
       HttpResponse.json({
         answers: MOCK_HIROBA_ANSWERS.filter((a) => a.hirobaPostId === params.id),
+      }),
+    ),
+    http.put('/api/hiroba-posts/:id/image', ({ params }) =>
+      HttpResponse.json({
+        post: { ...MOCK_HIROBA_POSTS[0], id: params.id, imageUrl: MOCK_AVATAR_URL },
       }),
     ),
     http.delete('/api/hiroba-posts/:id', () => HttpResponse.json({ success: true })),
@@ -375,5 +403,22 @@ export const mswHandlers = {
       if (!reset) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
       return HttpResponse.json({ success: true })
     }),
+  ],
+  chat: [
+    http.post('/api/chat', () =>
+      uiMessageStreamResponse([
+        { type: 'start' },
+        { type: 'text-start', id: 'text-1' },
+        { type: 'text-delta', id: 'text-1', delta: 'Storybookの' },
+        { type: 'text-delta', id: 'text-1', delta: 'モック回答です。' },
+        { type: 'text-end', id: 'text-1' },
+        {
+          type: 'data-conversation',
+          data: { conversationId: 'mock-conversation' },
+          transient: true,
+        },
+        { type: 'finish' },
+      ]),
+    ),
   ],
 }

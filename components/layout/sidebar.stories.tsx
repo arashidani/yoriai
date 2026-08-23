@@ -18,7 +18,7 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByText('ひろば')).toBeVisible()
     await expect(canvas.getByText('なんでもQ&A')).toBeVisible()
-    await expect(canvas.getByText('ミッション')).toBeVisible()
+    await expect(canvas.queryByRole('link', { name: 'ミッション' })).not.toBeInTheDocument()
     await expect(canvas.queryByRole('link', { name: '投稿・保存した質問' })).not.toBeInTheDocument()
     await expect(canvas.getByText('マイページ')).toBeVisible()
     await expect(canvas.getAllByLabelText('通知')[1]).toBeVisible()

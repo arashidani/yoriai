@@ -14,9 +14,16 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    hiroba: { slug: 'hiroba-1', name: '広場１', description: 'みんなで気軽に話せる広場です。' },
+    hiroba: {
+      id: 'hiroba-alcohol',
+      slug: 'alcohol',
+      name: 'お酒',
+      description: '好きなお酒やおすすめのおつまみを紹介し合うひろばです。',
+      icon: 'wine',
+      tone: 'lime',
+    },
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('広場１')).toBeVisible()
+    await expect(canvas.getByText('お酒')).toBeVisible()
   },
 }

@@ -106,9 +106,9 @@ export const PostSchema = z
 
 export const HirobaSchema = z
   .object({
-    id: z.string().openapi({ example: 'hiroba-1' }),
-    slug: z.string().openapi({ example: 'hiroba-1' }),
-    name: z.string().openapi({ example: '広場１' }),
+    id: z.string().openapi({ example: 'hiroba-alcohol' }),
+    slug: z.string().openapi({ example: 'alcohol' }),
+    name: z.string().openapi({ example: 'お酒' }),
     description: z.string().openapi({ example: 'みんなで気軽に話せる広場です。' }),
     createdAt: dateTime(),
   })
@@ -117,9 +117,10 @@ export const HirobaSchema = z
 export const HirobaPostSchema = z
   .object({
     id: z.string().openapi({ example: 'hiroba-post-1' }),
-    hirobaId: z.string().openapi({ example: 'hiroba-1' }),
+    hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
     title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
     body: z.string().openapi({ example: '近くに新しくできたお店に行ってみました。' }),
+    imageUrl: z.string().nullable().openapi({ example: null }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
     author: z.union([UserSchema, z.null()]).optional(),
     answerCount: z.number().openapi({ example: 0 }),
@@ -170,7 +171,16 @@ export const AnswerSchema = z
   .openapi('Answer')
 
 export const NotificationTypeSchema = z
-  .enum(['POST_ANSWERED', 'POST_DELETED', 'ANSWER_HIDDEN'])
+  .enum([
+    'POST_ANSWERED',
+    'POST_LIKED',
+    'ANSWER_LIKED',
+    'HIROBA_POST_ANSWERED',
+    'HIROBA_POST_LIKED',
+    'HIROBA_ANSWER_LIKED',
+    'POST_DELETED',
+    'ANSWER_HIDDEN',
+  ])
   .openapi('NotificationType')
 
 export const NotificationSchema = z
@@ -182,6 +192,10 @@ export const NotificationSchema = z
     post: z.union([PostSchema, z.null()]).optional(),
     answerId: z.string().nullable().openapi({ example: null }),
     answer: z.union([AnswerSchema, z.null()]).optional(),
+    hirobaPostId: z.string().nullable().openapi({ example: null }),
+    hirobaPost: z.union([HirobaPostSchema, z.null()]).optional(),
+    hirobaAnswerId: z.string().nullable().openapi({ example: null }),
+    hirobaAnswer: z.union([HirobaAnswerSchema, z.null()]).optional(),
     isRead: z.boolean().openapi({ example: false }),
     createdAt: dateTime(),
   })
@@ -302,7 +316,7 @@ export const IdParamSchema = z.object({
 
 /** パスパラメータ :slug */
 export const SlugParamSchema = z.object({
-  slug: z.string().openapi({ param: { name: 'slug', in: 'path' }, example: 'hiroba-1' }),
+  slug: z.string().openapi({ param: { name: 'slug', in: 'path' }, example: 'alcohol' }),
 })
 
 /** よく使うエラーレスポンス定義 */

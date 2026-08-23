@@ -4,6 +4,7 @@ import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity } from '@/app/generated/prisma/enums'
 import { assignTags } from '@/lib/ai/assign-tags'
 import { moderatePost } from '@/lib/ai/moderate-post'
+import { findHiroba, HIROBA_CATALOG } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -51,6 +52,44 @@ const getRoute = createRoute({
   },
 })
 
+const membershipResponse = z.object({ joined: z.boolean() })
+
+const joinRoute = createRoute({
+  method: 'post',
+  path: '/{slug}/membership',
+  tags: ['hiroba'],
+  summary: 'ひろばに参加する',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: SlugParamSchema },
+  responses: {
+    200: {
+      description: '参加後の状態',
+      content: { 'application/json': { schema: membershipResponse } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('ひろばが見つからない', 'Not found'),
+  },
+})
+
+const leaveRoute = createRoute({
+  method: 'delete',
+  path: '/{slug}/membership',
+  tags: ['hiroba'],
+  summary: 'ひろばから退出する',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: SlugParamSchema },
+  responses: {
+    200: {
+      description: '退出後の状態',
+      content: { 'application/json': { schema: membershipResponse } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('ひろばが見つからない', 'Not found'),
+  },
+})
+
 const createPostRoute = createRoute({
   method: 'post',
   path: '/{slug}/posts',
@@ -92,11 +131,18 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     if (process.env.MOCK_MODE === 'true') {
       return c.json({ hirobas: MOCK_HIROBAS }, 200)
     }
-    const hirobas = await prisma.hiroba.findMany({ orderBy: { createdAt: 'desc' } })
-    return c.json({ hirobas }, 200)
+    const hirobas = await prisma.hiroba.findMany({
+      where: { slug: { in: HIROBA_CATALOG.map((hiroba) => hiroba.slug) } },
+    })
+    const bySlug = new Map(hirobas.map((hiroba) => [hiroba.slug, hiroba]))
+    return c.json(
+      { hirobas: HIROBA_CATALOG.flatMap((hiroba) => bySlug.get(hiroba.slug) ?? []) },
+      200,
+    )
   })
   .openapi(getRoute, async (c) => {
     const { slug } = c.req.valid('param')
+    if (!findHiroba(slug)) return c.json({ error: 'Not found' }, 404)
 
     if (process.env.MOCK_MODE === 'true') {
       const hiroba = MOCK_HIROBAS.find((h) => h.slug === slug)
@@ -118,8 +164,37 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       200,
     )
   })
+  .openapi(joinRoute, async (c) => {
+    const { slug } = c.req.valid('param')
+    if (!findHiroba(slug)) return c.json({ error: 'Not found' }, 404)
+    if (process.env.MOCK_MODE === 'true') return c.json({ joined: true }, 200)
+
+    const hiroba = await prisma.hiroba.findUnique({ where: { slug }, select: { id: true } })
+    if (!hiroba) return c.json({ error: 'Not found' }, 404)
+
+    const user = c.get('user')
+    await prisma.hirobaMembership.upsert({
+      where: { userId_hirobaId: { userId: user.id, hirobaId: hiroba.id } },
+      update: {},
+      create: { userId: user.id, hirobaId: hiroba.id },
+    })
+    return c.json({ joined: true }, 200)
+  })
+  .openapi(leaveRoute, async (c) => {
+    const { slug } = c.req.valid('param')
+    if (!findHiroba(slug)) return c.json({ error: 'Not found' }, 404)
+    if (process.env.MOCK_MODE === 'true') return c.json({ joined: false }, 200)
+
+    const hiroba = await prisma.hiroba.findUnique({ where: { slug }, select: { id: true } })
+    if (!hiroba) return c.json({ error: 'Not found' }, 404)
+
+    const user = c.get('user')
+    await prisma.hirobaMembership.deleteMany({ where: { userId: user.id, hirobaId: hiroba.id } })
+    return c.json({ joined: false }, 200)
+  })
   .openapi(createPostRoute, async (c) => {
     const { slug } = c.req.valid('param')
+    if (!findHiroba(slug)) return c.json({ error: 'Not found' }, 404)
 
     if (process.env.MOCK_MODE === 'true') {
       const hiroba = MOCK_HIROBAS.find((h) => h.slug === slug)
@@ -132,6 +207,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
             id: `hiroba-post-${Date.now()}`,
             hirobaId: hiroba.id,
             ...data,
+            imageUrl: null,
             authorId: user.id,
             author: user,
             answerCount: 0,
