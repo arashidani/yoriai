@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import type { DisplayNameColor } from '@/app/generated/prisma/enums'
 import { HirobaPostCard } from './hiroba-post-card'
 
 export type HirobaPost = {
@@ -8,7 +9,10 @@ export type HirobaPost = {
   hirobaSlug: string
   title: string
   body: string
+  imageUrl: string | null
+  authorId: string | null
   displayName: string
+  displayNameColor: DisplayNameColor | null
   isOwnPost: boolean
   likeCount: number
   liked: boolean
@@ -32,7 +36,7 @@ export function HirobaPostList({ posts, isAdmin }: HirobaPostListProps) {
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 grid-cols-1 gap-4">
       {visiblePosts.map((post) => (
         <HirobaPostCard
           key={post.id}

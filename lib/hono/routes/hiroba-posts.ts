@@ -1,7 +1,8 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { bodyLimit } from 'hono/body-limit'
 import type { HirobaAnswer, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
-import { FlagSeverity, Role } from '@/app/generated/prisma/enums'
+import { FlagSeverity, NotificationType, Role } from '@/app/generated/prisma/enums'
 import { moderateAnswer } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -14,10 +15,23 @@ import {
   SavedStatusSchema,
   SuccessSchema,
 } from '@/lib/hono/openapi/schemas'
+import {
+  HIROBA_POST_IMAGE_MAX_BYTES,
+  HIROBA_POST_IMAGE_TOO_LARGE_MESSAGE,
+} from '@/lib/image/hiroba-post-image-limits'
+import {
+  HirobaPostImageProcessingError,
+  processHirobaPostImage,
+  UnsupportedHirobaPostImageError,
+} from '@/lib/image/process-hiroba-post-image'
 import { MOCK_HIROBA_ANSWERS, MOCK_HIROBA_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
 import { createHirobaAnswerSchema } from '@/lib/schemas/hiroba'
+import {
+  HirobaPostImageUploadError,
+  uploadHirobaPostImage,
+} from '@/lib/supabase/storage/hiroba-post-image'
 
 type HirobaAnswerWithAuthor = HirobaAnswer & { author: User | null }
 
@@ -202,6 +216,47 @@ const deleteRoute = createRoute({
   },
 })
 
+const uploadImageRoute = createRoute({
+  method: 'put',
+  path: '/{id}/image',
+  tags: ['hiroba-posts'],
+  summary: 'ひろば投稿の画像をアップロード',
+  security: [{ supabaseSession: [] }],
+  middleware: [
+    authMiddleware,
+    bodyLimit({
+      maxSize: HIROBA_POST_IMAGE_MAX_BYTES,
+      onError: (c) => c.json({ error: HIROBA_POST_IMAGE_TOO_LARGE_MESSAGE }, 413),
+    }),
+  ] as const,
+  request: {
+    params: IdParamSchema,
+    body: {
+      required: true,
+      content: {
+        'multipart/form-data': {
+          schema: z.object({
+            file: z.instanceof(File).openapi({ type: 'string', format: 'binary' }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: '画像を設定した投稿',
+      content: { 'application/json': { schema: z.object({ post: HirobaPostSchema }) } },
+    },
+    400: errorResponse('対応していない画像形式', '対応していない画像形式です'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('投稿者本人ではない', 'Forbidden'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
+    413: errorResponse('ファイルサイズ超過', HIROBA_POST_IMAGE_TOO_LARGE_MESSAGE),
+    422: errorResponse('画像処理に失敗', '画像を処理できませんでした'),
+    502: errorResponse('アップロード失敗', '画像のアップロードに失敗しました'),
+  },
+})
+
 export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
   .openapi(getRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -235,6 +290,56 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       orderBy: [{ likeCount: 'desc' }, { createdAt: 'asc' }],
     })
     return c.json({ answers: answers.map(toAnswerResponse) }, 200)
+  })
+  .openapi(uploadImageRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const user = c.get('user')
+    const { file } = c.req.valid('form')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_HIROBA_POSTS.find((item) => item.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+      return c.json(
+        { post: { ...post, imageUrl: 'https://storage.example.com/hiroba-posts/mock.webp' } },
+        200,
+      )
+    }
+
+    const post = await prisma.hirobaPost.findFirst({
+      where: { id, authorId: user.id, deletedAt: null },
+    })
+    if (!post) {
+      const exists = await prisma.hirobaPost.findFirst({
+        where: { id, deletedAt: null },
+        select: { id: true },
+      })
+      return c.json({ error: exists ? 'Forbidden' : 'Not found' }, exists ? 403 : 404)
+    }
+
+    let image: Buffer
+    try {
+      image = await processHirobaPostImage(Buffer.from(await file.arrayBuffer()))
+    } catch (error) {
+      if (error instanceof UnsupportedHirobaPostImageError)
+        return c.json({ error: error.message }, 400)
+      if (error instanceof HirobaPostImageProcessingError)
+        return c.json({ error: error.message }, 422)
+      throw error
+    }
+
+    let imageUrl: string
+    try {
+      imageUrl = await uploadHirobaPostImage(post.id, image)
+    } catch (error) {
+      if (error instanceof HirobaPostImageUploadError) {
+        return c.json({ error: '画像のアップロードに失敗しました' }, 502)
+      }
+      throw error
+    }
+
+    const updated = await prisma.hirobaPost.update({ where: { id: post.id }, data: { imageUrl } })
+    return c.json({ post: { ...updated, tags: [] } }, 200)
   })
   .openapi(createAnswerRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -328,6 +433,21 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       }
     }
 
+    if (!answer.isHidden && post.authorId && post.authorId !== user.id) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: post.authorId,
+            type: NotificationType.HIROBA_POST_ANSWERED,
+            hirobaPostId: post.id,
+            hirobaAnswerId: answer.id,
+          },
+        })
+      } catch (error) {
+        console.error('Failed to create hiroba reply notification', { postId: post.id, error })
+      }
+    }
+
     return c.json({ answer: toAnswerResponse(answer) }, 201)
   })
   .openapi(likeRoute, async (c) => {
@@ -346,10 +466,19 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (post.authorId === user.id) return c.json({ error: '自分の投稿にはいいねできません' }, 403)
 
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.hirobaPostLike.createMany({
+      const created = await tx.hirobaPostLike.createMany({
         data: [{ hirobaPostId: id, userId: user.id }],
         skipDuplicates: true,
       })
+      if (created.count > 0 && post.authorId) {
+        await tx.notification.create({
+          data: {
+            userId: post.authorId,
+            type: NotificationType.HIROBA_POST_LIKED,
+            hirobaPostId: id,
+          },
+        })
+      }
       const likeCount = await tx.hirobaPostLike.count({ where: { hirobaPostId: id } })
       await tx.hirobaPost.update({ where: { id }, data: { likeCount } })
       return likeCount

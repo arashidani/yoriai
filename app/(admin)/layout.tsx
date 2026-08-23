@@ -19,7 +19,7 @@ const tabs = [
   { href: '/admin/tags', label: 'タグ管理' },
   { href: '/admin/profile-options', label: 'プロフィール項目管理' },
   { href: '/admin/tag-categories', label: 'タグカテゴリー管理' },
-  { href: '/admin/hiroba', label: 'ひろば管理' },
+  { href: '/admin/hiroba', label: 'ひろば一覧' },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
