@@ -573,7 +573,9 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const { tagId, ...postData } = data
     const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
     if (process.env.MOCK_MODE === 'true') {
-      const selectedTag = tagId ? MOCK_TAGS.find((tag) => tag.id === tagId) : undefined
+      const selectedTag = tagId
+        ? MOCK_TAGS.find((tag) => tag.id === tagId && tag.isWorkTag)
+        : undefined
       if (tagId && !selectedTag) return c.json({ error: '選択されたタグが見つかりません' }, 400)
       const tagAssignment: 'assigned' | 'failed' = selectedTag ? 'assigned' : 'failed'
       return c.json(
@@ -1085,18 +1087,23 @@ export const questionTagsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({
         categories: MOCK_TAG_CATEGORIES.map(({ id, name }) => ({
           id,
           name,
-          tags: MOCK_TAGS.filter((tag) => tag.category === name)
+          tags: MOCK_TAGS.filter((tag) => tag.category === name && tag.isWorkTag)
             .map(({ id: tagId, name: tagName }) => ({ id: tagId, name: tagName }))
             .sort((a, b) => a.name.localeCompare(b.name, 'ja')),
-        })),
+        })).filter((category) => category.tags.length > 0),
       },
       200,
     )
   const categories = await prisma.tagCategory.findMany({
+    where: { tags: { some: { isWorkTag: true } } },
     select: {
       id: true,
       name: true,
-      tags: { select: { id: true, name: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] },
+      tags: {
+        where: { isWorkTag: true },
+        select: { id: true, name: true },
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+      },
     },
     orderBy: [{ name: 'asc' }, { id: 'asc' }],
   })

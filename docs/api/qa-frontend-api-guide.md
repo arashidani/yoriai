@@ -1,5 +1,7 @@
 # Q&A API フロントエンド実装ガイド
 
+> 質問投稿の `tagAssignment` とAI再試行／手動タグ付与は、[質問投稿・タグ付与API フロントエンド連携ガイド](./question-tag-assignment-frontend-guide.md) を参照してください。
+
 ## 1. 画面別エンドポイント早見表
 
 | 画面・操作 | METHOD | PATH |
@@ -11,6 +13,7 @@
 | 投稿した質問 | GET | `/api/users/me/questions` |
 | 保存した質問 | GET | `/api/users/me/saved-questions` |
 | 質問投稿 | POST | `/api/questions` |
+| 質問タグのAI再試行／手動付与 | POST | `/api/questions/{id}/tag-assignment` |
 | 回答投稿 | POST | `/api/questions/{id}/answers` |
 | 質問の足跡 | POST / DELETE | `/api/questions/{id}/likes` |
 | 回答の足跡 | POST / DELETE | `/api/answers/{id}/likes` |
