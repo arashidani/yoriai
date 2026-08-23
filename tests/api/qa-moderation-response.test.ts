@@ -151,12 +151,12 @@ describe('Q&A作成APIのモデレーション結果', () => {
     expect((await response.json()).moderation).toEqual({ isHidden: true })
   })
 
-  it('手動タグが指定された質問ではAI割り当てをスキップする', async () => {
+  it('その他タグが手動指定された質問ではAI割り当てをスキップする', async () => {
     const manualTag = {
-      id: 'tag-manual',
-      name: '勤怠・有給関連',
-      category: '社内ルール・手続き',
-      categoryDefinition: { id: 'category-1', name: '社内ルール・手続き' },
+      id: 'tag-other',
+      name: 'その他（雑談に近い質問）',
+      category: 'その他',
+      categoryDefinition: { id: 'category-other', name: 'その他' },
       description: null,
       createdAt: new Date('2026-08-08T00:00:00.000Z'),
     }
@@ -174,6 +174,9 @@ describe('Q&A作成APIのモデレーション結果', () => {
     })
 
     expect(response.status).toBe(201)
+    expect(prismaMock.tag.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: manualTag.id, isWorkTag: true } }),
+    )
     expect(prismaMock.postTag.createMany).toHaveBeenCalledWith({
       data: [{ postId: basePost.id, tagId: manualTag.id }],
       skipDuplicates: true,
@@ -214,6 +217,9 @@ describe('Q&A作成APIのモデレーション結果', () => {
     })
 
     expect(response.status).toBe(200)
+    expect(prismaMock.tag.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: tag.id, isWorkTag: true } }),
+    )
     expect(await response.json()).toEqual({ tag: { id: tag.id, name: tag.name } })
     expect(prismaMock.postTag.createMany).toHaveBeenCalledWith({
       data: [{ postId: basePost.id, tagId: tag.id }],

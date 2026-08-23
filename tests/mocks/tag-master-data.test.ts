@@ -41,5 +41,6 @@ describe('AIタグ用マスターデータ', () => {
       { name: 'キャリア相談', category: 'IBJマインド・キャリア' },
       { name: 'その他（雑談に近い質問）', category: 'その他' },
     ])
+    expect(MOCK_TAGS.every(({ isWorkTag }) => isWorkTag)).toBe(true)
   })
 })
