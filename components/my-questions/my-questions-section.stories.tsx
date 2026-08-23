@@ -32,10 +32,10 @@ const postedItems = [
   },
 ]
 
-function parseMyQuestionsUrl(url: string) {
+function parseMyQuestionsUrl(url: string): { tab: MyQuestionsTab; page: number } {
   const params = new URL(url, 'http://localhost').searchParams
   return {
-    tab: (params.get('tab') === 'saved' ? 'saved' : 'posted') satisfies MyQuestionsTab,
+    tab: params.get('tab') === 'saved' ? 'saved' : 'posted',
     page: Number(params.get('page')) || 1,
   }
 }
