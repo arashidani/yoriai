@@ -11,9 +11,7 @@ type MyQuestionsNavigationContextValue = {
   isPending: boolean
 }
 
-const MyQuestionsNavigationContext = createContext<MyQuestionsNavigationContextValue | null>(
-  null,
-)
+const MyQuestionsNavigationContext = createContext<MyQuestionsNavigationContextValue | null>(null)
 
 type MyQuestionsNavigationProviderProps = {
   children: ReactNode

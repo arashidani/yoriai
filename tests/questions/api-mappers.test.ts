@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { QuestionStatus } from '@/app/generated/prisma/enums'
-import { getMostLikedAnswerId, toQaAnswerResponse, toQuestionResponse } from '@/lib/questions/api-mappers'
+import {
+  getMostLikedAnswerId,
+  toQaAnswerResponse,
+  toQuestionResponse,
+} from '@/lib/questions/api-mappers'
 
 const answer = (id: string, likeCount: number, createdAt: string) => ({
   id,
