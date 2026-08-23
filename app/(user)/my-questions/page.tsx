@@ -8,6 +8,7 @@ import { MyQuestionsListFallback } from '@/components/my-questions/my-questions-
 import {
   MyQuestionsNavigationProvider,
   MyQuestionsNavigationShell,
+  MyQuestionsPendingList,
 } from '@/components/my-questions/my-questions-navigation'
 import { MyQuestionsTabs } from '@/components/my-questions/my-questions-tabs'
 import { Separator } from '@/components/ui/separator'
@@ -40,9 +41,11 @@ export default async function MyQuestionsPage({ searchParams }: Props) {
         <MyQuestionsNavigationShell className="mt-8">
           <MyQuestionsTabs tab={tab} />
           <Separator />
-          <Suspense fallback={<MyQuestionsListFallback />} key={`${tab}-${page}`}>
-            <MyQuestionsList tab={tab} page={page} />
-          </Suspense>
+          <MyQuestionsPendingList>
+            <Suspense fallback={<MyQuestionsListFallback />} key={`${tab}-${page}`}>
+              <MyQuestionsList tab={tab} page={page} />
+            </Suspense>
+          </MyQuestionsPendingList>
         </MyQuestionsNavigationShell>
       </MyQuestionsNavigationProvider>
     </main>

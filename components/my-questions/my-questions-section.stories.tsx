@@ -6,6 +6,7 @@ import { MyQuestionsListFallback } from './my-questions-list-fallback'
 import {
   MyQuestionsNavigationProvider,
   MyQuestionsNavigationShell,
+  MyQuestionsPendingList,
 } from './my-questions-navigation'
 import { MyQuestionsPagination } from './my-questions-pagination'
 import { type MyQuestionsTab, MyQuestionsTabs } from './my-questions-tabs'
@@ -55,21 +56,23 @@ function MyQuestionsSectionDemo({ loading = false }: { loading?: boolean }) {
       <MyQuestionsNavigationShell className="w-full max-w-4xl">
         <MyQuestionsTabs tab={tab} />
         <Separator />
-        {loading ? (
-          <MyQuestionsListFallback />
-        ) : (
-          <>
-            <PostedQuestionList items={postedItems} />
-            <MyQuestionsPagination
-              className="mt-6"
-              page={page}
-              totalPages={3}
-              total={25}
-              pageSize={10}
-              tab={tab}
-            />
-          </>
-        )}
+        <MyQuestionsPendingList>
+          {loading ? (
+            <MyQuestionsListFallback />
+          ) : (
+            <>
+              <PostedQuestionList items={postedItems} />
+              <MyQuestionsPagination
+                className="mt-6"
+                page={page}
+                totalPages={3}
+                total={25}
+                pageSize={10}
+                tab={tab}
+              />
+            </>
+          )}
+        </MyQuestionsPendingList>
       </MyQuestionsNavigationShell>
     </MyQuestionsNavigationProvider>
   )
@@ -98,7 +101,7 @@ export const Default: Story = {
 export const Loading: Story = {
   render: () => <MyQuestionsSectionDemo loading />,
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('status', { name: '読み込み中' })).toBeVisible()
+    await expect(canvas.getAllByRole('status', { name: '読み込み中' })).toHaveLength(1)
   },
 }
 
@@ -110,5 +113,8 @@ export const SwitchTab: Story = {
       'aria-selected',
       'true',
     )
+    await expect(
+      canvas.queryAllByRole('status', { name: '読み込み中' }).length,
+    ).toBeLessThanOrEqual(1)
   },
 }
