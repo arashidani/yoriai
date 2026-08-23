@@ -7,8 +7,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
 import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
+import { type QaFeedStatusFilter, useQaFeedFilterStore } from '@/lib/stores/qa-feed-filter-store'
 import { PostCard } from './post-card'
-import { QaFeedStatusFilter } from './qa-feed-controls'
+import { QaFeedStatusFilter as QaFeedStatusFilterControl } from './qa-feed-controls'
 import { QaFilterBar } from './qa-filter-bar'
 
 const STATUS_FILTERS = [
@@ -19,8 +20,6 @@ const STATUS_FILTERS = [
 
 const PAGE_SIZE = 10
 const KEYWORD_DEBOUNCE_MS = 250
-
-type StatusFilter = (typeof STATUS_FILTERS)[number]['id']
 
 type QaFeedProps = {
   posts?: QaPost[]
@@ -49,7 +48,7 @@ function useDebouncedValue<T>(value: T, delay: number) {
 
 async function fetchQuestions(params: {
   page: number
-  status: StatusFilter
+  status: QaFeedStatusFilter
   keyword: string
   tagId?: string
 }): Promise<QuestionsResult> {
@@ -135,10 +134,14 @@ export function QaFeed({
   initialTotalPages = 1,
   initialTotal = 0,
 }: QaFeedProps) {
-  const [keyword, setKeyword] = useState('')
-  const [status, setStatus] = useState<StatusFilter>('all')
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
-  const [page, setPage] = useState(1)
+  const keyword = useQaFeedFilterStore((state) => state.keyword)
+  const status = useQaFeedFilterStore((state) => state.status)
+  const selectedTagIds = useQaFeedFilterStore((state) => state.selectedTagIds)
+  const page = useQaFeedFilterStore((state) => state.page)
+  const setKeyword = useQaFeedFilterStore((state) => state.setKeyword)
+  const setStatus = useQaFeedFilterStore((state) => state.setStatus)
+  const setSelectedTagIds = useQaFeedFilterStore((state) => state.setSelectedTagIds)
+  const setPage = useQaFeedFilterStore((state) => state.setPage)
   const listRef = useRef<HTMLDivElement>(null)
   const debouncedKeyword = useDebouncedValue(keyword, KEYWORD_DEBOUNCE_MS)
   const tagId = selectedTagIds[0]
@@ -169,11 +172,6 @@ export function QaFeed({
   // クエリキー変更で前データを残している再取得のみ。SSR の isFetching 差による hydration mismatch を避ける
   const showSpinner = isFetching && isPlaceholderData
 
-  function resetPage(action: () => void) {
-    setPage(1)
-    action()
-  }
-
   function handlePageChange(nextPage: number) {
     setPage(nextPage)
     listRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
@@ -193,15 +191,15 @@ export function QaFeed({
         <div className="flex flex-col gap-6">
           <QaFilterBar
             keyword={keyword}
-            onKeywordChange={(value) => resetPage(() => setKeyword(value))}
+            onKeywordChange={setKeyword}
             tags={allTags}
             selectedTagIds={selectedTagIds}
-            onSelectedTagIdsChange={(ids) => resetPage(() => setSelectedTagIds(ids))}
+            onSelectedTagIdsChange={setSelectedTagIds}
           />
-          <QaFeedStatusFilter
+          <QaFeedStatusFilterControl
             filters={[...STATUS_FILTERS]}
             value={status}
-            onValueChange={(value) => resetPage(() => setStatus(value as StatusFilter))}
+            onValueChange={(value) => setStatus(value as QaFeedStatusFilter)}
           />
         </div>
       </div>
