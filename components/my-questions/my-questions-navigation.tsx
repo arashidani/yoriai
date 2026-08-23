@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { createContext, type ReactNode, useContext, useTransition } from 'react'
 
-import { Spinner } from '@/components/ui/spinner'
+import { MyQuestionsListFallback } from '@/components/my-questions/my-questions-list-fallback'
 import { cn } from '@/lib/utils'
 
 type MyQuestionsNavigationContextValue = {
@@ -57,22 +57,27 @@ type MyQuestionsNavigationShellProps = {
 }
 
 function MyQuestionsNavigationShell({ className, children }: MyQuestionsNavigationShellProps) {
+  return <div className={cn('flex flex-col items-start', className)}>{children}</div>
+}
+
+type MyQuestionsPendingListProps = {
+  children: ReactNode
+}
+
+function MyQuestionsPendingList({ children }: MyQuestionsPendingListProps) {
   const { isPending } = useMyQuestionsNavigation()
 
   return (
-    <div className={cn('relative flex flex-col items-start', className)}>
-      {isPending && (
-        <div className="absolute inset-0 z-40 bg-background/70">
-          <div className="sticky top-1/2 flex -translate-y-1/2 justify-center">
-            <Spinner className="size-8 text-primary" aria-label="読み込み中" />
-          </div>
-        </div>
-      )}
-      <div className="w-full min-h-48" aria-busy={isPending}>
-        {children}
-      </div>
+    <div className="w-full min-h-48" aria-busy={isPending}>
+      {isPending && <MyQuestionsListFallback />}
+      <div className={isPending ? 'hidden' : 'contents'}>{children}</div>
     </div>
   )
 }
 
-export { MyQuestionsNavigationProvider, MyQuestionsNavigationShell, useMyQuestionsNavigation }
+export {
+  MyQuestionsNavigationProvider,
+  MyQuestionsNavigationShell,
+  MyQuestionsPendingList,
+  useMyQuestionsNavigation,
+}
