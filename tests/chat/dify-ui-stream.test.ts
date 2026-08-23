@@ -133,9 +133,7 @@ describe('toChatUIMessageStream', () => {
   it('初回のmessageイベントで会話IDを流す', async () => {
     const chunks = await collect(
       toChatUIMessageStream(
-        difyStream([
-          { event: 'message', answer: 'こんにちは', conversation_id: 'conv-early' },
-        ]),
+        difyStream([{ event: 'message', answer: 'こんにちは', conversation_id: 'conv-early' }]),
       ),
     )
 
@@ -149,9 +147,7 @@ describe('toChatUIMessageStream', () => {
   it('message_end前に中断されても会話IDを保持できる', async () => {
     const chunks = await collect(
       toChatUIMessageStream(
-        difyStream([
-          { event: 'message', answer: '途中まで', conversation_id: 'conv-partial' },
-        ]),
+        difyStream([{ event: 'message', answer: '途中まで', conversation_id: 'conv-partial' }]),
       ),
     )
 
