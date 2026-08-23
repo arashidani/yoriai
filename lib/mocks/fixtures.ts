@@ -281,7 +281,7 @@ export const MOCK_TAGS = [
     name: 'その他（雑談に近い質問）',
     category: 'その他',
     description: null,
-    isWorkTag: false,
+    isWorkTag: true,
     createdAt: new Date('2024-01-01'),
   },
 ]

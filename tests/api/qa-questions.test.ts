@@ -186,4 +186,24 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect((await question.json()).moderation).toEqual({ isHidden: false })
     expect((await answer.json()).moderation).toEqual({ isHidden: false })
   })
+
+  it('その他タグを手動選択して質問を投稿できる', async () => {
+    const response = await app.request('/api/questions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440018',
+      },
+      body: JSON.stringify({
+        title: '雑談の質問',
+        body: 'その他カテゴリーで投稿します',
+        tagId: 'tag-18',
+      }),
+    })
+
+    expect(response.status).toBe(201)
+    const body = await response.json()
+    expect(body.tagAssignment).toBe('assigned')
+    expect(body.question.tag).toEqual({ id: 'tag-category-6', name: 'その他' })
+  })
 })
