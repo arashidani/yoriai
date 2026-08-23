@@ -18,6 +18,8 @@ export type QaPost = {
   answerCount: number
   tags: { id: string; name: string }[]
   createdAt: Date | string
+  activityAt: Date | string
+  updatedAt: Date | string
 }
 
 type ApiQuestion = {
@@ -34,6 +36,8 @@ type ApiQuestion = {
   answerCount: number
   tag: { id: string; name: string } | null
   createdAt: Date | string
+  activityAt: Date | string
+  updatedAt: Date | string
 }
 
 export function toQaPost(question: ApiQuestion): QaPost {
@@ -52,6 +56,8 @@ export function toQaPost(question: ApiQuestion): QaPost {
     answerCount: question.answerCount,
     tags: question.tag ? [question.tag] : [],
     createdAt: question.createdAt,
+    activityAt: question.activityAt,
+    updatedAt: question.updatedAt,
   }
 }
 
@@ -68,7 +74,7 @@ export function toQuestionItemData(post: QaPost): QuestionItemData {
     avatarSrc: post.avatarUrl ?? undefined,
     category: post.tags[0]?.name,
     status: post.status,
-    timestamp: formatRelativeTime(post.createdAt),
+    timestamp: formatRelativeTime(post.activityAt),
     title: post.title,
     excerpt: excerpt(post.body),
     commentCount: post.answerCount,
