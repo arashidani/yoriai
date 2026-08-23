@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronDownIcon } from 'lucide-react'
+import { useRef } from 'react'
 import { KeywordInput } from '@/components/design-system/ui/keyword-input'
 
 export type QuestionTagCategory = {
@@ -19,6 +20,31 @@ type QaFilterBarProps = {
   onSelectedTagIdsChange: (tagIds: string[]) => void
 }
 
+type CategoryCheckboxProps = {
+  id: string
+  checked: boolean
+  indeterminate: boolean
+  onChange: () => void
+}
+
+function CategoryCheckbox({ id, checked, indeterminate, onChange }: CategoryCheckboxProps) {
+  const ref = useRef<HTMLInputElement>(null)
+
+  return (
+    <input
+      ref={(node) => {
+        ref.current = node
+        if (node) node.indeterminate = indeterminate
+      }}
+      id={id}
+      type="checkbox"
+      checked={checked}
+      aria-checked={indeterminate ? 'mixed' : checked}
+      onChange={onChange}
+    />
+  )
+}
+
 /** キーワード検索とカテゴリー選択。狭いときは縦積み、md 以上は横並び（キーワードが残り幅を占める）。 */
 function QaFilterBar({
   keyword,
@@ -29,10 +55,47 @@ function QaFilterBar({
   selectedTagIds,
   onSelectedTagIdsChange,
 }: QaFilterBarProps) {
-  const selectionCount = selectedCategoryIds.length + selectedTagIds.length
+  const sortedCategories = [...categories].sort(
+    (left, right) => right.tags.length - left.tags.length,
+  )
+  const selectionCount =
+    selectedTagIds.length +
+    selectedCategoryIds.filter((categoryId) => {
+      const category = categories.find(({ id }) => id === categoryId)
+      return !category?.tags.some(({ id }) => selectedTagIds.includes(id))
+    }).length
 
-  function toggle(ids: string[], id: string, onChange: (nextIds: string[]) => void) {
-    onChange(ids.includes(id) ? ids.filter((selectedId) => selectedId !== id) : [...ids, id])
+  function toggleCategory(category: QuestionTagCategory) {
+    const childIds = category.tags.map((tag) => tag.id)
+    const allChildrenSelected =
+      childIds.length > 0 && childIds.every((id) => selectedTagIds.includes(id))
+    const shouldDeselect = selectedCategoryIds.includes(category.id) || allChildrenSelected
+
+    onSelectedCategoryIdsChange(
+      shouldDeselect
+        ? selectedCategoryIds.filter((id) => id !== category.id)
+        : [...selectedCategoryIds, category.id],
+    )
+    onSelectedTagIdsChange(
+      shouldDeselect
+        ? selectedTagIds.filter((id) => !childIds.includes(id))
+        : [...new Set([...selectedTagIds, ...childIds])],
+    )
+  }
+
+  function toggleTag(category: QuestionTagCategory, tagId: string) {
+    const nextTagIds = selectedTagIds.includes(tagId)
+      ? selectedTagIds.filter((id) => id !== tagId)
+      : [...selectedTagIds, tagId]
+    const childIds = category.tags.map((tag) => tag.id)
+    const allChildrenSelected =
+      childIds.length > 0 && childIds.every((id) => nextTagIds.includes(id))
+    const nextCategoryIds = allChildrenSelected
+      ? [...new Set([...selectedCategoryIds, category.id])]
+      : selectedCategoryIds.filter((id) => id !== category.id)
+
+    onSelectedTagIdsChange(nextTagIds)
+    onSelectedCategoryIdsChange(nextCategoryIds)
   }
 
   return (
@@ -53,30 +116,44 @@ function QaFilterBar({
             <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" />
           </summary>
           <div className="absolute right-0 z-50 mt-1 max-h-96 w-full min-w-64 overflow-y-auto rounded-lg border bg-background p-3 shadow-lg">
-            {categories.map((category) => (
+            {sortedCategories.map((category) => (
               <div key={category.id} className="space-y-2 py-2 first:pt-0 last:pb-0">
-                <label className="flex cursor-pointer items-center gap-2 font-medium">
-                  <input
-                    type="checkbox"
-                    checked={selectedCategoryIds.includes(category.id)}
-                    onChange={() =>
-                      toggle(selectedCategoryIds, category.id, onSelectedCategoryIdsChange)
+                <label
+                  htmlFor={`category-${category.id}`}
+                  className="flex cursor-pointer items-center gap-2 font-medium"
+                >
+                  <CategoryCheckbox
+                    id={`category-${category.id}`}
+                    checked={
+                      selectedCategoryIds.includes(category.id) ||
+                      (category.tags.length > 0 &&
+                        category.tags.every((tag) => selectedTagIds.includes(tag.id)))
                     }
+                    indeterminate={
+                      category.tags.some((tag) => selectedTagIds.includes(tag.id)) &&
+                      !category.tags.every((tag) => selectedTagIds.includes(tag.id))
+                    }
+                    onChange={() => toggleCategory(category)}
                   />
                   {category.name}
                 </label>
-                <div className="space-y-2 border-l pl-6">
-                  {category.tags.map((tag) => (
-                    <label key={tag.id} className="flex cursor-pointer items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selectedTagIds.includes(tag.id)}
-                        onChange={() => toggle(selectedTagIds, tag.id, onSelectedTagIdsChange)}
-                      />
-                      {tag.name}
-                    </label>
-                  ))}
-                </div>
+                {!(category.name === 'その他' && category.tags.length === 1) && (
+                  <div className="space-y-2 border-l pl-6">
+                    {category.tags.map((tag) => (
+                      <label
+                        key={tag.id}
+                        className="flex cursor-pointer items-center gap-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedTagIds.includes(tag.id)}
+                          onChange={() => toggleTag(category, tag.id)}
+                        />
+                        {tag.name}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
