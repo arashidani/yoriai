@@ -40,7 +40,7 @@ export function LikeButton({
       aria-pressed={liked}
       className={cn(
         'gap-1.5 rounded-full border border-input px-3 text-paragraph-mini font-medium',
-        liked && 'border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20',
+        liked && 'border-transparent bg-action-like/10 text-action-like hover:bg-action-like/20',
       )}
     >
       <IconPaw className="size-3.5" />
