@@ -42,7 +42,13 @@ export const Disabled: Story = {
     isDisabled: true,
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: 'ボタン' })).toBeDisabled()
+    const button = canvas.getByRole('button', { name: 'ボタン' })
+    await expect(button).toBeDisabled()
+    // disabled は muted / muted-foreground（Figma: muted/muted, muted/muted-foreground）
+    await expect(button).toHaveStyle({
+      backgroundColor: 'rgb(246, 243, 237)',
+      color: 'rgb(165, 154, 141)',
+    })
   },
 }
 
