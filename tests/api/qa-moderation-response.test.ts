@@ -195,7 +195,7 @@ describe('Q&A作成APIのモデレーション結果', () => {
     })
 
     expect(response.status).toBe(400)
-    expect(await response.json()).toEqual({ error: '選択されたタグが見つかりません' })
+    expect(await response.json()).toEqual({ error: '指定されたタグが見つかりません' })
     expect(prismaMock.post.create).not.toHaveBeenCalled()
     expect(assignTagsMock).not.toHaveBeenCalled()
   })
