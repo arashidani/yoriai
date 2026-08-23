@@ -25,6 +25,7 @@ export const Default: Story = {
     keyword: '',
     onKeywordChange: fn(),
     categories: baseCategories,
+    onSelectedCategoryIdsChange: fn(),
     selectedTagIds: [],
     onSelectedTagIdsChange: fn(),
   },
@@ -96,9 +97,102 @@ export const ExclusiveTag: Story = {
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByText('カテゴリーを選択'))
     await userEvent.click(canvas.getByRole('checkbox', { name: 'Next.js' }))
-    await userEvent.click(canvas.getByRole('checkbox', { name: 'TypeScript' }))
     await expect(args.onSelectedTagIdsChange).toHaveBeenCalledWith(['tag-1'])
-    await expect(args.onSelectedTagIdsChange).toHaveBeenCalledWith(['tag-2'])
+    await expect(args.onSelectedCategoryIdsChange).toHaveBeenCalledWith([])
+  },
+}
+
+export const SelectParent: Story = {
+  args: {
+    ...Default.args,
+    onSelectedCategoryIdsChange: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await userEvent.click(canvas.getByRole('checkbox', { name: '技術' }))
+    await expect(args.onSelectedCategoryIdsChange).toHaveBeenCalledWith(['category-1'])
+    await expect(args.onSelectedTagIdsChange).toHaveBeenCalledWith(['tag-1', 'tag-2'])
+  },
+}
+
+export const SelectLastChild: Story = {
+  args: {
+    keyword: '',
+    onKeywordChange: fn(),
+    categories: baseCategories,
+    selectedCategoryIds: [],
+    onSelectedCategoryIdsChange: fn(),
+    selectedTagIds: ['tag-1'],
+    onSelectedTagIdsChange: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByText('1件選択中'))
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'TypeScript' }))
+    await expect(args.onSelectedTagIdsChange).toHaveBeenCalledWith(['tag-1', 'tag-2'])
+    await expect(args.onSelectedCategoryIdsChange).toHaveBeenCalledWith(['category-1'])
+  },
+}
+
+export const FlatOtherCategory: Story = {
+  args: {
+    keyword: '',
+    onKeywordChange: fn(),
+    categories: [
+      {
+        id: 'category-other',
+        name: 'その他',
+        tags: [{ id: 'tag-other', name: 'その他' }],
+      },
+    ],
+    selectedCategoryIds: [],
+    onSelectedCategoryIdsChange: fn(),
+    selectedTagIds: [],
+    onSelectedTagIdsChange: fn(),
+  },
+  play: async ({ canvas, args }) => {
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await expect(canvas.getAllByText('その他')).toHaveLength(1)
+    await userEvent.click(canvas.getByRole('checkbox', { name: 'その他' }))
+    await expect(args.onSelectedCategoryIdsChange).toHaveBeenCalledWith(['category-other'])
+    await expect(args.onSelectedTagIdsChange).toHaveBeenCalledWith(['tag-other'])
+  },
+}
+
+export const SortedByChildCount: Story = {
+  args: {
+    ...Default.args,
+    categories: [
+      { id: 'small', name: '子が1件', tags: [{ id: 'small-1', name: '小項目' }] },
+      {
+        id: 'large',
+        name: '子が3件',
+        tags: [
+          { id: 'large-1', name: '大項目1' },
+          { id: 'large-2', name: '大項目2' },
+          { id: 'large-3', name: '大項目3' },
+        ],
+      },
+      {
+        id: 'medium',
+        name: '子が2件',
+        tags: [
+          { id: 'medium-1', name: '中項目1' },
+          { id: 'medium-2', name: '中項目2' },
+        ],
+      },
+    ],
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    const parentCheckboxes = ['子が3件', '子が2件', '子が1件'].map((name) =>
+      canvas.getByRole('checkbox', { name }),
+    )
+    await expect(parentCheckboxes[0].compareDocumentPosition(parentCheckboxes[1])).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    await expect(parentCheckboxes[1].compareDocumentPosition(parentCheckboxes[2])).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
   },
 }
 
