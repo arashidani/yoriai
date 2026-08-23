@@ -10,3 +10,10 @@ export const createPostSchema = z.object({
 })
 
 export type CreatePostInput = z.infer<typeof createPostSchema>
+
+export const assignQuestionTagSchema = z.discriminatedUnion('mode', [
+  z.object({ mode: z.literal('ai') }),
+  z.object({ mode: z.literal('manual'), tagId: z.string().min(1, 'タグを選択してください') }),
+])
+
+export type AssignQuestionTagInput = z.infer<typeof assignQuestionTagSchema>
