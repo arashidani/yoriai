@@ -123,7 +123,10 @@ export function ChatPanel() {
         {isBusy && !isAnswering && (
           <div className="flex items-start gap-2">
             <YoriainuAvatar />
-            <p className="animate-pulse px-1 text-muted-foreground text-paragraph-small" aria-live="polite">
+            <p
+              className="animate-pulse px-1 text-muted-foreground text-paragraph-small"
+              aria-live="polite"
+            >
               {THINKING_MESSAGE}
             </p>
           </div>

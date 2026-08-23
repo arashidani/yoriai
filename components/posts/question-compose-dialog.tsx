@@ -1,6 +1,6 @@
 'use client'
 
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
@@ -14,11 +14,13 @@ import type { CreatePostInput } from '@/lib/schemas/post'
 
 type Step = 'form' | 'completion'
 
-type QuestionComposeDialogProps = {
-  displayName: string
+async function fetchQuestionTags() {
+  const res = await client.api['question-tags'].$get()
+  if (!res.ok) throw new Error('カテゴリーの取得に失敗しました')
+  return (await res.json()).categories
 }
 
-export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProps) {
+export function QuestionComposeDialog() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [open, setOpen] = useState(false)
@@ -29,6 +31,12 @@ export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProp
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isSubmittingRef = useRef(false)
   const idempotencyKeyRef = useRef<{ key: string; requestBody: string } | null>(null)
+  const tagCategoriesQuery = useQuery({
+    queryKey: ['question-tags'],
+    queryFn: fetchQuestionTags,
+    enabled: open,
+    staleTime: 5 * 60 * 1000,
+  })
 
   function resetState() {
     setStep('form')
@@ -122,17 +130,17 @@ export function QuestionComposeDialog({ displayName }: QuestionComposeDialogProp
       />
       <DialogContent
         showCloseButton={false}
-        className="max-w-[650px] border-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-[650px]"
+        className="max-h-[calc(100dvh-2rem)] max-w-3xl overflow-hidden border-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-3xl"
       >
         {step === 'form' ? (
           <QuestionFormModal
             key={formInstance}
-            displayName={displayName}
-            avatarUrl="/anonymous-profiles/wani.png"
             onSubmit={handleSubmit}
             onClose={handleClose}
             isSubmitting={isSubmitting}
             error={error ?? undefined}
+            tagCategories={tagCategoriesQuery.data}
+            isTagCategoriesLoading={tagCategoriesQuery.isPending}
           />
         ) : (
           <QuestionCompletionModal onConfirm={handleConfirm} onClose={handleClose} />

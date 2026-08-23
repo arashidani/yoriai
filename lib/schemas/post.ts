@@ -6,6 +6,7 @@ export const createPostSchema = z.object({
     .min(1, 'タイトルは必須です')
     .max(200, 'タイトルは200文字以内で入力してください'),
   body: z.string().min(1, '本文は必須です'),
+  tagId: z.string().min(1).optional(),
 })
 
 export type CreatePostInput = z.infer<typeof createPostSchema>

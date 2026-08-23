@@ -12,7 +12,7 @@ import {
   QuestionListQuerySchema,
   QuestionListResponseSchema,
   QuestionSchema,
-  QuestionTagSchema,
+  QuestionTagCategorySchema,
 } from '@/lib/hono/openapi/qa-schemas'
 import {
   errorResponse,
@@ -20,7 +20,15 @@ import {
   LikeStatusSchema,
   SavedStatusSchema,
 } from '@/lib/hono/openapi/schemas'
-import { MOCK_ANSWERS, MOCK_POSTS, MOCK_TAGS, mockPostHasTagId } from '@/lib/mocks/fixtures'
+import {
+  MOCK_ANSWERS,
+  MOCK_BUSINESS_SKILLS,
+  MOCK_POSTS,
+  MOCK_TAG_CATEGORIES,
+  MOCK_TAGS,
+  MOCK_USER_PROFILE,
+  mockPostHasTagId,
+} from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import {
   getMostLikedAnswerId,
@@ -28,6 +36,7 @@ import {
   toQuestionResponse,
 } from '@/lib/questions/api-mappers'
 import { getOrAssignAnonymousProfile } from '@/lib/questions/assign-anonymous-profile'
+import { selectAnswerableQuestions } from '@/lib/questions/select-answerable-questions'
 import { createAnswerSchema } from '@/lib/schemas/answer'
 import { createPostSchema } from '@/lib/schemas/post'
 
@@ -40,7 +49,7 @@ const questionInclude = (userId: string) => ({
   author: true,
   postAnonymousProfile: { include: { anonymousProfile: true } },
   tags: {
-    include: { tag: true },
+    include: { tag: { include: { categoryDefinition: true } } },
     orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }],
   },
   likes: { where: { userId }, select: { userId: true } },
@@ -51,15 +60,33 @@ function pagination(page: number, pageSize: number, total: number) {
   return { page, pageSize, total, totalPages: total === 0 ? 0 : Math.ceil(total / pageSize) }
 }
 
+function commaSeparatedIds(value?: string) {
+  return (
+    value
+      ?.split(',')
+      .map((id) => id.trim())
+      .filter(Boolean) ?? []
+  )
+}
+
 function mockQuestions(viewerId: string) {
   return MOCK_POSTS.filter((post) => !post.deletedAt).map((post) =>
     toQuestionResponse(
       {
         ...post,
+        activityAt: MOCK_ANSWERS.filter((answer) => answer.postId === post.id).reduce(
+          (latest, answer) => (answer.createdAt > latest ? answer.createdAt : latest),
+          post.createdAt,
+        ),
         tags: post.tags.map((tag, index) => ({
           id: `mock-post-tag-${post.id}-${index}`,
           createdAt: new Date(post.createdAt.getTime() + index),
-          tag,
+          tag: {
+            ...tag,
+            categoryDefinition: MOCK_TAG_CATEGORIES.find(
+              (category) => category.name === tag.category,
+            ),
+          },
         })),
         likes: [],
         bookmarks: [],
@@ -80,6 +107,23 @@ const listRoute = createRoute({
     200: {
       description: '質問一覧',
       content: { 'application/json': { schema: QuestionListResponseSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+  },
+})
+
+const answerableRoute = createRoute({
+  method: 'get',
+  path: '/answerable',
+  tags: ['questions'],
+  summary: 'ログインユーザーが回答できそうな質問をランダム取得',
+  ...auth,
+  responses: {
+    200: {
+      description: 'ビジネススキル関連を優先し、「その他」で最大3件まで補完した質問',
+      content: {
+        'application/json': { schema: z.object({ questions: z.array(QuestionSchema).max(3) }) },
+      },
     },
     401: errorResponse('未認証', 'Unauthorized'),
   },
@@ -152,6 +196,7 @@ const createQuestionRoute = createRoute({
       },
     },
     401: errorResponse('未認証', 'Unauthorized'),
+    400: errorResponse('不正なタグ', '選択されたタグが見つかりません'),
     409: errorResponse('同じキーで異なる内容', '同じ投稿操作に異なる内容が指定されています'),
     500: errorResponse('作成失敗', '投稿の作成に失敗しました'),
   },
@@ -281,7 +326,9 @@ const unbookmarkRoute = createRoute({
 export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
   .openapi(listRoute, async (c) => {
     const user = c.get('user')
-    const { page, pageSize, keyword, status, tagId } = c.req.valid('query')
+    const { page, pageSize, keyword, status, tagId, categoryIds, tagIds } = c.req.valid('query')
+    const selectedCategoryIds = commaSeparatedIds(categoryIds)
+    const selectedTagIds = commaSeparatedIds(tagIds)
     if (process.env.MOCK_MODE === 'true') {
       let questions = mockQuestions(user.id)
       if (keyword)
@@ -291,8 +338,20 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       if (status === 'resolved')
         questions = questions.filter((q) => q.status === QuestionStatus.RESOLVED)
       if (tagId) questions = questions.filter((q) => mockPostHasTagId(q.id, tagId))
+      if (selectedCategoryIds.length > 0 || selectedTagIds.length > 0) {
+        const selectedCategoryNames = MOCK_TAG_CATEGORIES.filter((category) =>
+          selectedCategoryIds.includes(category.id),
+        ).map((category) => category.name)
+        const matchingPostIds = MOCK_POSTS.filter((post) =>
+          post.tags.some(
+            (tag) =>
+              selectedTagIds.includes(tag.id) || selectedCategoryNames.includes(tag.category),
+          ),
+        ).map((post) => post.id)
+        questions = questions.filter((question) => matchingPostIds.includes(question.id))
+      }
       questions.sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || b.id.localeCompare(a.id),
+        (a, b) => b.activityAt.getTime() - a.activityAt.getTime() || b.id.localeCompare(a.id),
       )
       const total = questions.length
       return c.json(
@@ -320,13 +379,30 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
             ],
           }
         : {}),
-      ...(tagId ? { tags: { some: { tagId } } } : {}),
+      ...(tagId
+        ? { tags: { some: { tagId } } }
+        : selectedCategoryIds.length > 0 || selectedTagIds.length > 0
+          ? {
+              tags: {
+                some: {
+                  tag: {
+                    OR: [
+                      ...(selectedTagIds.length > 0 ? [{ id: { in: selectedTagIds } }] : []),
+                      ...(selectedCategoryIds.length > 0
+                        ? [{ categoryDefinition: { id: { in: selectedCategoryIds } } }]
+                        : []),
+                    ],
+                  },
+                },
+              },
+            }
+          : {}),
     }
     const [posts, total] = await Promise.all([
       prisma.post.findMany({
         where,
         include: questionInclude(user.id),
-        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ activityAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -339,6 +415,64 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       },
       200,
     )
+  })
+  .openapi(answerableRoute, async (c) => {
+    const user = c.get('user')
+    c.header('Cache-Control', 'no-store')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const businessSkillNames = MOCK_BUSINESS_SKILLS.filter((skill) =>
+        MOCK_USER_PROFILE.businessSkillIds.includes(skill.id),
+      ).map((skill) => skill.name)
+      const candidates = mockQuestions(user.id).filter(
+        (question) => question.status === QuestionStatus.OPEN && !question.isOwnQuestion,
+      )
+      const postById = new Map(MOCK_POSTS.map((post) => [post.id, post]))
+      const skillQuestions = candidates.filter((question) =>
+        postById.get(question.id)?.tags.some((tag) => businessSkillNames.includes(tag.category)),
+      )
+      const otherQuestions = candidates.filter((question) =>
+        postById.get(question.id)?.tags.some((tag) => tag.name.startsWith('その他')),
+      )
+
+      return c.json({ questions: selectAnswerableQuestions(skillQuestions, otherQuestions) }, 200)
+    }
+
+    const businessSkillNames = (
+      await prisma.userBusinessSkill.findMany({
+        where: { userId: user.id },
+        select: { businessSkill: { select: { name: true } } },
+      })
+    ).map(({ businessSkill }) => businessSkill.name)
+    const baseWhere: Prisma.PostWhereInput = {
+      deletedAt: null,
+      status: QuestionStatus.OPEN,
+      OR: [{ authorId: null }, { authorId: { not: user.id } }],
+    }
+    const [skillQuestions, otherQuestions] = await Promise.all([
+      businessSkillNames.length === 0
+        ? []
+        : prisma.post.findMany({
+            where: {
+              ...baseWhere,
+              tags: {
+                some: {
+                  tag: { category: { in: businessSkillNames } },
+                },
+              },
+            },
+            include: questionInclude(user.id),
+          }),
+      prisma.post.findMany({
+        where: { ...baseWhere, tags: { some: { tag: { name: { startsWith: 'その他' } } } } },
+        include: questionInclude(user.id),
+      }),
+    ])
+    const questions = selectAnswerableQuestions(skillQuestions, otherQuestions).map((post) =>
+      toQuestionResponse(post, user.id),
+    )
+
+    return c.json({ questions }, 200)
   })
   .openapi(getRoute, async (c) => {
     const user = c.get('user')
@@ -402,21 +536,37 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
   .openapi(createQuestionRoute, async (c) => {
     const user = c.get('user')
     const data = c.req.valid('json')
+    const { tagId, ...postData } = data
     const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
     if (process.env.MOCK_MODE === 'true') {
+      const selectedTag = tagId ? MOCK_TAGS.find((tag) => tag.id === tagId) : undefined
+      if (tagId && !selectedTag) return c.json({ error: '選択されたタグが見つかりません' }, 400)
       return c.json(
         {
           question: toQuestionResponse(
             {
               id: `post-${Date.now()}`,
-              ...data,
+              ...postData,
               authorId: user.id,
               author: user,
               status: QuestionStatus.OPEN,
               answerCount: 0,
               likeCount: 0,
               resolvedAt: null,
-              tags: [],
+              tags: selectedTag
+                ? [
+                    {
+                      id: `manual-${selectedTag.id}`,
+                      createdAt: new Date(),
+                      tag: {
+                        ...selectedTag,
+                        categoryDefinition: MOCK_TAG_CATEGORIES.find(
+                          (category) => category.name === selectedTag.category,
+                        ),
+                      },
+                    },
+                  ]
+                : [],
               likes: [],
               bookmarks: [],
               createdAt: new Date(),
@@ -429,11 +579,25 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         201,
       )
     }
+    const manualTag = tagId
+      ? await prisma.tag.findUnique({
+          where: { id: tagId },
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            categoryDefinition: true,
+            description: true,
+            createdAt: true,
+          },
+        })
+      : null
+    if (tagId && !manualTag) return c.json({ error: '選択されたタグが見つかりません' }, 400)
     // biome-ignore lint/suspicious/noExplicitAny: Prisma result variants share one variable
     let post: any
     try {
       post = await prisma.post.create({
-        data: { ...data, authorId: user.id, idempotencyKey },
+        data: { ...postData, authorId: user.id, idempotencyKey },
         include: { author: true },
       })
     } catch (error) {
@@ -492,12 +656,21 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     let tags: any[] = []
     if (!post.deletedAt) {
       try {
-        const allTags = await prisma.tag.findMany({
-          where: { isWorkTag: true },
-          select: { id: true, name: true, category: true, description: true, createdAt: true },
-        })
-        const names = await assignTags(post.title, post.body, allTags)
-        const selected = allTags.find((tag) => names.includes(tag.name))
+        let selected = manualTag
+        if (!selected) {
+          const allTags = await prisma.tag.findMany({
+            select: {
+              id: true,
+              name: true,
+              category: true,
+              categoryDefinition: true,
+              description: true,
+              createdAt: true,
+            },
+          })
+          const names = await assignTags(post.title, post.body, allTags)
+          selected = allTags.find((tag) => names.includes(tag.name)) ?? null
+        }
         if (selected) {
           await prisma.postTag.createMany({
             data: [{ postId: post.id, tagId: selected.id }],
@@ -581,6 +754,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           where: { id },
           data: {
             answerCount: { increment: 1 },
+            activityAt: created.createdAt,
           },
         })
         return created
@@ -763,7 +937,11 @@ const tagsRouteDefinition = createRoute({
   responses: {
     200: {
       description: 'Q&Aタグ',
-      content: { 'application/json': { schema: z.object({ tags: z.array(QuestionTagSchema) }) } },
+      content: {
+        'application/json': {
+          schema: z.object({ categories: z.array(QuestionTagCategorySchema) }),
+        },
+      },
     },
     401: errorResponse('未認証', 'Unauthorized'),
   },
@@ -775,18 +953,25 @@ export const questionTagsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({
   if (process.env.MOCK_MODE === 'true')
     return c.json(
       {
-        tags: MOCK_TAGS.map(({ id, name }) => ({ id, name })).sort((a, b) =>
-          a.name.localeCompare(b.name, 'ja'),
-        ),
+        categories: MOCK_TAG_CATEGORIES.map(({ id, name }) => ({
+          id,
+          name,
+          tags: MOCK_TAGS.filter((tag) => tag.category === name)
+            .map(({ id: tagId, name: tagName }) => ({ id: tagId, name: tagName }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'ja')),
+        })),
       },
       200,
     )
-  const tags = await prisma.tag.findMany({
-    where: { isWorkTag: true },
-    select: { id: true, name: true },
+  const categories = await prisma.tagCategory.findMany({
+    select: {
+      id: true,
+      name: true,
+      tags: { select: { id: true, name: true }, orderBy: [{ name: 'asc' }, { id: 'asc' }] },
+    },
     orderBy: [{ name: 'asc' }, { id: 'asc' }],
   })
-  return c.json({ tags }, 200)
+  return c.json({ categories }, 200)
 })
 
 const myQuestionsDefinition = createRoute({
@@ -839,7 +1024,7 @@ export const meQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       prisma.post.findMany({
         where,
         include: questionInclude(user.id),
-        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ activityAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

@@ -24,29 +24,23 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-  args: {
-    displayName: '名無しのおせワニ',
-  },
+  args: {},
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: '質問する' })).toBeVisible()
   },
 }
 
 export const OpenForm: Story = {
-  args: {
-    displayName: '名無しのおせワニ',
-  },
+  args: {},
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: '質問する' }))
-    await expect(await screen.findByText('名無しのおせワニ')).toBeVisible()
-    await expect(screen.getByLabelText('質問のタイトル')).toBeVisible()
+    await expect(await screen.findByLabelText('質問のタイトル')).toBeVisible()
+    await expect(screen.queryByText('名無しのおせワニ')).not.toBeInTheDocument()
   },
 }
 
 export const SubmitSuccess: Story = {
-  args: {
-    displayName: '名無しのおせワニ',
-  },
+  args: {},
   parameters: {
     msw: {
       handlers: [
