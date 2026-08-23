@@ -1,6 +1,6 @@
 import { createUIMessageStream } from 'ai'
-import { MOCK_CHAT_CONVERSATION_ID, getMockChatResponseChunks } from '@/lib/mocks/fixtures'
 import { readDifyEvents } from '@/lib/dify/chat'
+import { getMockChatResponseChunks, MOCK_CHAT_CONVERSATION_ID } from '@/lib/mocks/fixtures'
 import type { ChatUIMessage } from './types'
 
 /**

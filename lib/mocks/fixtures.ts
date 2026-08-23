@@ -84,8 +84,16 @@ export const MOCK_BUSINESS_AREAS = [
 ]
 
 export const MOCK_BUSINESS_SKILLS = [
-  { id: 'business-skill-1', name: 'プロジェクト管理', isActive: true, ...optionDates },
-  { id: 'business-skill-2', name: 'プレゼンテーション', isActive: true, ...optionDates },
+  { id: 'business-skill-1', name: '社内ルール・手続き', isActive: true, ...optionDates },
+  { id: 'business-skill-2', name: 'IT・ツール操作', isActive: true, ...optionDates },
+  { id: 'business-skill-3', name: '業務スキル', isActive: true, ...optionDates },
+  {
+    id: 'business-skill-4',
+    name: '顧客対応・コミュニケーション',
+    isActive: true,
+    ...optionDates,
+  },
+  { id: 'business-skill-5', name: 'IBJマインド・キャリア', isActive: true, ...optionDates },
 ]
 
 export const MOCK_INTERESTS = [
@@ -120,61 +128,193 @@ export const MOCK_ANONYMOUS_PROFILES = [
 export const MOCK_TAGS = [
   {
     id: 'tag-1',
-    name: 'Next.js',
-    category: 'フレームワーク',
-    description: 'Next.js固有の機能や挙動に関する投稿',
+    name: '勤怠・有給関連',
+    category: '社内ルール・手続き',
+    description:
+      '会社で働く上で「必ず正解がある」事務的なこと。総務や経理、社歴の長い人が答えやすい。',
     isWorkTag: true,
     createdAt: new Date('2024-01-01'),
   },
   {
     id: 'tag-2',
-    name: 'TypeScript',
-    category: '言語',
-    description: 'TypeScriptの型や構文に関する投稿',
+    name: '経費精算',
+    category: '社内ルール・手続き',
+    description:
+      '会社で働く上で「必ず正解がある」事務的なこと。総務や経理、社歴の長い人が答えやすい。',
     isWorkTag: true,
     createdAt: new Date('2024-01-01'),
   },
   {
     id: 'tag-3',
-    name: 'Prisma',
-    category: 'データベース',
-    description: null,
+    name: '福利厚生',
+    category: '社内ルール・手続き',
+    description:
+      '会社で働く上で「必ず正解がある」事務的なこと。総務や経理、社歴の長い人が答えやすい。',
     isWorkTag: true,
     createdAt: new Date('2024-01-01'),
   },
   {
     id: 'tag-4',
-    name: 'React',
-    category: 'UIライブラリ',
-    description: null,
+    name: '社内設備',
+    category: '社内ルール・手続き',
+    description:
+      '会社で働く上で「必ず正解がある」事務的なこと。総務や経理、社歴の長い人が答えやすい。',
     isWorkTag: true,
     createdAt: new Date('2024-01-01'),
   },
   {
     id: 'tag-5',
-    name: 'ランチ',
-    category: '交流',
-    description: '食事や飲食店についての気軽な投稿',
+    name: '社内ツール',
+    category: 'IT・ツール操作',
+    description:
+      'PCやシステムなど「使い方がわからない」こと。ITリテラシーが高い人やシステム部が答えやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-6',
+    name: 'Office（Excel等）',
+    category: 'IT・ツール操作',
+    description:
+      'PCやシステムなど「使い方がわからない」こと。ITリテラシーが高い人やシステム部が答えやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-7',
+    name: 'デザイナー向け',
+    category: 'IT・ツール操作',
+    description:
+      'PCやシステムなど「使い方がわからない」こと。ITリテラシーが高い人やシステム部が答えやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-8',
+    name: 'エンジニア向け',
+    category: 'IT・ツール操作',
+    description:
+      'PCやシステムなど「使い方がわからない」こと。ITリテラシーが高い人やシステム部が答えやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-9',
+    name: '一般IT知識',
+    category: 'IT・ツール操作',
+    description:
+      'PCやシステムなど「使い方がわからない」こと。ITリテラシーが高い人やシステム部が答えやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-10',
+    name: '営業・商談',
+    category: '業務スキル',
+    description:
+      '正解はないが「こうすると上手くいく」という経験やコツ。中堅やエース社員が活躍しやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-11',
+    name: '資料作成',
+    category: '業務スキル',
+    description:
+      '正解はないが「こうすると上手くいく」という経験やコツ。中堅やエース社員が活躍しやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-12',
+    name: '企画アイディア',
+    category: '業務スキル',
+    description:
+      '正解はないが「こうすると上手くいく」という経験やコツ。中堅やエース社員が活躍しやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-13',
+    name: 'タスク管理',
+    category: '業務スキル',
+    description:
+      '正解はないが「こうすると上手くいく」という経験やコツ。中堅やエース社員が活躍しやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-14',
+    name: 'データ分析',
+    category: '業務スキル',
+    description:
+      '正解はないが「こうすると上手くいく」という経験やコツ。中堅やエース社員が活躍しやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-15',
+    name: '仲間とのコミュニケーション',
+    category: '顧客対応・コミュニケーション',
+    description: null,
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-16',
+    name: 'お客様とのコミュニケーション',
+    category: '顧客対応・コミュニケーション',
+    description: '対人関係や「IBJならでは」のソフトスキル。現場の最前線で働く人が答えやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-17',
+    name: 'キャリア相談',
+    category: 'IBJマインド・キャリア',
+    description: '会社の文化や、マニュアル化しづらいこと。マスター層やマネージャー層が語りやすい。',
+    isWorkTag: true,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-18',
+    name: 'その他（雑談に近い質問）',
+    category: 'その他',
+    description: null,
     isWorkTag: false,
     createdAt: new Date('2024-01-01'),
   },
 ]
 
 export const MOCK_TAG_CATEGORIES = [
-  { id: 'tag-category-1', name: 'フレームワーク', createdAt: new Date('2024-01-01') },
-  { id: 'tag-category-2', name: '言語', createdAt: new Date('2024-01-01') },
-  { id: 'tag-category-3', name: 'データベース', createdAt: new Date('2024-01-01') },
-  { id: 'tag-category-4', name: 'UIライブラリ', createdAt: new Date('2024-01-01') },
-  { id: 'tag-category-5', name: '交流', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-1', name: '社内ルール・手続き', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-2', name: 'IT・ツール操作', createdAt: new Date('2024-01-01') },
+  { id: 'tag-category-3', name: '業務スキル', createdAt: new Date('2024-01-01') },
+  {
+    id: 'tag-category-4',
+    name: '顧客対応・コミュニケーション',
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'tag-category-5',
+    name: 'IBJマインド・キャリア',
+    createdAt: new Date('2024-01-01'),
+  },
+  { id: 'tag-category-6', name: 'その他', createdAt: new Date('2024-01-01') },
 ]
 
-const MOCK_PUBLIC_TAGS = MOCK_TAGS.map(({ id, name, createdAt }) => ({ id, name, createdAt }))
+const MOCK_PUBLIC_TAGS = MOCK_TAGS.map(({ id, name, category, createdAt }) => ({
+  id,
+  name,
+  category,
+  createdAt,
+}))
 
 export const MOCK_POSTS = [
   {
     id: 'post-1',
-    title: 'Next.js App Routerの使い方を教えてください',
-    body: 'App RouterとPages Routerの違いが分からなくて困っています。どちらを使うべきでしょうか？',
+    title: '有給休暇の申請方法を教えてください',
+    body: '有給休暇を申請するときの社内手続きを知りたいです。',
     authorId: 'user-2',
     author: MOCK_USERS[1],
     postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
@@ -189,8 +329,8 @@ export const MOCK_POSTS = [
   },
   {
     id: 'post-2',
-    title: 'TypeScriptの型エラーを解決したい',
-    body: '`Type string is not assignable to type number` というエラーが出て困っています。',
+    title: '経費精算の申請期限を知りたい',
+    body: '立替経費はいつまでに申請すればよいでしょうか？',
     authorId: 'user-1',
     author: MOCK_USERS[0],
     postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[1] },
@@ -205,8 +345,8 @@ export const MOCK_POSTS = [
   },
   {
     id: 'post-3',
-    title: 'Prismaでリレーションを使う方法',
-    body: '1対多のリレーションをPrismaで定義する方法を知りたいです。',
+    title: '利用できる福利厚生を知りたい',
+    body: '現在利用できる福利厚生制度を教えてください。',
     authorId: 'user-2',
     author: MOCK_USERS[1],
     postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[0] },
@@ -221,10 +361,10 @@ export const MOCK_POSTS = [
   },
   {
     id: 'post-4',
-    title: 'Next.jsのエラーを解決したい',
-    body: '`Error: Invalid hook call. Hooks can only be called inside of the body of a function component.` というエラーが出て困っています。',
-    authorId: 'user-1',
-    author: MOCK_USERS[0],
+    title: '会議室設備の使い方を知りたい',
+    body: '会議室のモニターと社内ツールを接続する方法を教えてください。',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
     postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[1] },
     status: QuestionStatus.OPEN,
     answerCount: 0,
@@ -234,6 +374,22 @@ export const MOCK_POSTS = [
     tags: [MOCK_PUBLIC_TAGS[0], MOCK_PUBLIC_TAGS[3]],
     createdAt: new Date('2024-01-13'),
     updatedAt: new Date('2024-01-13'),
+  },
+  {
+    id: 'post-5',
+    title: 'どの小ジャンルにも当てはまらない質問',
+    body: 'その他として分類された質問です。',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
+    postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[2] },
+    status: QuestionStatus.OPEN,
+    answerCount: 0,
+    likeCount: 0,
+    resolvedAt: null,
+    deletedAt: null,
+    tags: [MOCK_PUBLIC_TAGS[17]],
+    createdAt: new Date('2024-01-14'),
+    updatedAt: new Date('2024-01-14'),
   },
   {
     id: 'post-deleted',
@@ -279,7 +435,7 @@ export const MOCK_HIROBA_POSTS = [
     answerCount: 1,
     likeCount: 2,
     deletedAt: null,
-    tags: [MOCK_PUBLIC_TAGS[4]],
+    tags: [MOCK_PUBLIC_TAGS[14]],
     createdAt: new Date('2024-01-20'),
     updatedAt: new Date('2024-01-20'),
   },
@@ -484,7 +640,7 @@ export const MOCK_MISSIONS = [
 export const MOCK_AI_FLAGS = [
   {
     id: 'flag-1',
-    title: '不適切な投稿の可能性: Next.js App Routerの使い方を教えてください',
+    title: '不適切な投稿の可能性: 有給休暇の申請方法を教えてください',
     detail: '投稿内に、脅迫・ハラスメントとみられる表現が含まれています',
     severity: FlagSeverity.HIGH,
     status: FlagStatus.UNREAD,

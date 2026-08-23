@@ -16,6 +16,7 @@ type SelectCategoriesProps = Omit<
   SelectPrimitive.Root.Props<string | null>,
   'children' | 'items'
 > & {
+  id?: string
   className?: string
   categories: Category[]
   placeholder?: string
@@ -23,6 +24,7 @@ type SelectCategoriesProps = Omit<
 }
 
 function SelectCategories({
+  id,
   className,
   categories,
   placeholder = 'カテゴリーを選択',
@@ -37,6 +39,7 @@ function SelectCategories({
   return (
     <SelectPrimitive.Root items={items} {...rootProps}>
       <SelectPrimitive.Trigger
+        id={id}
         data-slot="select-categories"
         className={cn(
           'flex w-full items-center gap-2 rounded-lg border-2 border-input bg-card p-3 text-paragraph-small font-medium text-foreground outline-none select-none data-placeholder:text-muted-foreground',
