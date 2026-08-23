@@ -70,6 +70,10 @@ export const ModerationResultSchema = z
   })
   .openapi('ModerationResult')
 
+export const TagAssignmentStatusSchema = z
+  .enum(['assigned', 'failed', 'skipped'])
+  .openapi('TagAssignmentStatus')
+
 export const PaginationSchema = z
   .object({
     page: z.number().int().positive(),
