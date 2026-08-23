@@ -119,10 +119,14 @@ export const mswHandlers = {
         {
           question: { ...MOCK_QUESTIONS[0], id: 'post-new', title: body.title, body: body.body },
           moderation: { isHidden: false },
+          tagAssignment: 'assigned',
         },
         { status: 201 },
       )
     }),
+    http.post('/api/questions/:id/tag-assignment', () =>
+      HttpResponse.json({ tag: { id: MOCK_TAGS[0].id, name: MOCK_TAGS[0].name } }),
+    ),
     http.delete('/api/admin/posts/:id', () => HttpResponse.json({ success: true })),
     http.post('/api/questions/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
     http.delete('/api/questions/:id/likes', () =>
