@@ -119,16 +119,24 @@ export const mswHandlers = {
         {
           question: { ...MOCK_QUESTIONS[0], id: 'post-new', title: body.title, body: body.body },
           moderation: { isHidden: false },
+          tagAssignment: 'assigned',
         },
         { status: 201 },
       )
     }),
     http.get('/api/question-tags', () =>
       HttpResponse.json({
-        tags: MOCK_TAGS.map(({ id, name }) => ({ id, name })).sort((a, b) =>
-          a.name.localeCompare(b.name, 'ja'),
-        ),
+        categories: MOCK_TAG_CATEGORIES.map(({ id, name }) => ({
+          id,
+          name,
+          tags: MOCK_TAGS.filter((tag) => tag.category === name && tag.isWorkTag)
+            .map(({ id: tagId, name: tagName }) => ({ id: tagId, name: tagName }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'ja')),
+        })).filter((category) => category.tags.length > 0),
       }),
+    ),
+    http.post('/api/questions/:id/tag-assignment', () =>
+      HttpResponse.json({ tag: { id: MOCK_TAGS[0].id, name: MOCK_TAGS[0].name } }),
     ),
     http.delete('/api/admin/posts/:id', () => HttpResponse.json({ success: true })),
     http.post('/api/questions/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),

@@ -1,34 +1,31 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery } from '@tanstack/react-query'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/design-system/button'
 import { FormField } from '@/components/design-system/form-field'
 import { IconAi } from '@/components/design-system/icons/icon-ai'
 import { IconClose } from '@/components/design-system/icons/icon-close'
 import { IconPencil } from '@/components/design-system/icons/icon-pencil'
-import { Select } from '@/components/design-system/ui/select'
+import { SelectCategories } from '@/components/design-system/ui/select-categories'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
-import { client } from '@/lib/hono/client'
 import { type CreatePostInput, createPostSchema } from '@/lib/schemas/post'
 import { cn } from '@/lib/utils'
-
-async function fetchQuestionTags() {
-  const res = await client.api['question-tags'].$get()
-  if (!res.ok) throw new Error('Failed to fetch tags')
-  const { tags } = await res.json()
-  return tags
-}
 
 type QuestionFormModalProps = {
   onSubmit: (data: CreatePostInput) => Promise<void>
   onClose?: () => void
   isSubmitting?: boolean
   error?: string
+  tagCategories?: {
+    id: string
+    name: string
+    tags: { id: string; name: string }[]
+  }[]
+  isTagCategoriesLoading?: boolean
 }
 
 export function QuestionFormModal({
@@ -36,18 +33,18 @@ export function QuestionFormModal({
   onClose,
   isSubmitting = false,
   error,
+  tagCategories = [],
+  isTagCategoriesLoading = false,
 }: QuestionFormModalProps) {
-  const { data: tags = [] } = useQuery({
-    queryKey: ['questionTags'],
-    queryFn: fetchQuestionTags,
-  })
+  const tagOptions = tagCategories.flatMap(({ tags }) => tags)
   const {
+    control,
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting: isFormSubmitting },
   } = useForm<CreatePostInput>({
     resolver: zodResolver(createPostSchema),
+    defaultValues: { title: '', body: '', tagId: undefined },
   })
   const title = useWatch({ control, name: 'title' })
   const body = useWatch({ control, name: 'body' })
@@ -55,7 +52,7 @@ export function QuestionFormModal({
   const isLoading = isSubmitting || isFormSubmitting
 
   return (
-    <div className="flex w-full max-w-[650px] flex-col gap-4 rounded-xl border border-border bg-background p-8">
+    <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-background p-5 sm:p-8">
       <div className="flex items-center justify-between">
         <h2 className="font-heading text-heading-4">質問を投稿する</h2>
         {onClose && (
@@ -101,7 +98,7 @@ export function QuestionFormModal({
             <Textarea
               id="body"
               placeholder="お疲れ様です！！！質問したいのですが..."
-              className="h-32 p-3"
+              className="h-36 p-3"
               {...register('body')}
               aria-invalid={!!errors.body}
             />
@@ -118,26 +115,30 @@ export function QuestionFormModal({
               </p>
             </div>
             <Controller
-              control={control}
               name="tagId"
+              control={control}
               render={({ field }) => (
-                <Select
+                <SelectCategories
                   id="tagId"
-                  options={tags.map((tag) => ({ value: tag.id, label: tag.name }))}
-                  placeholder="カテゴリーを選択"
+                  categories={tagOptions}
                   value={field.value ?? null}
                   onValueChange={(value) => field.onChange(value ?? undefined)}
+                  placeholder={
+                    isTagCategoriesLoading ? 'カテゴリーを読み込み中' : '手動でカテゴリーを選択'
+                  }
+                  noneLabel={
+                    isTagCategoriesLoading ? 'カテゴリーを読み込み中' : '手動でカテゴリーを選択'
+                  }
+                  disabled={isTagCategoriesLoading}
                 />
               )}
             />
           </div>
-          <p className="text-paragraph-mini text-secondary-foreground">
-            ※投稿内容の確認のため反映に30秒ほどかかる場合があります。
-            <br />
-            ※不適切と判断された投稿は運営により削除される可能性がございます。
-            <br />
-            ※匿名アイコン・匿名ユーザーネームがランダムで付与されます。
-          </p>
+          <div className="text-paragraph-mini text-secondary-foreground">
+            <p>※投稿内容の確認のため反映に30秒ほどかかる場合があります。</p>
+            <p>※不適切と判断された投稿は運営により削除される可能性がございます。</p>
+            <p>※匿名アイコン・匿名ユーザーネームがランダムで付与されます。</p>
+          </div>
           <Button
             type="submit"
             isDisabled={isLoading || !canSubmit}

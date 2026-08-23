@@ -7,10 +7,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
 import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
-import { type QaFeedStatusFilter, useQaFeedFilterStore } from '@/lib/stores/qa-feed-filter-store'
+import { type QaFeedStatusFilter as QaFeedStatus, useQaFeedFilterStore } from '@/lib/stores/qa-feed-filter-store'
 import { PostCard } from './post-card'
-import { QaFeedStatusFilter as QaFeedStatusFilterControl } from './qa-feed-controls'
-import { QaFilterBar } from './qa-filter-bar'
+import { QaFeedStatusFilter } from './qa-feed-controls'
+import { QaFilterBar, type QuestionTagCategory } from './qa-filter-bar'
 
 const STATUS_FILTERS = [
   { id: 'all', label: '全て' },
@@ -24,7 +24,7 @@ const KEYWORD_DEBOUNCE_MS = 250
 type QaFeedProps = {
   posts?: QaPost[]
   isAdmin: boolean
-  allTags: { id: string; name: string }[]
+  tagCategories: QuestionTagCategory[]
   initialTotalPages?: number
   initialTotal?: number
 }
@@ -48,9 +48,10 @@ function useDebouncedValue<T>(value: T, delay: number) {
 
 async function fetchQuestions(params: {
   page: number
-  status: QaFeedStatusFilter
+  status: QaFeedStatus
   keyword: string
-  tagId?: string
+  categoryIds: string[]
+  tagIds: string[]
 }): Promise<QuestionsResult> {
   const response = await client.api.questions.$get({
     query: {
@@ -58,7 +59,8 @@ async function fetchQuestions(params: {
       pageSize: String(PAGE_SIZE),
       status: params.status,
       keyword: params.keyword || undefined,
-      tagId: params.tagId,
+      categoryIds: params.categoryIds.length > 0 ? params.categoryIds.join(',') : undefined,
+      tagIds: params.tagIds.length > 0 ? params.tagIds.join(',') : undefined,
     },
   })
   if (!response.ok) throw new Error('質問一覧の取得に失敗しました')
@@ -126,36 +128,45 @@ function QaQuestionList({ posts, isAdmin }: QaQuestionListProps) {
   )
 }
 
-/** 検索・状態・単一タグ・ページをAPI Queryへ反映する質問一覧。 */
+/** 検索・状態・親カテゴリー・小ジャンル・ページをAPI Queryへ反映する質問一覧。 */
 export function QaFeed({
   posts,
   isAdmin,
-  allTags,
+  tagCategories,
   initialTotalPages = 1,
   initialTotal = 0,
 }: QaFeedProps) {
   const keyword = useQaFeedFilterStore((state) => state.keyword)
   const status = useQaFeedFilterStore((state) => state.status)
+  const selectedCategoryIds = useQaFeedFilterStore((state) => state.selectedCategoryIds)
   const selectedTagIds = useQaFeedFilterStore((state) => state.selectedTagIds)
   const page = useQaFeedFilterStore((state) => state.page)
   const setKeyword = useQaFeedFilterStore((state) => state.setKeyword)
   const setStatus = useQaFeedFilterStore((state) => state.setStatus)
+  const setSelectedCategoryIds = useQaFeedFilterStore((state) => state.setSelectedCategoryIds)
   const setSelectedTagIds = useQaFeedFilterStore((state) => state.setSelectedTagIds)
   const setPage = useQaFeedFilterStore((state) => state.setPage)
   const listRef = useRef<HTMLDivElement>(null)
   const debouncedKeyword = useDebouncedValue(keyword, KEYWORD_DEBOUNCE_MS)
-  const tagId = selectedTagIds[0]
   const isDefaultQuery =
-    page === 1 && status === 'all' && debouncedKeyword === '' && selectedTagIds.length === 0
+    page === 1 &&
+    status === 'all' &&
+    debouncedKeyword === '' &&
+    selectedCategoryIds.length === 0 &&
+    selectedTagIds.length === 0
 
   const { data, isPending, isFetching, isPlaceholderData, error } = useQuery({
-    queryKey: ['questions', { page, status, keyword: debouncedKeyword, tagId }],
+    queryKey: [
+      'questions',
+      { page, status, keyword: debouncedKeyword, selectedCategoryIds, selectedTagIds },
+    ],
     queryFn: () =>
       fetchQuestions({
         page,
         status,
         keyword: debouncedKeyword,
-        tagId,
+        categoryIds: selectedCategoryIds,
+        tagIds: selectedTagIds,
       }),
     initialData:
       posts && isDefaultQuery
@@ -192,14 +203,16 @@ export function QaFeed({
           <QaFilterBar
             keyword={keyword}
             onKeywordChange={setKeyword}
-            tags={allTags}
+            categories={tagCategories}
+            selectedCategoryIds={selectedCategoryIds}
+            onSelectedCategoryIdsChange={setSelectedCategoryIds}
             selectedTagIds={selectedTagIds}
             onSelectedTagIdsChange={setSelectedTagIds}
           />
-          <QaFeedStatusFilterControl
+          <QaFeedStatusFilter
             filters={[...STATUS_FILTERS]}
             value={status}
-            onValueChange={(value) => setStatus(value as QaFeedStatusFilter)}
+            onValueChange={(value: string) => setStatus(value as QaFeedStatus)}
           />
         </div>
       </div>

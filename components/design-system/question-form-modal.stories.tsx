@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn, within } from 'storybook/test'
+import { expect, fn, screen, within } from 'storybook/test'
 import { QuestionFormModal } from './question-form-modal'
 
 const meta = {
@@ -16,6 +16,7 @@ export const Default: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('質問を投稿する')).toBeVisible()
+    await expect(canvas.queryByText('名無しのおせワニ')).not.toBeInTheDocument()
     await expect(canvas.getByLabelText('質問のタイトル')).toBeVisible()
     await expect(canvas.getByLabelText('質問の本文')).toBeVisible()
     await expect(canvas.getByText('カテゴリー')).toBeVisible()
@@ -23,9 +24,13 @@ export const Default: Story = {
       canvas.getByText('カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します。'),
     ).toBeVisible()
     await expect(
-      canvas.getByText(
-        /※不適切と判断された投稿は運営により削除される可能性がございます。\s*※匿名アイコン・匿名ユーザーネームがランダムで付与されます。/,
-      ),
+      canvas.getByText('※投稿内容の確認のため反映に30秒ほどかかる場合があります。'),
+    ).toBeVisible()
+    await expect(
+      canvas.getByText('※不適切と判断された投稿は運営により削除される可能性がございます。'),
+    ).toBeVisible()
+    await expect(
+      canvas.getByText('※匿名アイコン・匿名ユーザーネームがランダムで付与されます。'),
     ).toBeVisible()
     await expect(canvas.getByRole('button', { name: /投稿する/ })).toBeVisible()
   },
@@ -70,11 +75,40 @@ export const Submit: Story = {
     await userEvent.type(canvas.getByLabelText('質問の本文'), '申請画面の場所が分かりません。')
     await userEvent.click(canvas.getByRole('button', { name: /投稿する/ }))
     await expect(args.onSubmit).toHaveBeenCalledWith(
-      { title: '有給申請の方法について', body: '申請画面の場所が分かりません。' },
+      {
+        title: '有給申請の方法について',
+        body: '申請画面の場所が分かりません。',
+        tagId: undefined,
+      },
       expect.anything(),
     )
     await userEvent.click(canvas.getByRole('button', { name: '閉じる' }))
     await expect(args.onClose).toHaveBeenCalled()
+  },
+}
+
+export const ManualTag: Story = {
+  args: {
+    onSubmit: fn(),
+    tagCategories: [
+      {
+        id: 'category-1',
+        name: '社内ルール・手続き',
+        tags: [{ id: 'tag-1', name: '勤怠・有給関連' }],
+      },
+    ],
+  },
+  play: async ({ args, canvas, userEvent }) => {
+    await userEvent.type(canvas.getByLabelText('質問のタイトル'), '有給申請について')
+    await userEvent.type(canvas.getByLabelText('質問の本文'), '申請方法を教えてください。')
+    await userEvent.click(canvas.getByLabelText('カテゴリー'))
+    await expect(screen.queryByText('社内ルール・手続き')).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByText('勤怠・有給関連'))
+    await userEvent.click(canvas.getByRole('button', { name: /投稿する/ }))
+    await expect(args.onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ tagId: 'tag-1' }),
+      expect.anything(),
+    )
   },
 }
 

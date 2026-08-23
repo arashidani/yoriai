@@ -14,20 +14,94 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(response.status).toBe(200)
     const body = await response.json()
 
-    expect(body.pagination).toMatchObject({ page: 1, pageSize: 10, total: 4, totalPages: 1 })
-    expect(body.questions).toHaveLength(4)
+    expect(body.pagination).toMatchObject({ page: 1, pageSize: 10, total: 5, totalPages: 1 })
+    expect(body.questions).toHaveLength(5)
     expect(body.questions[0]).toHaveProperty('tag')
     expect(Array.isArray(body.questions[0].tag)).toBe(false)
     expect(body.questions[0]).not.toHaveProperty('tags')
   })
 
+  it('質問投稿日と最新回答投稿日の新しい順で返し、更新日時にも同じ値を使う', async () => {
+    const response = await app.request('/api/questions')
+    const body = await response.json()
+
+    expect(body.questions.map((question: { id: string }) => question.id)).toEqual([
+      'post-5',
+      'post-4',
+      'post-3',
+      'post-2',
+      'post-1',
+    ])
+    const answeredQuestion = body.questions.find(
+      (question: { id: string }) => question.id === 'post-3',
+    )
+    expect(answeredQuestion.activityAt).toBe('2024-01-12T02:00:00.000Z')
+    expect(answeredQuestion.updatedAt).toBe('2024-01-15T00:00:00.000Z')
+  })
+
   it('keyword・status・tagIdで絞り込む', async () => {
     const response = await app.request(
-      '/api/questions?keyword=TypeScript&status=unanswered&tagId=tag-2',
+      '/api/questions?keyword=経費精算&status=unanswered&tagId=tag-2',
     )
     const body = await response.json()
 
     expect(body.questions.map((question: { id: string }) => question.id)).toEqual(['post-2'])
+  })
+
+  it('親カテゴリーIDと小ジャンルIDを複数指定してOR検索する', async () => {
+    const response = await app.request(
+      '/api/questions?categoryIds=tag-category-1&tagIds=tag-2,tag-3',
+    )
+    const body = await response.json()
+
+    expect(body.questions.map((question: { id: string }) => question.id).sort()).toEqual([
+      'post-1',
+      'post-2',
+      'post-3',
+      'post-4',
+    ])
+  })
+
+  it('質問タグ候補を親カテゴリー配下にまとめ、「その他」を含む全小ジャンルを返す', async () => {
+    const response = await app.request('/api/question-tags')
+    const body = await response.json()
+
+    expect(body.categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'tag-category-6',
+          name: 'その他',
+          tags: [
+            expect.objectContaining({
+              id: 'tag-18',
+              name: 'その他（雑談に近い質問）',
+            }),
+          ],
+        }),
+      ]),
+    )
+    expect(body.categories.flatMap((category: { tags: unknown[] }) => category.tags)).toHaveLength(
+      18,
+    )
+  })
+
+  it('回答できる質問をビジネススキル優先・その他補完で最大3件返す', async () => {
+    const response = await app.request('/api/questions/answerable')
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.questions).toHaveLength(3)
+    expect(body.questions.map((question: { id: string }) => question.id).sort()).toEqual([
+      'post-1',
+      'post-4',
+      'post-5',
+    ])
+    expect(
+      body.questions.every(
+        (question: { status: string; isOwnQuestion: boolean }) =>
+          question.status === 'OPEN' && !question.isOwnQuestion,
+      ),
+    ).toBe(true)
   })
 
   it('page/pageSizeを適用する', async () => {
@@ -35,7 +109,7 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     const body = await response.json()
 
     expect(body.questions).toHaveLength(2)
-    expect(body.pagination).toEqual({ page: 2, pageSize: 2, total: 4, totalPages: 2 })
+    expect(body.pagination).toEqual({ page: 2, pageSize: 2, total: 5, totalPages: 3 })
   })
 
   it('解決済みかつ1票以上の最多回答だけisMostLiked=trueにする', async () => {
@@ -127,7 +201,7 @@ describe('Q&A API contract (MOCK_MODE)', () => {
 
     expect(response.status).toBe(201)
     const body = await response.json()
-    expect(body.question.tag).toMatchObject({ id: 'tag-1', name: 'Next.js' })
+    expect(body.question.tag).toMatchObject({ id: 'tag-category-1', name: '社内ルール・手続き' })
   })
 
   it('質問・回答の作成レスポンスに公開状態を返す', async () => {
@@ -152,5 +226,25 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect((await question.json()).moderation).toEqual({ isHidden: false })
     expect(answerBody.moderation).toEqual({ isHidden: false })
     expect(answerBody.answer).toMatchObject({ joinedYear: 2020, joinedMonth: 4 })
+  })
+
+  it('その他タグを手動選択して質問を投稿できる', async () => {
+    const response = await app.request('/api/questions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440018',
+      },
+      body: JSON.stringify({
+        title: '雑談の質問',
+        body: 'その他カテゴリーで投稿します',
+        tagId: 'tag-18',
+      }),
+    })
+
+    expect(response.status).toBe(201)
+    const body = await response.json()
+    expect(body.tagAssignment).toBe('assigned')
+    expect(body.question.tag).toEqual({ id: 'tag-category-6', name: 'その他' })
   })
 })

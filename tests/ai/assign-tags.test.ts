@@ -10,16 +10,15 @@ const candidates: TagCandidate[] = [
 ]
 
 describe('selectValidTagNames', () => {
-  it('登録済みタグをカテゴリーごとに最大1件、全体で最大3件選ぶ', () => {
+  it('登録済みタグから最大1件だけ選ぶ', () => {
     expect(selectValidTagNames(['給与', '採用', '請求書', '雑談', '福利厚生'], candidates)).toEqual(
-      ['給与', '請求書', '雑談'],
+      ['給与'],
     )
   })
 
   it('未知のタグ、重複、文字列以外の値を捨てる', () => {
     expect(selectValidTagNames(['不存在', '給与', '給与', 123, '請求書'], candidates)).toEqual([
       '給与',
-      '請求書',
     ])
   })
 
