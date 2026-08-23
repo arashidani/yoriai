@@ -85,6 +85,11 @@ components:
           type: string
           format: date-time
           example: 2026-08-08T00:00:00.000Z
+        activityAt:
+          type: string
+          format: date-time
+          example: 2026-08-08T00:00:00.000Z
+          description: 質問投稿日と最新回答投稿日のうち新しい日時
         updatedAt:
           type: string
           format: date-time
@@ -103,6 +108,7 @@ components:
         - tag
         - resolvedAt
         - createdAt
+        - activityAt
         - updatedAt
     QuestionDisplayAuthor:
       type: object
@@ -206,6 +212,12 @@ components:
           description: AI判定によって非公開になった場合はtrue
       required:
         - isHidden
+    TagAssignmentStatus:
+      type: string
+      enum:
+        - assigned
+        - failed
+        - skipped
     LikeStatus:
       type: object
       properties:
@@ -1182,6 +1194,9 @@ paths:
                 body:
                   type: string
                   minLength: 1
+                tagId:
+                  type: string
+                  minLength: 1
               required:
                 - title
                 - body
@@ -1197,9 +1212,12 @@ paths:
                     $ref: "#/components/schemas/Question"
                   moderation:
                     $ref: "#/components/schemas/ModerationResult"
+                  tagAssignment:
+                    $ref: "#/components/schemas/TagAssignmentStatus"
                 required:
                   - question
                   - moderation
+                  - tagAssignment
         "201":
           description: 作成成功
           content:
@@ -1211,9 +1229,20 @@ paths:
                     $ref: "#/components/schemas/Question"
                   moderation:
                     $ref: "#/components/schemas/ModerationResult"
+                  tagAssignment:
+                    $ref: "#/components/schemas/TagAssignmentStatus"
                 required:
                   - question
                   - moderation
+                  - tagAssignment
+        "400":
+          description: 不正なタグ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 選択されたタグが見つかりません
         "401":
           description: 未認証
           content:
@@ -1450,6 +1479,105 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 回答の作成に失敗しました
+  /api/questions/{id}/tag-assignment:
+    post:
+      tags:
+        - questions
+      summary: 質問へタグを付与（AI再試行または手動選択）
+      security: *a1
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    mode:
+                      type: string
+                      enum:
+                        - ai
+                  required:
+                    - mode
+                - type: object
+                  properties:
+                    mode:
+                      type: string
+                      enum:
+                        - manual
+                    tagId:
+                      type: string
+                      minLength: 1
+                  required:
+                    - mode
+                    - tagId
+      responses:
+        "200":
+          description: タグ付与成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tag:
+                    $ref: "#/components/schemas/QuestionTag"
+                required:
+                  - tag
+        "400":
+          description: 不正なタグ
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 選択されたタグが見つかりません
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 質問者以外
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 質問が見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "409":
+          description: 操作不可
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: この質問にはタグを付与できません
+        "503":
+          description: AIタグ付与失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
   /api/questions/{id}/resolve:
     post:
       tags:

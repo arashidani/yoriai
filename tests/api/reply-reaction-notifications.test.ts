@@ -47,15 +47,22 @@ describe('返信・リアクション通知', () => {
       id: 'post-1',
       authorId: 'user-2',
       deletedAt: null,
+      likeCount: 0,
     })
     prismaMock.questionLike.createMany.mockResolvedValue({ count: 1 })
-    prismaMock.questionLike.count.mockResolvedValue(1)
+    prismaMock.post.update.mockResolvedValue({ likeCount: 1 })
 
     const response = await app.request('/api/questions/post-1/likes', { method: 'POST' })
 
     expect(response.status).toBe(200)
     expect(prismaMock.notification.create).toHaveBeenCalledWith({
       data: { userId: 'user-2', type: 'POST_LIKED', postId: 'post-1' },
+    })
+    expect(prismaMock.questionLike.count).not.toHaveBeenCalled()
+    expect(prismaMock.post.update).toHaveBeenCalledWith({
+      where: { id: 'post-1' },
+      data: { likeCount: { increment: 1 } },
+      select: { likeCount: true },
     })
   })
 
@@ -64,6 +71,7 @@ describe('返信・リアクション通知', () => {
       id: 'post-1',
       authorId: 'user-2',
       deletedAt: null,
+      likeCount: 1,
     })
     prismaMock.questionLike.createMany.mockResolvedValue({ count: 0 })
     prismaMock.questionLike.count.mockResolvedValue(1)
@@ -72,6 +80,7 @@ describe('返信・リアクション通知', () => {
 
     expect(response.status).toBe(200)
     expect(prismaMock.notification.create).not.toHaveBeenCalled()
+    expect(prismaMock.post.update).not.toHaveBeenCalled()
   })
 
   it('ひろば投稿への返信で投稿者に通知する', async () => {
