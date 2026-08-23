@@ -231,6 +231,13 @@ describe('Q&A作成APIのモデレーション結果', () => {
     })
 
     expect(response.status).toBe(201)
+    expect(txMock.post.update).toHaveBeenCalledWith({
+      where: { id: basePost.id },
+      data: {
+        answerCount: { increment: 1 },
+        activityAt: baseAnswer.createdAt,
+      },
+    })
     expect((await response.json()).moderation).toEqual({ isHidden: true })
   })
 

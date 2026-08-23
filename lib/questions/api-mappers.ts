@@ -46,7 +46,8 @@ export function toQuestionResponse(post: LooseRecord, viewerId: string) {
     tag: firstTagCategory(post),
     resolvedAt: post.resolvedAt ?? null,
     createdAt: post.createdAt,
-    updatedAt: post.updatedAt,
+    activityAt: post.activityAt ?? post.createdAt,
+    updatedAt: post.updatedAt ?? post.createdAt,
   }
 }
 

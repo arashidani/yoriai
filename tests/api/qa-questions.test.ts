@@ -21,6 +21,24 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(body.questions[0]).not.toHaveProperty('tags')
   })
 
+  it('質問投稿日と最新回答投稿日の新しい順で返し、更新日時にも同じ値を使う', async () => {
+    const response = await app.request('/api/questions')
+    const body = await response.json()
+
+    expect(body.questions.map((question: { id: string }) => question.id)).toEqual([
+      'post-5',
+      'post-4',
+      'post-3',
+      'post-2',
+      'post-1',
+    ])
+    const answeredQuestion = body.questions.find(
+      (question: { id: string }) => question.id === 'post-3',
+    )
+    expect(answeredQuestion.activityAt).toBe('2024-01-12T02:00:00.000Z')
+    expect(answeredQuestion.updatedAt).toBe('2024-01-15T00:00:00.000Z')
+  })
+
   it('keyword・status・tagIdで絞り込む', async () => {
     const response = await app.request(
       '/api/questions?keyword=経費精算&status=unanswered&tagId=tag-2',

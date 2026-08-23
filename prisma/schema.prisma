@@ -124,12 +124,15 @@ model Post {
   notifications Notification[]
   tags          PostTag[]
   createdAt     DateTime       @default(now())
+  /// 質問投稿日または最新回答投稿日。質問一覧の並び順と更新日時表示に使う
+  activityAt    DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
   /// AIフラグによる自動ソフトデリート日時（管理者が復元するとnullに戻る）
   deletedAt DateTime?
 
   @@unique([authorId, idempotencyKey])
+  @@index([activityAt, id])
 }
 
 /// 質問スレッドごとの「実ユーザー ⇔ 匿名キャラ」の対応

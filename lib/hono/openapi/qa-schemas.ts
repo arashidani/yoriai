@@ -40,6 +40,9 @@ export const QuestionSchema = z
     tag: z.union([QuestionTagSchema, z.null()]),
     resolvedAt: z.union([dateTime(), z.null()]),
     createdAt: dateTime(),
+    activityAt: dateTime().openapi({
+      description: '質問投稿日と最新回答投稿日のうち新しい日時',
+    }),
     updatedAt: dateTime(),
   })
   .openapi('Question')

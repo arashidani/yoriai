@@ -74,6 +74,10 @@ function mockQuestions(viewerId: string) {
     toQuestionResponse(
       {
         ...post,
+        activityAt: MOCK_ANSWERS.filter((answer) => answer.postId === post.id).reduce(
+          (latest, answer) => (answer.createdAt > latest ? answer.createdAt : latest),
+          post.createdAt,
+        ),
         tags: post.tags.map((tag, index) => ({
           id: `mock-post-tag-${post.id}-${index}`,
           createdAt: new Date(post.createdAt.getTime() + index),
@@ -347,7 +351,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         questions = questions.filter((question) => matchingPostIds.includes(question.id))
       }
       questions.sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime() || b.id.localeCompare(a.id),
+        (a, b) => b.activityAt.getTime() - a.activityAt.getTime() || b.id.localeCompare(a.id),
       )
       const total = questions.length
       return c.json(
@@ -398,7 +402,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       prisma.post.findMany({
         where,
         include: questionInclude(user.id),
-        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ activityAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
@@ -750,6 +754,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           where: { id },
           data: {
             answerCount: { increment: 1 },
+            activityAt: created.createdAt,
           },
         })
         return created
@@ -1000,7 +1005,7 @@ export const meQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       prisma.post.findMany({
         where,
         include: questionInclude(user.id),
-        orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+        orderBy: [{ activityAt: 'desc' }, { id: 'desc' }],
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),

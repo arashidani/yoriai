@@ -38,8 +38,9 @@ const basePosts = [
     answerCount: 1,
     tags: [{ id: 'tag-1', name: 'Next.js' }],
     createdAt: '2024-01-10T00:00:00Z',
+    activityAt: '2024-01-12T00:00:00Z',
     updatedAt: '2024-01-10T00:00:00Z',
-    timestamp: formatRelativeTime('2024-01-10T00:00:00Z'),
+    timestamp: formatRelativeTime('2024-01-12T00:00:00Z'),
   },
   {
     id: 'post-2',
@@ -54,6 +55,7 @@ const basePosts = [
     answerCount: 0,
     tags: [{ id: 'tag-2', name: 'TypeScript' }],
     createdAt: '2024-01-11T00:00:00Z',
+    activityAt: '2024-01-11T00:00:00Z',
     updatedAt: '2024-01-11T00:00:00Z',
     timestamp: formatRelativeTime('2024-01-11T00:00:00Z'),
   },
