@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/design-system/button'
@@ -11,6 +12,7 @@ type ActionButtonsProps = {
   primaryAction?: ReactNode
   secondaryLabel: string
   onSecondaryClick?: () => void
+  secondaryHref?: string
 }
 
 function ActionButtons({
@@ -20,6 +22,7 @@ function ActionButtons({
   primaryAction,
   secondaryLabel,
   onSecondaryClick,
+  secondaryHref,
 }: ActionButtonsProps) {
   return (
     <div
@@ -38,15 +41,27 @@ function ActionButtons({
           {primaryLabel}
         </Button>
       )}
-      <Button
-        type="button"
-        size="large"
-        variant="secondary"
-        className="shrink-0"
-        onClick={onSecondaryClick}
-      >
-        {secondaryLabel}
-      </Button>
+      {secondaryHref ? (
+        <Button
+          size="large"
+          variant="secondary"
+          className="shrink-0"
+          render={<Link href={secondaryHref} prefetch />}
+          nativeButton={false}
+        >
+          {secondaryLabel}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          size="large"
+          variant="secondary"
+          className="shrink-0"
+          onClick={onSecondaryClick}
+        >
+          {secondaryLabel}
+        </Button>
+      )}
     </div>
   )
 }

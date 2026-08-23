@@ -4,6 +4,9 @@ import { ActionButtons } from './action-buttons'
 
 const meta = {
   component: ActionButtons,
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
   args: {
     primaryLabel: '質問する',
     onPrimaryClick: fn(),
@@ -33,5 +36,17 @@ export const ClickSecondary: Story = {
   play: async ({ canvas, args }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'Q&A管理' }))
     await expect(args.onSecondaryClick).toHaveBeenCalled()
+  },
+}
+
+export const SecondaryLink: Story = {
+  args: {
+    secondaryHref: '/my-questions',
+    onSecondaryClick: undefined,
+  },
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: 'Q&A管理' })
+    await expect(link).toBeVisible()
+    await expect(link).toHaveAttribute('href', '/my-questions')
   },
 }

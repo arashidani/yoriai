@@ -17,6 +17,9 @@ export const Default: Story = {
   args: {},
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: '質問する' })).toBeVisible()
+    const manageLink = canvas.getByRole('link', { name: 'Q&A管理' })
+    await expect(manageLink).toBeVisible()
+    await expect(manageLink).toHaveAttribute('href', '/my-questions')
   },
 }
 

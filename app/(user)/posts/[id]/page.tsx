@@ -36,11 +36,14 @@ export default async function QaDetailPage({ params }: Props) {
             一覧に戻る
           </Button>
         </Link>
-        <Link href="/my-questions">
-          <Button type="button" variant="secondary" size="large">
-            Q&A管理
-          </Button>
-        </Link>
+        <Button
+          variant="secondary"
+          size="large"
+          render={<Link href="/my-questions" prefetch />}
+          nativeButton={false}
+        >
+          Q&A管理
+        </Button>
       </div>
       <Separator />
       <div className="flex w-full flex-col gap-3">
