@@ -226,6 +226,16 @@ export const ClearTag: Story = {
   },
 }
 
+export const CloseOnOutsideClick: Story = {
+  args: Default.args,
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByText('カテゴリーを選択'))
+    await expect(canvas.getByRole('checkbox', { name: '技術' })).toBeVisible()
+    await userEvent.click(canvas.getByPlaceholderText('キーワードを入力'))
+    await expect(canvas.queryByRole('checkbox', { name: '技術' })).not.toBeInTheDocument()
+  },
+}
+
 export const KeywordInput: Story = {
   args: {
     keyword: '',

@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronDownIcon } from 'lucide-react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { KeywordInput } from '@/components/design-system/ui/keyword-input'
 
 export type QuestionTagCategory = {
@@ -55,6 +55,20 @@ function QaFilterBar({
   selectedTagIds,
   onSelectedTagIdsChange,
 }: QaFilterBarProps) {
+  const detailsRef = useRef<HTMLDetailsElement>(null)
+
+  useEffect(() => {
+    function handlePointerDown(event: PointerEvent) {
+      const details = detailsRef.current
+      if (!details?.open) return
+      if (details.contains(event.target as Node)) return
+      details.open = false
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown, true)
+    return () => document.removeEventListener('pointerdown', handlePointerDown, true)
+  }, [])
+
   const sortedCategories = [...categories].sort(
     (left, right) => right.tags.length - left.tags.length,
   )
@@ -108,7 +122,7 @@ function QaFilterBar({
         />
       </div>
       <div className="relative min-w-0 w-full md:w-64 md:shrink-0">
-        <details className="group">
+        <details ref={detailsRef} className="group">
           <summary className="flex cursor-pointer list-none items-center gap-2 rounded-lg border-2 border-input bg-card p-3 text-paragraph-small font-medium text-foreground">
             <span className="flex-1">
               {selectionCount === 0 ? 'カテゴリーを選択' : `${selectionCount}件選択中`}
