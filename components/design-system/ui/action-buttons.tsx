@@ -46,7 +46,7 @@ function ActionButtons({
           size="large"
           variant="secondary"
           className="shrink-0"
-          render={<Link href={secondaryHref} prefetch />}
+          render={<Link href={secondaryHref} />}
           nativeButton={false}
         >
           {secondaryLabel}
