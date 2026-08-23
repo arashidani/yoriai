@@ -105,6 +105,23 @@ export const Loading: Story = {
   },
 }
 
+export const PendingWithFallback: Story = {
+  render: () => (
+    <MyQuestionsNavigationProvider forcePending>
+      <MyQuestionsNavigationShell className="w-full max-w-4xl">
+        <MyQuestionsTabs tab="posted" />
+        <Separator />
+        <MyQuestionsPendingList>
+          <MyQuestionsListFallback />
+        </MyQuestionsPendingList>
+      </MyQuestionsNavigationShell>
+    </MyQuestionsNavigationProvider>
+  ),
+  play: async ({ canvas }) => {
+    await expect(canvas.getAllByRole('status', { name: '読み込み中' })).toHaveLength(1)
+  },
+}
+
 export const SwitchTab: Story = {
   render: () => <MyQuestionsSectionDemo />,
   play: async ({ canvas }) => {

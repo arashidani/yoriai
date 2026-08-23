@@ -17,11 +17,14 @@ type MyQuestionsNavigationProviderProps = {
   children: ReactNode
   /** Storybook 等で `router.push` の代わりに使う */
   onNavigate?: (url: string) => void
+  /** Storybook でタブ切り替え中の pending を固定する */
+  forcePending?: boolean
 }
 
 function MyQuestionsNavigationProvider({
   children,
   onNavigate,
+  forcePending = false,
 }: MyQuestionsNavigationProviderProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -37,7 +40,7 @@ function MyQuestionsNavigationProvider({
   }
 
   return (
-    <MyQuestionsNavigationContext value={{ navigate, isPending }}>
+    <MyQuestionsNavigationContext value={{ navigate, isPending: forcePending || isPending }}>
       {children}
     </MyQuestionsNavigationContext>
   )
