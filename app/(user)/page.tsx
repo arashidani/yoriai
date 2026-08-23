@@ -32,7 +32,7 @@ export default async function QaHomePage() {
           <HeaderSection
             className="sticky top-0 z-30 h-25 p-8"
             title="なんでもQ&A"
-            actions={<QuestionComposeDialog displayName={user?.username || 'ユーザー'} />}
+            actions={<QuestionComposeDialog />}
           />
           <QaFeed
             posts={posts}
