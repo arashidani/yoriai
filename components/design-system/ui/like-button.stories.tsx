@@ -25,6 +25,7 @@ export const Pressed: Story = {
   play: async ({ canvas }) => {
     const button = canvas.getByRole('button', { name: '1' })
     await expect(button).toHaveAttribute('aria-pressed', 'true')
+    await expect(button).toHaveClass(/aria-pressed:text-action-like/)
   },
 }
 
@@ -33,6 +34,7 @@ export const Large: Story = {
   play: async ({ canvas }) => {
     const button = canvas.getByRole('button', { name: '1' })
     await expect(button).toHaveAttribute('aria-pressed', 'true')
+    await expect(button).toHaveClass(/aria-pressed:text-action-like/)
   },
 }
 

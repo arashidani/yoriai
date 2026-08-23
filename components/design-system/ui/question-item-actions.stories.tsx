@@ -37,7 +37,9 @@ export const ToggleLike: Story = {
   play: async ({ canvas, userEvent }) => {
     const likeButton = canvas.getByRole('button', { name: '3' })
     await userEvent.click(likeButton)
-    await expect(canvas.getByRole('button', { name: '4' })).toHaveAttribute('aria-pressed', 'true')
+    const pressedLikeButton = canvas.getByRole('button', { name: '4' })
+    await expect(pressedLikeButton).toHaveAttribute('aria-pressed', 'true')
+    await expect(pressedLikeButton).toHaveClass(/aria-pressed:text-action-like/)
   },
 }
 

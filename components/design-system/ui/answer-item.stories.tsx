@@ -34,7 +34,9 @@ export const NoTenure: Story = {
 export const Liked: Story = {
   args: { likeCount: 3, liked: true },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('3')).toBeVisible()
+    const likeButton = canvas.getByRole('button', { name: '3' })
+    await expect(likeButton).toHaveAttribute('aria-pressed', 'true')
+    await expect(likeButton).toHaveClass(/aria-pressed:text-action-like/)
   },
 }
 
