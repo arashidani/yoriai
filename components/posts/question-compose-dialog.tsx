@@ -139,7 +139,7 @@ export function QuestionComposeDialog() {
           />
         }
         secondaryLabel="Q&A管理"
-        onSecondaryClick={() => router.push('/my-questions')}
+        secondaryHref="/my-questions"
       />
       <DialogContent
         showCloseButton={false}
