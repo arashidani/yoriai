@@ -114,7 +114,7 @@ export function QuestionFormModal({
             <div className="flex w-full items-center gap-2 rounded-lg bg-informative-background p-3">
               <IconAi className="size-4 shrink-0 text-informative" />
               <p className="text-paragraph-small font-bold text-informative">
-                カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します
+                カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します。
               </p>
             </div>
             <Controller

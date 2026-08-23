@@ -20,7 +20,7 @@ export const Default: Story = {
     await expect(canvas.getByLabelText('質問の本文')).toBeVisible()
     await expect(canvas.getByText('カテゴリー')).toBeVisible()
     await expect(
-      canvas.getByText('カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します'),
+      canvas.getByText('カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します。'),
     ).toBeVisible()
     await expect(
       canvas.getByText(
