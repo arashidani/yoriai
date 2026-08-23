@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/design-system/button'
+import { AnswerEmptyState } from '@/components/design-system/ui/answer-empty-state'
 import { QuestionCard } from '@/components/design-system/ui/question-card'
 import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { AnswerForm } from '@/components/posts/answer-form'
@@ -71,7 +72,19 @@ export default async function QaDetailPage({ params }: Props) {
       <div className="flex w-full flex-col gap-6">
         <Separator />
         {answers.length === 0 ? (
-          <p className="text-paragraph text-secondary-foreground">まだ回答がありません。</p>
+          question.status === 'RESOLVED' ? (
+            <AnswerEmptyState
+              variant="xx"
+              title="回答がありません"
+              message={'答えが気になっちゃう\nワン！'}
+            />
+          ) : (
+            <AnswerEmptyState
+              variant="shikushiku"
+              title="まだ回答がありません"
+              message={'ボクもこれ\n気になるワンッ...'}
+            />
+          )
         ) : (
           <QaAnswerItemList answers={answers} />
         )}
