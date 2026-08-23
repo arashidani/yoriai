@@ -2,14 +2,14 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
 import { expect, userEvent } from 'storybook/test'
 import { Separator } from '@/components/ui/separator'
+import { MyQuestionsListFallback } from './my-questions-list-fallback'
 import {
   MyQuestionsNavigationProvider,
   MyQuestionsNavigationShell,
 } from './my-questions-navigation'
-import { MyQuestionsListFallback } from './my-questions-list-fallback'
 import { MyQuestionsPagination } from './my-questions-pagination'
+import { type MyQuestionsTab, MyQuestionsTabs } from './my-questions-tabs'
 import { PostedQuestionList } from './posted-question-list'
-import { MyQuestionsTabs, type MyQuestionsTab } from './my-questions-tabs'
 
 const postedItems = [
   {

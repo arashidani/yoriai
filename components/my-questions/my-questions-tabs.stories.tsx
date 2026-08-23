@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
 import { expect, userEvent } from 'storybook/test'
 import { MyQuestionsNavigationProvider } from './my-questions-navigation'
-import { MyQuestionsTabs, type MyQuestionsTab } from './my-questions-tabs'
+import { type MyQuestionsTab, MyQuestionsTabs } from './my-questions-tabs'
 
 const meta = {
   component: MyQuestionsTabs,

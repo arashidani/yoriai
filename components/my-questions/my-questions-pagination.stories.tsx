@@ -44,13 +44,7 @@ function InteractiveDemo() {
         setPage(Number(params.get('page')) || 1)
       }}
     >
-      <MyQuestionsPagination
-        page={page}
-        totalPages={5}
-        total={42}
-        pageSize={10}
-        tab="posted"
-      />
+      <MyQuestionsPagination page={page} totalPages={5} total={42} pageSize={10} tab="posted" />
     </MyQuestionsNavigationProvider>
   )
 }
