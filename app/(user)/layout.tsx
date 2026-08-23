@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import { Role } from '@/app/generated/prisma/enums'
-import { isChatEnabled } from '@/lib/chat/availability'
 import { AiChatWidget } from '@/components/layout/ai-chat-widget'
 import { Sidebar } from '@/components/layout/sidebar'
 import { getCurrentUser } from '@/lib/auth/current-user'
+import { isChatEnabled } from '@/lib/chat/availability'
 
 export default async function UserLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser()
