@@ -1,7 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, QuestionStatus } from '@/app/generated/prisma/enums'
-import { assignTags } from '@/lib/ai/assign-tags'
+import { assignTagsWithStatus } from '@/lib/ai/assign-tags'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -13,6 +13,8 @@ import {
   QuestionListResponseSchema,
   QuestionSchema,
   QuestionTagCategorySchema,
+  QuestionTagSchema,
+  TagAssignmentStatusSchema,
 } from '@/lib/hono/openapi/qa-schemas'
 import {
   errorResponse,
@@ -38,7 +40,7 @@ import {
 import { getOrAssignAnonymousProfile } from '@/lib/questions/assign-anonymous-profile'
 import { selectAnswerableQuestions } from '@/lib/questions/select-answerable-questions'
 import { createAnswerSchema } from '@/lib/schemas/answer'
-import { createPostSchema } from '@/lib/schemas/post'
+import { assignQuestionTagSchema, createPostSchema } from '@/lib/schemas/post'
 
 const auth = {
   security: [{ supabaseSession: [] }],
@@ -183,7 +185,11 @@ const createQuestionRoute = createRoute({
       description: '作成成功',
       content: {
         'application/json': {
-          schema: z.object({ question: QuestionSchema, moderation: ModerationResultSchema }),
+          schema: z.object({
+            question: QuestionSchema,
+            moderation: ModerationResultSchema,
+            tagAssignment: TagAssignmentStatusSchema,
+          }),
         },
       },
     },
@@ -191,7 +197,11 @@ const createQuestionRoute = createRoute({
       description: '同一内容の再送',
       content: {
         'application/json': {
-          schema: z.object({ question: QuestionSchema, moderation: ModerationResultSchema }),
+          schema: z.object({
+            question: QuestionSchema,
+            moderation: ModerationResultSchema,
+            tagAssignment: TagAssignmentStatusSchema,
+          }),
         },
       },
     },
@@ -199,6 +209,30 @@ const createQuestionRoute = createRoute({
     400: errorResponse('不正なタグ', '選択されたタグが見つかりません'),
     409: errorResponse('同じキーで異なる内容', '同じ投稿操作に異なる内容が指定されています'),
     500: errorResponse('作成失敗', '投稿の作成に失敗しました'),
+  },
+})
+
+const assignTagRoute = createRoute({
+  method: 'post',
+  path: '/{id}/tag-assignment',
+  tags: ['questions'],
+  summary: '質問へタグを付与（AI再試行または手動選択）',
+  ...auth,
+  request: {
+    params: IdParamSchema,
+    body: { required: true, content: { 'application/json': { schema: assignQuestionTagSchema } } },
+  },
+  responses: {
+    200: {
+      description: 'タグ付与成功',
+      content: { 'application/json': { schema: z.object({ tag: QuestionTagSchema }) } },
+    },
+    400: errorResponse('不正なタグ', '選択されたタグが見つかりません'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('質問者以外', 'Forbidden'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+    409: errorResponse('操作不可', 'この質問にはタグを付与できません'),
+    503: errorResponse('AIタグ付与失敗', 'AIによるタグ付与に失敗しました'),
   },
 })
 
@@ -541,6 +575,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (process.env.MOCK_MODE === 'true') {
       const selectedTag = tagId ? MOCK_TAGS.find((tag) => tag.id === tagId) : undefined
       if (tagId && !selectedTag) return c.json({ error: '選択されたタグが見つかりません' }, 400)
+      const tagAssignment: 'assigned' | 'failed' = selectedTag ? 'assigned' : 'failed'
       return c.json(
         {
           question: toQuestionResponse(
@@ -575,13 +610,14 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
             user.id,
           ),
           moderation: { isHidden: false },
+          tagAssignment,
         },
         201,
       )
     }
     const manualTag = tagId
       ? await prisma.tag.findUnique({
-          where: { id: tagId },
+          where: { id: tagId, isWorkTag: true },
           select: {
             id: true,
             name: true,
@@ -605,15 +641,22 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         return c.json({ error: '投稿の作成に失敗しました' }, 500)
       const existing = await prisma.post.findUnique({
         where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
-        include: { author: true },
+        include: { author: true, tags: { include: { tag: true } } },
       })
       if (!existing) return c.json({ error: '投稿の作成に失敗しました' }, 500)
       if (existing.title !== data.title || existing.body !== data.body)
         return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
+      const tagAssignment: 'assigned' | 'failed' | 'skipped' =
+        existing.deletedAt || (existing.tags?.length ?? 0) > 0
+          ? (existing.tags?.length ?? 0) > 0
+            ? 'assigned'
+            : 'skipped'
+          : 'failed'
       return c.json(
         {
           question: toQuestionResponse(existing, user.id),
           moderation: { isHidden: Boolean(existing.deletedAt) },
+          tagAssignment,
         },
         200,
       )
@@ -654,11 +697,13 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     }
     // biome-ignore lint/suspicious/noExplicitAny: temporary PostTag include shape
     let tags: any[] = []
+    let tagAssignment: 'assigned' | 'failed' | 'skipped' = post.deletedAt ? 'skipped' : 'failed'
     if (!post.deletedAt) {
       try {
         let selected = manualTag
         if (!selected) {
           const allTags = await prisma.tag.findMany({
+            where: { isWorkTag: true },
             select: {
               id: true,
               name: true,
@@ -668,8 +713,12 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
               createdAt: true,
             },
           })
-          const names = await assignTags(post.title, post.body, allTags)
-          selected = allTags.find((tag) => names.includes(tag.name)) ?? null
+          const assignment = await assignTagsWithStatus(post.title, post.body, allTags)
+          tagAssignment = assignment.status === 'assigned' ? 'assigned' : 'failed'
+          selected =
+            assignment.status === 'assigned'
+              ? (allTags.find((tag) => tag.name === assignment.tagNames[0]) ?? null)
+              : null
         }
         if (selected) {
           await prisma.postTag.createMany({
@@ -677,18 +726,87 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
             skipDuplicates: true,
           })
           tags = [{ id: `assigned-${selected.id}`, createdAt: selected.createdAt, tag: selected }]
+          tagAssignment = 'assigned'
         }
       } catch (error) {
         console.error('Failed to assign tags', { postId: post.id, error })
+        tagAssignment = 'failed'
       }
     }
     return c.json(
       {
         question: toQuestionResponse({ ...post, tags }, user.id),
         moderation: { isHidden: Boolean(post.deletedAt) },
+        tagAssignment,
       },
       201,
     )
+  })
+  .openapi(assignTagRoute, async (c) => {
+    const user = c.get('user')
+    const { id } = c.req.valid('param')
+    const input = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((item) => item.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+      const tag =
+        input.mode === 'manual'
+          ? MOCK_TAGS.find((item) => item.id === input.tagId && item.isWorkTag)
+          : MOCK_TAGS.find((item) => item.isWorkTag)
+      if (!tag) {
+        if (input.mode === 'manual') return c.json({ error: '選択されたタグが見つかりません' }, 400)
+        return c.json({ error: 'AIによるタグ付与に失敗しました' }, 503)
+      }
+      return c.json({ tag: { id: tag.id, name: tag.name } }, 200)
+    }
+
+    const post = await prisma.post.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        authorId: true,
+        deletedAt: true,
+        status: true,
+        tags: { select: { tag: { select: { id: true, name: true } } }, take: 1 },
+      },
+    })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+    if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+    if (post.deletedAt || post.status === QuestionStatus.HIDDEN)
+      return c.json({ error: 'この質問にはタグを付与できません' }, 409)
+    const existingTag = post.tags[0]?.tag
+    if (existingTag) return c.json({ tag: existingTag }, 200)
+
+    const candidates = await prisma.tag.findMany({
+      where: {
+        isWorkTag: true,
+        ...(input.mode === 'manual' ? { id: input.tagId } : {}),
+      },
+      select: { id: true, name: true, category: true, description: true },
+    })
+    if (input.mode === 'manual' && candidates.length === 0)
+      return c.json({ error: '選択されたタグが見つかりません' }, 400)
+
+    let selected: (typeof candidates)[number] | null = candidates[0] ?? null
+    if (input.mode === 'ai') {
+      const assignment = await assignTagsWithStatus(post.title, post.body, candidates)
+      if (assignment.status !== 'assigned')
+        return c.json({ error: 'AIによるタグ付与に失敗しました' }, 503)
+      selected = candidates.find((tag) => tag.name === assignment.tagNames[0]) ?? null
+      if (!selected) return c.json({ error: 'AIによるタグ付与に失敗しました' }, 503)
+    }
+
+    if (!selected) return c.json({ error: '選択されたタグが見つかりません' }, 400)
+
+    await prisma.postTag.createMany({
+      data: [{ postId: post.id, tagId: selected.id }],
+      skipDuplicates: true,
+    })
+    return c.json({ tag: { id: selected.id, name: selected.name } }, 200)
   })
   .openapi(createAnswerRoute, async (c) => {
     const user = c.get('user')
@@ -871,14 +989,21 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         data: [{ postId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count > 0 && post.authorId) {
-        await tx.notification.create({
-          data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
-        })
-      }
-      const count = await tx.questionLike.count({ where: { postId: id } })
-      await tx.post.update({ where: { id }, data: { likeCount: count } })
-      return count
+      if (created.count === 0) return post.likeCount
+
+      const [, updatedPost] = await Promise.all([
+        post.authorId
+          ? tx.notification.create({
+              data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
+            })
+          : Promise.resolve(null),
+        tx.post.update({
+          where: { id },
+          data: { likeCount: { increment: 1 } },
+          select: { likeCount: true },
+        }),
+      ])
+      return updatedPost.likeCount
     })
     return c.json({ liked: true, likeCount }, 200)
   })
@@ -893,10 +1018,14 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (process.env.MOCK_MODE === 'true')
       return c.json({ liked: false, likeCount: Math.max(0, post.likeCount - 1) }, 200)
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.questionLike.deleteMany({ where: { postId: id, userId: user.id } })
-      const count = await tx.questionLike.count({ where: { postId: id } })
-      await tx.post.update({ where: { id }, data: { likeCount: count } })
-      return count
+      const deleted = await tx.questionLike.deleteMany({ where: { postId: id, userId: user.id } })
+      if (deleted.count === 0) return post.likeCount
+      const updatedPost = await tx.post.update({
+        where: { id },
+        data: { likeCount: { decrement: 1 } },
+        select: { likeCount: true },
+      })
+      return updatedPost.likeCount
     })
     return c.json({ liked: false, likeCount }, 200)
   })
@@ -906,7 +1035,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const post =
       process.env.MOCK_MODE === 'true'
         ? MOCK_POSTS.find((item) => item.id === id)
-        : await prisma.post.findUnique({ where: { id } })
+        : await prisma.post.findUnique({ where: { id }, select: { id: true } })
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (process.env.MOCK_MODE !== 'true')
       await prisma.postBookmark.createMany({
@@ -921,7 +1050,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const post =
       process.env.MOCK_MODE === 'true'
         ? MOCK_POSTS.find((item) => item.id === id)
-        : await prisma.post.findUnique({ where: { id } })
+        : await prisma.post.findUnique({ where: { id }, select: { id: true } })
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (process.env.MOCK_MODE !== 'true')
       await prisma.postBookmark.deleteMany({ where: { postId: id, userId: user.id } })

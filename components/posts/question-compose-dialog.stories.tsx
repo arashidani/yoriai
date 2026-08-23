@@ -50,6 +50,7 @@ export const SubmitSuccess: Story = {
             {
               question: { id: 'post-new', title: body.title, body: body.body },
               moderation: { isHidden: false },
+              tagAssignment: 'assigned',
             },
             { status: 201 },
           )
@@ -63,5 +64,35 @@ export const SubmitSuccess: Story = {
     await userEvent.type(screen.getByLabelText('質問の本文'), '申請画面の場所が分かりません。')
     await userEvent.click(screen.getByRole('button', { name: /投稿する/ }))
     await expect(await screen.findByText('質問の投稿が完了しました')).toBeVisible()
+  },
+}
+
+export const TagAssignmentFailed: Story = {
+  args: {},
+  parameters: {
+    msw: {
+      handlers: [
+        http.post('/api/questions', async ({ request }) => {
+          const body = (await request.json()) as { title: string; body: string }
+          return HttpResponse.json(
+            {
+              question: { id: 'post-new', title: body.title, body: body.body },
+              moderation: { isHidden: false },
+              tagAssignment: 'failed',
+            },
+            { status: 201 },
+          )
+        }),
+      ],
+    },
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: '質問する' }))
+    await userEvent.type(await screen.findByLabelText('質問のタイトル'), '有給申請の方法について')
+    await userEvent.type(screen.getByLabelText('質問の本文'), '申請画面の場所が分かりません。')
+    await userEvent.click(screen.getByRole('button', { name: /投稿する/ }))
+    await expect(await screen.findByText('タグを付与できませんでした')).toBeVisible()
+    await expect(screen.getByRole('button', { name: 'AIでもう一度試す' })).toBeVisible()
+    await expect(screen.getByText('自分でカテゴリーを選ぶ')).toBeVisible()
   },
 }

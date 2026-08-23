@@ -7,12 +7,13 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/design-system/button'
 import { QuestionCompletionModal } from '@/components/design-system/question-completion-modal'
 import { QuestionFormModal } from '@/components/design-system/question-form-modal'
+import { QuestionTagRecoveryModal } from '@/components/design-system/question-tag-recovery-modal'
 import { ActionButtons } from '@/components/design-system/ui/action-buttons'
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
 import { client } from '@/lib/hono/client'
 import type { CreatePostInput } from '@/lib/schemas/post'
 
-type Step = 'form' | 'completion'
+type Step = 'form' | 'tag-recovery' | 'completion'
 
 async function fetchQuestionTags() {
   const res = await client.api['question-tags'].$get()
@@ -49,7 +50,7 @@ export function QuestionComposeDialog() {
     if (next) {
       setFormInstance((instance) => instance + 1)
     } else {
-      if (isSubmittingRef.current) return
+      if (isSubmittingRef.current || step === 'tag-recovery') return
       if (step === 'completion') {
         queryClient.invalidateQueries({ queryKey: ['questions'] })
       }
@@ -92,13 +93,26 @@ export function QuestionComposeDialog() {
       }
 
       setCreatedQuestionId(body.question.id)
-      setStep('completion')
+      setStep(body.tagAssignment === 'failed' ? 'tag-recovery' : 'completion')
     } catch {
       setError('通信に失敗しました。画面をリロードせず、もう一度お試しください')
     } finally {
       isSubmittingRef.current = false
       setIsSubmitting(false)
     }
+  }
+
+  async function assignTag(input: { mode: 'ai' } | { mode: 'manual'; tagId: string }) {
+    if (!createdQuestionId) throw new Error('投稿情報を確認できませんでした')
+    const res = await client.api.questions[':id']['tag-assignment'].$post({
+      param: { id: createdQuestionId },
+      json: input,
+    })
+    if (!res.ok) {
+      const body = await res.json()
+      throw new Error('error' in body ? body.error : 'タグの付与に失敗しました')
+    }
+    setStep('completion')
   }
 
   function handleConfirm() {
@@ -141,6 +155,12 @@ export function QuestionComposeDialog() {
             error={error ?? undefined}
             tagCategories={tagCategoriesQuery.data}
             isTagCategoriesLoading={tagCategoriesQuery.isPending}
+          />
+        ) : step === 'tag-recovery' ? (
+          <QuestionTagRecoveryModal
+            tagCategories={tagCategoriesQuery.data ?? []}
+            onRetry={() => assignTag({ mode: 'ai' })}
+            onAssignManually={(tagId) => assignTag({ mode: 'manual', tagId })}
           />
         ) : (
           <QuestionCompletionModal onConfirm={handleConfirm} onClose={handleClose} />
