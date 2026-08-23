@@ -192,6 +192,7 @@ const createQuestionRoute = createRoute({
       },
     },
     401: errorResponse('未認証', 'Unauthorized'),
+    400: errorResponse('不正なタグ', '選択されたタグが見つかりません'),
     409: errorResponse('同じキーで異なる内容', '同じ投稿操作に異なる内容が指定されています'),
     500: errorResponse('作成失敗', '投稿の作成に失敗しました'),
   },
@@ -531,21 +532,37 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
   .openapi(createQuestionRoute, async (c) => {
     const user = c.get('user')
     const data = c.req.valid('json')
+    const { tagId, ...postData } = data
     const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
     if (process.env.MOCK_MODE === 'true') {
+      const selectedTag = tagId ? MOCK_TAGS.find((tag) => tag.id === tagId) : undefined
+      if (tagId && !selectedTag) return c.json({ error: '選択されたタグが見つかりません' }, 400)
       return c.json(
         {
           question: toQuestionResponse(
             {
               id: `post-${Date.now()}`,
-              ...data,
+              ...postData,
               authorId: user.id,
               author: user,
               status: QuestionStatus.OPEN,
               answerCount: 0,
               likeCount: 0,
               resolvedAt: null,
-              tags: [],
+              tags: selectedTag
+                ? [
+                    {
+                      id: `manual-${selectedTag.id}`,
+                      createdAt: new Date(),
+                      tag: {
+                        ...selectedTag,
+                        categoryDefinition: MOCK_TAG_CATEGORIES.find(
+                          (category) => category.name === selectedTag.category,
+                        ),
+                      },
+                    },
+                  ]
+                : [],
               likes: [],
               bookmarks: [],
               createdAt: new Date(),
@@ -558,11 +575,25 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         201,
       )
     }
+    const manualTag = tagId
+      ? await prisma.tag.findUnique({
+          where: { id: tagId },
+          select: {
+            id: true,
+            name: true,
+            category: true,
+            categoryDefinition: true,
+            description: true,
+            createdAt: true,
+          },
+        })
+      : null
+    if (tagId && !manualTag) return c.json({ error: '選択されたタグが見つかりません' }, 400)
     // biome-ignore lint/suspicious/noExplicitAny: Prisma result variants share one variable
     let post: any
     try {
       post = await prisma.post.create({
-        data: { ...data, authorId: user.id, idempotencyKey },
+        data: { ...postData, authorId: user.id, idempotencyKey },
         include: { author: true },
       })
     } catch (error) {
@@ -621,18 +652,21 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     let tags: any[] = []
     if (!post.deletedAt) {
       try {
-        const allTags = await prisma.tag.findMany({
-          select: {
-            id: true,
-            name: true,
-            category: true,
-            categoryDefinition: true,
-            description: true,
-            createdAt: true,
-          },
-        })
-        const names = await assignTags(post.title, post.body, allTags)
-        const selected = allTags.find((tag) => names.includes(tag.name))
+        let selected = manualTag
+        if (!selected) {
+          const allTags = await prisma.tag.findMany({
+            select: {
+              id: true,
+              name: true,
+              category: true,
+              categoryDefinition: true,
+              description: true,
+              createdAt: true,
+            },
+          })
+          const names = await assignTags(post.title, post.body, allTags)
+          selected = allTags.find((tag) => names.includes(tag.name)) ?? null
+        }
         if (selected) {
           await prisma.postTag.createMany({
             data: [{ postId: post.id, tagId: selected.id }],

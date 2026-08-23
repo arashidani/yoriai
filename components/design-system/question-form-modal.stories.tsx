@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn } from 'storybook/test'
+import { expect, fn, screen } from 'storybook/test'
 import { QuestionFormModal } from './question-form-modal'
 
 const meta = {
@@ -11,25 +11,33 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   args: {
-    displayName: '名無しのおせワニ',
-    avatarUrl: '/anonymous-profiles/wani.png',
     onSubmit: fn(),
     onClose: fn(),
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('質問を投稿する')).toBeVisible()
-    await expect(canvas.getByText('名無しのおせワニ')).toBeVisible()
+    await expect(canvas.queryByText('名無しのおせワニ')).not.toBeInTheDocument()
     await expect(canvas.getByLabelText('質問のタイトル')).toBeVisible()
     await expect(canvas.getByLabelText('質問の本文')).toBeVisible()
     await expect(
-      canvas.getByText('AIが自動でカテゴリタグを付与し、回答されやすくします。'),
+      canvas.getByText('カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します'),
+    ).toBeVisible()
+    await expect(canvas.getByLabelText('カテゴリー')).toBeVisible()
+    await expect(canvas.getByText('手動でカテゴリーを選択')).toBeVisible()
+    await expect(
+      canvas.getByText('※投稿内容の確認のため反映に30秒ほどかかる場合があります。'),
+    ).toBeVisible()
+    await expect(
+      canvas.getByText('※不適切と判断された投稿は運営により削除される可能性がございます。'),
+    ).toBeVisible()
+    await expect(
+      canvas.getByText('※匿名アイコン・匿名ユーザーネームがランダムで付与されます。'),
     ).toBeVisible()
   },
 }
 
 export const ValidationErrors: Story = {
   args: {
-    displayName: '名無しのおせワニ',
     onSubmit: fn(),
   },
   play: async ({ args, canvas, userEvent }) => {
@@ -42,7 +50,6 @@ export const ValidationErrors: Story = {
 
 export const Submit: Story = {
   args: {
-    displayName: '名無しのおせワニ',
     onSubmit: fn(),
     onClose: fn(),
   },
@@ -51,7 +58,11 @@ export const Submit: Story = {
     await userEvent.type(canvas.getByLabelText('質問の本文'), '申請画面の場所が分かりません。')
     await userEvent.click(canvas.getByRole('button', { name: /投稿する/ }))
     await expect(args.onSubmit).toHaveBeenCalledWith(
-      { title: '有給申請の方法について', body: '申請画面の場所が分かりません。' },
+      {
+        title: '有給申請の方法について',
+        body: '申請画面の場所が分かりません。',
+        tagId: undefined,
+      },
       expect.anything(),
     )
     await userEvent.click(canvas.getByRole('button', { name: '閉じる' }))
@@ -59,9 +70,33 @@ export const Submit: Story = {
   },
 }
 
+export const ManualTag: Story = {
+  args: {
+    onSubmit: fn(),
+    tagCategories: [
+      {
+        id: 'category-1',
+        name: '社内ルール・手続き',
+        tags: [{ id: 'tag-1', name: '勤怠・有給関連' }],
+      },
+    ],
+  },
+  play: async ({ args, canvas, userEvent }) => {
+    await userEvent.type(canvas.getByLabelText('質問のタイトル'), '有給申請について')
+    await userEvent.type(canvas.getByLabelText('質問の本文'), '申請方法を教えてください。')
+    await userEvent.click(canvas.getByLabelText('カテゴリー'))
+    await expect(screen.queryByText('社内ルール・手続き')).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByText('勤怠・有給関連'))
+    await userEvent.click(canvas.getByRole('button', { name: /投稿する/ }))
+    await expect(args.onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ tagId: 'tag-1' }),
+      expect.anything(),
+    )
+  },
+}
+
 export const Submitting: Story = {
   args: {
-    displayName: '名無しのおせワニ',
     onSubmit: fn(),
     isSubmitting: true,
     onClose: fn(),
@@ -74,9 +109,8 @@ export const Submitting: Story = {
   },
 }
 
-export const Error: Story = {
+export const ErrorState: Story = {
   args: {
-    displayName: '名無しのおせワニ',
     onSubmit: fn(),
     error: '通信に失敗しました。画面をリロードせず、もう一度お試しください',
   },
