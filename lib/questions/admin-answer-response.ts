@@ -1,4 +1,8 @@
 import type { AnonymousProfile, Answer, PostAnonymousProfile } from '@/app/generated/prisma/client'
+import {
+  anonymousProfileDisplayName,
+  avatarUrlForAlias,
+} from '@/lib/questions/anonymous-profile-display'
 
 type AnswerWithAnonymousProfile = Answer & {
   postAnonymousProfile: PostAnonymousProfile & { anonymousProfile: AnonymousProfile }
@@ -14,8 +18,14 @@ export function toAdminAnswerResponse(answer: AnswerWithAnonymousProfile) {
     likeCount: answer.likeCount,
     anonymousProfile: {
       id: answer.postAnonymousProfile.anonymousProfile.id,
-      displayName: answer.postAnonymousProfile.anonymousProfile.displayName,
-      avatarUrl: answer.postAnonymousProfile.anonymousProfile.avatarUrl,
+      displayName: anonymousProfileDisplayName(
+        answer.postAnonymousProfile.anonymousProfile.displayName,
+        answer.postAnonymousProfile.aliasNumber,
+      ),
+      avatarUrl: avatarUrlForAlias(
+        answer.postAnonymousProfile.anonymousProfile.avatarUrls,
+        answer.postAnonymousProfile.aliasNumber,
+      ),
     },
     createdAt: answer.createdAt,
     updatedAt: answer.updatedAt,
