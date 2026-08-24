@@ -22,6 +22,8 @@ type UseDebouncedOptimisticToggleOptions<T> = {
   initialPressed: boolean
   /** いいね数など。未指定ならカウントの楽観更新は行わない */
   initialCount?: number
+  /** 同一対象の楽観的な props 更新を初期値として取り込まないための識別子 */
+  resetKey?: string
   /** トグル後、API を叩くまでのデバウンス時間（ミリ秒） */
   debounceMs?: number
   /** false のときは UI 更新のみで API 同期しない（未ログイン時など） */
@@ -47,6 +49,7 @@ type UseDebouncedOptimisticToggleOptions<T> = {
 export function useDebouncedOptimisticToggle<T>({
   initialPressed,
   initialCount,
+  resetKey,
   debounceMs = DEFAULT_DEBOUNCE_MS,
   enabled = true,
   onSync,
@@ -64,9 +67,14 @@ export function useDebouncedOptimisticToggle<T>({
   // 同一フック内で onSync が並行実行されないよう排他する
   const inFlightRef = useRef(false)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const resetKeyRef = useRef(resetKey)
 
-  // 親から props が変わったとき（別質問へ遷移など）に状態をリセット
+  // resetKey 指定時は別対象への遷移だけをサーバー確定値として取り込む。
+  // 同一対象の楽観キャッシュ更新を取り込むと、未送信の操作を確定済みと誤認してしまう。
   useEffect(() => {
+    if (resetKey !== undefined && resetKeyRef.current === resetKey) return
+
+    resetKeyRef.current = resetKey
     confirmedPressedRef.current = initialPressed
     pressedRef.current = initialPressed
     setPressed(initialPressed)
@@ -75,7 +83,7 @@ export function useDebouncedOptimisticToggle<T>({
       confirmedCountRef.current = nextCount
       setCount(nextCount)
     }
-  }, [initialPressed, initialCount])
+  }, [initialPressed, initialCount, resetKey])
 
   /** pressedRef と confirmedPressedRef が食い違っていれば API 同期する */
   const syncIfNeeded = useCallback(async () => {
