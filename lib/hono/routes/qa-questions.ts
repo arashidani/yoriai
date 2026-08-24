@@ -1002,27 +1002,31 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (post.authorId === user.id) return c.json({ error: '自分の質問にはいいねできません' }, 403)
     if (process.env.MOCK_MODE === 'true')
       return c.json({ liked: true, likeCount: post.likeCount + 1 }, 200)
-    const likeCount = await prisma.$transaction(async (tx) => {
+    const { likeCount, isNewLike } = await prisma.$transaction(async (tx) => {
       const created = await tx.questionLike.createMany({
         data: [{ postId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count === 0) return post.likeCount
+      if (created.count === 0) return { likeCount: post.likeCount, isNewLike: false }
 
-      const [, updatedPost] = await Promise.all([
-        post.authorId
-          ? tx.notification.create({
-              data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
-            })
-          : Promise.resolve(null),
-        tx.post.update({
-          where: { id },
-          data: { likeCount: { increment: 1 } },
-          select: { likeCount: true },
-        }),
-      ])
-      return updatedPost.likeCount
+      const updatedPost = await tx.post.update({
+        where: { id },
+        data: { likeCount: { increment: 1 } },
+        select: { likeCount: true },
+      })
+      return { likeCount: updatedPost.likeCount, isNewLike: true }
     })
+
+    if (isNewLike && post.authorId) {
+      try {
+        await prisma.notification.create({
+          data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
+        })
+      } catch (error) {
+        console.error('Failed to create question like notification', { postId: id, error })
+      }
+    }
+
     return c.json({ liked: true, likeCount }, 200)
   })
   .openapi(unlikeRoute, async (c) => {

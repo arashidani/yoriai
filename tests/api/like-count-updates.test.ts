@@ -1,8 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
 
-const { prismaMock } = vi.hoisted(() => ({
+const { prismaMock, transactionNotificationCreate } = vi.hoisted(() => ({
   prismaMock: {
+    post: { findUnique: vi.fn(), update: vi.fn() },
+    questionLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
     answer: { findUnique: vi.fn(), update: vi.fn() },
     answerLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
     hirobaPost: { findUnique: vi.fn(), update: vi.fn() },
@@ -12,6 +14,7 @@ const { prismaMock } = vi.hoisted(() => ({
     notification: { create: vi.fn() },
     $transaction: vi.fn(),
   },
+  transactionNotificationCreate: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma/client', () => ({ prisma: prismaMock }))
@@ -29,6 +32,16 @@ vi.mock('@/lib/hono/middleware/auth', async () => {
 import app from '@/lib/hono/app'
 
 const cases = [
+  {
+    label: '質問',
+    endpoint: '/api/questions/question-1/likes',
+    id: 'question-1',
+    entity: prismaMock.post,
+    reaction: prismaMock.questionLike,
+    likeData: { postId: 'question-1', userId: MOCK_USERS[0].id },
+    unlikeWhere: { postId: 'question-1', userId: MOCK_USERS[0].id },
+    notificationData: { userId: 'user-2', type: 'POST_LIKED', postId: 'question-1' },
+  },
   {
     label: '回答',
     endpoint: '/api/answers/answer-1/likes',
@@ -83,7 +96,10 @@ describe.each(cases)('$labelのLike/Unlike', ({
   beforeEach(() => {
     vi.clearAllMocks()
     prismaMock.$transaction.mockImplementation((callback: (tx: typeof prismaMock) => unknown) =>
-      callback(prismaMock),
+      callback({
+        ...prismaMock,
+        notification: { create: transactionNotificationCreate },
+      }),
     )
     entity.findUnique.mockResolvedValue({ id, authorId: 'user-2', likeCount: 5 })
   })
@@ -98,6 +114,7 @@ describe.each(cases)('$labelのLike/Unlike', ({
     expect(await response.json()).toEqual({ liked: true, likeCount: 6 })
     expect(reaction.createMany).toHaveBeenCalledWith({ data: [likeData], skipDuplicates: true })
     expect(prismaMock.notification.create).toHaveBeenCalledWith({ data: notificationData })
+    expect(transactionNotificationCreate).not.toHaveBeenCalled()
     expect(reaction.count).not.toHaveBeenCalled()
     expect(entity.update).toHaveBeenCalledWith({
       where: { id },
@@ -116,6 +133,37 @@ describe.each(cases)('$labelのLike/Unlike', ({
     expect(reaction.count).not.toHaveBeenCalled()
     expect(prismaMock.notification.create).not.toHaveBeenCalled()
     expect(entity.update).not.toHaveBeenCalled()
+  })
+
+  it('通知作成が失敗してもLikeは成立する', async () => {
+    const error = new Error('notification failed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    reaction.createMany.mockResolvedValue({ count: 1 })
+    entity.update.mockResolvedValue({ likeCount: 6 })
+    prismaMock.notification.create.mockRejectedValue(error)
+
+    const response = await app.request(endpoint, { method: 'POST' })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ liked: true, likeCount: 6 })
+    expect(prismaMock.notification.create).toHaveBeenCalledWith({ data: notificationData })
+    expect(transactionNotificationCreate).not.toHaveBeenCalled()
+    expect(consoleError).toHaveBeenCalled()
+
+    consoleError.mockRestore()
+  })
+
+  it('作者がいない場合は新規Likeでも通知を作成しない', async () => {
+    entity.findUnique.mockResolvedValue({ id, authorId: null, likeCount: 5 })
+    reaction.createMany.mockResolvedValue({ count: 1 })
+    entity.update.mockResolvedValue({ likeCount: 6 })
+
+    const response = await app.request(endpoint, { method: 'POST' })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ liked: true, likeCount: 6 })
+    expect(prismaMock.notification.create).not.toHaveBeenCalled()
+    expect(transactionNotificationCreate).not.toHaveBeenCalled()
   })
 
   it('UnlikeはCOUNT再計算せずdecrementする', async () => {
