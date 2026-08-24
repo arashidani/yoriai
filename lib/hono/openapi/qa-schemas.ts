@@ -48,6 +48,13 @@ export const QuestionSchema = z
   })
   .openapi('Question')
 
+export const AnswerableQuestionSchema = z
+  .object({
+    id: z.string(),
+    title: z.string(),
+  })
+  .openapi('AnswerableQuestion')
+
 export const QaAnswerSchema = z
   .object({
     id: z.string(),

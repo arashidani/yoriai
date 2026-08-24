@@ -98,8 +98,8 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     ])
     expect(
       body.questions.every(
-        (question: { status: string; isOwnQuestion: boolean }) =>
-          question.status === 'OPEN' && !question.isOwnQuestion,
+        (question: Record<string, unknown>) =>
+          Object.keys(question).sort().join(',') === 'id,title',
       ),
     ).toBe(true)
   })
