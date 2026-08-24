@@ -2,10 +2,12 @@ import { notFound } from 'next/navigation'
 import { Role } from '@/app/generated/prisma/enums'
 import { HirobaFeed } from '@/components/hiroba/hiroba-feed'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { findHiroba } from '@/lib/hiroba/catalog'
+import { findHiroba, HIROBA_CATALOG } from '@/lib/hiroba/catalog'
 import { MOCK_HIROBA_POSTS, MOCK_JOINED_HIROBA_SLUGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
+
+const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000
 
 async function getHiroba(slug: string) {
   const catalogHiroba = findHiroba(slug)
@@ -79,13 +81,38 @@ async function getPosts(hirobaId: string, hirobaSlug: string, currentUserId: str
   })
 }
 
+async function getPopularPosts() {
+  if (process.env.MOCK_MODE === 'true') {
+    return [...MOCK_HIROBA_POSTS]
+      .sort((a, b) => b.likeCount - a.likeCount)
+      .slice(0, 3)
+      .map((post) => ({
+        id: post.id,
+        hirobaSlug: HIROBA_CATALOG.find((hiroba) => hiroba.id === post.hirobaId)?.slug ?? '',
+        title: post.title,
+        body: post.body,
+      }))
+  }
+
+  const posts = await prisma.hirobaPost.findMany({
+    where: { createdAt: { gte: new Date(Date.now() - THREE_DAYS_IN_MS) }, deletedAt: null },
+    select: { id: true, title: true, body: true, hiroba: { select: { slug: true } } },
+    orderBy: [{ likeCount: 'desc' }, { createdAt: 'desc' }],
+    take: 3,
+  })
+  return posts.map(({ hiroba, ...post }) => ({ ...post, hirobaSlug: hiroba.slug }))
+}
+
 export default async function HirobaDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const hiroba = await getHiroba(slug)
   if (!hiroba) notFound()
 
   const user = await getCurrentUser()
-  const posts = await getPosts(hiroba.id, hiroba.slug, user?.id)
+  const [posts, popularPosts] = await Promise.all([
+    getPosts(hiroba.id, hiroba.slug, user?.id),
+    getPopularPosts(),
+  ])
   const isAdmin = user?.role === Role.ADMIN
   const joined = user
     ? process.env.MOCK_MODE === 'true'
@@ -96,5 +123,13 @@ export default async function HirobaDetailPage({ params }: { params: Promise<{ s
         }))
     : false
 
-  return <HirobaFeed hiroba={hiroba} posts={posts} isAdmin={isAdmin} initialJoined={joined} />
+  return (
+    <HirobaFeed
+      hiroba={hiroba}
+      posts={posts}
+      popularPosts={popularPosts}
+      isAdmin={isAdmin}
+      initialJoined={joined}
+    />
+  )
 }
