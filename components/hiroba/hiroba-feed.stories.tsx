@@ -43,11 +43,23 @@ export const Default: Story = {
       tone: 'lime',
     },
     posts,
+    popularPosts: [
+      {
+        id: 'hiroba-post-popular',
+        hirobaSlug: 'gaming',
+        title: 'いま人気のゲームを教えてください',
+        body: '週末に遊ぶゲームを探しています。',
+      },
+    ],
     isAdmin: false,
     initialJoined: false,
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getAllByText(/今日のランチ/)).toHaveLength(2)
+    await expect(canvas.getByText(/今日のランチ/)).toBeVisible()
+    await expect(canvas.getByRole('link', { name: /いま人気のゲーム/ })).toHaveAttribute(
+      'href',
+      '/hiroba/gaming/posts/hiroba-post-popular',
+    )
     await expect(canvas.getByRole('link', { name: '投稿する' })).toBeVisible()
     await expect(canvas.getByRole('button', { name: '参加する' })).toHaveAttribute(
       'aria-pressed',

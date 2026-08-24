@@ -17,6 +17,7 @@ import { HirobaPostList } from './hiroba-post-list'
 type HirobaFeedProps = {
   hiroba: HirobaCatalogItem
   posts: HirobaPost[]
+  popularPosts: { id: string; hirobaSlug: string; title: string; body: string }[]
   isAdmin: boolean
   initialJoined: boolean
 }
@@ -31,7 +32,7 @@ const bannerTones = {
 } as const
 
 /** ひろばの紹介、参加導線、投稿フィード、補助情報をまとめた詳細画面。 */
-export function HirobaFeed({ hiroba, posts, isAdmin, initialJoined }: HirobaFeedProps) {
+export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined }: HirobaFeedProps) {
   const router = useRouter()
   const [joined, setJoined] = useState(initialJoined)
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
@@ -168,16 +169,16 @@ export function HirobaFeed({ hiroba, posts, isAdmin, initialJoined }: HirobaFeed
                 <Flame className="size-5 text-primary" aria-hidden />
                 人気の投稿
               </h2>
-              {posts.length === 0 ? (
+              {popularPosts.length === 0 ? (
                 <p className="text-paragraph-small text-secondary-foreground">
                   投稿が集まると、ここに人気の投稿が表示されます。
                 </p>
               ) : (
                 <div className="grid min-w-0 grid-cols-1 gap-2">
-                  {posts.slice(0, 3).map((post) => (
+                  {popularPosts.map((post) => (
                     <Link
                       key={post.id}
-                      href={`/hiroba/${hiroba.slug}/posts/${post.id}`}
+                      href={`/hiroba/${post.hirobaSlug}/posts/${post.id}`}
                       className="min-w-0 rounded-lg border border-input bg-background p-3 hover:border-primary"
                     >
                       <p className="truncate text-paragraph-small font-bold">{post.title}</p>

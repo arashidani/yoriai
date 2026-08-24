@@ -5,12 +5,12 @@ import { prisma } from '@/lib/prisma/client'
  * 本番導入前に、実際のデザイン・コピーで置き換えること。
  */
 const ANONYMOUS_PROFILES = [
-  { displayName: 'ねこ', avatarUrl: '/anonymous-profiles/cat.svg' },
-  { displayName: 'いぬ', avatarUrl: '/anonymous-profiles/dog.svg' },
-  { displayName: 'うさぎ', avatarUrl: '/anonymous-profiles/rabbit.svg' },
-  { displayName: 'きつね', avatarUrl: '/anonymous-profiles/fox.svg' },
-  { displayName: 'ぱんだ', avatarUrl: '/anonymous-profiles/panda.svg' },
-  { displayName: 'くま', avatarUrl: '/anonymous-profiles/bear.svg' },
+  { displayName: 'ねこ', avatarUrls: ['/anonymous-profiles/cat.svg'] },
+  { displayName: 'いぬ', avatarUrls: ['/anonymous-profiles/dog.svg'] },
+  { displayName: 'うさぎ', avatarUrls: ['/anonymous-profiles/rabbit.svg'] },
+  { displayName: 'きつね', avatarUrls: ['/anonymous-profiles/fox.svg'] },
+  { displayName: 'ぱんだ', avatarUrls: ['/anonymous-profiles/panda.svg'] },
+  { displayName: 'くま', avatarUrls: ['/anonymous-profiles/bear.svg'] },
 ]
 
 async function main() {
