@@ -14,7 +14,7 @@ const answers = MOCK_ANSWERS.map((answer, index) => ({
   isMostLiked: false,
   displayAuthor: {
     displayName: answer.anonymousProfile.displayName,
-    avatarUrl: answer.anonymousProfile.avatarUrl,
+    avatarUrl: answer.anonymousProfile.avatarUrls[0],
   },
   joinedYear: answer.author.joinedYear,
   joinedMonth: answer.author.joinedMonth,

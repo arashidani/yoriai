@@ -1,7 +1,19 @@
 import type { AnonymousProfile, Answer, PostAnonymousProfile } from '@/app/generated/prisma/client'
+import {
+  anonymousProfileDisplayName,
+  avatarUrlForAlias,
+} from '@/lib/questions/anonymous-profile-display'
 
 type AnswerWithAnonymousProfile = Answer & {
   postAnonymousProfile: PostAnonymousProfile & { anonymousProfile: AnonymousProfile }
+}
+
+export function toAnswerAnonymousProfileResponse(profile: AnonymousProfile, aliasNumber = 1) {
+  return {
+    id: profile.id,
+    displayName: anonymousProfileDisplayName(profile.displayName, aliasNumber),
+    avatarUrl: avatarUrlForAlias(profile.avatarUrls, aliasNumber),
+  }
 }
 
 /** AIフラグ管理・回答復元APIで使用する管理画面専用の回答レスポンスmapper。 */
@@ -12,11 +24,10 @@ export function toAdminAnswerResponse(answer: AnswerWithAnonymousProfile) {
     body: answer.body,
     isHidden: answer.isHidden,
     likeCount: answer.likeCount,
-    anonymousProfile: {
-      id: answer.postAnonymousProfile.anonymousProfile.id,
-      displayName: answer.postAnonymousProfile.anonymousProfile.displayName,
-      avatarUrl: answer.postAnonymousProfile.anonymousProfile.avatarUrl,
-    },
+    anonymousProfile: toAnswerAnonymousProfileResponse(
+      answer.postAnonymousProfile.anonymousProfile,
+      answer.postAnonymousProfile.aliasNumber,
+    ),
     createdAt: answer.createdAt,
     updatedAt: answer.updatedAt,
   }
