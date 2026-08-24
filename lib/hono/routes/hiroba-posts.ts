@@ -12,6 +12,7 @@ import {
   HirobaPostSchema,
   IdParamSchema,
   LikeStatusSchema,
+  MentionCandidateSchema,
   SavedStatusSchema,
   SuccessSchema,
 } from '@/lib/hono/openapi/schemas'
@@ -49,6 +50,62 @@ function toAnswerResponse(answer: HirobaAnswerWithAuthor) {
   }
 }
 
+async function getHirobaMentionCandidates(postId: string) {
+  if (process.env.MOCK_MODE === 'true') {
+    const post = MOCK_HIROBA_POSTS.find((item) => item.id === postId)
+    if (!post) return null
+    const participants = [
+      ...MOCK_HIROBA_ANSWERS.filter(
+        (answer) => answer.hirobaPostId === postId && !answer.isHidden,
+      ).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+      post,
+    ]
+    const seen = new Set<string>()
+    return participants.flatMap((participant) => {
+      if (!participant.authorId || !participant.author || seen.has(participant.authorId)) return []
+      seen.add(participant.authorId)
+      return [
+        {
+          id: participant.authorId,
+          displayName:
+            participant.author.name ?? participant.author.username ?? participant.author.email,
+        },
+      ]
+    })
+  }
+
+  const post = await prisma.hirobaPost.findFirst({
+    where: { id: postId, deletedAt: null },
+    select: {
+      authorId: true,
+      author: { select: { name: true, username: true, email: true } },
+      answers: {
+        where: { isHidden: false, authorId: { not: null } },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: {
+          authorId: true,
+          author: { select: { name: true, username: true, email: true } },
+        },
+      },
+    },
+  })
+  if (!post) return null
+
+  const seen = new Set<string>()
+  const add = (
+    userId: string | null,
+    author: { name: string | null; username: string | null; email: string } | null,
+  ) => {
+    if (!userId || !author || seen.has(userId)) return []
+    seen.add(userId)
+    return [{ id: userId, displayName: author.name ?? author.username ?? author.email }]
+  }
+  return [
+    ...post.answers.flatMap((answer) => add(answer.authorId, answer.author)),
+    ...add(post.authorId, post.author),
+  ]
+}
+
 const getRoute = createRoute({
   method: 'get',
   path: '/{id}',
@@ -77,6 +134,26 @@ const listAnswersRoute = createRoute({
         'application/json': { schema: z.object({ answers: z.array(HirobaAnswerSchema) }) },
       },
     },
+    404: errorResponse('投稿が見つからない', 'Not found'),
+  },
+})
+
+const mentionCandidatesRoute = createRoute({
+  method: 'get',
+  path: '/{id}/mention-candidates',
+  tags: ['hiroba-posts'],
+  summary: 'ひろば投稿でメンションできる参加者を最新の回答順で取得',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: 'メンション候補',
+      content: {
+        'application/json': { schema: z.object({ candidates: z.array(MentionCandidateSchema) }) },
+      },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
     404: errorResponse('投稿が見つからない', 'Not found'),
   },
 })
@@ -111,6 +188,7 @@ const createAnswerRoute = createRoute({
       content: { 'application/json': { schema: z.object({ answer: HirobaAnswerSchema }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
+    400: errorResponse('メンション対象が不正', 'このスレッドの参加者のみメンションできます'),
     404: errorResponse('投稿が見つからない', 'Not found'),
     409: errorResponse(
       '同じキーで、前回とは異なる回答内容が送信された',
@@ -258,6 +336,12 @@ const uploadImageRoute = createRoute({
 })
 
 export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
+  .openapi(mentionCandidatesRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const candidates = await getHirobaMentionCandidates(id)
+    if (!candidates) return c.json({ error: 'Not found' }, 404)
+    return c.json({ candidates }, 200)
+  })
   .openapi(getRoute, async (c) => {
     const { id } = c.req.valid('param')
     if (process.env.MOCK_MODE === 'true') {
@@ -283,7 +367,6 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
 
     const post = await prisma.hirobaPost.findFirst({ where: { id, deletedAt: null } })
     if (!post) return c.json({ error: 'Not found' }, 404)
-
     const answers = await prisma.hirobaAnswer.findMany({
       where: { hirobaPostId: id, isHidden: false },
       include: { author: true },
@@ -373,6 +456,15 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
 
     const post = await prisma.hirobaPost.findFirst({ where: { id, deletedAt: null } })
     if (!post) return c.json({ error: 'Not found' }, 404)
+    const requestedMentionIds = data.mentionedUserIds ?? []
+    if (requestedMentionIds.length > 0) {
+      const candidates = await getHirobaMentionCandidates(id)
+      if (
+        !candidates ||
+        !requestedMentionIds.every((userId) => candidates.some((item) => item.id === userId))
+      )
+        return c.json({ error: 'このスレッドの参加者のみメンションできます' }, 400)
+    }
 
     let answer: HirobaAnswerWithAuthor
     try {
@@ -445,6 +537,24 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         })
       } catch (error) {
         console.error('Failed to create hiroba reply notification', { postId: post.id, error })
+      }
+    }
+
+    if (!answer.isHidden) {
+      const mentionedUserIds = [...new Set(requestedMentionIds)].filter((id) => id !== user.id)
+      if (mentionedUserIds.length > 0) {
+        try {
+          await prisma.notification.createMany({
+            data: mentionedUserIds.map((userId) => ({
+              userId,
+              type: NotificationType.MENTIONED,
+              hirobaPostId: post.id,
+              hirobaAnswerId: answer.id,
+            })),
+          })
+        } catch (error) {
+          console.error('Failed to create hiroba mention notifications', { postId: post.id, error })
+        }
       }
     }
 

@@ -22,6 +22,7 @@ const posts = [
     authorId: 'user-1',
     displayName: '田中太郎',
     displayNameColor: 'BLUE' as const,
+    lunchPreference: 'NO_PREFERENCE' as const,
     isOwnPost: false,
     likeCount: 2,
     liked: false,

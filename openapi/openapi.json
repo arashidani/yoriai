@@ -75,6 +75,34 @@
       }
     },
     "schemas": {
+      "MentionCandidate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "user-1"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "ねこ"
+          }
+        },
+        "required": [
+          "id",
+          "displayName"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
       "Question": {
         "type": "object",
         "properties": {
@@ -239,17 +267,6 @@
           "pageSize",
           "total",
           "totalPages"
-        ]
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "error"
         ]
       },
       "QuestionAnswer": {
@@ -1007,8 +1024,20 @@
             "example": "ねこ"
           },
           "avatarUrl": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "example": "/anonymous-profiles/cat.svg"
+          },
+          "avatarUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "/anonymous-profiles/cat.svg"
+            ]
           },
           "isActive": {
             "type": "boolean",
@@ -1022,8 +1051,7 @@
         },
         "required": [
           "id",
-          "displayName",
-          "avatarUrl"
+          "displayName"
         ]
       },
       "Badge": {
@@ -1538,6 +1566,7 @@
       "NotificationType": {
         "type": "string",
         "enum": [
+          "MENTIONED",
           "POST_ANSWERED",
           "POST_LIKED",
           "ANSWER_LIKED",
@@ -1564,6 +1593,79 @@
     "parameters": {}
   },
   "paths": {
+    "/api/questions/{id}/mention-candidates": {
+      "get": {
+        "tags": [
+          "questions"
+        ],
+        "summary": "質問スレッドでメンションできる参加者を最新の回答順で取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "メンション候補",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MentionCandidate"
+                      }
+                    }
+                  },
+                  "required": [
+                    "candidates"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "質問が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/questions": {
       "get": {
         "tags": [
@@ -2081,6 +2183,14 @@
                   "body": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "mentionedUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxItems": 50
                   }
                 },
                 "required": [
@@ -2131,6 +2241,19 @@
                     "answer",
                     "moderation"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "メンション対象が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "このスレッドの参加者のみメンションできます"
                 }
               }
             }
@@ -3948,6 +4071,79 @@
         }
       }
     },
+    "/api/hiroba-posts/{id}/mention-candidates": {
+      "get": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "ひろば投稿でメンションできる参加者を最新の回答順で取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "メンション候補",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MentionCandidate"
+                      }
+                    }
+                  },
+                  "required": [
+                    "candidates"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/hiroba-posts/{id}": {
       "get": {
         "tags": [
@@ -4170,6 +4366,14 @@
                   "body": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "mentionedUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxItems": 50
                   }
                 },
                 "required": [
@@ -4212,6 +4416,19 @@
                   "required": [
                     "answer"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "メンション対象が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "このスレッドの参加者のみメンションできます"
                 }
               }
             }
@@ -6266,15 +6483,10 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 50
-                  },
-                  "avatarUrl": {
-                    "type": "string",
-                    "minLength": 1
                   }
                 },
                 "required": [
-                  "displayName",
-                  "avatarUrl"
+                  "displayName"
                 ]
               }
             }
@@ -6333,7 +6545,7 @@
         "tags": [
           "admin"
         ],
-        "summary": "匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）",
+        "summary": "匿名キャラの有効状態またはアバター表示順を更新（管理者専用）",
         "security": [
           {
             "supabaseSession": []
@@ -6359,11 +6571,16 @@
                 "properties": {
                   "isActive": {
                     "type": "boolean"
+                  },
+                  "avatarUrls": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxItems": 20
                   }
-                },
-                "required": [
-                  "isActive"
-                ]
+                }
               }
             }
           }
@@ -6383,6 +6600,19 @@
                   "required": [
                     "profile"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "アバターの並び順が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "登録済みのアバターだけを並べ替えられます"
                 }
               }
             }
@@ -6495,6 +6725,160 @@
                 },
                 "example": {
                   "error": "すでに使われている匿名キャラは削除できません。候補から外すには無効化してください"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/anonymous-profiles/{id}/avatars": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "匿名キャラのアバターを追加（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "アバター追加後の匿名キャラ",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "profile": {
+                      "$ref": "#/components/schemas/AnonymousProfile"
+                    }
+                  },
+                  "required": [
+                    "profile"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "対応していない画像形式",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "対応していない画像形式です"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "匿名キャラが見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "ファイルサイズ超過",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ファイルサイズが大きすぎます（4.5MB以下にしてください）"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "画像処理に失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "画像を処理できませんでした"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "アップロード失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "画像のアップロードに失敗しました"
                 }
               }
             }
