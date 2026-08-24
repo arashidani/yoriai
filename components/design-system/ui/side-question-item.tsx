@@ -9,7 +9,7 @@ type SideQuestionItemProps = {
   avatarSrc?: string
   avatarAlt?: string
   title: string
-  excerpt: string
+  excerpt?: string
 }
 
 function SideQuestionItem({
@@ -22,10 +22,14 @@ function SideQuestionItem({
 }: SideQuestionItemProps) {
   const content = (
     <div className="flex w-full items-start gap-2">
-      <AuthorAvatar src={avatarSrc} alt={avatarAlt} className="size-9.5" />
+      <AuthorAvatar src={avatarSrc} alt={avatarAlt} className="size-9.5" sizes="38px" />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <p className="truncate text-paragraph-small font-medium text-foreground">{title}</p>
-        <p className="truncate text-paragraph-mini font-medium text-muted-foreground">{excerpt}</p>
+        {excerpt ? (
+          <p className="truncate text-paragraph-mini font-medium text-muted-foreground">
+            {excerpt}
+          </p>
+        ) : null}
       </div>
     </div>
   )
