@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import { $, createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { bodyLimit } from 'hono/body-limit'
 import { createMiddleware } from 'hono/factory'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagStatus, Role } from '@/app/generated/prisma/enums'
@@ -24,6 +25,12 @@ import {
   TagCategorySchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
+import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_MESSAGE } from '@/lib/image/avatar-limits'
+import {
+  AvatarProcessingError,
+  processAvatarImage,
+  UnsupportedImageError,
+} from '@/lib/image/process-avatar'
 import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
@@ -38,7 +45,10 @@ import {
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { toAdminAnswerResponse } from '@/lib/questions/admin-answer-response'
+import {
+  toAdminAnswerResponse,
+  toAnswerAnonymousProfileResponse,
+} from '@/lib/questions/admin-answer-response'
 import {
   createAnonymousProfileSchema,
   updateAnonymousProfileSchema,
@@ -50,6 +60,10 @@ import { createTagSchema, updateTagSchema } from '@/lib/schemas/tag'
 import { createTagCategorySchema } from '@/lib/schemas/tag-category'
 import { updateUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import {
+  AnonymousProfileAvatarUploadError,
+  uploadAnonymousProfileAvatar,
+} from '@/lib/supabase/storage/anonymous-profile-avatar'
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const PASSWORD_RESET_TTL_MS = 24 * 60 * 60 * 1000
@@ -406,7 +420,7 @@ const updateAnonymousProfileRoute = createRoute({
   method: 'patch',
   path: '/anonymous-profiles/{id}',
   tags: ['admin'],
-  summary: '匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）',
+  summary: '匿名キャラの有効状態またはアバター表示順を更新（管理者専用）',
   security,
   request: {
     params: IdParamSchema,
@@ -422,7 +436,48 @@ const updateAnonymousProfileRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    400: errorResponse('アバターの並び順が不正', '登録済みのアバターだけを並べ替えられます'),
     404: errorResponse('匿名キャラが見つからない', 'Not found'),
+  },
+})
+
+const uploadAnonymousProfileAvatarRoute = createRoute({
+  method: 'post',
+  path: '/anonymous-profiles/{id}/avatars',
+  tags: ['admin'],
+  summary: '匿名キャラのアバターを追加（管理者専用）',
+  security,
+  middleware: [
+    bodyLimit({
+      maxSize: AVATAR_MAX_BYTES,
+      onError: (c) => c.json({ error: AVATAR_TOO_LARGE_MESSAGE }, 413),
+    }),
+  ] as const,
+  request: {
+    params: IdParamSchema,
+    body: {
+      required: true,
+      content: {
+        'multipart/form-data': {
+          schema: z.object({
+            file: z.instanceof(File).openapi({ type: 'string', format: 'binary' }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'アバター追加後の匿名キャラ',
+      content: { 'application/json': { schema: z.object({ profile: AnonymousProfileSchema }) } },
+    },
+    400: errorResponse('対応していない画像形式', '対応していない画像形式です'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('匿名キャラが見つからない', 'Not found'),
+    413: errorResponse('ファイルサイズ超過', AVATAR_TOO_LARGE_MESSAGE),
+    422: errorResponse('画像処理に失敗', '画像を処理できませんでした'),
+    502: errorResponse('アップロード失敗', '画像のアップロードに失敗しました'),
   },
 })
 
@@ -711,7 +766,17 @@ export const adminRoute = $(
     if (process.env.MOCK_MODE === 'true') {
       const answer = MOCK_ANSWERS.find((a) => a.id === id)
       if (!answer) return c.json({ error: 'Not found' }, 404)
-      return c.json({ answer: { ...answer, isHidden: false } }, 200)
+      const { anonymousProfile, ...rest } = answer
+      return c.json(
+        {
+          answer: {
+            ...rest,
+            isHidden: false,
+            anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
+          },
+        },
+        200,
+      )
     }
 
     const existing = await prisma.answer.findUnique({ where: { id } })
@@ -911,6 +976,7 @@ export const adminRoute = $(
           profile: {
             id: `anon-${MOCK_ANONYMOUS_PROFILES.length + 1}`,
             ...data,
+            avatarUrls: [],
             isActive: true,
             createdAt: new Date(),
           },
@@ -924,19 +990,76 @@ export const adminRoute = $(
   })
   .openapi(updateAnonymousProfileRoute, async (c) => {
     const { id } = c.req.valid('param')
-    const { isActive } = c.req.valid('json')
+    const data = c.req.valid('json')
 
     if (process.env.MOCK_MODE === 'true') {
       const profile = MOCK_ANONYMOUS_PROFILES.find((p) => p.id === id)
       if (!profile) return c.json({ error: 'Not found' }, 404)
-      return c.json({ profile: { ...profile, isActive } }, 200)
+      return c.json({ profile: { ...profile, ...data } }, 200)
     }
 
     const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
     if (!existing) return c.json({ error: 'Not found' }, 404)
 
-    const profile = await prisma.anonymousProfile.update({ where: { id }, data: { isActive } })
+    if (data.avatarUrls) {
+      const isSameAvatarSet =
+        data.avatarUrls.length === existing.avatarUrls.length &&
+        [...data.avatarUrls]
+          .sort()
+          .every((url, index) => url === [...existing.avatarUrls].sort()[index])
+      if (!isSameAvatarSet)
+        return c.json({ error: '登録済みのアバターだけを並べ替えられます' }, 400)
+    }
+
+    const profile = await prisma.anonymousProfile.update({ where: { id }, data })
     return c.json({ profile }, 200)
+  })
+  .openapi(uploadAnonymousProfileAvatarRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const { file } = c.req.valid('form')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const profile = MOCK_ANONYMOUS_PROFILES.find((item) => item.id === id)
+      if (!profile) return c.json({ error: 'Not found' }, 404)
+      return c.json(
+        {
+          profile: {
+            ...profile,
+            avatarUrls: [...profile.avatarUrls, '/anonymous-profiles/new.svg'],
+          },
+        },
+        200,
+      )
+    }
+
+    const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+    if (existing.avatarUrls.length >= 20) {
+      return c.json({ error: 'アバターは20枚までです' }, 400)
+    }
+
+    let image: Buffer
+    try {
+      image = await processAvatarImage(Buffer.from(await file.arrayBuffer()))
+    } catch (error) {
+      if (error instanceof UnsupportedImageError) return c.json({ error: error.message }, 400)
+      if (error instanceof AvatarProcessingError) return c.json({ error: error.message }, 422)
+      throw error
+    }
+
+    try {
+      const avatarUrl = await uploadAnonymousProfileAvatar(id, image)
+      const profile = await prisma.anonymousProfile.update({
+        where: { id },
+        data: { avatarUrls: { push: avatarUrl } },
+      })
+      return c.json({ profile }, 200)
+    } catch (error) {
+      if (error instanceof AnonymousProfileAvatarUploadError) {
+        return c.json({ error: '画像のアップロードに失敗しました' }, 502)
+      }
+      throw error
+    }
   })
   .openapi(deleteAnonymousProfileRoute, async (c) => {
     const { id } = c.req.valid('param')

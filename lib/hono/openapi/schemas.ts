@@ -150,19 +150,29 @@ export const AnonymousProfileSchema = z
   .object({
     id: z.string().openapi({ example: 'anon-1' }),
     displayName: z.string().openapi({ example: 'ねこ' }),
-    avatarUrl: z.string().openapi({ example: '/anonymous-profiles/cat.svg' }),
-    // 質問・回答の公開レスポンス（Answer.anonymousProfile等）では省略される。管理画面の一覧でのみ使う
+    avatarUrls: z
+      .array(z.string())
+      .optional()
+      .openapi({ example: ['/anonymous-profiles/cat.svg'] }),
     isActive: z.boolean().optional().openapi({ example: true }),
     createdAt: dateTime().optional(),
   })
   .openapi('AnonymousProfile')
+
+const AnswerAnonymousProfileSchema = z
+  .object({
+    id: z.string().openapi({ example: 'anon-1' }),
+    displayName: z.string().openapi({ example: 'ねこ#2' }),
+    avatarUrl: z.string().nullable().openapi({ example: '/anonymous-profiles/cat.svg' }),
+  })
+  .openapi('AnswerAnonymousProfile')
 
 export const AnswerSchema = z
   .object({
     id: z.string().openapi({ example: 'answer-1' }),
     postId: z.string().openapi({ example: 'post-1' }),
     body: z.string().openapi({ example: 'App Router を使うのがおすすめです。' }),
-    anonymousProfile: AnonymousProfileSchema,
+    anonymousProfile: AnswerAnonymousProfileSchema,
     isHidden: z.boolean().openapi({ example: false }),
     likeCount: z.number().openapi({ example: 0 }),
     createdAt: dateTime(),
@@ -172,6 +182,7 @@ export const AnswerSchema = z
 
 export const NotificationTypeSchema = z
   .enum([
+    'MENTIONED',
     'POST_ANSWERED',
     'POST_LIKED',
     'ANSWER_LIKED',

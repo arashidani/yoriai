@@ -24,3 +24,22 @@ export const Empty: Story = {
     await expect(canvas.getByText('まだ匿名キャラがありません')).toBeVisible()
   },
 }
+
+export const MultipleAvatars: Story = {
+  args: {
+    profiles: [
+      {
+        ...MOCK_ANONYMOUS_PROFILES[0],
+        avatarUrls: [
+          '/anonymous-profiles/cat.svg',
+          '/anonymous-profiles/dog.svg',
+          '/anonymous-profiles/rabbit.svg',
+        ],
+      },
+    ],
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByAltText('ねこ #1')).toBeVisible()
+    await expect(canvas.getByAltText('ねこ #3')).toBeVisible()
+  },
+}
