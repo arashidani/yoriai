@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { HttpResponse, http } from 'msw'
 import { expect, screen, userEvent, waitFor } from 'storybook/test'
 import { MOCK_ANSWERS } from '@/lib/mocks/fixtures'
+import { getIbjCareerName } from '@/lib/users/ibj-career'
 import { QaAnswerItemList } from './qa-answer-item-list'
 
 const answers = MOCK_ANSWERS.map((answer, index) => ({
@@ -15,6 +16,8 @@ const answers = MOCK_ANSWERS.map((answer, index) => ({
     displayName: answer.anonymousProfile.displayName,
     avatarUrl: answer.anonymousProfile.avatarUrl,
   },
+  joinedYear: answer.author.joinedYear,
+  joinedMonth: answer.author.joinedMonth,
   createdAt: answer.createdAt,
 }))
 
@@ -33,6 +36,16 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByText('ねこ')).toBeVisible()
     await expect(canvas.getByText('いぬ')).toBeVisible()
+    await expect(
+      canvas.getByText(
+        getIbjCareerName(String(answers[0].joinedYear), String(answers[0].joinedMonth)),
+      ),
+    ).toBeVisible()
+    await expect(
+      canvas.getByText(
+        getIbjCareerName(String(answers[1].joinedYear), String(answers[1].joinedMonth)),
+      ),
+    ).toBeVisible()
   },
 }
 

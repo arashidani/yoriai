@@ -30,8 +30,17 @@ function displayAuthor(record: LooseRecord, isOwn: boolean) {
   }
 }
 
+function bookmarkCountOf(post: LooseRecord) {
+  if (typeof post.bookmarkCount === 'number') return post.bookmarkCount
+  if (typeof post._count?.bookmarks === 'number') return post._count.bookmarks
+  return 0
+}
+
 export function toQuestionResponse(post: LooseRecord, viewerId: string) {
   const isOwnQuestion = post.authorId === viewerId
+  const bookmarks = post.bookmarks ?? []
+  const saved = bookmarks.some((bookmark: LooseRecord) => bookmark.userId === viewerId)
+  const bookmarkCount = bookmarkCountOf(post)
   return {
     id: post.id,
     title: post.title,
@@ -40,7 +49,8 @@ export function toQuestionResponse(post: LooseRecord, viewerId: string) {
     answerCount: post.answerCount ?? 0,
     likeCount: post.likeCount ?? 0,
     liked: (post.likes ?? []).some((like: LooseRecord) => like.userId === viewerId),
-    saved: (post.bookmarks ?? []).some((bookmark: LooseRecord) => bookmark.userId === viewerId),
+    bookmarkCount,
+    saved,
     isOwnQuestion,
     displayAuthor: displayAuthor(post, isOwnQuestion),
     tag: firstTagCategory(post),
@@ -66,6 +76,8 @@ export function toQaAnswerResponse(
     isOwnAnswer,
     isMostLiked: answer.id === mostLikedAnswerId,
     displayAuthor: displayAuthor(answer, isOwnAnswer),
+    joinedYear: answer.author?.joinedYear ?? null,
+    joinedMonth: answer.author?.joinedMonth ?? null,
     createdAt: answer.createdAt,
     updatedAt: answer.updatedAt,
   }

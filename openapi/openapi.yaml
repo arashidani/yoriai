@@ -65,6 +65,9 @@ components:
           minimum: 0
         liked:
           type: boolean
+        bookmarkCount:
+          type: integer
+          minimum: 0
         saved:
           type: boolean
         isOwnQuestion:
@@ -102,6 +105,7 @@ components:
         - answerCount
         - likeCount
         - liked
+        - bookmarkCount
         - saved
         - isOwnQuestion
         - displayAuthor
@@ -185,6 +189,16 @@ components:
           description: 募集終了済み質問の最多いいね回答1件だけtrue
         displayAuthor:
           $ref: "#/components/schemas/QuestionDisplayAuthor"
+        joinedYear:
+          type:
+            - integer
+            - "null"
+          example: 2022
+        joinedMonth:
+          type:
+            - integer
+            - "null"
+          example: 4
         createdAt:
           type: string
           format: date-time
@@ -202,6 +216,8 @@ components:
         - isOwnAnswer
         - isMostLiked
         - displayAuthor
+        - joinedYear
+        - joinedMonth
         - createdAt
         - updatedAt
     ModerationResult:
@@ -236,6 +252,10 @@ components:
         saved:
           type: boolean
           example: true
+        bookmarkCount:
+          type: integer
+          minimum: 0
+          example: 1
       required:
         - saved
     QuestionTagCategory:

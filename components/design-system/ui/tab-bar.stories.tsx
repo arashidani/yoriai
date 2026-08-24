@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { expect } from 'storybook/test'
-import { BookmarkTabIcon } from '@/components/icons/bookmark-tab-icon'
-import { PencilIcon } from '@/components/icons/pencil-icon'
+import { IconBookmark } from '@/components/design-system/icons/icon-bookmark'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { TabBar } from './tab-bar'
 
 const meta = {
@@ -12,12 +12,12 @@ const meta = {
       {
         value: 'posted',
         label: '投稿した質問',
-        icon: <PencilIcon className="size-full text-primary" />,
+        icon: <IconPencil className="size-full text-primary" />,
       },
       {
         value: 'saved',
         label: '保存した質問',
-        icon: <BookmarkTabIcon className="size-full text-amber-400" />,
+        icon: <IconBookmark className="size-full text-amber-400" />,
       },
     ],
   },
@@ -51,13 +51,13 @@ export const LinkedTabs: Story = {
       {
         value: 'posted',
         label: '投稿した質問',
-        icon: <PencilIcon className="size-full text-primary" />,
+        icon: <IconPencil className="size-full text-primary" />,
         href: '/my-questions?tab=posted&page=1',
       },
       {
         value: 'saved',
         label: '保存した質問',
-        icon: <BookmarkTabIcon className="size-full text-amber-400" />,
+        icon: <IconBookmark className="size-full text-amber-400" />,
         href: '/my-questions?tab=saved&page=1',
       },
     ],
