@@ -168,6 +168,16 @@ components:
           type: string
       required:
         - error
+    AnswerableQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+      required:
+        - id
+        - title
     QuestionAnswer:
       type: object
       properties:
@@ -1325,7 +1335,7 @@ paths:
                   questions:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Question"
+                      $ref: "#/components/schemas/AnswerableQuestion"
                     maxItems: 3
                 required:
                   - questions
