@@ -252,6 +252,21 @@
           "error"
         ]
       },
+      "AnswerableQuestion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
       "QuestionAnswer": {
         "type": "object",
         "properties": {
@@ -1901,7 +1916,7 @@
                     "questions": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Question"
+                        "$ref": "#/components/schemas/AnswerableQuestion"
                       },
                       "maxItems": 3
                     }
