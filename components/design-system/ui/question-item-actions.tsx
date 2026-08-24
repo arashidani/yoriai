@@ -71,6 +71,7 @@ function QuestionItemActions({
   const like = useDebouncedOptimisticToggle({
     initialPressed: resolvedLiked,
     initialCount: resolvedLikeCount,
+    resetKey: postId,
     enabled: !!postId,
     onSync: async (pressed) => {
       if (!postId) throw new Error('postId is required')
@@ -89,6 +90,7 @@ function QuestionItemActions({
   const bookmark = useDebouncedOptimisticToggle({
     initialPressed: resolvedBookmarked,
     initialCount: resolvedBookmarkCount,
+    resetKey: postId,
     enabled: !!postId,
     onSync: async (pressed) => {
       if (!postId) throw new Error('postId is required')
