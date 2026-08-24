@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect } from 'storybook/test'
+import { HttpResponse, http } from 'msw'
+import { expect, fn, waitFor } from 'storybook/test'
 import { QuestionItemActions } from './question-item-actions'
+
+const likeRequest = fn()
+const bookmarkRequest = fn()
 
 const meta = {
   component: QuestionItemActions,
@@ -48,5 +52,35 @@ export const ToggleBookmark: Story = {
     const bookmarkButton = canvas.getByRole('button', { name: '5' })
     await userEvent.click(bookmarkButton)
     await expect(canvas.getByRole('button', { name: '6' })).toHaveAttribute('aria-pressed', 'true')
+  },
+}
+
+export const SyncOptimisticInteractions: Story = {
+  args: { postId: 'post-sync' },
+  parameters: {
+    msw: {
+      handlers: [
+        http.post('/api/questions/:id/likes', () => {
+          likeRequest()
+          return HttpResponse.json({ liked: true, likeCount: 4 })
+        }),
+        http.post('/api/questions/:id/bookmarks', () => {
+          bookmarkRequest()
+          return HttpResponse.json({ saved: true, bookmarkCount: 6 })
+        }),
+      ],
+    },
+  },
+  play: async ({ canvas, userEvent }) => {
+    likeRequest.mockClear()
+    bookmarkRequest.mockClear()
+
+    await userEvent.click(canvas.getByRole('button', { name: '3' }))
+    await userEvent.click(canvas.getByRole('button', { name: '5' }))
+
+    await expect(canvas.getByRole('button', { name: '4' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(canvas.getByRole('button', { name: '6' })).toHaveAttribute('aria-pressed', 'true')
+    await waitFor(() => expect(likeRequest).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(bookmarkRequest).toHaveBeenCalledTimes(1))
   },
 }

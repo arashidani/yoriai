@@ -8,6 +8,14 @@ type AnswerWithAnonymousProfile = Answer & {
   postAnonymousProfile: PostAnonymousProfile & { anonymousProfile: AnonymousProfile }
 }
 
+export function toAnswerAnonymousProfileResponse(profile: AnonymousProfile, aliasNumber = 1) {
+  return {
+    id: profile.id,
+    displayName: anonymousProfileDisplayName(profile.displayName, aliasNumber),
+    avatarUrl: avatarUrlForAlias(profile.avatarUrls, aliasNumber),
+  }
+}
+
 /** AIフラグ管理・回答復元APIで使用する管理画面専用の回答レスポンスmapper。 */
 export function toAdminAnswerResponse(answer: AnswerWithAnonymousProfile) {
   return {
@@ -16,17 +24,10 @@ export function toAdminAnswerResponse(answer: AnswerWithAnonymousProfile) {
     body: answer.body,
     isHidden: answer.isHidden,
     likeCount: answer.likeCount,
-    anonymousProfile: {
-      id: answer.postAnonymousProfile.anonymousProfile.id,
-      displayName: anonymousProfileDisplayName(
-        answer.postAnonymousProfile.anonymousProfile.displayName,
-        answer.postAnonymousProfile.aliasNumber,
-      ),
-      avatarUrl: avatarUrlForAlias(
-        answer.postAnonymousProfile.anonymousProfile.avatarUrls,
-        answer.postAnonymousProfile.aliasNumber,
-      ),
-    },
+    anonymousProfile: toAnswerAnonymousProfileResponse(
+      answer.postAnonymousProfile.anonymousProfile,
+      answer.postAnonymousProfile.aliasNumber,
+    ),
     createdAt: answer.createdAt,
     updatedAt: answer.updatedAt,
   }

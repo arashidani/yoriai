@@ -6,6 +6,7 @@ import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
+  AnswerableQuestionSchema,
   ModerationResultSchema,
   PageQuerySchema,
   QaAnswerSchema,
@@ -197,7 +198,9 @@ const answerableRoute = createRoute({
     200: {
       description: 'ビジネススキル関連を優先し、「その他」で最大3件まで補完した質問',
       content: {
-        'application/json': { schema: z.object({ questions: z.array(QuestionSchema).max(3) }) },
+        'application/json': {
+          schema: z.object({ questions: z.array(AnswerableQuestionSchema).max(3) }),
+        },
       },
     },
     401: errorResponse('未認証', 'Unauthorized'),
@@ -568,7 +571,10 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         postById.get(question.id)?.tags.some((tag) => tag.name.startsWith('その他')),
       )
 
-      return c.json({ questions: selectAnswerableQuestions(skillQuestions, otherQuestions) }, 200)
+      const questions = selectAnswerableQuestions(skillQuestions, otherQuestions).map(
+        ({ id, title }) => ({ id, title }),
+      )
+      return c.json({ questions }, 200)
     }
 
     const businessSkillNames = (
@@ -594,16 +600,14 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
                 },
               },
             },
-            include: questionInclude(user.id),
+            select: { id: true, title: true },
           }),
       prisma.post.findMany({
         where: { ...baseWhere, tags: { some: { tag: { name: { startsWith: 'その他' } } } } },
-        include: questionInclude(user.id),
+        select: { id: true, title: true },
       }),
     ])
-    const questions = selectAnswerableQuestions(skillQuestions, otherQuestions).map((post) =>
-      toQuestionResponse(post, user.id),
-    )
+    const questions = selectAnswerableQuestions(skillQuestions, otherQuestions)
 
     return c.json({ questions }, 200)
   })
@@ -1121,27 +1125,31 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (post.authorId === user.id) return c.json({ error: '自分の質問にはいいねできません' }, 403)
     if (process.env.MOCK_MODE === 'true')
       return c.json({ liked: true, likeCount: post.likeCount + 1 }, 200)
-    const likeCount = await prisma.$transaction(async (tx) => {
+    const { likeCount, isNewLike } = await prisma.$transaction(async (tx) => {
       const created = await tx.questionLike.createMany({
         data: [{ postId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count === 0) return post.likeCount
+      if (created.count === 0) return { likeCount: post.likeCount, isNewLike: false }
 
-      const [, updatedPost] = await Promise.all([
-        post.authorId
-          ? tx.notification.create({
-              data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
-            })
-          : Promise.resolve(null),
-        tx.post.update({
-          where: { id },
-          data: { likeCount: { increment: 1 } },
-          select: { likeCount: true },
-        }),
-      ])
-      return updatedPost.likeCount
+      const updatedPost = await tx.post.update({
+        where: { id },
+        data: { likeCount: { increment: 1 } },
+        select: { likeCount: true },
+      })
+      return { likeCount: updatedPost.likeCount, isNewLike: true }
     })
+
+    if (isNewLike && post.authorId) {
+      try {
+        await prisma.notification.create({
+          data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
+        })
+      } catch (error) {
+        console.error('Failed to create question like notification', { postId: id, error })
+      }
+    }
+
     return c.json({ liked: true, likeCount }, 200)
   })
   .openapi(unlikeRoute, async (c) => {

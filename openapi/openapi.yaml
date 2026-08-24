@@ -180,6 +180,16 @@ components:
         - pageSize
         - total
         - totalPages
+    AnswerableQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+      required:
+        - id
+        - title
     QuestionAnswer:
       type: object
       properties:
@@ -697,7 +707,7 @@ components:
           type: string
           example: App Router を使うのがおすすめです。
         anonymousProfile:
-          $ref: "#/components/schemas/AnonymousProfile"
+          $ref: "#/components/schemas/AnswerAnonymousProfile"
         isHidden:
           type: boolean
           example: false
@@ -721,7 +731,7 @@ components:
         - likeCount
         - createdAt
         - updatedAt
-    AnonymousProfile:
+    AnswerAnonymousProfile:
       type: object
       properties:
         id:
@@ -729,28 +739,16 @@ components:
           example: anon-1
         displayName:
           type: string
-          example: ねこ
+          example: ねこ#2
         avatarUrl:
           type:
             - string
             - "null"
           example: /anonymous-profiles/cat.svg
-        avatarUrls:
-          type: array
-          items:
-            type: string
-          example:
-            - /anonymous-profiles/cat.svg
-        isActive:
-          type: boolean
-          example: true
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
       required:
         - id
         - displayName
+        - avatarUrl
     Badge:
       type: object
       properties:
@@ -906,6 +904,31 @@ components:
         - postId
         - answerId
         - createdAt
+    AnonymousProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: anon-1
+        displayName:
+          type: string
+          example: ねこ
+        avatarUrls:
+          type: array
+          items:
+            type: string
+          example:
+            - /anonymous-profiles/cat.svg
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - displayName
     TagCategory:
       type: object
       properties:
@@ -1367,7 +1390,7 @@ paths:
                   questions:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Question"
+                      $ref: "#/components/schemas/AnswerableQuestion"
                     maxItems: 3
                 required:
                   - questions

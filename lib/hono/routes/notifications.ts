@@ -10,7 +10,10 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import { MOCK_NOTIFICATIONS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { toAdminAnswerResponse } from '@/lib/questions/admin-answer-response'
+import {
+  toAdminAnswerResponse,
+  toAnswerAnonymousProfileResponse,
+} from '@/lib/questions/admin-answer-response'
 
 const listQuerySchema = z.object({
   cursor: z
@@ -121,7 +124,17 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       const start = cursor ? notifications.findIndex((item) => item.id === cursor) + 1 : 0
       const page = notifications.slice(start, start + limit + 1)
       const hasNextPage = page.length > limit
-      const items = page.slice(0, limit)
+      const items = page.slice(0, limit).map((notification) => {
+        if (!notification.answer) return notification
+        const { anonymousProfile, ...answer } = notification.answer
+        return {
+          ...notification,
+          answer: {
+            ...answer,
+            anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
+          },
+        }
+      })
       return c.json(
         {
           notifications: items,
@@ -169,7 +182,22 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       const notification = MOCK_NOTIFICATIONS.find((item) => item.id === id)
       if (!notification) return c.json({ error: 'Not found' }, 404)
       if (notification.userId !== user.id) return c.json({ error: 'Forbidden' }, 403)
-      return c.json({ notification: { ...notification, isRead: true } }, 200)
+      if (!notification.answer)
+        return c.json({ notification: { ...notification, isRead: true } }, 200)
+      const { anonymousProfile, ...answer } = notification.answer
+      return c.json(
+        {
+          notification: {
+            ...notification,
+            isRead: true,
+            answer: {
+              ...answer,
+              anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
+            },
+          },
+        },
+        200,
+      )
     }
 
     const notification = await prisma.notification.findUnique({
