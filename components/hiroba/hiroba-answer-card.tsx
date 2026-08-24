@@ -2,6 +2,7 @@ import { Utensils } from 'lucide-react'
 import Link from 'next/link'
 import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import { HirobaAnswerLikeButton } from '@/components/hiroba/hiroba-answer-like-button'
+import { MentionText } from '@/components/mentions/mention-text'
 import { displayNameColorClass, lunchStyleTag, mbtiColorTag } from './display-name-color'
 
 export type HirobaAnswer = {
@@ -65,7 +66,9 @@ export function HirobaAnswerCard({ answer, liked }: HirobaAnswerCardProps) {
           {new Date(answer.createdAt).toLocaleDateString('ja-JP')}
         </span>
       </div>
-      <p className="whitespace-pre-wrap pt-3 text-paragraph-small">{answer.body}</p>
+      <p className="whitespace-pre-wrap pt-3 text-paragraph-small">
+        <MentionText text={answer.body} />
+      </p>
       {!answer.isOwnAnswer && (
         <div className="pt-3">
           <HirobaAnswerLikeButton
