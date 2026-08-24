@@ -176,6 +176,7 @@ export const AnswerSchema = z
 
 export const NotificationTypeSchema = z
   .enum([
+    'MENTIONED',
     'POST_ANSWERED',
     'POST_LIKED',
     'ANSWER_LIKED',
@@ -186,6 +187,13 @@ export const NotificationTypeSchema = z
     'ANSWER_HIDDEN',
   ])
   .openapi('NotificationType')
+
+export const MentionCandidateSchema = z
+  .object({
+    id: z.string().openapi({ example: 'user-1' }),
+    displayName: z.string().openapi({ example: 'ねこ' }),
+  })
+  .openapi('MentionCandidate')
 
 export const NotificationSchema = z
   .object({

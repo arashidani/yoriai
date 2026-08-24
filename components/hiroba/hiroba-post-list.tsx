@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import type { DisplayNameColor } from '@/app/generated/prisma/enums'
+import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import { HirobaPostCard } from './hiroba-post-card'
 
 export type HirobaPost = {
@@ -13,6 +13,7 @@ export type HirobaPost = {
   authorId: string | null
   displayName: string
   displayNameColor: DisplayNameColor | null
+  lunchPreference: LunchPreference | null
   isOwnPost: boolean
   likeCount: number
   liked: boolean

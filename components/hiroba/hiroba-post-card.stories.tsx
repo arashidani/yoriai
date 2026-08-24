@@ -21,6 +21,7 @@ const basePost = {
   authorId: 'user-1',
   displayName: '田中太郎',
   displayNameColor: 'BLUE' as const,
+  lunchPreference: 'NO_PREFERENCE' as const,
   isOwnPost: false,
   likeCount: 2,
   liked: false,
@@ -36,6 +37,14 @@ export const Default: Story = {
     await expect(canvas.getByText(/今日のランチ/)).toBeVisible()
     await expect(canvas.getByText('田中太郎')).toBeVisible()
     await expect(canvas.getByText('田中太郎')).toHaveClass('text-display-name-blue')
+    await expect(canvas.getByText('こだわりない')).toHaveClass(
+      'bg-lunch-style-bg',
+      'text-lunch-style',
+    )
+    await expect(canvas.getByText('こだわりない').parentElement?.querySelector('svg')).toHaveClass(
+      'lucide-utensils',
+    )
+    await expect(canvas.getByText('あお色の人')).toHaveClass('bg-mbti-blue-bg', 'text-mbti-blue')
     await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute(
       'href',
       '/mypage/user-1',

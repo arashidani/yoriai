@@ -2,10 +2,10 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useCallback, useRef, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { type MentionCandidate, MentionTextarea } from '@/components/mentions/mention-textarea'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 import { client } from '@/lib/hono/client'
 import { type CreateHirobaAnswerInput, createHirobaAnswerSchema } from '@/lib/schemas/hiroba'
 
@@ -16,23 +16,34 @@ type HirobaAnswerFormProps = {
 export function HirobaAnswerForm({ postId }: HirobaAnswerFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([])
   const isSubmittingRef = useRef(false)
   const idempotencyKeyRef = useRef<{ key: string; requestBody: string } | null>(null)
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateHirobaAnswerInput>({
     resolver: zodResolver(createHirobaAnswerSchema),
+    defaultValues: { body: '', mentionedUserIds: [] },
   })
+
+  const loadCandidates = useCallback(async (): Promise<MentionCandidate[]> => {
+    const res = await client.api['hiroba-posts'][':id']['mention-candidates'].$get({
+      param: { id: postId },
+    })
+    if (!res.ok) return []
+    return (await res.json()).candidates
+  }, [postId])
 
   async function onSubmit(data: CreateHirobaAnswerInput) {
     if (isSubmittingRef.current) return
     isSubmittingRef.current = true
     setError(null)
 
-    const requestBody = JSON.stringify(data)
+    const submission = { ...data, mentionedUserIds }
+    const requestBody = JSON.stringify(submission)
     if (idempotencyKeyRef.current?.requestBody !== requestBody) {
       idempotencyKeyRef.current = { key: crypto.randomUUID(), requestBody }
     }
@@ -41,7 +52,7 @@ export function HirobaAnswerForm({ postId }: HirobaAnswerFormProps) {
       const res = await client.api['hiroba-posts'][':id'].answers.$post({
         param: { id: postId },
         header: { 'idempotency-key': idempotencyKeyRef.current.key },
-        json: data,
+        json: submission,
       })
       if (!res.ok) {
         const body = await res.json()
@@ -49,6 +60,7 @@ export function HirobaAnswerForm({ postId }: HirobaAnswerFormProps) {
         return
       }
       reset()
+      setMentionedUserIds([])
       router.refresh()
     } catch {
       setError('通信に失敗しました。画面をリロードせず、もう一度お試しください')
@@ -64,11 +76,22 @@ export function HirobaAnswerForm({ postId }: HirobaAnswerFormProps) {
           {error}
         </p>
       )}
-      <Textarea
-        placeholder="回答を入力してください"
-        rows={4}
-        {...register('body')}
-        aria-invalid={!!errors.body}
+      <Controller
+        name="body"
+        control={control}
+        render={({ field }) => (
+          <MentionTextarea
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            selectedIds={mentionedUserIds}
+            onSelectedIdsChange={setMentionedUserIds}
+            loadCandidates={loadCandidates}
+            placeholder="回答を入力してください"
+            disabled={isSubmitting}
+            ariaInvalid={!!errors.body}
+          />
+        )}
       />
       {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
       <Button type="submit" disabled={isSubmitting}>

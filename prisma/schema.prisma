@@ -518,6 +518,7 @@ enum QuestionStatus {
 }
 
 enum NotificationType {
+  MENTIONED
   POST_ANSWERED
   POST_LIKED
   ANSWER_LIKED

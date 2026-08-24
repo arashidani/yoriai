@@ -20,6 +20,7 @@ import {
   errorResponse,
   IdParamSchema,
   LikeStatusSchema,
+  MentionCandidateSchema,
   SavedStatusSchema,
 } from '@/lib/hono/openapi/schemas'
 import {
@@ -32,6 +33,7 @@ import {
   mockPostHasTagId,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { anonymousProfileDisplayName } from '@/lib/questions/anonymous-profile-display'
 import {
   getMostLikedAnswerId,
   toQaAnswerResponse,
@@ -70,6 +72,75 @@ function commaSeparatedIds(value?: string) {
       .map((id) => id.trim())
       .filter(Boolean) ?? []
   )
+}
+
+async function getQaMentionCandidates(postId: string) {
+  if (process.env.MOCK_MODE === 'true') {
+    const post = MOCK_POSTS.find((item) => item.id === postId)
+    if (!post) return null
+    const participants = [
+      ...MOCK_ANSWERS.filter((answer) => answer.postId === postId && !answer.isHidden).sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      ),
+      post,
+    ]
+    const seen = new Set<string>()
+    return participants.flatMap((participant) => {
+      if (!participant.authorId || seen.has(participant.authorId)) return []
+      seen.add(participant.authorId)
+      const profile =
+        'anonymousProfile' in participant
+          ? participant.anonymousProfile
+          : participant.postAnonymousProfile?.anonymousProfile
+      return profile
+        ? [
+            {
+              id: participant.authorId,
+              displayName: anonymousProfileDisplayName(profile.displayName, 1),
+            },
+          ]
+        : []
+    })
+  }
+
+  const post = await prisma.post.findUnique({
+    where: { id: postId },
+    select: {
+      authorId: true,
+      postAnonymousProfile: { include: { anonymousProfile: true } },
+      answers: {
+        where: { isHidden: false, authorId: { not: null } },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: {
+          authorId: true,
+          postAnonymousProfile: { include: { anonymousProfile: true } },
+        },
+      },
+    },
+  })
+  if (!post) return null
+
+  const seen = new Set<string>()
+  const add = (
+    userId: string | null,
+    assignment: { anonymousProfile: { displayName: string }; aliasNumber: number } | null,
+  ) => {
+    if (!userId || !assignment || seen.has(userId)) return []
+    seen.add(userId)
+    return [
+      {
+        id: userId,
+        displayName: anonymousProfileDisplayName(
+          assignment.anonymousProfile.displayName,
+          assignment.aliasNumber,
+        ),
+      },
+    ]
+  }
+  return [
+    ...post.answers.flatMap((answer) => add(answer.authorId, answer.postAnonymousProfile)),
+    ...add(post.authorId, post.postAnonymousProfile),
+  ]
 }
 
 function mockQuestions(viewerId: string) {
@@ -161,6 +232,25 @@ const listAnswersRoute = createRoute({
     200: {
       description: '回答一覧',
       content: { 'application/json': { schema: z.object({ answers: z.array(QaAnswerSchema) }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+  },
+})
+
+const mentionCandidatesRoute = createRoute({
+  method: 'get',
+  path: '/{id}/mention-candidates',
+  tags: ['questions'],
+  summary: '質問スレッドでメンションできる参加者を最新の回答順で取得',
+  ...auth,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: 'メンション候補',
+      content: {
+        'application/json': { schema: z.object({ candidates: z.array(MentionCandidateSchema) }) },
+      },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     404: errorResponse('質問が見つからない', 'Not found'),
@@ -267,6 +357,7 @@ const createAnswerRoute = createRoute({
       },
     },
     401: errorResponse('未認証', 'Unauthorized'),
+    400: errorResponse('メンション対象が不正', 'このスレッドの参加者のみメンションできます'),
     404: errorResponse('質問が存在しない', '投稿が見つかりません'),
     410: errorResponse('質問が削除済み', 'この投稿は削除されたため、回答できません'),
     409: errorResponse('回答受付終了', '回答を受け付けていない質問です'),
@@ -360,6 +451,12 @@ const unbookmarkRoute = createRoute({
 })
 
 export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
+  .openapi(mentionCandidatesRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const candidates = await getQaMentionCandidates(id)
+    if (!candidates) return c.json({ error: 'Not found' }, 404)
+    return c.json({ candidates }, 200)
+  })
   .openapi(listRoute, async (c) => {
     const user = c.get('user')
     const { page, pageSize, keyword, status, tagId, categoryIds, tagIds } = c.req.valid('query')
@@ -862,6 +959,15 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (post.deletedAt) return c.json({ error: 'この投稿は削除されたため、回答できません' }, 410)
     if (post.status !== QuestionStatus.OPEN)
       return c.json({ error: '回答を受け付けていない質問です' }, 409)
+    const requestedMentionIds = data.mentionedUserIds ?? []
+    if (requestedMentionIds.length > 0) {
+      const candidates = await getQaMentionCandidates(id)
+      if (
+        !candidates ||
+        !requestedMentionIds.every((userId) => candidates.some((item) => item.id === userId))
+      )
+        return c.json({ error: 'このスレッドの参加者のみメンションできます' }, 400)
+    }
     let assignment: Awaited<ReturnType<typeof getOrAssignAnonymousProfile>>
     try {
       assignment = await getOrAssignAnonymousProfile(id, user.id)
@@ -948,6 +1054,23 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         })
       } catch (error) {
         console.error('Failed to create reply notification', { postId: post.id, error })
+      }
+    }
+    if (!answer.isHidden) {
+      const mentionedUserIds = [...new Set(requestedMentionIds)].filter((id) => id !== user.id)
+      if (mentionedUserIds.length > 0) {
+        try {
+          await prisma.notification.createMany({
+            data: mentionedUserIds.map((userId) => ({
+              userId,
+              type: NotificationType.MENTIONED,
+              postId: post.id,
+              answerId: answer.id,
+            })),
+          })
+        } catch (error) {
+          console.error('Failed to create mention notifications', { postId: post.id, error })
+        }
       }
     }
     return c.json(

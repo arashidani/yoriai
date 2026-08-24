@@ -1,7 +1,8 @@
+import { Utensils } from 'lucide-react'
 import Link from 'next/link'
-import type { DisplayNameColor } from '@/app/generated/prisma/enums'
+import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import { HirobaAnswerLikeButton } from '@/components/hiroba/hiroba-answer-like-button'
-import { displayNameColorClass } from './display-name-color'
+import { displayNameColorClass, lunchStyleTag, mbtiColorTag } from './display-name-color'
 
 export type HirobaAnswer = {
   id: string
@@ -9,6 +10,7 @@ export type HirobaAnswer = {
   authorId: string | null
   displayName: string
   displayNameColor: DisplayNameColor | null
+  lunchPreference: LunchPreference | null
   isOwnAnswer: boolean
   likeCount: number
   createdAt: Date | string
@@ -20,9 +22,12 @@ type HirobaAnswerCardProps = {
 }
 
 export function HirobaAnswerCard({ answer, liked }: HirobaAnswerCardProps) {
+  const lunchStyle = lunchStyleTag(answer.lunchPreference)
+  const mbtiTag = mbtiColorTag(answer.displayNameColor)
+
   return (
     <article className="rounded-xl border border-input bg-background p-4 shadow-xs">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <div
           className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-paragraph-mini font-bold"
           aria-hidden
@@ -41,6 +46,19 @@ export function HirobaAnswerCard({ answer, liked }: HirobaAnswerCardProps) {
             className={`text-paragraph-small font-bold ${displayNameColorClass(answer.displayNameColor)}`}
           >
             {answer.displayName}
+          </span>
+        )}
+        {lunchStyle && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-lunch-style-bg px-2 py-0.5 text-paragraph-mini font-bold text-lunch-style">
+            <Utensils className="size-3" aria-hidden />
+            {lunchStyle}
+          </span>
+        )}
+        {mbtiTag && (
+          <span
+            className={`rounded-full px-2 py-0.5 text-paragraph-mini font-bold ${mbtiTag.className}`}
+          >
+            {mbtiTag.label}
           </span>
         )}
         <span className="text-paragraph-mini text-secondary-foreground" suppressHydrationWarning>

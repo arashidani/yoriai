@@ -8,7 +8,7 @@ const { prismaMock } = vi.hoisted(() => ({
     hirobaPost: { findFirst: vi.fn(), update: vi.fn() },
     hirobaAnswer: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
     hirobaPostLike: { createMany: vi.fn(), count: vi.fn() },
-    notification: { create: vi.fn() },
+    notification: { create: vi.fn(), createMany: vi.fn() },
     $transaction: vi.fn(),
   },
 }))
@@ -118,6 +118,52 @@ describe('返信・リアクション通知', () => {
         hirobaPostId: 'hiroba-post-1',
         hirobaAnswerId: 'hiroba-answer-new',
       },
+    })
+  })
+
+  it('ひろば投稿でメンションした参加者に通知する', async () => {
+    prismaMock.hirobaPost.findFirst
+      .mockResolvedValueOnce({
+        id: 'hiroba-post-1',
+        authorId: 'user-2',
+        deletedAt: null,
+      })
+      .mockResolvedValueOnce({
+        authorId: 'user-2',
+        author: MOCK_USERS[1],
+        answers: [],
+      })
+    prismaMock.hirobaAnswer.create.mockResolvedValue({
+      id: 'hiroba-answer-new',
+      hirobaPostId: 'hiroba-post-1',
+      authorId: 'user-1',
+      author: MOCK_USERS[0],
+      body: '@一般ユーザー 返信です',
+      isHidden: false,
+      likeCount: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+
+    const response = await app.request('/api/hiroba-posts/hiroba-post-1/answers', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440000',
+      },
+      body: JSON.stringify({ body: '@一般ユーザー 返信です', mentionedUserIds: ['user-2'] }),
+    })
+
+    expect(response.status).toBe(201)
+    expect(prismaMock.notification.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: 'user-2',
+          type: 'MENTIONED',
+          hirobaPostId: 'hiroba-post-1',
+          hirobaAnswerId: 'hiroba-answer-new',
+        },
+      ],
     })
   })
 })

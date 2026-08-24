@@ -1,7 +1,7 @@
-import { MessageCircle, UserRound, UsersRound } from 'lucide-react'
+import { MessageCircle, UserRound, UsersRound, Utensils } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { displayNameColorClass } from './display-name-color'
+import { displayNameColorClass, lunchStyleTag, mbtiColorTag } from './display-name-color'
 import { HirobaDeletePostButton } from './hiroba-delete-post-button'
 import { HirobaPostLikeButton } from './hiroba-post-like-button'
 import type { HirobaPost } from './hiroba-post-list'
@@ -30,6 +30,8 @@ const actionChipClass =
 
 export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostCardProps) {
   const canDelete = isAdmin || (post.isOwnPost && post.answerCount === 0)
+  const lunchStyle = lunchStyleTag(post.lunchPreference)
+  const mbtiTag = mbtiColorTag(post.displayNameColor)
 
   return (
     <div className="relative min-w-0 rounded-lg border border-input bg-background shadow-xs">
@@ -47,7 +49,7 @@ export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostC
             <UserRound className="size-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {post.authorId ? (
                 <Link
                   href={`/mypage/${post.authorId}`}
@@ -60,6 +62,19 @@ export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostC
                   className={`text-paragraph-small font-bold ${displayNameColorClass(post.displayNameColor)}`}
                 >
                   {post.displayName}
+                </span>
+              )}
+              {lunchStyle && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-lunch-style-bg px-2 py-0.5 text-paragraph-mini font-bold text-lunch-style">
+                  <Utensils className="size-3" aria-hidden />
+                  {lunchStyle}
+                </span>
+              )}
+              {mbtiTag && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-paragraph-mini font-bold ${mbtiTag.className}`}
+                >
+                  {mbtiTag.label}
                 </span>
               )}
               <span

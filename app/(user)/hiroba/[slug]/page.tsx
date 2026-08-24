@@ -70,6 +70,7 @@ async function getPosts(hirobaId: string, hirobaSlug: string, currentUserId: str
       authorId: post.authorId,
       displayName: post.author?.name ?? post.author?.email ?? '削除されたユーザー',
       displayNameColor: post.author?.displayNameColor ?? null,
+      lunchPreference: post.author?.lunchPreference ?? null,
       isOwnPost,
       likeCount: post.likeCount,
       liked: likedPostIds.has(post.id),
