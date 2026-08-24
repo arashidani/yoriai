@@ -150,7 +150,11 @@ export const AnonymousProfileSchema = z
   .object({
     id: z.string().openapi({ example: 'anon-1' }),
     displayName: z.string().openapi({ example: 'ねこ' }),
-    avatarUrl: z.string().openapi({ example: '/anonymous-profiles/cat.svg' }),
+    avatarUrl: z.string().nullable().optional().openapi({ example: '/anonymous-profiles/cat.svg' }),
+    avatarUrls: z
+      .array(z.string())
+      .optional()
+      .openapi({ example: ['/anonymous-profiles/cat.svg'] }),
     // 質問・回答の公開レスポンス（Answer.anonymousProfile等）では省略される。管理画面の一覧でのみ使う
     isActive: z.boolean().optional().openapi({ example: true }),
     createdAt: dateTime().optional(),

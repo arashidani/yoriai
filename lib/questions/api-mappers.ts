@@ -1,4 +1,8 @@
 import type { QuestionStatus } from '@/app/generated/prisma/enums'
+import {
+  anonymousProfileDisplayName,
+  avatarUrlForAlias,
+} from '@/lib/questions/anonymous-profile-display'
 
 // biome-ignore lint/suspicious/noExplicitAny: mapper accepts Prisma include and mock shapes
 type LooseRecord = Record<string, any>
@@ -24,9 +28,10 @@ function displayAuthor(record: LooseRecord, isOwn: boolean) {
     }
   }
   const profile = record.postAnonymousProfile?.anonymousProfile ?? record.anonymousProfile ?? null
+  const aliasNumber = record.postAnonymousProfile?.aliasNumber ?? 1
   return {
-    displayName: profile?.displayName ?? '匿名',
-    avatarUrl: profile?.avatarUrl ?? null,
+    displayName: profile ? anonymousProfileDisplayName(profile.displayName, aliasNumber) : '匿名',
+    avatarUrl: profile ? avatarUrlForAlias(profile.avatarUrls ?? [], aliasNumber) : null,
   }
 }
 
