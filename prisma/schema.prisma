@@ -145,20 +145,23 @@ model PostAnonymousProfile {
   user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   anonymousProfileId String
   anonymousProfile   AnonymousProfile @relation(fields: [anonymousProfileId], references: [id])
+  /// 同じ匿名キャラが何巡目か（1 = 表示名そのまま、2 = "#2"）
+  aliasNumber        Int              @default(1)
   createdAt          DateTime         @default(now())
 
   assignedAsAuthorOfPosts Post[]   @relation("PostAuthorAssignment")
   answers                 Answer[]
 
   @@unique([postId, userId])
-  @@unique([postId, anonymousProfileId])
+  @@unique([postId, anonymousProfileId, aliasNumber])
 }
 
 /// 匿名キャラのマスタ（表示名・アイコン）
 model AnonymousProfile {
   id          String   @id @default(uuid(7))
   displayName String   @unique
-  avatarUrl   String
+  /// aliasNumber の順に使用するアバター画像URL。巡回後は先頭から繰り返す。
+  avatarUrls  String[] @default([])
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
 

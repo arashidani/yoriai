@@ -685,7 +685,7 @@ components:
           type: string
           example: App Router を使うのがおすすめです。
         anonymousProfile:
-          $ref: "#/components/schemas/AnonymousProfile"
+          $ref: "#/components/schemas/AnswerAnonymousProfile"
         isHidden:
           type: boolean
           example: false
@@ -709,7 +709,7 @@ components:
         - likeCount
         - createdAt
         - updatedAt
-    AnonymousProfile:
+    AnswerAnonymousProfile:
       type: object
       properties:
         id:
@@ -717,17 +717,12 @@ components:
           example: anon-1
         displayName:
           type: string
-          example: ねこ
+          example: ねこ#2
         avatarUrl:
-          type: string
+          type:
+            - string
+            - "null"
           example: /anonymous-profiles/cat.svg
-        isActive:
-          type: boolean
-          example: true
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
       required:
         - id
         - displayName
@@ -887,6 +882,31 @@ components:
         - postId
         - answerId
         - createdAt
+    AnonymousProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          example: anon-1
+        displayName:
+          type: string
+          example: ねこ
+        avatarUrls:
+          type: array
+          items:
+            type: string
+          example:
+            - /anonymous-profiles/cat.svg
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - displayName
     TagCategory:
       type: object
       properties:
@@ -1086,6 +1106,7 @@ components:
     NotificationType:
       type: string
       enum:
+        - MENTIONED
         - POST_ANSWERED
         - POST_LIKED
         - ANSWER_LIKED
@@ -3960,12 +3981,8 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 50
-                avatarUrl:
-                  type: string
-                  minLength: 1
               required:
                 - displayName
-                - avatarUrl
       responses:
         "201":
           description: 追加された匿名キャラ
@@ -3998,7 +4015,7 @@ paths:
     patch:
       tags:
         - admin
-      summary: 匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）
+      summary: 匿名キャラの有効状態またはアバター表示順を更新（管理者専用）
       security: *a3
       parameters:
         - schema:
@@ -4016,8 +4033,12 @@ paths:
               properties:
                 isActive:
                   type: boolean
-              required:
-                - isActive
+                avatarUrls:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  maxItems: 20
       responses:
         "200":
           description: 更新後の匿名キャラ
@@ -4030,6 +4051,14 @@ paths:
                     $ref: "#/components/schemas/AnonymousProfile"
                 required:
                   - profile
+        "400":
+          description: アバターの並び順が不正
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 登録済みのアバターだけを並べ替えられます
         "401":
           description: 未認証
           content:
@@ -4097,6 +4126,99 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: すでに使われている匿名キャラは削除できません。候補から外すには無効化してください
+  /api/admin/anonymous-profiles/{id}/avatars:
+    post:
+      tags:
+        - admin
+      summary: 匿名キャラのアバターを追加（管理者専用）
+      security: *a3
+      parameters:
+        - schema:
+            type: string
+            example: post-1
+          required: true
+          name: id
+          in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+              required:
+                - file
+      responses:
+        "200":
+          description: アバター追加後の匿名キャラ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  profile:
+                    $ref: "#/components/schemas/AnonymousProfile"
+                required:
+                  - profile
+        "400":
+          description: 対応していない画像形式
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 対応していない画像形式です
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
+        "404":
+          description: 匿名キャラが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Not found
+        "413":
+          description: ファイルサイズ超過
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: ファイルサイズが大きすぎます（4.5MB以下にしてください）
+        "422":
+          description: 画像処理に失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 画像を処理できませんでした
+        "502":
+          description: アップロード失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 画像のアップロードに失敗しました
   /api/admin/tag-categories:
     get:
       tags:

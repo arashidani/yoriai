@@ -305,13 +305,13 @@ export const mswHandlers = {
       HttpResponse.json({ profiles: MOCK_ANONYMOUS_PROFILES }),
     ),
     http.post('/api/admin/anonymous-profiles', async ({ request }) => {
-      const body = (await request.json()) as { displayName: string; avatarUrl: string }
+      const body = (await request.json()) as { displayName: string }
       return HttpResponse.json(
         {
           profile: {
             id: 'anon-new',
             displayName: body.displayName,
-            avatarUrl: body.avatarUrl,
+            avatarUrls: [],
             isActive: true,
             createdAt: new Date().toISOString(),
           },
@@ -322,8 +322,15 @@ export const mswHandlers = {
     http.patch('/api/admin/anonymous-profiles/:id', async ({ params, request }) => {
       const profile = MOCK_ANONYMOUS_PROFILES.find((p) => p.id === params.id)
       if (!profile) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
-      const body = (await request.json()) as { isActive: boolean }
-      return HttpResponse.json({ profile: { ...profile, isActive: body.isActive } })
+      const body = (await request.json()) as { isActive?: boolean; avatarUrls?: string[] }
+      return HttpResponse.json({ profile: { ...profile, ...body } })
+    }),
+    http.post('/api/admin/anonymous-profiles/:id/avatars', ({ params }) => {
+      const profile = MOCK_ANONYMOUS_PROFILES.find((p) => p.id === params.id)
+      if (!profile) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      return HttpResponse.json({
+        profile: { ...profile, avatarUrls: [...profile.avatarUrls, MOCK_AVATAR_URL] },
+      })
     }),
     http.delete('/api/admin/anonymous-profiles/:id', () => HttpResponse.json({ success: true })),
     http.get('/api/admin/tag-categories', () =>
