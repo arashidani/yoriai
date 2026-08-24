@@ -470,18 +470,25 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         data: [{ hirobaPostId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count > 0 && post.authorId) {
-        await tx.notification.create({
-          data: {
-            userId: post.authorId,
-            type: NotificationType.HIROBA_POST_LIKED,
-            hirobaPostId: id,
-          },
-        })
-      }
-      const likeCount = await tx.hirobaPostLike.count({ where: { hirobaPostId: id } })
-      await tx.hirobaPost.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      if (created.count === 0) return post.likeCount
+
+      const [, updatedPost] = await Promise.all([
+        post.authorId
+          ? tx.notification.create({
+              data: {
+                userId: post.authorId,
+                type: NotificationType.HIROBA_POST_LIKED,
+                hirobaPostId: id,
+              },
+            })
+          : Promise.resolve(null),
+        tx.hirobaPost.update({
+          where: { id },
+          data: { likeCount: { increment: 1 } },
+          select: { likeCount: true },
+        }),
+      ])
+      return updatedPost.likeCount
     })
     return c.json({ liked: true, likeCount }, 200)
   })
@@ -499,10 +506,17 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (!post) return c.json({ error: 'Not found' }, 404)
 
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.hirobaPostLike.deleteMany({ where: { hirobaPostId: id, userId: user.id } })
-      const likeCount = await tx.hirobaPostLike.count({ where: { hirobaPostId: id } })
-      await tx.hirobaPost.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      const deleted = await tx.hirobaPostLike.deleteMany({
+        where: { hirobaPostId: id, userId: user.id },
+      })
+      if (deleted.count === 0) return post.likeCount
+
+      const updatedPost = await tx.hirobaPost.update({
+        where: { id },
+        data: { likeCount: { decrement: 1 } },
+        select: { likeCount: true },
+      })
+      return updatedPost.likeCount
     })
     return c.json({ liked: false, likeCount }, 200)
   })

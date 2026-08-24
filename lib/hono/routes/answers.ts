@@ -67,14 +67,25 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
         data: [{ answerId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count > 0 && answer.authorId) {
-        await tx.notification.create({
-          data: { userId: answer.authorId, type: NotificationType.ANSWER_LIKED, answerId: id },
-        })
-      }
-      const likeCount = await tx.answerLike.count({ where: { answerId: id } })
-      await tx.answer.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      if (created.count === 0) return answer.likeCount
+
+      const [, updatedAnswer] = await Promise.all([
+        answer.authorId
+          ? tx.notification.create({
+              data: {
+                userId: answer.authorId,
+                type: NotificationType.ANSWER_LIKED,
+                answerId: id,
+              },
+            })
+          : Promise.resolve(null),
+        tx.answer.update({
+          where: { id },
+          data: { likeCount: { increment: 1 } },
+          select: { likeCount: true },
+        }),
+      ])
+      return updatedAnswer.likeCount
     })
     return c.json({ liked: true, likeCount }, 200)
   })
@@ -92,10 +103,15 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
     if (!answer) return c.json({ error: 'Not found' }, 404)
 
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.answerLike.deleteMany({ where: { answerId: id, userId: user.id } })
-      const likeCount = await tx.answerLike.count({ where: { answerId: id } })
-      await tx.answer.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      const deleted = await tx.answerLike.deleteMany({ where: { answerId: id, userId: user.id } })
+      if (deleted.count === 0) return answer.likeCount
+
+      const updatedAnswer = await tx.answer.update({
+        where: { id },
+        data: { likeCount: { decrement: 1 } },
+        select: { likeCount: true },
+      })
+      return updatedAnswer.likeCount
     })
     return c.json({ liked: false, likeCount }, 200)
   })
