@@ -62,31 +62,35 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
     if (!answer) return c.json({ error: 'Not found' }, 404)
     if (answer.authorId === user.id) return c.json({ error: '自分の回答にはいいねできません' }, 403)
 
-    const likeCount = await prisma.$transaction(async (tx) => {
+    const { likeCount, isNewLike } = await prisma.$transaction(async (tx) => {
       const created = await tx.answerLike.createMany({
         data: [{ answerId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count === 0) return answer.likeCount
+      if (created.count === 0) return { likeCount: answer.likeCount, isNewLike: false }
 
-      const [, updatedAnswer] = await Promise.all([
-        answer.authorId
-          ? tx.notification.create({
-              data: {
-                userId: answer.authorId,
-                type: NotificationType.ANSWER_LIKED,
-                answerId: id,
-              },
-            })
-          : Promise.resolve(null),
-        tx.answer.update({
-          where: { id },
-          data: { likeCount: { increment: 1 } },
-          select: { likeCount: true },
-        }),
-      ])
-      return updatedAnswer.likeCount
+      const updatedAnswer = await tx.answer.update({
+        where: { id },
+        data: { likeCount: { increment: 1 } },
+        select: { likeCount: true },
+      })
+      return { likeCount: updatedAnswer.likeCount, isNewLike: true }
     })
+
+    if (isNewLike && answer.authorId) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: answer.authorId,
+            type: NotificationType.ANSWER_LIKED,
+            answerId: id,
+          },
+        })
+      } catch (error) {
+        console.error('Failed to create answer like notification', { answerId: id, error })
+      }
+    }
+
     return c.json({ liked: true, likeCount }, 200)
   })
   .openapi(unlikeRoute, async (c) => {

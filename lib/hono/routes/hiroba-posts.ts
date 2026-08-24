@@ -465,31 +465,38 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (post.authorId === user.id) return c.json({ error: '自分の投稿にはいいねできません' }, 403)
 
-    const likeCount = await prisma.$transaction(async (tx) => {
+    const { likeCount, isNewLike } = await prisma.$transaction(async (tx) => {
       const created = await tx.hirobaPostLike.createMany({
         data: [{ hirobaPostId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count === 0) return post.likeCount
+      if (created.count === 0) return { likeCount: post.likeCount, isNewLike: false }
 
-      const [, updatedPost] = await Promise.all([
-        post.authorId
-          ? tx.notification.create({
-              data: {
-                userId: post.authorId,
-                type: NotificationType.HIROBA_POST_LIKED,
-                hirobaPostId: id,
-              },
-            })
-          : Promise.resolve(null),
-        tx.hirobaPost.update({
-          where: { id },
-          data: { likeCount: { increment: 1 } },
-          select: { likeCount: true },
-        }),
-      ])
-      return updatedPost.likeCount
+      const updatedPost = await tx.hirobaPost.update({
+        where: { id },
+        data: { likeCount: { increment: 1 } },
+        select: { likeCount: true },
+      })
+      return { likeCount: updatedPost.likeCount, isNewLike: true }
     })
+
+    if (isNewLike && post.authorId) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: post.authorId,
+            type: NotificationType.HIROBA_POST_LIKED,
+            hirobaPostId: id,
+          },
+        })
+      } catch (error) {
+        console.error('Failed to create hiroba post like notification', {
+          hirobaPostId: id,
+          error,
+        })
+      }
+    }
+
     return c.json({ liked: true, likeCount }, 200)
   })
   .openapi(unlikeRoute, async (c) => {
