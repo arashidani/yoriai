@@ -433,6 +433,7 @@ const updateAnonymousProfileRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    400: errorResponse('アバターの並び順が不正', '登録済みのアバターだけを並べ替えられます'),
     404: errorResponse('匿名キャラが見つからない', 'Not found'),
   },
 })
