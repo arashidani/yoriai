@@ -46,6 +46,7 @@
   --color-informative: var(--informative);
   --color-informative-foreground: var(--informative-foreground);
   --color-informative-background: var(--informative-background);
+  --color-action-like: var(--action-like);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -99,6 +100,8 @@
   --color-hiroba-mint-foreground: var(--hiroba-mint-foreground);
   --color-tenurechip: var(--tenurechip);
   --color-tenurechip-foreground: var(--tenurechip-foreground);
+  --color-statuschip-success: var(--statuschip-success);
+  --color-statuschip-success-foreground: var(--statuschip-success-foreground);
 
   /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
      3種類に限定し、独自の font-* ユーティリティは増やさない。
@@ -557,6 +560,7 @@
   --informative: #33c1ed; /* sky-500 */
   --informative-foreground: #fffefc;
   --informative-background: #f0fcff; /* sky-50 */
+  --action-like: #fb7185; /* rose-400（Light/Dark 共通・固定色） */
   --border: #f6f3ed; /* neutral-200 */
   /* NOTE: Figma は input=#ffffff（背景色定義）だが、shadcn の border-input
      は入力欄の枠線色のため視認できる値にする（ユーザー確認済み）。 */
@@ -619,6 +623,10 @@
   /* Figma: badge/tenurechip, badge/tenurechip-foreground。Light/Dark 共通の固定色 */
   --tenurechip: #ecfccb;
   --tenurechip-foreground: #65a30d;
+
+  /* Figma: badge/statuschip-success, badge/statuschip-success-foreground（解決済みチップ）。Light/Dark 共通の固定色 */
+  --statuschip-success: #ece7df; /* neutral-300 */
+  --statuschip-success-foreground: #a59a8d; /* neutral-600 */
 }
 
 /* ── Dark ── */
@@ -652,6 +660,7 @@
   --informative: #33c1ed; /* sky-500（Light と固定・上部 NOTE 参照） */
   --informative-foreground: #fffefc;
   --informative-background: #0a4a5e; /* sky-900 */
+  --action-like: #fb7185; /* rose-400（Light と固定） */
   --border: #7d746a; /* neutral-700 */
   --input: #7d746a; /* neutral-700（Figma は 白5%。light 側の NOTE 参照） */
   --ring: #7d746a;
@@ -690,6 +699,8 @@
 
   --tenurechip: #ecfccb; /* Light と固定 */
   --tenurechip-foreground: #65a30d; /* Light と固定 */
+  --statuschip-success: #ece7df; /* Light と固定 */
+  --statuschip-success-foreground: #a59a8d; /* Light と固定 */
 }
 
 @layer base {

@@ -1,0 +1,21 @@
+import type { SVGProps } from 'react'
+
+import { cn } from '@/lib/utils'
+
+export function IconCheck({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 20 15"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      {...props}
+      className={cn('size-5', className)}
+    >
+      <path
+        d="M17.2286 1.18714C17.8388 0.576944 18.8279 0.576944 19.4381 1.18714C20.0483 1.79733 20.0483 2.78642 19.4381 3.39661L9.02181 13.8129C8.41162 14.4231 7.42254 14.4231 6.81234 13.8129L1.6036 8.60535C0.993475 7.99522 0.99361 7.00609 1.6036 6.39588C2.2138 5.78568 3.20288 5.78568 3.81307 6.39588L7.91586 10.4987L17.2286 1.18714Z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}

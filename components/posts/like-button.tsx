@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { toast } from 'sonner'
-import { AshiatoIcon } from '@/components/icons/ashiato-icon'
+import { IconPaw } from '@/components/design-system/icons/icon-paw'
 import { Button } from '@/components/ui/button'
+import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { cn } from '@/lib/utils'
 
 type LikeButtonProps = {
@@ -19,45 +19,32 @@ export function LikeButton({
   onToggle,
   size = 'sm',
 }: LikeButtonProps) {
-  const [liked, setLiked] = useState(initialLiked)
-  const [likeCount, setLikeCount] = useState(initialLikeCount)
-  const [pending, setPending] = useState(false)
-
-  async function handleClick() {
-    if (pending) return
-    const next = !liked
-    setPending(true)
-    setLiked(next)
-    setLikeCount((count) => count + (next ? 1 : -1))
-
-    try {
-      const result = await onToggle(next)
-      setLiked(result.liked)
-      setLikeCount(result.likeCount)
-    } catch {
-      setLiked(!next)
-      setLikeCount((count) => count + (next ? -1 : 1))
-      toast.error('いいねの処理に失敗しました')
-    } finally {
-      setPending(false)
-    }
-  }
+  const {
+    pressed: liked,
+    count: likeCount,
+    toggle,
+  } = useDebouncedOptimisticToggle({
+    initialPressed: initialLiked,
+    initialCount: initialLikeCount,
+    onSync: onToggle,
+    parseResult: (result) => ({ pressed: result.liked, count: result.likeCount }),
+    onError: () => toast.error('いいねの処理に失敗しました'),
+  })
 
   return (
     <Button
       type="button"
       variant="ghost"
       size={size}
-      onClick={handleClick}
-      disabled={pending}
+      onClick={toggle}
       aria-pressed={liked}
       className={cn(
         'gap-1.5 rounded-full border border-input px-3 text-paragraph-mini font-medium',
-        liked && 'border-transparent bg-destructive/10 text-destructive hover:bg-destructive/20',
+        liked && 'border-transparent bg-action-like/10 text-action-like hover:bg-action-like/20',
       )}
     >
-      <AshiatoIcon className="size-3.5" />
-      {likeCount}
+      <IconPaw className="size-3.5" />
+      {Math.max(0, likeCount ?? 0)}
     </Button>
   )
 }

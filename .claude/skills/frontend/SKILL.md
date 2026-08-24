@@ -494,3 +494,49 @@ export const ServerError: Story = {
 - `components/ui/` を直接編集する → shadcn が再生成すると上書きされる
 - フォームスキーマをコンポーネント内にインラインで書く → `lib/schemas/` に置く
 - shadcn コンポーネント追加時に `npx shadcn@latest add` をターミナルで直接叩く → shadcn MCP 経由で検索・追加する
+- **動的ルートで `prefetch` だけ付けて体感速度を改善しようとする** → `createServerApiClient` 経由（`cookies()` 等）のページは完全動的ルートのため、`loading.tsx` / `Suspense` 境界が無いと自動プリフェッチの対象が存在しない。`prefetch={true}` で強制すると一覧10件分の「認証 + API クエリ」がサーバーに飛ぶ。**先に `loading.tsx` と `Suspense` 境界を追加し、プリフェッチはその後の話**（`node_modules/next/dist/docs/01-app/02-guides/prefetching.md` 参照）
+
+---
+
+## 11. 動的ルートのナビゲーション（`loading.tsx` / `Suspense`）
+
+**ルール: `cookies()` や `createServerApiClient` を使う動的ルートでは、クリック直後のフィードバック用に `loading.tsx` を置く。データ取得は `Suspense` で分割し、`Link` の `prefetch` だけでは改善しない。**
+
+| | 静的ページ | 動的ページ |
+|---|---|---|
+| 自動プリフェッチ | ルート全体 | `loading.tsx` がある場合のみシェルまで |
+| クリック時のサーバー往復 | 不要 | 必要（シェルはストリーミング） |
+
+### 実装パターン
+
+1. `app/(user)/posts/[id]/loading.tsx` — ナビゲーション直後に表示するシェル（静的なヘッダーボタン + スケルトン）
+2. `page.tsx` — 静的シェル + `Suspense` でデータ取得コンポーネントを分割
+3. `Link` はデフォルトの自動プリフェッチに任せる（`prefetch={true}` は付けない）
+
+```tsx
+// app/(user)/posts/[id]/loading.tsx
+export default function Loading() {
+  return (
+    <QaDetailPageShell>
+      <QaDetailContentFallback />
+    </QaDetailPageShell>
+  )
+}
+
+// app/(user)/posts/[id]/page.tsx
+export default async function Page({ params }: Props) {
+  const { id } = await params
+  return (
+    <QaDetailPageShell>
+      <Suspense fallback={<QaDetailQuestionFallback />}>
+        <QaDetailQuestion id={id} />
+      </Suspense>
+      <Suspense fallback={<QaDetailAnswersFallback />}>
+        <QaDetailAnswers id={id} />
+      </Suspense>
+    </QaDetailPageShell>
+  )
+}
+```
+
+同一リクエスト内で質問 API を複数コンポーネントから呼ぶ場合は `React.cache` で重複取得を防ぐ（`lib/questions/get-qa-question.ts`）。

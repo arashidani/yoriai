@@ -117,14 +117,24 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     const body = await response.json()
 
     expect(body.answers).toHaveLength(1)
-    expect(body.answers[0]).toMatchObject({ id: 'answer-2', isMostLiked: true })
+    expect(body.answers[0]).toMatchObject({
+      id: 'answer-2',
+      isMostLiked: true,
+      joinedYear: 2020,
+      joinedMonth: 4,
+    })
   })
 
   it('未解決質問では最多回答でもメダルを付けない', async () => {
     const response = await app.request('/api/questions/post-1/answers')
     const body = await response.json()
 
-    expect(body.answers[0]).toMatchObject({ id: 'answer-1', isMostLiked: false })
+    expect(body.answers[0]).toMatchObject({
+      id: 'answer-1',
+      isMostLiked: false,
+      joinedYear: 2022,
+      joinedMonth: 10,
+    })
   })
 
   it('投稿した質問・保存した質問を専用APIで返す', async () => {
@@ -165,6 +175,35 @@ describe('Q&A API contract (MOCK_MODE)', () => {
       error: 'この投稿は削除されたため、回答できません',
     })
   })
+  it('存在しないtagIdを指定すると400を返す', async () => {
+    const response = await app.request('/api/questions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440002',
+      },
+      body: JSON.stringify({ title: '質問テスト', body: '本文テスト', tagId: 'invalid-tag' }),
+    })
+
+    expect(response.status).toBe(400)
+    expect(await response.json()).toEqual({ error: '指定されたタグが見つかりません' })
+  })
+
+  it('有効なtagIdを指定するとタグ付きで作成する', async () => {
+    const response = await app.request('/api/questions', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440003',
+      },
+      body: JSON.stringify({ title: '質問テスト', body: '本文テスト', tagId: 'tag-1' }),
+    })
+
+    expect(response.status).toBe(201)
+    const body = await response.json()
+    expect(body.question.tag).toMatchObject({ id: 'tag-category-1', name: '社内ルール・手続き' })
+  })
+
   it('質問・回答の作成レスポンスに公開状態を返す', async () => {
     const headers = {
       'content-type': 'application/json',
@@ -183,8 +222,10 @@ describe('Q&A API contract (MOCK_MODE)', () => {
 
     expect(question.status).toBe(201)
     expect(answer.status).toBe(201)
+    const answerBody = await answer.json()
     expect((await question.json()).moderation).toEqual({ isHidden: false })
-    expect((await answer.json()).moderation).toEqual({ isHidden: false })
+    expect(answerBody.moderation).toEqual({ isHidden: false })
+    expect(answerBody.answer).toMatchObject({ joinedYear: 2020, joinedMonth: 4 })
   })
 
   it('その他タグを手動選択して質問を投稿できる', async () => {

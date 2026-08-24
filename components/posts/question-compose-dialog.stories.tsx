@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
 import { expect, screen, userEvent } from 'storybook/test'
 import { QuestionComposeDialog } from './question-compose-dialog'
@@ -9,15 +8,6 @@ const meta = {
   parameters: {
     nextjs: { appDirectory: true },
   },
-  decorators: [
-    (Story) => (
-      <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-      >
-        <Story />
-      </QueryClientProvider>
-    ),
-  ],
 } satisfies Meta<typeof QuestionComposeDialog>
 
 export default meta
@@ -27,6 +17,9 @@ export const Default: Story = {
   args: {},
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: '質問する' })).toBeVisible()
+    const manageLink = canvas.getByRole('link', { name: 'Q&A管理' })
+    await expect(manageLink).toBeVisible()
+    await expect(manageLink).toHaveAttribute('href', '/my-questions')
   },
 }
 

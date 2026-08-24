@@ -105,6 +105,10 @@
           "liked": {
             "type": "boolean"
           },
+          "bookmarkCount": {
+            "type": "integer",
+            "minimum": 0
+          },
           "saved": {
             "type": "boolean"
           },
@@ -161,6 +165,7 @@
           "answerCount",
           "likeCount",
           "liked",
+          "bookmarkCount",
           "saved",
           "isOwnQuestion",
           "displayAuthor",
@@ -276,6 +281,20 @@
           "displayAuthor": {
             "$ref": "#/components/schemas/QuestionDisplayAuthor"
           },
+          "joinedYear": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "example": 2022
+          },
+          "joinedMonth": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "example": 4
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -296,6 +315,8 @@
           "isOwnAnswer",
           "isMostLiked",
           "displayAuthor",
+          "joinedYear",
+          "joinedMonth",
           "createdAt",
           "updatedAt"
         ]
@@ -343,6 +364,11 @@
           "saved": {
             "type": "boolean",
             "example": true
+          },
+          "bookmarkCount": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 1
           }
         },
         "required": [
