@@ -48,7 +48,7 @@ function QuestionItem({
   return (
     <div
       data-slot="question-item"
-      className={cn('flex w-full flex-col gap-4 p-6 hover:bg-muted', className)}
+      className={cn('flex w-full flex-col gap-4 p-6 hover:bg-muted', href && 'cursor-pointer', className)}
     >
       <div className="flex w-full items-start gap-4">
         <AuthorAvatar src={avatarSrc} alt={avatarAlt} />

@@ -8,7 +8,7 @@ import { IconPawOutline } from '@/components/design-system/icons/icon-paw-outlin
 import { cn } from '@/lib/utils'
 
 const likeButtonVariants = cva(
-  'group inline-flex items-center justify-center gap-1 rounded-full font-bold whitespace-nowrap outline-none disabled:pointer-events-none disabled:opacity-50',
+  'group inline-flex cursor-pointer items-center justify-center gap-1 rounded-full font-bold whitespace-nowrap outline-none disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       size: {

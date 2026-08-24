@@ -4,7 +4,7 @@ import { IconBubble } from '@/components/design-system/icons/icon-bubble'
 import { cn } from '@/lib/utils'
 
 const commentCountVariants = cva(
-  'inline-flex items-center justify-center gap-1 rounded-full font-bold whitespace-nowrap text-muted-foreground',
+  'inline-flex cursor-default items-center justify-center gap-1 rounded-full font-bold whitespace-nowrap text-muted-foreground',
   {
     variants: {
       size: {
