@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import { Sparkles } from 'lucide-react'
 
+import { IconAi } from '@/components/design-system/icons/icon-ai'
 import { cn } from '@/lib/utils'
 
 const categoryChipVariants = cva(
@@ -26,7 +26,7 @@ type CategoryChipProps = VariantProps<typeof categoryChipVariants> & {
 function CategoryChip({ className, size = 'default', children }: CategoryChipProps) {
   return (
     <span data-slot="category-chip" className={cn(categoryChipVariants({ size }), className)}>
-      <Sparkles className={cn('shrink-0', size === 'large' ? 'size-3.5' : 'size-3')} aria-hidden />
+      <IconAi className={cn('shrink-0', size === 'large' ? 'size-3.5' : 'size-3')} aria-hidden />
       {children}
     </span>
   )

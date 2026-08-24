@@ -1,10 +1,10 @@
 'use client'
 
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
 import { Button } from '@/components/design-system/button'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { QuestionCompletionModal } from '@/components/design-system/question-completion-modal'
 import { QuestionFormModal } from '@/components/design-system/question-form-modal'
 import { QuestionTagRecoveryModal } from '@/components/design-system/question-tag-recovery-modal'
@@ -20,7 +20,6 @@ async function fetchQuestionTags() {
   if (!res.ok) throw new Error('カテゴリーの取得に失敗しました')
   return (await res.json()).categories
 }
-
 export function QuestionComposeDialog() {
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -123,7 +122,7 @@ export function QuestionComposeDialog() {
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange} disablePointerDismissal>
+    <Dialog open={open} onOpenChange={handleOpenChange} disablePointerDismissal modal="trap-focus">
       <ActionButtons
         primaryAction={
           <DialogTrigger
@@ -132,7 +131,7 @@ export function QuestionComposeDialog() {
                 type="button"
                 size="large"
                 className="shrink-0"
-                leftIcon={<Pencil className="size-4" />}
+                leftIcon={<IconPencil className="size-full" />}
               >
                 質問する
               </Button>
@@ -140,7 +139,7 @@ export function QuestionComposeDialog() {
           />
         }
         secondaryLabel="Q&A管理"
-        onSecondaryClick={() => router.push('/my-questions')}
+        secondaryHref="/my-questions"
       />
       <DialogContent
         showCloseButton={false}

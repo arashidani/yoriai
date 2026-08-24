@@ -80,7 +80,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
         <AnswerFormUI
           onSubmit={handleSubmit(onSubmit)}
           placeholder="回答を入力する"
-          submitLabel={isSubmitting ? '送信中...' : '回答する'}
+          submitLabel={isSubmitting ? '送信中...' : '回答'}
           disabled={isSubmitting || isPostUnavailable}
           textareaProps={{ rows: 4, ...register('body'), 'aria-invalid': !!errors.body }}
         />

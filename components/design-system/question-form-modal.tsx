@@ -1,10 +1,12 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Pencil, Sparkles, X } from 'lucide-react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Button } from '@/components/design-system/button'
 import { FormField } from '@/components/design-system/form-field'
+import { IconAi } from '@/components/design-system/icons/icon-ai'
+import { IconClose } from '@/components/design-system/icons/icon-close'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { SelectCategories } from '@/components/design-system/ui/select-categories'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
@@ -34,6 +36,7 @@ export function QuestionFormModal({
   tagCategories = [],
   isTagCategoriesLoading = false,
 }: QuestionFormModalProps) {
+  const tagOptions = tagCategories.flatMap(({ tags }) => tags)
   const {
     control,
     register,
@@ -43,7 +46,10 @@ export function QuestionFormModal({
     resolver: zodResolver(createPostSchema),
     defaultValues: { title: '', body: '', tagId: undefined },
   })
-  const tagOptions = tagCategories.flatMap(({ tags }) => tags)
+  const title = useWatch({ control, name: 'title' })
+  const body = useWatch({ control, name: 'body' })
+  const canSubmit = Boolean(title?.trim()) && Boolean(body?.trim())
+  const isLoading = isSubmitting || isFormSubmitting
 
   return (
     <div className="flex max-h-[calc(100dvh-2rem)] w-full max-w-3xl flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-background p-5 sm:p-8">
@@ -53,21 +59,21 @@ export function QuestionFormModal({
           <button
             type="button"
             aria-label="閉じる"
-            disabled={isSubmitting}
-            onClick={isSubmitting ? undefined : onClose}
+            disabled={isLoading}
+            onClick={isLoading ? undefined : onClose}
             className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted',
-              isSubmitting && 'pointer-events-none opacity-50',
+              'flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted',
+              isLoading && 'pointer-events-none opacity-50',
             )}
           >
-            <X className="size-6" />
+            <IconClose className="text-foreground" />
           </button>
         )}
       </div>
       <Separator />
-      {isSubmitting ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-16">
-          <Spinner className="size-8" />
+          <Spinner className="size-8 text-primary" aria-label="投稿中" />
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
@@ -103,9 +109,9 @@ export function QuestionFormModal({
               <p className="text-sm font-bold text-foreground">カテゴリー</p>
             </Label>
             <div className="flex w-full items-center gap-2 rounded-lg bg-informative-background p-3">
-              <Sparkles className="size-4 shrink-0 text-informative" aria-hidden />
+              <IconAi className="size-4 shrink-0 text-informative" />
               <p className="text-paragraph-small font-bold text-informative">
-                カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します
+                カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します。
               </p>
             </div>
             <Controller
@@ -135,10 +141,10 @@ export function QuestionFormModal({
           </div>
           <Button
             type="submit"
-            isDisabled={isSubmitting || isFormSubmitting}
+            isDisabled={isLoading || !canSubmit}
             className="flex items-center justify-center gap-2 px-6 py-4"
           >
-            <Pencil className="size-4" />
+            <IconPencil className="size-4" />
             投稿する
           </Button>
         </form>

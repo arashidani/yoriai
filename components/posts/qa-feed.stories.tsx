@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { delay, HttpResponse, http } from 'msw'
 import { expect, userEvent, waitFor } from 'storybook/test'
 import { formatRelativeTime } from '@/lib/date-time'
+import { useQaFeedFilterStore } from '@/lib/stores/qa-feed-filter-store'
 import { QaFeed } from './qa-feed'
 
 const meta = {
@@ -11,13 +12,16 @@ const meta = {
     nextjs: { appDirectory: true },
   },
   decorators: [
-    (Story) => (
-      <QueryClientProvider
-        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
-      >
-        <Story />
-      </QueryClientProvider>
-    ),
+    (Story) => {
+      useQaFeedFilterStore.getState().resetFilters()
+      return (
+        <QueryClientProvider
+          client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+        >
+          <Story />
+        </QueryClientProvider>
+      )
+    },
   ],
 } satisfies Meta<typeof QaFeed>
 
@@ -33,6 +37,7 @@ const basePosts = [
     isOwnQuestion: false,
     likeCount: 3,
     liked: false,
+    bookmarkCount: 0,
     saved: false,
     status: 'RESOLVED' as const,
     answerCount: 1,
@@ -50,6 +55,7 @@ const basePosts = [
     isOwnQuestion: false,
     likeCount: 0,
     liked: false,
+    bookmarkCount: 0,
     saved: false,
     status: 'OPEN' as const,
     answerCount: 0,

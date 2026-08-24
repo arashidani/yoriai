@@ -33,8 +33,10 @@ function StatusChipAction({ className, status, onEndRecruiting }: StatusChipActi
       <TooltipTrigger
         render={<button type="button" onClick={onEndRecruiting} />}
         data-slot="status-chip-action"
+        // Base UI の既定は 600ms。取り消せない操作の注意書きなので hover 直後に出す
+        delay={0}
         className={cn(
-          'inline-flex items-center justify-center gap-1 rounded-full border border-primary bg-card px-4 py-2 text-paragraph-small font-bold text-primary',
+          'inline-flex items-center justify-center gap-1 rounded-full border border-primary bg-card px-4 py-2 text-paragraph-small font-bold text-primary hover:bg-brand-2',
           className,
         )}
       >

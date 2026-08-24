@@ -22,10 +22,10 @@ type ToolChipProps = {
 export function ToolChip({ className, text, side = 'top' }: ToolChipProps) {
   return (
     <div className={cn(toolChipClass, className)}>
-      <p className="whitespace-nowrap text-caption font-bold">{text}</p>
+      <p className="whitespace-pre-line text-caption font-bold">{text}</p>
       <span
         className={cn(
-          'absolute flex items-center justify-center text-informative',
+          'absolute z-10 flex items-center justify-center text-informative',
           arrowClassBySide[side],
         )}
       >

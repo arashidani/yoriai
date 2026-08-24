@@ -124,6 +124,17 @@ export const mswHandlers = {
         { status: 201 },
       )
     }),
+    http.get('/api/question-tags', () =>
+      HttpResponse.json({
+        categories: MOCK_TAG_CATEGORIES.map(({ id, name }) => ({
+          id,
+          name,
+          tags: MOCK_TAGS.filter((tag) => tag.category === name && tag.isWorkTag)
+            .map(({ id: tagId, name: tagName }) => ({ id: tagId, name: tagName }))
+            .sort((a, b) => a.name.localeCompare(b.name, 'ja')),
+        })).filter((category) => category.tags.length > 0),
+      }),
+    ),
     http.post('/api/questions/:id/tag-assignment', () =>
       HttpResponse.json({ tag: { id: MOCK_TAGS[0].id, name: MOCK_TAGS[0].name } }),
     ),
@@ -132,8 +143,12 @@ export const mswHandlers = {
     http.delete('/api/questions/:id/likes', () =>
       HttpResponse.json({ liked: false, likeCount: 0 }),
     ),
-    http.post('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: true })),
-    http.delete('/api/questions/:id/bookmarks', () => HttpResponse.json({ saved: false })),
+    http.post('/api/questions/:id/bookmarks', () =>
+      HttpResponse.json({ saved: true, bookmarkCount: 1 }),
+    ),
+    http.delete('/api/questions/:id/bookmarks', () =>
+      HttpResponse.json({ saved: false, bookmarkCount: 0 }),
+    ),
     http.post('/api/questions/:id/resolve', ({ params }) => {
       const post = MOCK_QUESTIONS.find((p) => p.id === params.id)
       if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
