@@ -23,8 +23,10 @@ describe('JST日時ユーティリティ', () => {
   })
 
   it('相対時刻を返す', () => {
-    const now = Date.now()
-    expect(formatRelativeTime(now - 5 * 60_000)).toBe('5分前')
-    expect(formatRelativeTime(now - 3 * 60 * 60_000)).toBe('3時間前')
+    const now = Date.parse('2026-08-24T12:00:00.000Z')
+    expect(formatRelativeTime(now - 5 * 60_000, now)).toBe('5分前')
+    expect(formatRelativeTime(now - 3 * 60 * 60_000, now)).toBe('3時間前')
+    expect(formatRelativeTime(now - 23 * 60 * 60_000, now)).toBe('23時間前')
+    expect(formatRelativeTime(now - 24 * 60 * 60_000, now)).toBe('1日前')
   })
 })
