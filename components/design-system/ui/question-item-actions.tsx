@@ -1,12 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import { BookmarkButton } from '@/components/design-system/ui/bookmark-button'
 import { CommentCount } from '@/components/design-system/ui/comment-count'
 import { LikeButton } from '@/components/design-system/ui/like-button'
+import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { client } from '@/lib/hono/client'
+import type { QaPost } from '@/lib/questions/qa-post'
+import {
+  getQuestionInteractionFromCache,
+  patchQuestionInteractionCache,
+  type QuestionInteractionPatch,
+} from '@/lib/questions/question-interaction-cache'
+
+type QuestionsCache = {
+  posts: QaPost[]
+  totalPages: number
+  total: number
+}
+
+function patchQuestionsCache(
+  queryClient: QueryClient,
+  postId: string,
+  patch: QuestionInteractionPatch,
+) {
+  patchQuestionInteractionCache(queryClient, postId, patch)
+  queryClient.setQueriesData({ queryKey: ['questions'] }, (data) => {
+    if (!data || typeof data !== 'object' || !('posts' in data)) return data
+    const current = data as QuestionsCache
+    if (!Array.isArray(current.posts)) return data
+    return {
+      ...current,
+      posts: current.posts.map((post) => (post.id === postId ? { ...post, ...patch } : post)),
+    }
+  })
+}
 
 type QuestionItemActionsProps = {
   postId?: string
@@ -29,65 +59,67 @@ function QuestionItemActions({
   isOwnQuestion = false,
   size = 'default',
 }: QuestionItemActionsProps) {
-  const [liked, setLiked] = useState(initialLiked)
-  const [likeCount, setLikeCount] = useState(initialLikeCount)
-  const [bookmarked, setBookmarked] = useState(initialBookmarked)
-  const [bookmarkCount, setBookmarkCount] = useState(initialBookmarkCount)
-  const [likePending, setLikePending] = useState(false)
-  const [bookmarkPending, setBookmarkPending] = useState(false)
+  const queryClient = useQueryClient()
+  const cachedInteraction = postId
+    ? getQuestionInteractionFromCache(queryClient, postId)
+    : undefined
+  const resolvedLiked = cachedInteraction?.liked ?? initialLiked
+  const resolvedLikeCount = cachedInteraction?.likeCount ?? initialLikeCount
+  const resolvedBookmarked = cachedInteraction?.saved ?? initialBookmarked
+  const resolvedBookmarkCount = cachedInteraction?.bookmarkCount ?? initialBookmarkCount
 
-  async function handleLikedChange(pressed: boolean) {
-    if (isOwnQuestion || likePending) return
-
-    const prevLiked = liked
-    const prevCount = likeCount
-    setLiked(pressed)
-    setLikeCount((count) => count + (pressed ? 1 : -1))
-
-    if (!postId) return
-
-    setLikePending(true)
-    try {
+  const like = useDebouncedOptimisticToggle({
+    initialPressed: resolvedLiked,
+    initialCount: resolvedLikeCount,
+    enabled: !!postId,
+    onSync: async (pressed) => {
+      if (!postId) throw new Error('postId is required')
       const res = pressed
         ? await client.api.questions[':id'].likes.$post({ param: { id: postId } })
         : await client.api.questions[':id'].likes.$delete({ param: { id: postId } })
       if (!res.ok) throw new Error('いいねの処理に失敗しました')
-      const body = await res.json()
-      setLiked(body.liked)
-      setLikeCount(body.likeCount)
-    } catch {
-      setLiked(prevLiked)
-      setLikeCount(prevCount)
-      toast.error('いいねの処理に失敗しました')
-    } finally {
-      setLikePending(false)
-    }
-  }
+      const json = await res.json()
+      patchQuestionsCache(queryClient, postId, { liked: json.liked, likeCount: json.likeCount })
+      return json
+    },
+    parseResult: (result) => ({ pressed: result.liked, count: result.likeCount }),
+    onError: () => toast.error('いいねの処理に失敗しました'),
+  })
 
-  async function handleBookmarkedChange(pressed: boolean) {
-    if (bookmarkPending) return
-
-    const prevBookmarked = bookmarked
-    const prevCount = bookmarkCount
-    setBookmarked(pressed)
-    setBookmarkCount((count) => count + (pressed ? 1 : -1))
-
-    if (!postId) return
-
-    setBookmarkPending(true)
-    try {
+  const bookmark = useDebouncedOptimisticToggle({
+    initialPressed: resolvedBookmarked,
+    initialCount: resolvedBookmarkCount,
+    enabled: !!postId,
+    onSync: async (pressed) => {
+      if (!postId) throw new Error('postId is required')
       const res = pressed
         ? await client.api.questions[':id'].bookmarks.$post({ param: { id: postId } })
         : await client.api.questions[':id'].bookmarks.$delete({ param: { id: postId } })
       if (!res.ok) throw new Error('保存の処理に失敗しました')
-      const body = await res.json()
-      setBookmarked(body.saved)
-    } catch {
-      setBookmarked(prevBookmarked)
-      setBookmarkCount(prevCount)
-      toast.error('保存の処理に失敗しました')
-    } finally {
-      setBookmarkPending(false)
+      const json = await res.json()
+      patchQuestionsCache(queryClient, postId, {
+        saved: json.saved,
+        ...(typeof json.bookmarkCount === 'number' ? { bookmarkCount: json.bookmarkCount } : {}),
+      })
+      return json
+    },
+    parseResult: (result) => ({ pressed: result.saved, count: result.bookmarkCount }),
+    onError: () => toast.error('保存の処理に失敗しました'),
+  })
+
+  function handleLikePressedChange(next: boolean) {
+    if (next === like.pressed) return
+    const nextCount = Math.max(0, (like.count ?? resolvedLikeCount) + (next ? 1 : -1))
+    like.setPressed(next)
+    if (postId) patchQuestionsCache(queryClient, postId, { liked: next, likeCount: nextCount })
+  }
+
+  function handleBookmarkPressedChange(next: boolean) {
+    if (next === bookmark.pressed) return
+    const nextCount = Math.max(0, (bookmark.count ?? resolvedBookmarkCount) + (next ? 1 : -1))
+    bookmark.setPressed(next)
+    if (postId) {
+      patchQuestionsCache(queryClient, postId, { saved: next, bookmarkCount: nextCount })
     }
   }
 
@@ -96,19 +128,17 @@ function QuestionItemActions({
       <CommentCount count={commentCount} size={size} />
       {!isOwnQuestion && (
         <LikeButton
-          count={likeCount}
+          count={like.count ?? resolvedLikeCount}
           size={size}
-          pressed={liked}
-          onPressedChange={handleLikedChange}
-          disabled={likePending}
+          pressed={like.pressed}
+          onPressedChange={handleLikePressedChange}
         />
       )}
       <BookmarkButton
-        count={bookmarkCount}
+        count={bookmark.count ?? resolvedBookmarkCount}
         size={size}
-        pressed={bookmarked}
-        onPressedChange={handleBookmarkedChange}
-        disabled={bookmarkPending}
+        pressed={bookmark.pressed}
+        onPressedChange={handleBookmarkPressedChange}
       />
     </div>
   )

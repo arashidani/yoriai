@@ -1,0 +1,23 @@
+import type { SVGProps } from 'react'
+
+import { cn } from '@/lib/utils'
+
+export function IconTitle({ className, ...props }: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 14 18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      {...props}
+      className={cn('size-5', className)}
+    >
+      <path
+        d="M3.35229 12.2119C4.51564 12.831 5.8178 13.1584 7.14526 13.1572L7.65991 13.1562V13.1348C8.76687 13.0648 9.84583 12.7683 10.8308 12.2646V16.8574C10.8308 17.0229 10.7652 17.1817 10.6482 17.2988C10.5311 17.416 10.3715 17.4824 10.2058 17.4824C10.0829 17.4823 9.96396 17.4477 9.86206 17.3789L9.86011 17.377L7.37769 15.7236L7.09155 15.5332L6.80542 15.7236L4.32397 17.377L4.32202 17.3779C4.1299 17.5068 3.88932 17.519 3.6853 17.4092C3.4772 17.2971 3.35229 17.0877 3.35229 16.8574V12.2119Z"
+        stroke="currentColor"
+        strokeWidth="1.03152"
+      />
+      <circle cx="6.96277" cy="6.96277" r="6.96277" fill="currentColor" />
+    </svg>
+  )
+}

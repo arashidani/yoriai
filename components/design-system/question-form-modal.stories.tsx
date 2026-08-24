@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn, screen } from 'storybook/test'
+import { expect, fn, screen, within } from 'storybook/test'
 import { QuestionFormModal } from './question-form-modal'
 
 const meta = {
@@ -19,11 +19,10 @@ export const Default: Story = {
     await expect(canvas.queryByText('名無しのおせワニ')).not.toBeInTheDocument()
     await expect(canvas.getByLabelText('質問のタイトル')).toBeVisible()
     await expect(canvas.getByLabelText('質問の本文')).toBeVisible()
+    await expect(canvas.getByText('カテゴリー')).toBeVisible()
     await expect(
-      canvas.getByText('カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します'),
+      canvas.getByText('カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します。'),
     ).toBeVisible()
-    await expect(canvas.getByLabelText('カテゴリー')).toBeVisible()
-    await expect(canvas.getByText('手動でカテゴリーを選択')).toBeVisible()
     await expect(
       canvas.getByText('※投稿内容の確認のため反映に30秒ほどかかる場合があります。'),
     ).toBeVisible()
@@ -33,18 +32,36 @@ export const Default: Story = {
     await expect(
       canvas.getByText('※匿名アイコン・匿名ユーザーネームがランダムで付与されます。'),
     ).toBeVisible()
+    await expect(canvas.getByRole('button', { name: /投稿する/ })).toBeVisible()
   },
 }
 
-export const ValidationErrors: Story = {
+export const CategorySelect: Story = {
   args: {
     onSubmit: fn(),
   },
-  play: async ({ args, canvas, userEvent }) => {
-    await userEvent.click(canvas.getByRole('button', { name: /投稿する/ }))
-    await expect(await canvas.findByText('タイトルは必須です')).toBeVisible()
-    await expect(await canvas.findByText('本文は必須です')).toBeVisible()
-    await expect(args.onSubmit).not.toHaveBeenCalled()
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.click(canvas.getByRole('combobox', { name: 'カテゴリー' }))
+    const body = within(document.body)
+    await expect(await body.findByRole('option', { name: 'Next.js' })).toBeVisible()
+    await userEvent.click(body.getByRole('option', { name: 'Next.js' }))
+    await expect(canvas.getByRole('combobox', { name: 'カテゴリー' })).toHaveTextContent('Next.js')
+  },
+}
+
+export const DisabledUntilFilled: Story = {
+  args: {
+    onSubmit: fn(),
+  },
+  play: async ({ canvas, userEvent }) => {
+    const submitButton = canvas.getByRole('button', { name: /投稿する/ })
+    await expect(submitButton).toBeDisabled()
+
+    await userEvent.type(canvas.getByLabelText('質問のタイトル'), '有給申請の方法について')
+    await expect(submitButton).toBeDisabled()
+
+    await userEvent.type(canvas.getByLabelText('質問の本文'), '申請画面の場所が分かりません。')
+    await expect(submitButton).toBeEnabled()
   },
 }
 
@@ -103,7 +120,7 @@ export const Submitting: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('質問を投稿する')).toBeVisible()
-    await expect(canvas.getByRole('status', { name: 'Loading' })).toBeVisible()
+    await expect(canvas.getByRole('status', { name: '投稿中' })).toBeVisible()
     await expect(canvas.getByRole('button', { name: '閉じる' })).toBeDisabled()
     await expect(canvas.queryByLabelText('質問のタイトル')).not.toBeInTheDocument()
   },

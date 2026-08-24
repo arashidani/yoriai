@@ -13,7 +13,7 @@ const STATUS_LABEL: Record<StatusChipStatus, string> = {
 
 const STATUS_CLASS: Record<StatusChipStatus, string> = {
   OPEN: 'bg-brand-2 text-primary',
-  RESOLVED: 'bg-muted text-muted-foreground',
+  RESOLVED: 'bg-statuschip-success text-statuschip-success-foreground',
 }
 
 const statusChipVariants = cva(

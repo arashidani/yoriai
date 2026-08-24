@@ -1,7 +1,8 @@
-import { Pencil } from 'lucide-react'
+import Link from 'next/link'
 import type { ReactNode } from 'react'
 
 import { Button } from '@/components/design-system/button'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { cn } from '@/lib/utils'
 
 type ActionButtonsProps = {
@@ -11,6 +12,7 @@ type ActionButtonsProps = {
   primaryAction?: ReactNode
   secondaryLabel: string
   onSecondaryClick?: () => void
+  secondaryHref?: string
 }
 
 function ActionButtons({
@@ -20,6 +22,7 @@ function ActionButtons({
   primaryAction,
   secondaryLabel,
   onSecondaryClick,
+  secondaryHref,
 }: ActionButtonsProps) {
   return (
     <div
@@ -32,21 +35,33 @@ function ActionButtons({
           size="large"
           variant="primary"
           className="shrink-0"
-          leftIcon={<Pencil />}
+          leftIcon={<IconPencil className="size-full" />}
           onClick={onPrimaryClick}
         >
           {primaryLabel}
         </Button>
       )}
-      <Button
-        type="button"
-        size="large"
-        variant="secondary"
-        className="shrink-0"
-        onClick={onSecondaryClick}
-      >
-        {secondaryLabel}
-      </Button>
+      {secondaryHref ? (
+        <Button
+          size="large"
+          variant="secondary"
+          className="shrink-0"
+          render={<Link href={secondaryHref} />}
+          nativeButton={false}
+        >
+          {secondaryLabel}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          size="large"
+          variant="secondary"
+          className="shrink-0"
+          onClick={onSecondaryClick}
+        >
+          {secondaryLabel}
+        </Button>
+      )}
     </div>
   )
 }

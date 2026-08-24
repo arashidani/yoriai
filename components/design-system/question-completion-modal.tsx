@@ -1,7 +1,7 @@
-import { X } from 'lucide-react'
 import Image from 'next/image'
 import mascotImage from '@/assets/mascots/moscot_happy.svg'
 import { Button } from '@/components/design-system/button'
+import { IconClose } from '@/components/design-system/icons/icon-close'
 import { ToolChip } from '@/components/design-system/ui/tool-chip'
 import { Separator } from '@/components/ui/separator'
 
@@ -20,9 +20,9 @@ export function QuestionCompletionModal({ onConfirm, onClose }: QuestionCompleti
             type="button"
             aria-label="閉じる"
             onClick={onClose}
-            className="flex size-9 shrink-0 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted"
+            className="flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted"
           >
-            <X className="size-4" />
+            <IconClose className="text-foreground" />
           </button>
         )}
       </div>

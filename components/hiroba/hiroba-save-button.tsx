@@ -1,9 +1,9 @@
 'use client'
 
 import { Bookmark } from 'lucide-react'
-import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { client } from '@/lib/hono/client'
 import { cn } from '@/lib/utils'
 
@@ -13,31 +13,23 @@ type HirobaSaveButtonProps = {
 }
 
 export function HirobaSaveButton({ postId, initialSaved }: HirobaSaveButtonProps) {
-  const [saved, setSaved] = useState(initialSaved)
-  const [pending, setPending] = useState(false)
+  const { pressed: saved, toggle } = useDebouncedOptimisticToggle({
+    initialPressed: initialSaved,
+    onSync: async (next) => {
+      const res = next
+        ? await client.api['hiroba-posts'][':id'].bookmarks.$post({ param: { id: postId } })
+        : await client.api['hiroba-posts'][':id'].bookmarks.$delete({ param: { id: postId } })
+      if (!res.ok) throw new Error('保存の処理に失敗しました')
+      return res.json()
+    },
+    parseResult: (result) => ({ pressed: result.saved }),
+    onError: () => toast.error('保存の処理に失敗しました'),
+  })
 
-  async function handleClick(e: React.MouseEvent) {
+  function handleClick(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    if (pending) return
-
-    const next = !saved
-    setPending(true)
-    setSaved(next)
-
-    const res = next
-      ? await client.api['hiroba-posts'][':id'].bookmarks.$post({ param: { id: postId } })
-      : await client.api['hiroba-posts'][':id'].bookmarks.$delete({ param: { id: postId } })
-
-    setPending(false)
-
-    if (!res.ok) {
-      setSaved(!next)
-      toast.error('保存の処理に失敗しました')
-      return
-    }
-    const body = await res.json()
-    setSaved(body.saved)
+    toggle()
   }
 
   return (
@@ -46,7 +38,6 @@ export function HirobaSaveButton({ postId, initialSaved }: HirobaSaveButtonProps
       variant="ghost"
       size="sm"
       onClick={handleClick}
-      disabled={pending}
       aria-pressed={saved}
       className={cn(
         'gap-1.5 rounded-full border border-input px-3 text-paragraph-mini font-medium',

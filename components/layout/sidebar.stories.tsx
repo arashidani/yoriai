@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect } from 'storybook/test'
+import { expect, screen, userEvent } from 'storybook/test'
 import { Sidebar } from './sidebar'
 
 const meta = {
@@ -42,5 +42,19 @@ export const PostsPageActive: Story = {
     // /posts/* でも「なんでもQ&A」がアクティブ表示になる
     const qaLink = canvas.getByText('なんでもQ&A').closest('a')
     await expect(qaLink).toHaveClass(/bg-muted/)
+  },
+}
+
+export const MobileMenu: Story = {
+  args: { isAdmin: false },
+  globals: {
+    viewport: { value: 'mobile2', isRotated: false },
+  },
+  play: async ({ canvas }) => {
+    await userEvent.click(canvas.getByRole('button', { name: 'メニュー' }))
+    await expect(await screen.findByRole('link', { name: 'ひろば' })).toBeVisible()
+    await expect(screen.getByRole('link', { name: 'なんでもQ&A' })).toBeVisible()
+    await expect(screen.getByRole('link', { name: 'マイページ' })).toBeVisible()
+    await expect(screen.getByRole('button', { name: '閉じる' })).toBeVisible()
   },
 }

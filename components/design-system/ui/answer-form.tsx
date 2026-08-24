@@ -1,7 +1,7 @@
-import { Pencil } from 'lucide-react'
 import type { ComponentProps } from 'react'
 
 import { Button } from '@/components/design-system/button'
+import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { Textarea } from '@/components/design-system/ui/textarea'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,7 @@ type AnswerFormProps = {
 function AnswerForm({
   className,
   placeholder = '回答を入力する',
-  submitLabel = '送信',
+  submitLabel = '回答',
   disabled = false,
   textareaProps,
   ...formProps
@@ -28,7 +28,7 @@ function AnswerForm({
         type="submit"
         size="default"
         variant="primary"
-        leftIcon={<Pencil className="size-4" />}
+        leftIcon={<IconPencil className="size-full" />}
         isDisabled={disabled}
         className="absolute right-4 bottom-3.5"
       >
