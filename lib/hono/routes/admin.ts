@@ -45,7 +45,10 @@ import {
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { toAdminAnswerResponse } from '@/lib/questions/admin-answer-response'
+import {
+  toAdminAnswerResponse,
+  toAnswerAnonymousProfileResponse,
+} from '@/lib/questions/admin-answer-response'
 import {
   createAnonymousProfileSchema,
   updateAnonymousProfileSchema,
@@ -763,7 +766,17 @@ export const adminRoute = $(
     if (process.env.MOCK_MODE === 'true') {
       const answer = MOCK_ANSWERS.find((a) => a.id === id)
       if (!answer) return c.json({ error: 'Not found' }, 404)
-      return c.json({ answer: { ...answer, isHidden: false } }, 200)
+      const { anonymousProfile, ...rest } = answer
+      return c.json(
+        {
+          answer: {
+            ...rest,
+            isHidden: false,
+            anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
+          },
+        },
+        200,
+      )
     }
 
     const existing = await prisma.answer.findUnique({ where: { id } })

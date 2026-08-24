@@ -269,6 +269,21 @@
           "totalPages"
         ]
       },
+      "AnswerableQuestion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title"
+        ]
+      },
       "QuestionAnswer": {
         "type": "object",
         "properties": {
@@ -980,7 +995,7 @@
             "example": "App Router を使うのがおすすめです。"
           },
           "anonymousProfile": {
-            "$ref": "#/components/schemas/AnonymousProfile"
+            "$ref": "#/components/schemas/AnswerAnonymousProfile"
           },
           "isHidden": {
             "type": "boolean",
@@ -1012,7 +1027,7 @@
           "updatedAt"
         ]
       },
-      "AnonymousProfile": {
+      "AnswerAnonymousProfile": {
         "type": "object",
         "properties": {
           "id": {
@@ -1021,7 +1036,7 @@
           },
           "displayName": {
             "type": "string",
-            "example": "ねこ"
+            "example": "ねこ#2"
           },
           "avatarUrl": {
             "type": [
@@ -1029,29 +1044,12 @@
               "null"
             ],
             "example": "/anonymous-profiles/cat.svg"
-          },
-          "avatarUrls": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "/anonymous-profiles/cat.svg"
-            ]
-          },
-          "isActive": {
-            "type": "boolean",
-            "example": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
           }
         },
         "required": [
           "id",
-          "displayName"
+          "displayName",
+          "avatarUrl"
         ]
       },
       "Badge": {
@@ -1273,6 +1271,41 @@
           "postId",
           "answerId",
           "createdAt"
+        ]
+      },
+      "AnonymousProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "anon-1"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "ねこ"
+          },
+          "avatarUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "/anonymous-profiles/cat.svg"
+            ]
+          },
+          "isActive": {
+            "type": "boolean",
+            "example": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "displayName"
         ]
       },
       "TagCategory": {
@@ -1973,7 +2006,7 @@
                     "questions": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Question"
+                        "$ref": "#/components/schemas/AnswerableQuestion"
                       },
                       "maxItems": 3
                     }
