@@ -67,18 +67,25 @@ export const hirobaAnswersRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
         data: [{ hirobaAnswerId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      if (created.count > 0 && answer.authorId) {
-        await tx.notification.create({
-          data: {
-            userId: answer.authorId,
-            type: NotificationType.HIROBA_ANSWER_LIKED,
-            hirobaAnswerId: id,
-          },
-        })
-      }
-      const likeCount = await tx.hirobaAnswerLike.count({ where: { hirobaAnswerId: id } })
-      await tx.hirobaAnswer.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      if (created.count === 0) return answer.likeCount
+
+      const [, updatedAnswer] = await Promise.all([
+        answer.authorId
+          ? tx.notification.create({
+              data: {
+                userId: answer.authorId,
+                type: NotificationType.HIROBA_ANSWER_LIKED,
+                hirobaAnswerId: id,
+              },
+            })
+          : Promise.resolve(null),
+        tx.hirobaAnswer.update({
+          where: { id },
+          data: { likeCount: { increment: 1 } },
+          select: { likeCount: true },
+        }),
+      ])
+      return updatedAnswer.likeCount
     })
     return c.json({ liked: true, likeCount }, 200)
   })
@@ -96,10 +103,17 @@ export const hirobaAnswersRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
     if (!answer) return c.json({ error: 'Not found' }, 404)
 
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.hirobaAnswerLike.deleteMany({ where: { hirobaAnswerId: id, userId: user.id } })
-      const likeCount = await tx.hirobaAnswerLike.count({ where: { hirobaAnswerId: id } })
-      await tx.hirobaAnswer.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      const deleted = await tx.hirobaAnswerLike.deleteMany({
+        where: { hirobaAnswerId: id, userId: user.id },
+      })
+      if (deleted.count === 0) return answer.likeCount
+
+      const updatedAnswer = await tx.hirobaAnswer.update({
+        where: { id },
+        data: { likeCount: { decrement: 1 } },
+        select: { likeCount: true },
+      })
+      return updatedAnswer.likeCount
     })
     return c.json({ liked: false, likeCount }, 200)
   })
