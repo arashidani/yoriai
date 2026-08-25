@@ -8,11 +8,12 @@ type PostCardProps = {
   post: QaPost
   isAdmin?: boolean
   onDeleted?: (postId: string) => void
+  now?: number
 }
 
-export function PostCard({ post, isAdmin = false, onDeleted }: PostCardProps) {
+export function PostCard({ post, isAdmin = false, onDeleted, now }: PostCardProps) {
   const canDelete = isAdmin && onDeleted
-  const item = toQuestionItemData(post)
+  const item = toQuestionItemData(post, now)
 
   return (
     <div className="relative">
