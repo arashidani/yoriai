@@ -309,6 +309,9 @@ components:
         isActive:
           type: boolean
           example: true
+        sortOrder:
+          type: integer
+          example: 0
         createdAt:
           type: string
           format: date-time
@@ -321,8 +324,17 @@ components:
         - id
         - name
         - isActive
+        - sortOrder
         - createdAt
         - updatedAt
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+      required:
+        - success
     Hiroba:
       type: object
       properties:
@@ -360,9 +372,6 @@ components:
         title:
           type: string
           example: 今日のランチどこ行きました？
-        body:
-          type: string
-          example: 近くに新しくできたお店に行ってみました。
         imageUrl:
           type:
             - string
@@ -407,7 +416,6 @@ components:
         - id
         - hirobaId
         - title
-        - body
         - imageUrl
         - authorId
         - answerCount
@@ -535,14 +543,6 @@ components:
         - likeCount
         - createdAt
         - updatedAt
-    Success:
-      type: object
-      properties:
-        success:
-          type: boolean
-          example: true
-      required:
-        - success
     InviteCreated:
       type: object
       properties:
@@ -1151,7 +1151,7 @@ paths:
     get:
       tags:
         - questions
-      summary: 質問スレッドでメンションできる参加者を最新の回答順で取得
+      summary: 質問スレッドでメンションできる匿名参加者を最新の回答順で取得
       security: &a1
         - supabaseSession: []
       parameters:
@@ -2348,6 +2348,69 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 同じ名前の項目がすでに存在します
+  /api/admin/profile-options/{category}/order:
+    put:
+      tags:
+        - admin
+      summary: プロフィール選択肢の並び順を更新（管理者専用）
+      security: *a2
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - departments
+              - business-areas
+              - business-skills
+              - interests
+          required: true
+          name: category
+          in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                orderedIds:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  minItems: 1
+              required:
+                - orderedIds
+      responses:
+        "200":
+          description: 並び順を更新
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: 選択肢の指定が不正
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: すべての項目を重複なく指定してください
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+        "403":
+          description: 権限不足（管理者専用）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Forbidden
   /api/admin/profile-options/{category}/{id}:
     patch:
       tags:
@@ -2601,12 +2664,8 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 200
-                body:
-                  type: string
-                  minLength: 1
               required:
                 - title
-                - body
       responses:
         "200":
           description: 再送された投稿（すでに作成済みの投稿）
@@ -2638,6 +2697,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Unauthorized
+        "403":
+          description: ひろばに未参加
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: ひろばに参加してください
         "404":
           description: ひろばが見つからない
           content:
@@ -2895,6 +2962,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Unauthorized
+        "403":
+          description: ひろばに未参加
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: ひろばに参加してください
         "404":
           description: 投稿が見つからない
           content:

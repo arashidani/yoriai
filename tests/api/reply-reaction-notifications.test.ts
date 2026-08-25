@@ -7,6 +7,7 @@ const { prismaMock } = vi.hoisted(() => ({
     questionLike: { createMany: vi.fn(), count: vi.fn() },
     hirobaPost: { findFirst: vi.fn(), update: vi.fn() },
     hirobaAnswer: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    hirobaMembership: { findUnique: vi.fn() },
     hirobaPostLike: { createMany: vi.fn(), count: vi.fn() },
     notification: { create: vi.fn(), createMany: vi.fn() },
     $transaction: vi.fn(),
@@ -40,6 +41,7 @@ describe('返信・リアクション通知', () => {
     prismaMock.$transaction.mockImplementation((callback: (tx: typeof prismaMock) => unknown) =>
       callback(prismaMock),
     )
+    prismaMock.hirobaMembership.findUnique.mockResolvedValue({ userId: 'user-1' })
   })
 
   it('質問への新規いいねで質問者に通知する', async () => {
@@ -86,6 +88,7 @@ describe('返信・リアクション通知', () => {
   it('ひろば投稿への返信で投稿者に通知する', async () => {
     prismaMock.hirobaPost.findFirst.mockResolvedValue({
       id: 'hiroba-post-1',
+      hirobaId: 'hiroba-alcohol',
       authorId: 'user-2',
       deletedAt: null,
     })
@@ -125,6 +128,7 @@ describe('返信・リアクション通知', () => {
     prismaMock.hirobaPost.findFirst
       .mockResolvedValueOnce({
         id: 'hiroba-post-1',
+        hirobaId: 'hiroba-alcohol',
         authorId: 'user-2',
         deletedAt: null,
       })

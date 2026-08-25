@@ -8,7 +8,6 @@ export type HirobaPost = {
   id: string
   hirobaSlug: string
   title: string
-  body: string
   imageUrl: string | null
   authorId: string | null
   displayName: string
@@ -26,9 +25,16 @@ export type HirobaPost = {
 type HirobaPostListProps = {
   posts: HirobaPost[]
   isAdmin: boolean
+  canReply?: boolean
+  onJoinRequired?: () => void
 }
 
-export function HirobaPostList({ posts, isAdmin }: HirobaPostListProps) {
+export function HirobaPostList({
+  posts,
+  isAdmin,
+  canReply = true,
+  onJoinRequired,
+}: HirobaPostListProps) {
   const [deletedIds, setDeletedIds] = useState<string[]>([])
   const visiblePosts = posts.filter((post) => !deletedIds.includes(post.id))
 
@@ -43,6 +49,8 @@ export function HirobaPostList({ posts, isAdmin }: HirobaPostListProps) {
           key={post.id}
           post={post}
           isAdmin={isAdmin}
+          canReply={canReply}
+          onJoinRequired={onJoinRequired}
           onDeleted={(id) => setDeletedIds((prev) => [...prev, id])}
         />
       ))}

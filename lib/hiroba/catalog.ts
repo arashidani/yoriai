@@ -11,6 +11,12 @@ export type HirobaCatalogItem = {
   tone: HirobaTone
 }
 
+export const DEFAULT_HIROBA_SLUGS = ['feature-testing'] as const
+
+export function isDefaultHiroba(slug: string) {
+  return (DEFAULT_HIROBA_SLUGS as readonly string[]).includes(slug)
+}
+
 type HirobaSection = {
   title: string
   tone: HirobaTone
@@ -32,6 +38,13 @@ export const HIROBA_SECTIONS: HirobaSection[] = [
     title: '迷ったらこれ',
     tone: 'lime',
     items: [
+      item(
+        'feature-testing',
+        '機能たしかめ広場',
+        '新しい機能を気軽に試して、感想や気づきを共有するひろばです。',
+        'sparkles',
+        'lime',
+      ),
       item(
         'outdoor',
         'アウトドア派',

@@ -167,15 +167,16 @@ export const mswHandlers = {
       const posts = MOCK_HIROBA_POSTS.filter((p) => p.hirobaId === hiroba.id)
       return HttpResponse.json({ hiroba, posts })
     }),
+    http.post('/api/hiroba/:slug/membership', () => HttpResponse.json({ joined: true })),
+    http.delete('/api/hiroba/:slug/membership', () => HttpResponse.json({ joined: false })),
     http.post('/api/hiroba/:slug/posts', async ({ request }) => {
-      const body = (await request.json()) as { title: string; body: string }
+      const body = (await request.json()) as { title: string }
       return HttpResponse.json(
         {
           post: {
             id: 'hiroba-post-new',
             hirobaId: 'hiroba-1',
             title: body.title,
-            body: body.body,
             imageUrl: null,
             authorId: 'user-1',
             author: MOCK_USERS[0],
@@ -239,6 +240,7 @@ export const mswHandlers = {
             id: `${params.category}-new`,
             name: body.name,
             isActive: true,
+            sortOrder: 2,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           },
@@ -253,11 +255,15 @@ export const mswHandlers = {
           id: 'option-1',
           name: body.name ?? '項目',
           isActive: body.isActive ?? true,
+          sortOrder: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
       })
     }),
+    http.put('/api/admin/profile-options/:category/order', () =>
+      HttpResponse.json({ success: true }),
+    ),
     http.get('/api/admin/users', () => HttpResponse.json({ users: MOCK_USERS })),
     http.get('/api/admin/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
     http.patch('/api/admin/users/:id', () => HttpResponse.json({ success: true })),

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { Role } from '@/app/generated/prisma/enums'
 import { HirobaFeed } from '@/components/hiroba/hiroba-feed'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { findHiroba, HIROBA_CATALOG } from '@/lib/hiroba/catalog'
+import { findHiroba, HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
 import { MOCK_HIROBA_POSTS, MOCK_JOINED_HIROBA_SLUGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
@@ -65,7 +65,6 @@ async function getPosts(hirobaId: string, hirobaSlug: string, currentUserId: str
       id: post.id,
       hirobaSlug,
       title: post.title,
-      body: post.body,
       imageUrl: post.imageUrl,
       authorId: post.authorId,
       displayName: post.author?.name ?? post.author?.email ?? '削除されたユーザー',
@@ -91,13 +90,12 @@ async function getPopularPosts() {
         id: post.id,
         hirobaSlug: HIROBA_CATALOG.find((hiroba) => hiroba.id === post.hirobaId)?.slug ?? '',
         title: post.title,
-        body: post.body,
       }))
   }
 
   const posts = await prisma.hirobaPost.findMany({
     where: { createdAt: { gte: new Date(Date.now() - THREE_DAYS_IN_MS) }, deletedAt: null },
-    select: { id: true, title: true, body: true, hiroba: { select: { slug: true } } },
+    select: { id: true, title: true, hiroba: { select: { slug: true } } },
     orderBy: [{ likeCount: 'desc' }, { createdAt: 'desc' }],
     take: 3,
   })
@@ -116,12 +114,16 @@ export default async function HirobaDetailPage({ params }: { params: Promise<{ s
   ])
   const isAdmin = user?.role === Role.ADMIN
   const joined = user
-    ? process.env.MOCK_MODE === 'true'
-      ? MOCK_JOINED_HIROBA_SLUGS.includes(hiroba.slug as (typeof MOCK_JOINED_HIROBA_SLUGS)[number])
-      : !!(await prisma.hirobaMembership.findUnique({
-          where: { userId_hirobaId: { userId: user.id, hirobaId: hiroba.id } },
-          select: { userId: true },
-        }))
+    ? isDefaultHiroba(hiroba.slug)
+      ? true
+      : process.env.MOCK_MODE === 'true'
+        ? MOCK_JOINED_HIROBA_SLUGS.includes(
+            hiroba.slug as (typeof MOCK_JOINED_HIROBA_SLUGS)[number],
+          )
+        : !!(await prisma.hirobaMembership.findUnique({
+            where: { userId_hirobaId: { userId: user.id, hirobaId: hiroba.id } },
+            select: { userId: true },
+          }))
     : false
 
   return (

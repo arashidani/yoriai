@@ -50,6 +50,7 @@ model Department {
   id        String   @id @default(uuid(7))
   name      String   @unique
   isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -59,6 +60,7 @@ model BusinessArea {
   id        String   @id @default(uuid(7))
   name      String   @unique
   isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -68,6 +70,7 @@ model BusinessSkill {
   id        String              @id @default(uuid(7))
   name      String              @unique
   isActive  Boolean             @default(true)
+  sortOrder Int                 @default(0)
   users     UserBusinessSkill[]
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
@@ -77,6 +80,7 @@ model Interest {
   id        String         @id @default(uuid(7))
   name      String         @unique
   isActive  Boolean        @default(true)
+  sortOrder Int            @default(0)
   users     UserInterest[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt

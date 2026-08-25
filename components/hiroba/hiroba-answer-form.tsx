@@ -8,13 +8,24 @@ import { type MentionCandidate, MentionTextarea } from '@/components/mentions/me
 import { Button } from '@/components/ui/button'
 import { client } from '@/lib/hono/client'
 import { type CreateHirobaAnswerInput, createHirobaAnswerSchema } from '@/lib/schemas/hiroba'
+import { HirobaJoinDialog } from './hiroba-join-dialog'
 
 type HirobaAnswerFormProps = {
   postId: string
+  hirobaSlug: string
+  hirobaName: string
+  initialJoined: boolean
 }
 
-export function HirobaAnswerForm({ postId }: HirobaAnswerFormProps) {
+export function HirobaAnswerForm({
+  postId,
+  hirobaSlug,
+  hirobaName,
+  initialJoined,
+}: HirobaAnswerFormProps) {
   const router = useRouter()
+  const [joined, setJoined] = useState(initialJoined)
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([])
   const isSubmittingRef = useRef(false)
@@ -67,6 +78,24 @@ export function HirobaAnswerForm({ postId }: HirobaAnswerFormProps) {
     } finally {
       isSubmittingRef.current = false
     }
+  }
+
+  if (!joined) {
+    return (
+      <>
+        <Button onClick={() => setJoinDialogOpen(true)}>回答する</Button>
+        <HirobaJoinDialog
+          open={joinDialogOpen}
+          onOpenChange={setJoinDialogOpen}
+          hirobaSlug={hirobaSlug}
+          hirobaName={hirobaName}
+          onJoined={() => {
+            setJoined(true)
+            router.refresh()
+          }}
+        />
+      </>
+    )
   }
 
   return (

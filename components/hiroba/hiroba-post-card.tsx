@@ -10,6 +10,8 @@ import { HirobaSaveButton } from './hiroba-save-button'
 type HirobaPostCardProps = {
   post: HirobaPost
   isAdmin?: boolean
+  canReply?: boolean
+  onJoinRequired?: () => void
   onDeleted?: (postId: string) => void
 }
 
@@ -28,7 +30,13 @@ function formatRelativeTime(input: Date | string) {
 const actionChipClass =
   'inline-flex items-center gap-1.5 rounded-full border border-input px-3 py-1 text-paragraph-mini font-medium text-secondary-foreground'
 
-export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostCardProps) {
+export function HirobaPostCard({
+  post,
+  isAdmin = false,
+  canReply = true,
+  onJoinRequired,
+  onDeleted,
+}: HirobaPostCardProps) {
   const canDelete = isAdmin || (post.isOwnPost && post.answerCount === 0)
   const lunchStyle = lunchStyleTag(post.lunchPreference)
   const mbtiTag = mbtiColorTag(post.displayNameColor)
@@ -86,7 +94,6 @@ export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostC
             </div>
             <Link href={`/hiroba/${post.hirobaSlug}/posts/${post.id}`} className="block">
               <p className="pt-1 text-paragraph-small font-bold">{post.title}</p>
-              <p className="text-paragraph-small">{post.body}</p>
               {post.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5 pt-2">
                   {post.tags.map((tag) => (
@@ -114,13 +121,20 @@ export function HirobaPostCard({ post, isAdmin = false, onDeleted }: HirobaPostC
         </div>
       </article>
       <div className="flex items-center gap-3 px-4 pt-3 pb-4 pl-16">
-        <Link
-          href={`/hiroba/${post.hirobaSlug}/posts/${post.id}#answer-form`}
-          className={actionChipClass}
-        >
-          <MessageCircle className="size-3" />
-          返信
-        </Link>
+        {canReply ? (
+          <Link
+            href={`/hiroba/${post.hirobaSlug}/posts/${post.id}#answer-form`}
+            className={actionChipClass}
+          >
+            <MessageCircle className="size-3" />
+            返信
+          </Link>
+        ) : (
+          <button type="button" onClick={onJoinRequired} className={actionChipClass}>
+            <MessageCircle className="size-3" />
+            返信
+          </button>
+        )}
         <HirobaSaveButton postId={post.id} initialSaved={post.saved} />
         {!post.isOwnPost && (
           <HirobaPostLikeButton
