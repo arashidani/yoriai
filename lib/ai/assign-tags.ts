@@ -50,9 +50,14 @@ export async function assignTagsWithStatus(
 
   try {
     const ai = new GoogleGenAI({ apiKey: requireEnv('GEMINI_API_KEY') })
+    const promptCandidates = candidates.map(({ name, category, description }) => ({
+      name,
+      category,
+      description,
+    }))
     const response = await ai.models.generateContent({
       model: 'gemini-flash-latest',
-      contents: `候補タグ: ${JSON.stringify(candidates)}\nタイトル: ${title}\n本文: ${body}`,
+      contents: `候補タグ: ${JSON.stringify(promptCandidates)}\nタイトル: ${title}\n本文: ${body}`,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
         responseMimeType: 'application/json',
