@@ -57,7 +57,6 @@ const questionInclude = (userId: string) => ({
   },
   likes: { where: { userId }, select: { userId: true } },
   bookmarks: { where: { userId }, select: { userId: true } },
-  _count: { select: { bookmarks: true } },
 })
 
 function pagination(page: number, pageSize: number, total: number) {
@@ -94,7 +93,6 @@ function mockQuestions(viewerId: string) {
         })),
         likes: [],
         bookmarks: [],
-        _count: { bookmarks: 0 },
       },
       viewerId,
     ),
@@ -1057,14 +1055,25 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const post =
       process.env.MOCK_MODE === 'true'
         ? MOCK_POSTS.find((item) => item.id === id)
-        : await prisma.post.findUnique({ where: { id }, select: { id: true } })
+        : await prisma.post.findUnique({
+            where: { id },
+            select: { id: true, bookmarkCount: true },
+          })
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (process.env.MOCK_MODE === 'true') return c.json({ saved: true, bookmarkCount: 1 }, 200)
-    await prisma.postBookmark.createMany({
-      data: [{ postId: id, userId: user.id }],
-      skipDuplicates: true,
+    const bookmarkCount = await prisma.$transaction(async (tx) => {
+      const created = await tx.postBookmark.createMany({
+        data: [{ postId: id, userId: user.id }],
+        skipDuplicates: true,
+      })
+      if (created.count === 0) return post.bookmarkCount
+      const updatedPost = await tx.post.update({
+        where: { id },
+        data: { bookmarkCount: { increment: 1 } },
+        select: { bookmarkCount: true },
+      })
+      return updatedPost.bookmarkCount
     })
-    const bookmarkCount = await prisma.postBookmark.count({ where: { postId: id } })
     return c.json({ saved: true, bookmarkCount }, 200)
   })
   .openapi(unbookmarkRoute, async (c) => {
@@ -1073,11 +1082,24 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const post =
       process.env.MOCK_MODE === 'true'
         ? MOCK_POSTS.find((item) => item.id === id)
-        : await prisma.post.findUnique({ where: { id }, select: { id: true } })
+        : await prisma.post.findUnique({
+            where: { id },
+            select: { id: true, bookmarkCount: true },
+          })
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (process.env.MOCK_MODE === 'true') return c.json({ saved: false, bookmarkCount: 0 }, 200)
-    await prisma.postBookmark.deleteMany({ where: { postId: id, userId: user.id } })
-    const bookmarkCount = await prisma.postBookmark.count({ where: { postId: id } })
+    const bookmarkCount = await prisma.$transaction(async (tx) => {
+      const deleted = await tx.postBookmark.deleteMany({
+        where: { postId: id, userId: user.id },
+      })
+      if (deleted.count === 0) return post.bookmarkCount
+      const updatedPost = await tx.post.update({
+        where: { id },
+        data: { bookmarkCount: { decrement: 1 } },
+        select: { bookmarkCount: true },
+      })
+      return updatedPost.bookmarkCount
+    })
     return c.json({ saved: false, bookmarkCount }, 200)
   })
 
