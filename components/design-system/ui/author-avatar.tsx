@@ -9,9 +9,10 @@ type AuthorAvatarProps = {
   src?: string
   alt?: string
   className?: string
+  sizes?: string
 }
 
-function AuthorAvatar({ src, alt = '', className }: AuthorAvatarProps) {
+function AuthorAvatar({ src, alt = '', className, sizes = '50px' }: AuthorAvatarProps) {
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
   const showImage = Boolean(src) && src !== failedSrc
 
@@ -28,6 +29,7 @@ function AuthorAvatar({ src, alt = '', className }: AuthorAvatarProps) {
           src={src}
           alt={alt}
           fill
+          sizes={sizes}
           className="object-cover"
           onError={() => setFailedSrc(src)}
         />

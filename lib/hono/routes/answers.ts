@@ -1,5 +1,6 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { NotificationType } from '@/app/generated/prisma/enums'
+import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, IdParamSchema, LikeStatusSchema } from '@/lib/hono/openapi/schemas'
@@ -58,7 +59,10 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
       return c.json({ liked: true, likeCount: answer.likeCount + 1 }, 200)
     }
 
-    const answer = await prisma.answer.findUnique({ where: { id } })
+    const answer = await prisma.answer.findUnique({
+      where: { id },
+      select: { id: true, authorId: true, likeCount: true },
+    })
     if (!answer) return c.json({ error: 'Not found' }, 404)
     if (answer.authorId === user.id) return c.json({ error: '自分の回答にはいいねできません' }, 403)
 
@@ -78,17 +82,20 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
     })
 
     if (isNewLike && answer.authorId) {
-      try {
-        await prisma.notification.create({
-          data: {
-            userId: answer.authorId,
-            type: NotificationType.ANSWER_LIKED,
-            answerId: id,
-          },
-        })
-      } catch (error) {
-        console.error('Failed to create answer like notification', { answerId: id, error })
-      }
+      const authorId = answer.authorId
+      scheduleAfterResponse(async () => {
+        try {
+          await prisma.notification.create({
+            data: {
+              userId: authorId,
+              type: NotificationType.ANSWER_LIKED,
+              answerId: id,
+            },
+          })
+        } catch (error) {
+          console.error('Failed to create answer like notification', { answerId: id, error })
+        }
+      })
     }
 
     return c.json({ liked: true, likeCount }, 200)
@@ -103,7 +110,10 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
       return c.json({ liked: false, likeCount: Math.max(0, answer.likeCount - 1) }, 200)
     }
 
-    const answer = await prisma.answer.findUnique({ where: { id } })
+    const answer = await prisma.answer.findUnique({
+      where: { id },
+      select: { id: true, authorId: true, likeCount: true },
+    })
     if (!answer) return c.json({ error: 'Not found' }, 404)
 
     const likeCount = await prisma.$transaction(async (tx) => {

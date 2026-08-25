@@ -12,7 +12,7 @@ function FilterChip({ className, children, ...props }: FilterChipProps) {
     <TogglePrimitive
       data-slot="filter-chip"
       className={cn(
-        'group inline-flex items-center justify-center gap-1 rounded-full border border-muted-foreground bg-card px-4 py-2 text-paragraph-small font-bold whitespace-nowrap text-muted-foreground outline-none transition-colors not-aria-pressed:hover:bg-statuschip-success aria-pressed:border-transparent aria-pressed:bg-brand-2 aria-pressed:text-primary',
+        'group inline-flex cursor-pointer items-center justify-center gap-1 rounded-full border border-muted-foreground bg-card px-4 py-2 text-paragraph-small font-bold whitespace-nowrap text-muted-foreground outline-none transition-colors not-aria-pressed:hover:bg-statuschip-success aria-pressed:border-transparent aria-pressed:bg-brand-2 aria-pressed:text-primary',
         className,
       )}
       {...props}

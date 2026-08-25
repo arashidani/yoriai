@@ -17,9 +17,9 @@ export function getJstDateRange(value: string) {
   }
 }
 
-export function formatRelativeTime(value: DateInput) {
+export function formatRelativeTime(value: DateInput, now: number = Date.now()) {
   const date = new Date(value)
-  const diffMinutes = Math.floor((Date.now() - date.getTime()) / 60_000)
+  const diffMinutes = Math.floor((now - date.getTime()) / 60_000)
   if (diffMinutes < 1) return 'たった今'
   if (diffMinutes < 60) return `${diffMinutes}分前`
   const diffHours = Math.floor(diffMinutes / 60)
