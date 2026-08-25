@@ -17,6 +17,6 @@ describe('fixed hiroba catalog', () => {
 
   it('uses each catalog card tone on its detail page', () => {
     expect(HIROBA_CATALOG.every((hiroba) => !('detailTone' in hiroba))).toBe(true)
-    expect(findHiroba('alcohol')?.tone).toBe('lime')
+    expect(findHiroba('alcohol')?.category).toBe('pickup')
   })
 })

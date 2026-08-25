@@ -10,7 +10,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
   if (user && !user.onboardingCompletedAt) redirect('/onboarding')
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
+    <div className="flex min-h-screen flex-col lg:flex-row border-t-[6px] border-primary ">
       <Sidebar isAdmin={user?.role === Role.ADMIN} />
       <main className="flex min-w-0 flex-1 flex-col bg-background">{children}</main>
       {isChatEnabled() && <AiChatWidget />}

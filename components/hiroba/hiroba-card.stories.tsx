@@ -19,8 +19,8 @@ export const Default: Story = {
       slug: 'alcohol',
       name: 'お酒',
       description: '好きなお酒やおすすめのおつまみを紹介し合うひろばです。',
-      icon: 'wine',
-      tone: 'lime',
+      icon: 'alcohol',
+      category: 'pickup',
     },
   },
   play: async ({ canvas }) => {
