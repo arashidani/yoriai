@@ -37,6 +37,7 @@ const cases = [
     endpoint: '/api/questions/question-1/likes',
     id: 'question-1',
     entity: prismaMock.post,
+    entitySelect: { id: true, authorId: true, likeCount: true, deletedAt: true },
     reaction: prismaMock.questionLike,
     likeData: { postId: 'question-1', userId: MOCK_USERS[0].id },
     unlikeWhere: { postId: 'question-1', userId: MOCK_USERS[0].id },
@@ -47,6 +48,7 @@ const cases = [
     endpoint: '/api/answers/answer-1/likes',
     id: 'answer-1',
     entity: prismaMock.answer,
+    entitySelect: { id: true, authorId: true, likeCount: true },
     reaction: prismaMock.answerLike,
     likeData: { answerId: 'answer-1', userId: MOCK_USERS[0].id },
     unlikeWhere: { answerId: 'answer-1', userId: MOCK_USERS[0].id },
@@ -57,6 +59,7 @@ const cases = [
     endpoint: '/api/hiroba-posts/hiroba-post-1/likes',
     id: 'hiroba-post-1',
     entity: prismaMock.hirobaPost,
+    entitySelect: { id: true, authorId: true, likeCount: true },
     reaction: prismaMock.hirobaPostLike,
     likeData: { hirobaPostId: 'hiroba-post-1', userId: MOCK_USERS[0].id },
     unlikeWhere: { hirobaPostId: 'hiroba-post-1', userId: MOCK_USERS[0].id },
@@ -71,6 +74,7 @@ const cases = [
     endpoint: '/api/hiroba-answers/hiroba-answer-1/likes',
     id: 'hiroba-answer-1',
     entity: prismaMock.hirobaAnswer,
+    entitySelect: { id: true, authorId: true, likeCount: true },
     reaction: prismaMock.hirobaAnswerLike,
     likeData: { hirobaAnswerId: 'hiroba-answer-1', userId: MOCK_USERS[0].id },
     unlikeWhere: { hirobaAnswerId: 'hiroba-answer-1', userId: MOCK_USERS[0].id },
@@ -86,6 +90,7 @@ describe.each(cases)('$labelのLike/Unlike', ({
   endpoint,
   id,
   entity,
+  entitySelect,
   reaction,
   likeData,
   unlikeWhere,
@@ -112,6 +117,7 @@ describe.each(cases)('$labelのLike/Unlike', ({
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ liked: true, likeCount: 6 })
+    expect(entity.findUnique).toHaveBeenCalledWith({ where: { id }, select: entitySelect })
     expect(reaction.createMany).toHaveBeenCalledWith({ data: [likeData], skipDuplicates: true })
     expect(prismaMock.notification.create).toHaveBeenCalledWith({ data: notificationData })
     expect(transactionNotificationCreate).not.toHaveBeenCalled()
@@ -174,6 +180,7 @@ describe.each(cases)('$labelのLike/Unlike', ({
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ liked: false, likeCount: 4 })
+    expect(entity.findUnique).toHaveBeenCalledWith({ where: { id }, select: entitySelect })
     expect(reaction.deleteMany).toHaveBeenCalledWith({ where: unlikeWhere })
     expect(reaction.count).not.toHaveBeenCalled()
     expect(entity.update).toHaveBeenCalledWith({
