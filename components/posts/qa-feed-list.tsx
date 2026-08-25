@@ -22,6 +22,7 @@ type QaFeedListProps = {
   isAdmin: boolean
   initialTotalPages?: number
   initialTotal?: number
+  now?: number
 }
 
 type QuestionsResult = {
@@ -70,9 +71,10 @@ async function fetchQuestions(params: {
 type QaQuestionListProps = {
   posts: QaPost[]
   isAdmin: boolean
+  now?: number
 }
 
-function QaQuestionList({ posts, isAdmin }: QaQuestionListProps) {
+function QaQuestionList({ posts, isAdmin, now }: QaQuestionListProps) {
   const [deletedIds, setDeletedIds] = useState<string[]>([])
   const visiblePosts = posts.filter((post) => !deletedIds.includes(post.id))
 
@@ -87,6 +89,7 @@ function QaQuestionList({ posts, isAdmin }: QaQuestionListProps) {
           key={post.id}
           post={post}
           isAdmin={isAdmin}
+          now={now}
           onDeleted={(id) => setDeletedIds((prev) => [...prev, id])}
         />
       ))}
@@ -163,7 +166,7 @@ function QaFeedList({ posts, isAdmin, initialTotalPages = 1, initialTotal = 0 }:
         ) : showSkeleton ? (
           <QaPostListSkeleton />
         ) : (
-          <QaQuestionList posts={visiblePosts} isAdmin={isAdmin} />
+          <QaQuestionList posts={visiblePosts} isAdmin={isAdmin} now={now} />
         )}
         {total >= 1 && (
           <div className="mt-6 flex flex-col items-center gap-2">

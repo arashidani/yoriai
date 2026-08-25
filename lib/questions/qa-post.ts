@@ -65,7 +65,7 @@ function excerpt(body: string) {
   return body.length > 100 ? `${body.slice(0, 100)}…` : body
 }
 
-export function toQuestionItemData(post: QaPost): QuestionItemData {
+export function toQuestionItemData(post: QaPost, now?: number): QuestionItemData {
   return {
     id: post.id,
     postId: post.id,
@@ -74,7 +74,7 @@ export function toQuestionItemData(post: QaPost): QuestionItemData {
     avatarSrc: post.avatarUrl ?? undefined,
     category: post.tags[0]?.name,
     status: post.status,
-    timestamp: formatRelativeTime(post.activityAt),
+    timestamp: formatRelativeTime(post.activityAt, now),
     title: post.title,
     excerpt: excerpt(post.body),
     commentCount: post.answerCount,

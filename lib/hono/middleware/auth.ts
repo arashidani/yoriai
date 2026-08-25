@@ -33,13 +33,12 @@ export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(asy
     },
   )
 
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-  if (!authUser) return c.json({ error: 'Unauthorized' }, 401)
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
+  const supabaseId = claimsData?.claims.sub
+  if (claimsError || !supabaseId) return c.json({ error: 'Unauthorized' }, 401)
 
   const user = await prisma.user.findUnique({
-    where: { supabaseId: authUser.id },
+    where: { supabaseId },
   })
   if (!user) return c.json({ error: 'User not found' }, 401)
 
