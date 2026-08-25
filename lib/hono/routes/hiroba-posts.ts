@@ -3,7 +3,6 @@ import { bodyLimit } from 'hono/body-limit'
 import type { HirobaAnswer, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, Role } from '@/app/generated/prisma/enums'
-import { moderateAnswer } from '@/lib/ai/moderate-post'
 import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -20,11 +19,6 @@ import {
   HIROBA_POST_IMAGE_MAX_BYTES,
   HIROBA_POST_IMAGE_TOO_LARGE_MESSAGE,
 } from '@/lib/image/hiroba-post-image-limits'
-import {
-  HirobaPostImageProcessingError,
-  processHirobaPostImage,
-  UnsupportedHirobaPostImageError,
-} from '@/lib/image/process-hiroba-post-image'
 import { MOCK_HIROBA_ANSWERS, MOCK_HIROBA_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
@@ -320,8 +314,12 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
 
     let image: Buffer
     try {
+      const { processHirobaPostImage } = await import('@/lib/image/process-hiroba-post-image')
       image = await processHirobaPostImage(Buffer.from(await file.arrayBuffer()))
     } catch (error) {
+      const { HirobaPostImageProcessingError, UnsupportedHirobaPostImageError } = await import(
+        '@/lib/image/process-hiroba-post-image'
+      )
       if (error instanceof UnsupportedHirobaPostImageError)
         return c.json({ error: error.message }, 400)
       if (error instanceof HirobaPostImageProcessingError)
@@ -409,6 +407,7 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       return c.json({ answer: toAnswerResponse(existingAnswer) }, 200)
     }
 
+    const { moderateAnswer } = await import('@/lib/ai/moderate-post')
     const moderation = await moderateAnswer(answer.body)
     if (moderation?.flagged) {
       try {
@@ -426,6 +425,10 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
             where: { id: answer.id },
             data: { isHidden: true, hiddenAt: new Date(), hiddenReason: 'AIによる自動検出' },
             include: { author: true },
+          }),
+          prisma.hirobaPost.update({
+            where: { id: answer.hirobaPostId },
+            data: { answerCount: { decrement: 1 } },
           }),
         ])
         answer = hiddenAnswer

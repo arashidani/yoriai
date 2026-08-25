@@ -125,6 +125,16 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     })
   })
 
+  it('質問詳細を質問と公開回答の1レスポンスで返す', async () => {
+    const response = await app.request('/api/questions/post-3')
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.question.id).toBe('post-3')
+    expect(body.answers).toHaveLength(1)
+    expect(body.answers[0]).toMatchObject({ id: 'answer-2', isMostLiked: true })
+  })
+
   it('未解決質問では最多回答でもメダルを付けない', async () => {
     const response = await app.request('/api/questions/post-1/answers')
     const body = await response.json()

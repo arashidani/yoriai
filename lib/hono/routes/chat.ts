@@ -1,5 +1,4 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
-import { createUIMessageStreamResponse } from 'ai'
 import { createMockChatStream, toChatUIMessageStream } from '@/lib/chat/dify-ui-stream'
 import { toDifyQuery } from '@/lib/chat/types'
 import { sendChatMessage } from '@/lib/dify/chat'
@@ -52,6 +51,7 @@ export const chatRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ default
 
     // MOCK_MODE=true のときはモックストリームを返す
     if (process.env.MOCK_MODE === 'true') {
+      const { createUIMessageStreamResponse } = await import('ai')
       return createUIMessageStreamResponse({ stream: createMockChatStream(query) })
     }
 
@@ -74,6 +74,7 @@ export const chatRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ default
       return c.json({ error: 'AIとの通信に失敗しました' }, 502)
     }
 
+    const { createUIMessageStreamResponse } = await import('ai')
     return createUIMessageStreamResponse({ stream: toChatUIMessageStream(difyRes.body) })
   },
 )

@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
+import { GEMINI_REQUEST_TIMEOUT_MS } from '@/lib/ai/errors'
 import { requireEnv } from '@/lib/env'
 
 const SYSTEM_INSTRUCTION =
@@ -49,7 +50,10 @@ export async function assignTagsWithStatus(
   if (candidates.length === 0) return { status: 'skipped', tagNames: [] }
 
   try {
-    const ai = new GoogleGenAI({ apiKey: requireEnv('GEMINI_API_KEY') })
+    const ai = new GoogleGenAI({
+      apiKey: requireEnv('GEMINI_API_KEY'),
+      httpOptions: { timeout: GEMINI_REQUEST_TIMEOUT_MS },
+    })
     const promptCandidates = candidates.map(({ name, category, description }) => ({
       name,
       category,

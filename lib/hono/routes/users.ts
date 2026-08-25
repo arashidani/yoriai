@@ -11,11 +11,6 @@ import {
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
 import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_MESSAGE } from '@/lib/image/avatar-limits'
-import {
-  AvatarProcessingError,
-  processAvatarImage,
-  UnsupportedImageError,
-} from '@/lib/image/process-avatar'
 import { MOCK_AVATAR_URL, MOCK_INVITES, MOCK_USER_PROFILE, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { updateUserProfile } from '@/lib/prisma/update-user-profile'
@@ -293,8 +288,12 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
 
     let processed: Buffer
     try {
+      const { processAvatarImage } = await import('@/lib/image/process-avatar')
       processed = await processAvatarImage(original)
     } catch (e) {
+      const { AvatarProcessingError, UnsupportedImageError } = await import(
+        '@/lib/image/process-avatar'
+      )
       if (e instanceof UnsupportedImageError) return c.json({ error: e.message }, 400)
       if (e instanceof AvatarProcessingError) return c.json({ error: e.message }, 422)
       throw e

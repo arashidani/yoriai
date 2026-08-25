@@ -1,4 +1,9 @@
 import { GoogleGenAI } from '@google/genai'
+import {
+  GEMINI_REQUEST_TIMEOUT_MS,
+  GeminiServiceUnavailableError,
+  isGeminiServiceUnavailable,
+} from '@/lib/ai/errors'
 import { requireEnv } from '@/lib/env'
 
 const SYSTEM_INSTRUCTION =
@@ -20,9 +25,15 @@ export type ModerationResult = {
   reason: string
 }
 
-async function moderate(contents: string): Promise<ModerationResult | null> {
+async function moderate(
+  contents: string,
+  options: { failOnServiceUnavailable?: boolean } = {},
+): Promise<ModerationResult | null> {
   try {
-    const ai = new GoogleGenAI({ apiKey: requireEnv('GEMINI_API_KEY') })
+    const ai = new GoogleGenAI({
+      apiKey: requireEnv('GEMINI_API_KEY'),
+      httpOptions: { timeout: GEMINI_REQUEST_TIMEOUT_MS },
+    })
     const response = await ai.models.generateContent({
       model: 'gemini-flash-latest',
       contents,
@@ -38,13 +49,16 @@ async function moderate(contents: string): Promise<ModerationResult | null> {
     return JSON.parse(text) as ModerationResult
   } catch (error) {
     console.error('Gemini moderation failed', error)
+    if (options.failOnServiceUnavailable && isGeminiServiceUnavailable(error)) {
+      throw new GeminiServiceUnavailableError()
+    }
     return null
   }
 }
 
-/** Gemini呼び出しに失敗した場合はnullを返す（投稿作成自体は失敗させない） */
+/** 503・タイムアウトは送出し、それ以外のGemini失敗は判定なしへ倒す。 */
 export async function moderatePost(title: string, body: string): Promise<ModerationResult | null> {
-  return moderate(`タイトル: ${title}\n本文: ${body}`)
+  return moderate(`タイトル: ${title}\n本文: ${body}`, { failOnServiceUnavailable: true })
 }
 
 /** Gemini呼び出しに失敗した場合はnullを返す（回答作成自体は失敗させない） */

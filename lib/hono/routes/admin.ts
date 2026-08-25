@@ -27,11 +27,6 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_MESSAGE } from '@/lib/image/avatar-limits'
 import {
-  AvatarProcessingError,
-  processAvatarImage,
-  UnsupportedImageError,
-} from '@/lib/image/process-avatar'
-import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
@@ -782,11 +777,23 @@ export const adminRoute = $(
     const existing = await prisma.answer.findUnique({ where: { id } })
     if (!existing) return c.json({ error: 'Not found' }, 404)
 
-    const answer = await prisma.answer.update({
-      where: { id },
-      data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
-      include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+    const answer = await prisma.$transaction(async (tx) => {
+      const restored = await tx.answer.updateMany({
+        where: { id, isHidden: true },
+        data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
+      })
+      if (restored.count > 0) {
+        await tx.post.update({
+          where: { id: existing.postId },
+          data: { answerCount: { increment: 1 } },
+        })
+      }
+      return tx.answer.findUnique({
+        where: { id },
+        include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+      })
     })
+    if (!answer) return c.json({ error: 'Not found' }, 404)
     return c.json({ answer: toAdminAnswerResponse(answer) }, 200)
   })
   .openapi(patchUserRoute, async (c) => {
@@ -1040,8 +1047,12 @@ export const adminRoute = $(
 
     let image: Buffer
     try {
+      const { processAvatarImage } = await import('@/lib/image/process-avatar')
       image = await processAvatarImage(Buffer.from(await file.arrayBuffer()))
     } catch (error) {
+      const { AvatarProcessingError, UnsupportedImageError } = await import(
+        '@/lib/image/process-avatar'
+      )
       if (error instanceof UnsupportedImageError) return c.json({ error: error.message }, 400)
       if (error instanceof AvatarProcessingError) return c.json({ error: error.message }, 422)
       throw error

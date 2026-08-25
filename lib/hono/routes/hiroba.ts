@@ -2,8 +2,6 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import type { HirobaPost, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity } from '@/app/generated/prisma/enums'
-import { assignTags } from '@/lib/ai/assign-tags'
-import { moderatePost } from '@/lib/ai/moderate-post'
 import { findHiroba, HIROBA_CATALOG } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -258,6 +256,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       return c.json({ post: { ...existingPost, tags: [] } }, 200)
     }
 
+    const { moderatePost } = await import('@/lib/ai/moderate-post')
     const moderation = await moderatePost(post.title, post.body)
     if (moderation?.flagged) {
       try {
@@ -289,6 +288,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
         const allTags = await prisma.tag.findMany({
           select: { id: true, name: true, category: true, description: true, createdAt: true },
         })
+        const { assignTags } = await import('@/lib/ai/assign-tags')
         const selectedNames = await assignTags(post.title, post.body, allTags)
         const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 1)
         if (selectedTags.length > 0) {

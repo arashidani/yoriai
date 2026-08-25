@@ -13,6 +13,12 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
     answer: {
       create: vi.fn(),
     },
+    hirobaAnswer: {
+      create: vi.fn(),
+    },
+    hirobaPost: {
+      update: vi.fn(),
+    },
     post: {
       update: vi.fn(),
     },
@@ -27,6 +33,14 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
       findUnique: vi.fn(),
       update: vi.fn(),
     },
+    hirobaPost: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    hirobaAnswer: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
     aiFlag: {
       create: vi.fn(),
     },
@@ -36,6 +50,9 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
     },
     postTag: {
       createMany: vi.fn(),
+    },
+    notification: {
+      create: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -60,6 +77,7 @@ vi.mock('@/lib/hono/middleware/auth', async () => {
 
 import { Prisma } from '@/app/generated/prisma/client'
 import { QuestionStatus } from '@/app/generated/prisma/enums'
+import { GeminiServiceUnavailableError } from '@/lib/ai/errors'
 import app from '@/lib/hono/app'
 import { MOCK_ANONYMOUS_PROFILES, MOCK_USERS } from '@/lib/mocks/fixtures'
 
@@ -149,6 +167,23 @@ describe('Q&A作成APIのモデレーション結果', () => {
 
     expect(response.status).toBe(201)
     expect((await response.json()).moderation).toEqual({ isHidden: true })
+  })
+
+  it('Geminiモデレーションが503の場合は投稿を作成せず503を返す', async () => {
+    moderationMock.moderatePost.mockRejectedValue(new GeminiServiceUnavailableError())
+
+    const response = await createRequest('/api/questions', {
+      title: basePost.title,
+      body: basePost.body,
+    })
+
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({
+      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
+    })
+    expect(prismaMock.post.create).not.toHaveBeenCalled()
+    expect(assignmentMock.getOrAssignAnonymousProfile).not.toHaveBeenCalled()
+    expect(assignTagsMock).not.toHaveBeenCalled()
   })
 
   it('その他タグが手動指定された質問ではAI割り当てをスキップする', async () => {
@@ -286,7 +321,51 @@ describe('Q&A作成APIのモデレーション結果', () => {
         activityAt: baseAnswer.createdAt,
       },
     })
+    expect(prismaMock.post.update).toHaveBeenCalledWith({
+      where: { id: basePost.id },
+      data: { answerCount: { decrement: 1 } },
+    })
     expect((await response.json()).moderation).toEqual({ isHidden: true })
+  })
+
+  it('ひろば回答をAI判定で非公開にすると公開回答件数を減らす', async () => {
+    const hirobaPost = {
+      id: 'hiroba-post-test',
+      authorId: MOCK_USERS[1].id,
+      deletedAt: null,
+    }
+    const hirobaAnswer = {
+      id: 'hiroba-answer-test',
+      hirobaPostId: hirobaPost.id,
+      authorId: MOCK_USERS[0].id,
+      author: MOCK_USERS[0],
+      body: 'ひろば回答テスト',
+      isHidden: false,
+      likeCount: 0,
+      createdAt: new Date('2026-08-08T01:00:00.000Z'),
+      updatedAt: new Date('2026-08-08T01:00:00.000Z'),
+    }
+    prismaMock.hirobaPost.findFirst.mockResolvedValue(hirobaPost)
+    txMock.hirobaAnswer.create.mockResolvedValue(hirobaAnswer)
+    txMock.hirobaPost.update.mockResolvedValue({ ...hirobaPost, answerCount: 1 })
+    prismaMock.aiFlag.create.mockResolvedValue({ id: 'flag-test' })
+    prismaMock.hirobaAnswer.update.mockResolvedValue({ ...hirobaAnswer, isHidden: true })
+    prismaMock.hirobaPost.update.mockResolvedValue({ ...hirobaPost, answerCount: 0 })
+    moderationMock.moderateAnswer.mockResolvedValue({
+      flagged: true,
+      severity: 'HIGH',
+      reason: 'テスト判定',
+    })
+
+    const response = await createRequest(`/api/hiroba-posts/${hirobaPost.id}/answers`, {
+      body: hirobaAnswer.body,
+    })
+
+    expect(response.status).toBe(201)
+    expect(prismaMock.hirobaPost.update).toHaveBeenCalledWith({
+      where: { id: hirobaPost.id },
+      data: { answerCount: { decrement: 1 } },
+    })
   })
 
   it('回答の冪等再送でも保存済みの非公開状態を返す', async () => {

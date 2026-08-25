@@ -1,11 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { assignTagsWithStatus, selectValidTagNames, type TagCandidate } from '@/lib/ai/assign-tags'
 
-const generateContentMock = vi.hoisted(() => vi.fn())
+const { generateContentMock, googleGenAiConstructorMock } = vi.hoisted(() => ({
+  generateContentMock: vi.fn(),
+  googleGenAiConstructorMock: vi.fn(),
+}))
 
 vi.mock('@google/genai', () => ({
   GoogleGenAI: class {
     models = { generateContent: generateContentMock }
+
+    constructor(options: unknown) {
+      googleGenAiConstructorMock(options)
+    }
   },
 }))
 
@@ -19,6 +26,7 @@ const candidates: TagCandidate[] = [
 
 beforeEach(() => {
   generateContentMock.mockReset()
+  googleGenAiConstructorMock.mockReset()
   vi.stubEnv('GEMINI_API_KEY', 'test-api-key')
 })
 
@@ -80,5 +88,9 @@ describe('assignTagsWithStatus', () => {
           '候補タグ: [{"name":"給与","category":"人事","description":"給与計算や支給日の質問"},{"name":"その他（雑談に近い質問）","category":"その他","description":null}]\nタイトル: 給与の支給日\n本文: 今月の給与の支給日を教えてください',
       }),
     )
+    expect(googleGenAiConstructorMock).toHaveBeenCalledWith({
+      apiKey: 'test-api-key',
+      httpOptions: { timeout: 30_000 },
+    })
   })
 })

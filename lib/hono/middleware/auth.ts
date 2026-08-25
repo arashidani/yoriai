@@ -1,9 +1,7 @@
-import { createServerClient } from '@supabase/ssr'
 import { createMiddleware } from 'hono/factory'
 import type { User } from '@/app/generated/prisma/client'
-import { requireEnv } from '@/lib/env'
+import { getUserByCookie } from '@/lib/auth/user-by-cookie'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
 
 export type AuthVariables = {
   user: User | (typeof MOCK_USERS)[number]
@@ -15,33 +13,10 @@ export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(asy
     return next()
   }
 
-  const supabase = createServerClient(
-    requireEnv('NEXT_PUBLIC_SUPABASE_URL'),
-    requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
-    {
-      cookies: {
-        getAll() {
-          const cookie = c.req.header('cookie') ?? ''
-          return cookie.split(';').flatMap((c) => {
-            const [name, ...rest] = c.trim().split('=')
-            if (!name) return []
-            return [{ name: name.trim(), value: rest.join('=') }]
-          })
-        },
-        setAll() {},
-      },
-    },
-  )
+  const resolution = await getUserByCookie(c.req.header('cookie') ?? '')
+  if (resolution.status === 'unauthorized') return c.json({ error: 'Unauthorized' }, 401)
+  if (resolution.status === 'user-not-found') return c.json({ error: 'User not found' }, 401)
 
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
-  const supabaseId = claimsData?.claims.sub
-  if (claimsError || !supabaseId) return c.json({ error: 'Unauthorized' }, 401)
-
-  const user = await prisma.user.findUnique({
-    where: { supabaseId },
-  })
-  if (!user) return c.json({ error: 'User not found' }, 401)
-
-  c.set('user', user)
+  c.set('user', resolution.user)
   return next()
 })
