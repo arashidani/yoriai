@@ -110,6 +110,7 @@ model Post {
   status         QuestionStatus @default(OPEN)
   answerCount    Int            @default(0)
   likeCount      Int            @default(0)
+  bookmarkCount  Int            @default(0)
   resolvedAt     DateTime?
 
   /// このスレッド内で質問者本人に表示する匿名キャラの割り当て（作成直後は未設定のためnullable）
