@@ -33,9 +33,8 @@ export async function proxy(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const claims = claimsData?.claims
 
   const publicPaths = [
     '/login',
@@ -47,14 +46,14 @@ export async function proxy(request: NextRequest) {
   const isPublicPath = publicPaths.includes(pathname)
 
   // 未認証ユーザーを /login にリダイレクト（/login・/register・/reset-password・/api は除外）
-  if (!user) {
+  if (!claims) {
     if (!isPublicPath && !pathname.startsWith('/api')) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     return supabaseResponse
   }
 
-  const role = (user.app_metadata?.role as string) ?? 'USER'
+  const role = (claims.app_metadata?.role as string) ?? 'USER'
   const homePath = role === 'ADMIN' ? '/admin' : '/'
 
   // ログイン済みユーザーが /login・/register・/reset-password にアクセスしたら自分のホームへ
