@@ -3,6 +3,7 @@ import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, QuestionStatus } from '@/app/generated/prisma/enums'
 import { assignTagsWithStatus } from '@/lib/ai/assign-tags'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
+import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -1019,13 +1020,16 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     })
 
     if (isNewLike && post.authorId) {
-      try {
-        await prisma.notification.create({
-          data: { userId: post.authorId, type: NotificationType.POST_LIKED, postId: id },
-        })
-      } catch (error) {
-        console.error('Failed to create question like notification', { postId: id, error })
-      }
+      const authorId = post.authorId
+      scheduleAfterResponse(async () => {
+        try {
+          await prisma.notification.create({
+            data: { userId: authorId, type: NotificationType.POST_LIKED, postId: id },
+          })
+        } catch (error) {
+          console.error('Failed to create question like notification', { postId: id, error })
+        }
+      })
     }
 
     return c.json({ liked: true, likeCount }, 200)

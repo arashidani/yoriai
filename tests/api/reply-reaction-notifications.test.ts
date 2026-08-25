@@ -1,7 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
 
-const { prismaMock } = vi.hoisted(() => ({
+const { afterResponseTasks, prismaMock, scheduleAfterResponseMock } = vi.hoisted(() => ({
+  afterResponseTasks: [] as Array<() => void | Promise<void>>,
   prismaMock: {
     post: { findUnique: vi.fn(), update: vi.fn() },
     questionLike: { createMany: vi.fn(), count: vi.fn() },
@@ -11,9 +12,13 @@ const { prismaMock } = vi.hoisted(() => ({
     notification: { create: vi.fn() },
     $transaction: vi.fn(),
   },
+  scheduleAfterResponseMock: vi.fn((task: () => void | Promise<void>) => {
+    afterResponseTasks.push(task)
+  }),
 }))
 
 vi.mock('@/lib/prisma/client', () => ({ prisma: prismaMock }))
+vi.mock('@/lib/hono/after-response', () => ({ scheduleAfterResponse: scheduleAfterResponseMock }))
 
 vi.mock('@/lib/hono/middleware/auth', async () => {
   const { createMiddleware } = await import('hono/factory')
@@ -37,6 +42,7 @@ describe('返信・リアクション通知', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    afterResponseTasks.length = 0
     prismaMock.$transaction.mockImplementation((callback: (tx: typeof prismaMock) => unknown) =>
       callback(prismaMock),
     )
@@ -55,6 +61,10 @@ describe('返信・リアクション通知', () => {
     const response = await app.request('/api/questions/post-1/likes', { method: 'POST' })
 
     expect(response.status).toBe(200)
+    expect(prismaMock.notification.create).not.toHaveBeenCalled()
+
+    await afterResponseTasks[0]?.()
+
     expect(prismaMock.notification.create).toHaveBeenCalledWith({
       data: { userId: 'user-2', type: 'POST_LIKED', postId: 'post-1' },
     })
