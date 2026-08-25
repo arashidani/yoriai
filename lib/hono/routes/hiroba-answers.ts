@@ -58,7 +58,10 @@ export const hirobaAnswersRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       return c.json({ liked: true, likeCount: answer.likeCount + 1 }, 200)
     }
 
-    const answer = await prisma.hirobaAnswer.findUnique({ where: { id } })
+    const answer = await prisma.hirobaAnswer.findUnique({
+      where: { id },
+      select: { id: true, authorId: true, likeCount: true },
+    })
     if (!answer) return c.json({ error: 'Not found' }, 404)
     if (answer.authorId === user.id) return c.json({ error: '自分の回答にはいいねできません' }, 403)
 
@@ -106,7 +109,10 @@ export const hirobaAnswersRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       return c.json({ liked: false, likeCount: Math.max(0, answer.likeCount - 1) }, 200)
     }
 
-    const answer = await prisma.hirobaAnswer.findUnique({ where: { id } })
+    const answer = await prisma.hirobaAnswer.findUnique({
+      where: { id },
+      select: { id: true, authorId: true, likeCount: true },
+    })
     if (!answer) return c.json({ error: 'Not found' }, 404)
 
     const likeCount = await prisma.$transaction(async (tx) => {

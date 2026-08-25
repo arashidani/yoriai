@@ -995,7 +995,10 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const post =
       process.env.MOCK_MODE === 'true'
         ? MOCK_POSTS.find((item) => item.id === id)
-        : await prisma.post.findUnique({ where: { id } })
+        : await prisma.post.findUnique({
+            where: { id },
+            select: { id: true, authorId: true, likeCount: true, deletedAt: true },
+          })
     if (!post || post.deletedAt) return c.json({ error: 'Not found' }, 404)
     if (post.authorId === user.id) return c.json({ error: '自分の質問にはいいねできません' }, 403)
     if (process.env.MOCK_MODE === 'true')
@@ -1033,7 +1036,10 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const post =
       process.env.MOCK_MODE === 'true'
         ? MOCK_POSTS.find((item) => item.id === id)
-        : await prisma.post.findUnique({ where: { id } })
+        : await prisma.post.findUnique({
+            where: { id },
+            select: { id: true, authorId: true, likeCount: true, deletedAt: true },
+          })
     if (!post) return c.json({ error: 'Not found' }, 404)
     if (process.env.MOCK_MODE === 'true')
       return c.json({ liked: false, likeCount: Math.max(0, post.likeCount - 1) }, 200)
