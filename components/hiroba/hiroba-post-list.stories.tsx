@@ -17,7 +17,6 @@ const posts = [
     id: 'hiroba-post-1',
     hirobaSlug: 'alcohol',
     title: '今日のランチどこ行きました？',
-    body: '近くに新しくできたお店に行ってみました。',
     imageUrl: null,
     authorId: 'user-1',
     displayName: '田中太郎',

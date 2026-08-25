@@ -12,8 +12,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   args: { onSubmit: fn() },
   play: async ({ canvas }) => {
-    await expect(canvas.getByLabelText('タイトル')).toBeVisible()
-    await expect(canvas.getByLabelText('本文')).toBeVisible()
+    await expect(canvas.getByLabelText('投稿のタイトル')).toBeVisible()
     await expect(canvas.getByLabelText('画像（任意）')).toBeVisible()
   },
 }

@@ -52,6 +52,7 @@ export const MOCK_USERS = [
 ]
 
 export const MOCK_JOINED_HIROBA_SLUGS = [
+  'feature-testing',
   'alcohol',
   'photography',
   'two-dimensional',
@@ -74,31 +75,44 @@ const optionDates = {
 }
 
 export const MOCK_DEPARTMENTS = [
-  { id: 'department-1', name: '開発部', isActive: true, ...optionDates },
-  { id: 'department-2', name: '営業部', isActive: true, ...optionDates },
+  { id: 'department-1', name: '開発部', isActive: true, sortOrder: 0, ...optionDates },
+  { id: 'department-2', name: '営業部', isActive: true, sortOrder: 1, ...optionDates },
 ]
 
 export const MOCK_BUSINESS_AREAS = [
-  { id: 'business-area-1', name: 'プロダクト開発', isActive: true, ...optionDates },
-  { id: 'business-area-2', name: '法人営業', isActive: true, ...optionDates },
+  { id: 'business-area-1', name: 'プロダクト開発', isActive: true, sortOrder: 0, ...optionDates },
+  { id: 'business-area-2', name: '法人営業', isActive: true, sortOrder: 1, ...optionDates },
 ]
 
 export const MOCK_BUSINESS_SKILLS = [
-  { id: 'business-skill-1', name: '社内ルール・手続き', isActive: true, ...optionDates },
-  { id: 'business-skill-2', name: 'IT・ツール操作', isActive: true, ...optionDates },
-  { id: 'business-skill-3', name: '業務スキル', isActive: true, ...optionDates },
+  {
+    id: 'business-skill-1',
+    name: '社内ルール・手続き',
+    isActive: true,
+    sortOrder: 0,
+    ...optionDates,
+  },
+  { id: 'business-skill-2', name: 'IT・ツール操作', isActive: true, sortOrder: 1, ...optionDates },
+  { id: 'business-skill-3', name: '業務スキル', isActive: true, sortOrder: 2, ...optionDates },
   {
     id: 'business-skill-4',
     name: '顧客対応・コミュニケーション',
     isActive: true,
+    sortOrder: 3,
     ...optionDates,
   },
-  { id: 'business-skill-5', name: 'IBJマインド・キャリア', isActive: true, ...optionDates },
+  {
+    id: 'business-skill-5',
+    name: 'IBJマインド・キャリア',
+    isActive: true,
+    sortOrder: 4,
+    ...optionDates,
+  },
 ]
 
 export const MOCK_INTERESTS = [
-  { id: 'interest-1', name: '生成AI', isActive: true, ...optionDates },
-  { id: 'interest-2', name: '組織づくり', isActive: true, ...optionDates },
+  { id: 'interest-1', name: '生成AI', isActive: true, sortOrder: 0, ...optionDates },
+  { id: 'interest-2', name: '組織づくり', isActive: true, sortOrder: 1, ...optionDates },
 ]
 
 export const MOCK_ANONYMOUS_PROFILES = [

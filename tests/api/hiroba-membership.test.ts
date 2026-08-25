@@ -53,6 +53,16 @@ describe('ひろば参加API', () => {
     })
   })
 
+  it('機能たしかめ広場からは退出できない', async () => {
+    const response = await app.request('/api/hiroba/feature-testing/membership', {
+      method: 'DELETE',
+    })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ joined: true })
+    expect(prismaMock.hirobaMembership.deleteMany).not.toHaveBeenCalled()
+  })
+
   it('固定カタログにないslugは参加させない', async () => {
     const response = await app.request('/api/hiroba/unknown/membership', { method: 'POST' })
 

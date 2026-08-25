@@ -446,6 +446,10 @@
             "type": "boolean",
             "example": true
           },
+          "sortOrder": {
+            "type": "integer",
+            "example": 0
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -461,8 +465,21 @@
           "id",
           "name",
           "isActive",
+          "sortOrder",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
         ]
       },
       "Hiroba": {
@@ -512,10 +529,6 @@
           "title": {
             "type": "string",
             "example": "今日のランチどこ行きました？"
-          },
-          "body": {
-            "type": "string",
-            "example": "近くに新しくできたお店に行ってみました。"
           },
           "imageUrl": {
             "type": [
@@ -584,7 +597,6 @@
           "id",
           "hirobaId",
           "title",
-          "body",
           "imageUrl",
           "authorId",
           "answerCount",
@@ -754,18 +766,6 @@
           "likeCount",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "Success": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "required": [
-          "success"
         ]
       },
       "InviteCreated": {
@@ -1631,7 +1631,7 @@
         "tags": [
           "questions"
         ],
-        "summary": "質問スレッドでメンションできる参加者を最新の回答順で取得",
+        "summary": "質問スレッドでメンションできる匿名参加者を最新の回答順で取得",
         "security": [
           {
             "supabaseSession": []
@@ -3595,6 +3595,109 @@
         }
       }
     },
+    "/api/admin/profile-options/{category}/order": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "プロフィール選択肢の並び順を更新（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "departments",
+                "business-areas",
+                "business-skills",
+                "interests"
+              ]
+            },
+            "required": true,
+            "name": "category",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orderedIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "orderedIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "並び順を更新",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "選択肢の指定が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "すべての項目を重複なく指定してください"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/profile-options/{category}/{id}": {
       "patch": {
         "tags": [
@@ -3998,15 +4101,10 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
-                  },
-                  "body": {
-                    "type": "string",
-                    "minLength": 1
                   }
                 },
                 "required": [
-                  "title",
-                  "body"
+                  "title"
                 ]
               }
             }
@@ -4058,6 +4156,19 @@
                 },
                 "example": {
                   "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ひろばに未参加",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ひろばに参加してください"
                 }
               }
             }
@@ -4475,6 +4586,19 @@
                 },
                 "example": {
                   "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ひろばに未参加",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ひろばに参加してください"
                 }
               }
             }

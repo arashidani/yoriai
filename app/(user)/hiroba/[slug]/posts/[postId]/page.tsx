@@ -13,7 +13,12 @@ import { HirobaPostLikeButton } from '@/components/hiroba/hiroba-post-like-butto
 import { HirobaSaveButton } from '@/components/hiroba/hiroba-save-button'
 import { Button } from '@/components/ui/button'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_HIROBA_ANSWERS, MOCK_HIROBA_POSTS } from '@/lib/mocks/fixtures'
+import { findHiroba, isDefaultHiroba } from '@/lib/hiroba/catalog'
+import {
+  MOCK_HIROBA_ANSWERS,
+  MOCK_HIROBA_POSTS,
+  MOCK_JOINED_HIROBA_SLUGS,
+} from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
 type Props = {
@@ -91,8 +96,20 @@ async function getViewerState(userId: string | undefined, postId: string, answer
 
 export default async function HirobaPostDetailPage({ params }: Props) {
   const { slug, postId } = await params
+  const hiroba = findHiroba(slug)
   const [post, currentUser] = await Promise.all([getPost(postId), getCurrentUser()])
-  if (!post) notFound()
+  if (!post || !hiroba || post.hirobaId !== hiroba.id) notFound()
+
+  const joined = currentUser
+    ? isDefaultHiroba(slug)
+      ? true
+      : process.env.MOCK_MODE === 'true'
+        ? MOCK_JOINED_HIROBA_SLUGS.includes(slug as (typeof MOCK_JOINED_HIROBA_SLUGS)[number])
+        : !!(await prisma.hirobaMembership.findUnique({
+            where: { userId_hirobaId: { userId: currentUser.id, hirobaId: post.hirobaId } },
+            select: { userId: true },
+          }))
+    : false
 
   const isAuthor = !!currentUser && currentUser.id === post.authorId
   const answers = await getAnswers(postId, currentUser?.id)
@@ -146,7 +163,6 @@ export default async function HirobaPostDetailPage({ params }: Props) {
         <span>{new Date(post.createdAt).toLocaleDateString('ja-JP')}</span>
       </div>
       <div className="prose max-w-none">
-        <p className="whitespace-pre-wrap">{post.body}</p>
         {post.imageUrl && (
           <Image
             src={post.imageUrl}
@@ -154,7 +170,7 @@ export default async function HirobaPostDetailPage({ params }: Props) {
             width={1200}
             height={900}
             unoptimized
-            className="mt-4 rounded-lg"
+            className="rounded-lg"
           />
         )}
       </div>
@@ -189,7 +205,12 @@ export default async function HirobaPostDetailPage({ params }: Props) {
 
       <section id="answer-form" className="mt-8 scroll-mt-8">
         <h2 className="mb-3 text-heading-4">回答する</h2>
-        <HirobaAnswerForm postId={post.id} />
+        <HirobaAnswerForm
+          postId={post.id}
+          hirobaSlug={slug}
+          hirobaName={hiroba.name}
+          initialJoined={joined}
+        />
       </section>
     </article>
   )

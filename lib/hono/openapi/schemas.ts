@@ -49,6 +49,7 @@ export const ProfileOptionSchema = z
     id: z.string().openapi({ example: 'option-1' }),
     name: z.string().openapi({ example: '開発部' }),
     isActive: z.boolean().openapi({ example: true }),
+    sortOrder: z.number().int().openapi({ example: 0 }),
     createdAt: dateTime(),
     updatedAt: dateTime(),
   })
@@ -119,7 +120,6 @@ export const HirobaPostSchema = z
     id: z.string().openapi({ example: 'hiroba-post-1' }),
     hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
     title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
-    body: z.string().openapi({ example: '近くに新しくできたお店に行ってみました。' }),
     imageUrl: z.string().nullable().openapi({ example: null }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
     author: z.union([UserSchema, z.null()]).optional(),

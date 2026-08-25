@@ -4,6 +4,7 @@ import type { HirobaAnswer, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, Role } from '@/app/generated/prisma/enums'
 import { moderateAnswer } from '@/lib/ai/moderate-post'
+import { HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -25,7 +26,12 @@ import {
   processHirobaPostImage,
   UnsupportedHirobaPostImageError,
 } from '@/lib/image/process-hiroba-post-image'
-import { MOCK_HIROBA_ANSWERS, MOCK_HIROBA_POSTS } from '@/lib/mocks/fixtures'
+import {
+  MOCK_HIROBA_ANSWERS,
+  MOCK_HIROBA_POSTS,
+  MOCK_HIROBAS,
+  MOCK_JOINED_HIROBA_SLUGS,
+} from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
 import { createHirobaAnswerSchema } from '@/lib/schemas/hiroba'
@@ -67,8 +73,7 @@ async function getHirobaMentionCandidates(postId: string) {
       return [
         {
           id: participant.authorId,
-          displayName:
-            participant.author.name ?? participant.author.username ?? participant.author.email,
+          displayName: participant.author.name ?? participant.author.username ?? 'ユーザー',
         },
       ]
     })
@@ -78,13 +83,13 @@ async function getHirobaMentionCandidates(postId: string) {
     where: { id: postId, deletedAt: null },
     select: {
       authorId: true,
-      author: { select: { name: true, username: true, email: true } },
+      author: { select: { name: true, username: true } },
       answers: {
         where: { isHidden: false, authorId: { not: null } },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         select: {
           authorId: true,
-          author: { select: { name: true, username: true, email: true } },
+          author: { select: { name: true, username: true } },
         },
       },
     },
@@ -94,11 +99,11 @@ async function getHirobaMentionCandidates(postId: string) {
   const seen = new Set<string>()
   const add = (
     userId: string | null,
-    author: { name: string | null; username: string | null; email: string } | null,
+    author: { name: string | null; username: string | null } | null,
   ) => {
     if (!userId || !author || seen.has(userId)) return []
     seen.add(userId)
-    return [{ id: userId, displayName: author.name ?? author.username ?? author.email }]
+    return [{ id: userId, displayName: author.name ?? author.username ?? 'ユーザー' }]
   }
   return [
     ...post.answers.flatMap((answer) => add(answer.authorId, answer.author)),
@@ -188,6 +193,7 @@ const createAnswerRoute = createRoute({
       content: { 'application/json': { schema: z.object({ answer: HirobaAnswerSchema }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('ひろばに未参加', 'ひろばに参加してください'),
     400: errorResponse('メンション対象が不正', 'このスレッドの参加者のみメンションできます'),
     404: errorResponse('投稿が見つからない', 'Not found'),
     409: errorResponse(
@@ -430,6 +436,15 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (process.env.MOCK_MODE === 'true') {
       const post = MOCK_HIROBA_POSTS.find((p) => p.id === id)
       if (!post) return c.json({ error: 'Not found' }, 404)
+      const hirobaSlug = MOCK_HIROBAS.find((hiroba) => hiroba.id === post.hirobaId)?.slug
+      if (
+        !hirobaSlug ||
+        (!isDefaultHiroba(hirobaSlug) &&
+          !MOCK_JOINED_HIROBA_SLUGS.includes(
+            hirobaSlug as (typeof MOCK_JOINED_HIROBA_SLUGS)[number],
+          ))
+      )
+        return c.json({ error: 'ひろばに参加してください' }, 403)
       const user = c.get('user')
       const data = c.req.valid('json')
       return c.json(
@@ -456,6 +471,16 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
 
     const post = await prisma.hirobaPost.findFirst({ where: { id, deletedAt: null } })
     if (!post) return c.json({ error: 'Not found' }, 404)
+    const hirobaSlug = HIROBA_CATALOG.find((hiroba) => hiroba.id === post.hirobaId)?.slug
+    if (
+      !hirobaSlug ||
+      (!isDefaultHiroba(hirobaSlug) &&
+        !(await prisma.hirobaMembership.findUnique({
+          where: { userId_hirobaId: { userId: user.id, hirobaId: post.hirobaId } },
+          select: { userId: true },
+        })))
+    )
+      return c.json({ error: 'ひろばに参加してください' }, 403)
     const requestedMentionIds = data.mentionedUserIds ?? []
     if (requestedMentionIds.length > 0) {
       const candidates = await getHirobaMentionCandidates(id)

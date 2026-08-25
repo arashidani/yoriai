@@ -2,6 +2,7 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { createServerClient } from '@supabase/ssr'
 import { bodyLimit } from 'hono/body-limit'
 import { requireEnv } from '@/lib/env'
+import { DEFAULT_HIROBA_SLUGS } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -209,6 +210,9 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
           email: authUser.email as string,
           name: name ?? invite.name ?? authUser.user_metadata?.name ?? null,
           role: invite.role,
+          hirobaMemberships: {
+            create: DEFAULT_HIROBA_SLUGS.map((slug) => ({ hiroba: { connect: { slug } } })),
+          },
         },
       })
     })

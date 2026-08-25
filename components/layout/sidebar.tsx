@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { Logo } from '@/components/brand/logo'
 import { IconClose } from '@/components/design-system/icons/icon-close'
 import { LogoutButton } from '@/components/logout-button'
+import { FeatureTutorialStartButton } from '@/components/tutorial/feature-tutorial'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -54,6 +55,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           {label}
         </Link>
       ))}
+      <FeatureTutorialStartButton onStart={onNavigate} />
     </nav>
   )
 }

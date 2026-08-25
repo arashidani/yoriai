@@ -4,20 +4,22 @@ import { ArrowLeft, Bot, Flame, Info, Sparkles, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { TUTORIAL_HIROBA_POSTS, useFeatureTutorial } from '@/components/tutorial/feature-tutorial'
 import { buttonVariants } from '@/components/ui/button'
 import type { HirobaCatalogItem } from '@/lib/hiroba/catalog'
-import { HIROBA_CATALOG } from '@/lib/hiroba/catalog'
+import { HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
 import { client } from '@/lib/hono/client'
 import { cn } from '@/lib/utils'
 import { HirobaCard } from './hiroba-card'
 import { HirobaIcon } from './hiroba-icon'
+import { HirobaJoinDialog } from './hiroba-join-dialog'
 import type { HirobaPost } from './hiroba-post-list'
 import { HirobaPostList } from './hiroba-post-list'
 
 type HirobaFeedProps = {
   hiroba: HirobaCatalogItem
   posts: HirobaPost[]
-  popularPosts: { id: string; hirobaSlug: string; title: string; body: string }[]
+  popularPosts: { id: string; hirobaSlug: string; title: string }[]
   isAdmin: boolean
   initialJoined: boolean
 }
@@ -32,11 +34,24 @@ const bannerTones = {
 } as const
 
 /** ひろばの紹介、参加導線、投稿フィード、補助情報をまとめた詳細画面。 */
-export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined }: HirobaFeedProps) {
+export function HirobaFeed({
+  hiroba,
+  posts,
+  popularPosts,
+  isAdmin,
+  initialJoined,
+}: HirobaFeedProps) {
   const router = useRouter()
+  const { active: tutorialActive } = useFeatureTutorial()
   const [joined, setJoined] = useState(initialJoined)
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
   const [membershipError, setMembershipError] = useState<string | null>(null)
+  const [joinDialogOpen, setJoinDialogOpen] = useState(false)
+  const isDefault = isDefaultHiroba(hiroba.slug)
+  const visiblePosts =
+    tutorialActive && hiroba.slug === 'feature-testing'
+      ? [...TUTORIAL_HIROBA_POSTS, ...posts]
+      : posts
   const popularHirobas = HIROBA_CATALOG.filter((item) => item.slug !== hiroba.slug).slice(0, 3)
 
   async function toggleMembership() {
@@ -82,19 +97,21 @@ export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined
                   <h1 className="mt-3 font-heading text-heading-2">{hiroba.name}</h1>
                 </div>
                 <div className="flex flex-wrap gap-3 pb-1">
-                  <button
-                    type="button"
-                    aria-pressed={joined}
-                    onClick={toggleMembership}
-                    disabled={isUpdatingMembership}
-                    className={buttonVariants({
-                      variant: joined ? 'outline' : 'default',
-                      className: 'rounded-full px-6',
-                    })}
-                  >
-                    <UserRound className="size-4" aria-hidden />
-                    {joined ? '参加中' : '参加する'}
-                  </button>
+                  {!isDefault && (
+                    <button
+                      type="button"
+                      aria-pressed={joined}
+                      onClick={toggleMembership}
+                      disabled={isUpdatingMembership}
+                      className={buttonVariants({
+                        variant: joined ? 'outline' : 'default',
+                        className: 'rounded-full px-6',
+                      })}
+                    >
+                      <UserRound className="size-4" aria-hidden />
+                      {joined ? '参加中' : '参加する'}
+                    </button>
+                  )}
                   <Link
                     href="/hiroba"
                     className={buttonVariants({
@@ -115,7 +132,7 @@ export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined
               <div className="mt-6 flex items-start gap-2 rounded-lg bg-hiroba-blue-soft px-4 py-3 text-hiroba-blue-foreground">
                 <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
                 <p className="text-paragraph-small">
-                  ひろばに参加すると投稿、返信、いいねができるようになります。
+                  投稿と返信にはひろばへの参加が必要です。閲覧といいねは参加前でもできます。
                 </p>
               </div>
             </section>
@@ -123,17 +140,32 @@ export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined
             <section className="mt-4">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="font-heading text-heading-3">みんなの投稿</h2>
-                <Link
-                  href={`/hiroba/${hiroba.slug}/new`}
-                  className={buttonVariants({
-                    size: 'default',
-                    className: 'shrink-0 rounded-full',
-                  })}
-                >
-                  投稿する
-                </Link>
+                {joined ? (
+                  <Link
+                    href={`/hiroba/${hiroba.slug}/new`}
+                    className={buttonVariants({
+                      size: 'default',
+                      className: 'shrink-0 rounded-full',
+                    })}
+                  >
+                    投稿する
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setJoinDialogOpen(true)}
+                    className={buttonVariants({ className: 'shrink-0 rounded-full' })}
+                  >
+                    投稿する
+                  </button>
+                )}
               </div>
-              <HirobaPostList posts={posts} isAdmin={isAdmin} />
+              <HirobaPostList
+                posts={visiblePosts}
+                isAdmin={isAdmin}
+                canReply={joined}
+                onJoinRequired={() => setJoinDialogOpen(true)}
+              />
             </section>
           </div>
 
@@ -182,9 +214,6 @@ export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined
                       className="min-w-0 rounded-lg border border-input bg-background p-3 hover:border-primary"
                     >
                       <p className="truncate text-paragraph-small font-bold">{post.title}</p>
-                      <p className="truncate text-paragraph-mini text-secondary-foreground">
-                        {post.body}
-                      </p>
                     </Link>
                   ))}
                 </div>
@@ -193,6 +222,16 @@ export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined
           </aside>
         </div>
       </div>
+      <HirobaJoinDialog
+        open={joinDialogOpen}
+        onOpenChange={setJoinDialogOpen}
+        hirobaSlug={hiroba.slug}
+        hirobaName={hiroba.name}
+        onJoined={() => {
+          setJoined(true)
+          router.refresh()
+        }}
+      />
     </div>
   )
 }

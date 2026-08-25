@@ -78,7 +78,7 @@ function commaSeparatedIds(value?: string) {
 async function getQaMentionCandidates(postId: string) {
   if (process.env.MOCK_MODE === 'true') {
     const post = MOCK_POSTS.find((item) => item.id === postId)
-    if (!post) return null
+    if (!post || post.deletedAt) return null
     const participants = [
       ...MOCK_ANSWERS.filter((answer) => answer.postId === postId && !answer.isHidden).sort(
         (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
@@ -96,16 +96,17 @@ async function getQaMentionCandidates(postId: string) {
       return profile
         ? [
             {
-              id: participant.authorId,
+              id: `mock-assignment-${participant.id}`,
               displayName: anonymousProfileDisplayName(profile.displayName, 1),
+              userId: participant.authorId,
             },
           ]
         : []
     })
   }
 
-  const post = await prisma.post.findUnique({
-    where: { id: postId },
+  const post = await prisma.post.findFirst({
+    where: { id: postId, deletedAt: null, status: { not: QuestionStatus.HIDDEN } },
     select: {
       authorId: true,
       postAnonymousProfile: { include: { anonymousProfile: true } },
@@ -124,17 +125,22 @@ async function getQaMentionCandidates(postId: string) {
   const seen = new Set<string>()
   const add = (
     userId: string | null,
-    assignment: { anonymousProfile: { displayName: string }; aliasNumber: number } | null,
+    assignment: {
+      id: string
+      anonymousProfile: { displayName: string }
+      aliasNumber: number
+    } | null,
   ) => {
     if (!userId || !assignment || seen.has(userId)) return []
     seen.add(userId)
     return [
       {
-        id: userId,
+        id: assignment.id,
         displayName: anonymousProfileDisplayName(
           assignment.anonymousProfile.displayName,
           assignment.aliasNumber,
         ),
+        userId,
       },
     ]
   }
@@ -245,7 +251,7 @@ const mentionCandidatesRoute = createRoute({
   method: 'get',
   path: '/{id}/mention-candidates',
   tags: ['questions'],
-  summary: '質問スレッドでメンションできる参加者を最新の回答順で取得',
+  summary: '質問スレッドでメンションできる匿名参加者を最新の回答順で取得',
   ...auth,
   request: { params: IdParamSchema },
   responses: {
@@ -458,7 +464,10 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const { id } = c.req.valid('param')
     const candidates = await getQaMentionCandidates(id)
     if (!candidates) return c.json({ error: 'Not found' }, 404)
-    return c.json({ candidates }, 200)
+    return c.json(
+      { candidates: candidates.map(({ id, displayName }) => ({ id, displayName })) },
+      200,
+    )
   })
   .openapi(listRoute, async (c) => {
     const user = c.get('user')
@@ -964,13 +973,21 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (post.status !== QuestionStatus.OPEN)
       return c.json({ error: '回答を受け付けていない質問です' }, 409)
     const requestedMentionIds = data.mentionedUserIds ?? []
+    let mentionedUserIds: string[] = []
     if (requestedMentionIds.length > 0) {
       const candidates = await getQaMentionCandidates(id)
-      if (
-        !candidates ||
-        !requestedMentionIds.every((userId) => candidates.some((item) => item.id === userId))
+      const userIdByCandidateId = new Map(
+        candidates?.map((item) => [item.id, item.userId] as const),
       )
+      if (!requestedMentionIds.every((candidateId) => userIdByCandidateId.has(candidateId)))
         return c.json({ error: 'このスレッドの参加者のみメンションできます' }, 400)
+      mentionedUserIds = [
+        ...new Set(
+          requestedMentionIds
+            .map((id) => userIdByCandidateId.get(id))
+            .filter((id): id is string => id !== undefined),
+        ),
+      ]
     }
     let assignment: Awaited<ReturnType<typeof getOrAssignAnonymousProfile>>
     try {
@@ -1061,11 +1078,11 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       }
     }
     if (!answer.isHidden) {
-      const mentionedUserIds = [...new Set(requestedMentionIds)].filter((id) => id !== user.id)
-      if (mentionedUserIds.length > 0) {
+      const notificationUserIds = mentionedUserIds.filter((id) => id !== user.id)
+      if (notificationUserIds.length > 0) {
         try {
           await prisma.notification.createMany({
-            data: mentionedUserIds.map((userId) => ({
+            data: notificationUserIds.map((userId) => ({
               userId,
               type: NotificationType.MENTIONED,
               postId: post.id,
