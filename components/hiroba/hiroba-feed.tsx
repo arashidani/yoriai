@@ -32,7 +32,13 @@ const bannerTones = {
 } as const
 
 /** ひろばの紹介、参加導線、投稿フィード、補助情報をまとめた詳細画面。 */
-export function HirobaFeed({ hiroba, posts, popularPosts, isAdmin, initialJoined }: HirobaFeedProps) {
+export function HirobaFeed({
+  hiroba,
+  posts,
+  popularPosts,
+  isAdmin,
+  initialJoined,
+}: HirobaFeedProps) {
   const router = useRouter()
   const [joined, setJoined] = useState(initialJoined)
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
