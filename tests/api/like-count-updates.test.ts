@@ -1,23 +1,29 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
 
-const { prismaMock, transactionNotificationCreate } = vi.hoisted(() => ({
-  prismaMock: {
-    post: { findUnique: vi.fn(), update: vi.fn() },
-    questionLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
-    answer: { findUnique: vi.fn(), update: vi.fn() },
-    answerLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
-    hirobaPost: { findUnique: vi.fn(), update: vi.fn() },
-    hirobaPostLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
-    hirobaAnswer: { findUnique: vi.fn(), update: vi.fn() },
-    hirobaAnswerLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
-    notification: { create: vi.fn() },
-    $transaction: vi.fn(),
-  },
-  transactionNotificationCreate: vi.fn(),
-}))
+const { afterResponseTasks, prismaMock, scheduleAfterResponseMock, transactionNotificationCreate } =
+  vi.hoisted(() => ({
+    afterResponseTasks: [] as Array<() => void | Promise<void>>,
+    prismaMock: {
+      post: { findUnique: vi.fn(), update: vi.fn() },
+      questionLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
+      answer: { findUnique: vi.fn(), update: vi.fn() },
+      answerLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
+      hirobaPost: { findUnique: vi.fn(), update: vi.fn() },
+      hirobaPostLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
+      hirobaAnswer: { findUnique: vi.fn(), update: vi.fn() },
+      hirobaAnswerLike: { createMany: vi.fn(), deleteMany: vi.fn(), count: vi.fn() },
+      notification: { create: vi.fn() },
+      $transaction: vi.fn(),
+    },
+    scheduleAfterResponseMock: vi.fn((task: () => void | Promise<void>) => {
+      afterResponseTasks.push(task)
+    }),
+    transactionNotificationCreate: vi.fn(),
+  }))
 
 vi.mock('@/lib/prisma/client', () => ({ prisma: prismaMock }))
+vi.mock('@/lib/hono/after-response', () => ({ scheduleAfterResponse: scheduleAfterResponseMock }))
 
 vi.mock('@/lib/hono/middleware/auth', async () => {
   const { createMiddleware } = await import('hono/factory')
@@ -100,6 +106,8 @@ describe.each(cases)('$labelのLike/Unlike', ({
 
   beforeEach(() => {
     vi.clearAllMocks()
+    afterResponseTasks.length = 0
+    prismaMock.notification.create.mockReset()
     prismaMock.$transaction.mockImplementation((callback: (tx: typeof prismaMock) => unknown) =>
       callback({
         ...prismaMock,
@@ -119,6 +127,11 @@ describe.each(cases)('$labelのLike/Unlike', ({
     expect(await response.json()).toEqual({ liked: true, likeCount: 6 })
     expect(entity.findUnique).toHaveBeenCalledWith({ where: { id }, select: entitySelect })
     expect(reaction.createMany).toHaveBeenCalledWith({ data: [likeData], skipDuplicates: true })
+    expect(scheduleAfterResponseMock).toHaveBeenCalledOnce()
+    expect(prismaMock.notification.create).not.toHaveBeenCalled()
+
+    await afterResponseTasks[0]?.()
+
     expect(prismaMock.notification.create).toHaveBeenCalledWith({ data: notificationData })
     expect(transactionNotificationCreate).not.toHaveBeenCalled()
     expect(reaction.count).not.toHaveBeenCalled()
@@ -137,6 +150,7 @@ describe.each(cases)('$labelのLike/Unlike', ({
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ liked: true, likeCount: 5 })
     expect(reaction.count).not.toHaveBeenCalled()
+    expect(scheduleAfterResponseMock).not.toHaveBeenCalled()
     expect(prismaMock.notification.create).not.toHaveBeenCalled()
     expect(entity.update).not.toHaveBeenCalled()
   })
@@ -152,6 +166,11 @@ describe.each(cases)('$labelのLike/Unlike', ({
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ liked: true, likeCount: 6 })
+    expect(scheduleAfterResponseMock).toHaveBeenCalledOnce()
+    expect(prismaMock.notification.create).not.toHaveBeenCalled()
+
+    await afterResponseTasks[0]?.()
+
     expect(prismaMock.notification.create).toHaveBeenCalledWith({ data: notificationData })
     expect(transactionNotificationCreate).not.toHaveBeenCalled()
     expect(consoleError).toHaveBeenCalled()
@@ -168,6 +187,7 @@ describe.each(cases)('$labelのLike/Unlike', ({
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({ liked: true, likeCount: 6 })
+    expect(scheduleAfterResponseMock).not.toHaveBeenCalled()
     expect(prismaMock.notification.create).not.toHaveBeenCalled()
     expect(transactionNotificationCreate).not.toHaveBeenCalled()
   })

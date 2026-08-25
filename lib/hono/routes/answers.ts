@@ -1,5 +1,6 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
 import { NotificationType } from '@/app/generated/prisma/enums'
+import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, IdParamSchema, LikeStatusSchema } from '@/lib/hono/openapi/schemas'
@@ -81,17 +82,20 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
     })
 
     if (isNewLike && answer.authorId) {
-      try {
-        await prisma.notification.create({
-          data: {
-            userId: answer.authorId,
-            type: NotificationType.ANSWER_LIKED,
-            answerId: id,
-          },
-        })
-      } catch (error) {
-        console.error('Failed to create answer like notification', { answerId: id, error })
-      }
+      const authorId = answer.authorId
+      scheduleAfterResponse(async () => {
+        try {
+          await prisma.notification.create({
+            data: {
+              userId: authorId,
+              type: NotificationType.ANSWER_LIKED,
+              answerId: id,
+            },
+          })
+        } catch (error) {
+          console.error('Failed to create answer like notification', { answerId: id, error })
+        }
+      })
     }
 
     return c.json({ liked: true, likeCount }, 200)

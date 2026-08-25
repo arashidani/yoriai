@@ -4,6 +4,7 @@ import type { HirobaAnswer, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, Role } from '@/app/generated/prisma/enums'
 import { moderateAnswer } from '@/lib/ai/moderate-post'
+import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -484,20 +485,23 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     })
 
     if (isNewLike && post.authorId) {
-      try {
-        await prisma.notification.create({
-          data: {
-            userId: post.authorId,
-            type: NotificationType.HIROBA_POST_LIKED,
+      const authorId = post.authorId
+      scheduleAfterResponse(async () => {
+        try {
+          await prisma.notification.create({
+            data: {
+              userId: authorId,
+              type: NotificationType.HIROBA_POST_LIKED,
+              hirobaPostId: id,
+            },
+          })
+        } catch (error) {
+          console.error('Failed to create hiroba post like notification', {
             hirobaPostId: id,
-          },
-        })
-      } catch (error) {
-        console.error('Failed to create hiroba post like notification', {
-          hirobaPostId: id,
-          error,
-        })
-      }
+            error,
+          })
+        }
+      })
     }
 
     return c.json({ liked: true, likeCount }, 200)
