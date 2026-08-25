@@ -62,7 +62,7 @@ export function QuestionFormModal({
             disabled={isLoading}
             onClick={isLoading ? undefined : onClose}
             className={cn(
-              'flex size-9 shrink-0 items-center justify-center rounded-full transition-colors hover:bg-muted',
+              'flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-muted',
               isLoading && 'pointer-events-none opacity-50',
             )}
           >

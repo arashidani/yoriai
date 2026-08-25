@@ -1,8 +1,10 @@
 import { Suspense } from 'react'
 
 import { HeaderSection } from '@/components/design-system/ui/header-section'
-import { AnswerableQuestionsFallback } from '@/components/posts/answerable-questions-fallback'
-import { HomeAnswerableQuestions } from '@/components/posts/home-answerable-questions'
+import {
+  HomeAnswerableQuestions,
+  HomeAnswerableQuestionsFallback,
+} from '@/components/posts/home-answerable-questions'
 import { HomeQaQuestionList } from '@/components/posts/home-qa-question-list'
 import { HomeQaTags } from '@/components/posts/home-qa-tags'
 import { QaCover } from '@/components/posts/qa-cover'
@@ -14,7 +16,7 @@ export default function QaHomePage() {
   return (
     <div className="flex min-w-0 flex-1 flex-col">
       <QaCover />
-      <div className="flex flex-1">
+      <div className="flex flex-1 xl:gap-8">
         <div className="flex min-w-0 flex-1 flex-col">
           <HeaderSection
             className="sticky top-0 z-30 h-25 p-8"
@@ -30,7 +32,7 @@ export default function QaHomePage() {
             </Suspense>
           </div>
         </div>
-        <Suspense fallback={<AnswerableQuestionsFallback />}>
+        <Suspense fallback={<HomeAnswerableQuestionsFallback />}>
           <HomeAnswerableQuestions />
         </Suspense>
       </div>

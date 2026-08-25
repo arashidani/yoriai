@@ -39,7 +39,7 @@ function AnswerItem({
     <div data-slot="answer-item" className={cn('relative flex w-full flex-col gap-4', className)}>
       {isMostLiked && <BestAnswerBadge className="absolute top-0 right-0 w-[54px]" />}
       <div className="flex w-full items-start gap-4">
-        <AuthorAvatar src={avatarSrc} alt={avatarAlt} className="size-10" />
+        <AuthorAvatar src={avatarSrc} alt={avatarAlt} className="size-10" sizes="40px" />
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           <div className="flex w-full flex-col gap-2">
             <div className="flex w-full flex-wrap items-center gap-2">

@@ -20,6 +20,7 @@ async function HomeQaQuestionList() {
       isAdmin={user?.role === Role.ADMIN}
       initialTotalPages={questionsBody.pagination.totalPages}
       initialTotal={questionsBody.pagination.total}
+      now={Date.now()}
     />
   )
 }
