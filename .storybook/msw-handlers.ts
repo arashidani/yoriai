@@ -4,7 +4,6 @@ import {
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
   MOCK_AVATAR_URL,
-  MOCK_BADGES,
   MOCK_BUSINESS_AREAS,
   MOCK_BUSINESS_SKILLS,
   MOCK_DEPARTMENTS,
@@ -13,7 +12,6 @@ import {
   MOCK_HIROBAS,
   MOCK_INTERESTS,
   MOCK_INVITES,
-  MOCK_MISSIONS,
   MOCK_PASSWORD_RESETS,
   MOCK_POSTS,
   MOCK_TAG_CATEGORIES,
@@ -268,14 +266,6 @@ export const mswHandlers = {
     http.get('/api/admin/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
     http.patch('/api/admin/users/:id', () => HttpResponse.json({ success: true })),
     http.delete('/api/admin/users/:id', () => HttpResponse.json({ success: true })),
-    http.get('/api/admin/badges', () => HttpResponse.json({ badges: MOCK_BADGES })),
-    http.post('/api/admin/badges', () =>
-      HttpResponse.json({ badge: MOCK_BADGES[0] }, { status: 201 }),
-    ),
-    http.get('/api/admin/missions', () => HttpResponse.json({ missions: MOCK_MISSIONS })),
-    http.post('/api/admin/missions', () =>
-      HttpResponse.json({ mission: MOCK_MISSIONS[0] }, { status: 201 }),
-    ),
     http.get('/api/admin/ai-flags', () => HttpResponse.json({ flags: MOCK_AI_FLAGS })),
     http.patch('/api/admin/ai-flags/:id', ({ params }) => {
       const flag = MOCK_AI_FLAGS.find((f) => f.id === params.id)
