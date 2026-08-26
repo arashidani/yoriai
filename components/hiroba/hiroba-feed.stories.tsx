@@ -22,6 +22,8 @@ const posts = [
     authorId: 'user-1',
     displayName: '田中太郎',
     displayNameColor: 'BLUE' as const,
+    avatarUrl: null,
+    lunchPreference: 'TEAM' as const,
     isOwnPost: false,
     likeCount: 2,
     liked: false,
@@ -39,32 +41,23 @@ export const Default: Story = {
       slug: 'alcohol',
       name: 'お酒',
       description: '好きなお酒やおすすめのおつまみを紹介し合うひろばです。',
-      icon: 'wine',
-      tone: 'lime',
+      icon: 'alcohol',
+      category: 'pickup',
     },
     posts,
-    popularPosts: [
-      {
-        id: 'hiroba-post-popular',
-        hirobaSlug: 'gaming',
-        title: 'いま人気のゲームを教えてください',
-        body: '週末に遊ぶゲームを探しています。',
-      },
-    ],
-    isAdmin: false,
     initialJoined: false,
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText(/今日のランチ/)).toBeVisible()
-    await expect(canvas.getByRole('link', { name: /いま人気のゲーム/ })).toHaveAttribute(
-      'href',
-      '/hiroba/gaming/posts/hiroba-post-popular',
-    )
-    await expect(canvas.getByRole('link', { name: '投稿する' })).toBeVisible()
+    await expect(canvas.getByText(/近くに新しく/)).toBeVisible()
+    await expect(canvas.getByRole('link', { name: '一覧に戻る' })).toBeVisible()
     await expect(canvas.getByRole('button', { name: '参加する' })).toHaveAttribute(
       'aria-pressed',
       'false',
     )
-    await expect(canvas.getByText('AI要約')).toBeVisible()
+    await expect(canvas.getByText('チームで')).toBeVisible()
+    await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute(
+      'href',
+      '/mypage/user-1',
+    )
   },
 }

@@ -72,5 +72,12 @@ export const updateProfileOptionSchema = z
     message: '変更内容を指定してください',
   })
 
+export const reorderProfileOptionsSchema = z.object({
+  orderedIds: z
+    .array(z.string().min(1))
+    .min(1, '並び順を指定してください')
+    .refine(uniqueIds, '同じ項目を重複して指定できません'),
+})
+
 export type CreateProfileOptionInput = z.infer<typeof createProfileOptionSchema>
 export type UpdateProfileOptionInput = z.infer<typeof updateProfileOptionSchema>
