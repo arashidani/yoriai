@@ -97,7 +97,13 @@ function QaQuestionList({ posts, isAdmin, now }: QaQuestionListProps) {
   )
 }
 
-function QaFeedList({ posts, isAdmin, initialTotalPages = 1, initialTotal = 0 }: QaFeedListProps) {
+function QaFeedList({
+  posts,
+  isAdmin,
+  initialTotalPages = 1,
+  initialTotal = 0,
+  now,
+}: QaFeedListProps) {
   const { active: tutorialActive } = useFeatureTutorial()
   const keyword = useQaFeedFilterStore((state) => state.keyword)
   const status = useQaFeedFilterStore((state) => state.status)
