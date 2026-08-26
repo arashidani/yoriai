@@ -277,11 +277,15 @@
           },
           "title": {
             "type": "string"
+          },
+          "displayAuthor": {
+            "$ref": "#/components/schemas/QuestionDisplayAuthor"
           }
         },
         "required": [
           "id",
-          "title"
+          "title",
+          "displayAuthor"
         ]
       },
       "QuestionAnswer": {
