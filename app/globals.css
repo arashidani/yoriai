@@ -70,6 +70,8 @@
   --color-mbti-yellow-bg: var(--mbti-yellow-bg);
   --color-mbti-blue-bg: var(--mbti-blue-bg);
   --color-mbti-purple-bg: var(--mbti-purple-bg);
+  --color-lunch-style: var(--lunch-style);
+  --color-lunch-style-bg: var(--lunch-style-bg);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-sidebar: var(--sidebar);
@@ -633,6 +635,8 @@
   --mbti-yellow-bg: #fef3c7;
   --mbti-blue-bg: #cffafe;
   --mbti-purple-bg: #f3e8ff;
+  --lunch-style: #db5631;
+  --lunch-style-bg: #ffe7df;
   --positive: #009689;
   --negative: #f54a00;
 
@@ -748,6 +752,8 @@
   --mbti-yellow-bg: #fef3c7;
   --mbti-blue-bg: #cffafe;
   --mbti-purple-bg: #f3e8ff;
+  --lunch-style: #ffb19a;
+  --lunch-style-bg: #7d2a15;
   --positive: #00bc7d;
   --negative: #ff2056;
 
