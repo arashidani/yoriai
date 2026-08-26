@@ -3,7 +3,6 @@ import { bodyLimit } from 'hono/body-limit'
 import type { HirobaAnswer, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, Role } from '@/app/generated/prisma/enums'
-import { GeminiServiceUnavailableError } from '@/lib/ai/errors'
 import { HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
 import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
@@ -189,10 +188,6 @@ const createAnswerRoute = createRoute({
       description: '再送された回答（すでに作成済みの回答）',
       content: { 'application/json': { schema: z.object({ answer: HirobaAnswerSchema }) } },
     },
-    503: errorResponse(
-      'AIサービス利用不可',
-      'AIサービスが混雑しています。時間をおいてもう一度お試しください',
-    ),
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('ひろばに未参加', 'ひろばに参加してください'),
     400: errorResponse('メンション対象が不正', 'このスレッドの参加者のみメンションできます'),
@@ -515,19 +510,8 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         return c.json({ error: '本文内のメンションを指定してください' }, 400)
     }
 
-    let moderation: import('@/lib/ai/moderate-post').ModerationResult | null
-    try {
-      const { moderateAnswer } = await import('@/lib/ai/moderate-post')
-      moderation = await moderateAnswer(data.body, { failOnServiceUnavailable: true })
-    } catch (error) {
-      if (error instanceof GeminiServiceUnavailableError) {
-        return c.json(
-          { error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください' },
-          503,
-        )
-      }
-      throw error
-    }
+    const { moderateAnswer } = await import('@/lib/ai/moderate-post')
+    const moderation = await moderateAnswer(data.body)
 
     let answer: HirobaAnswerWithAuthor
     try {

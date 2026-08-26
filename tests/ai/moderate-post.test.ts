@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { GeminiServiceUnavailableError } from '@/lib/ai/errors'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 
 const { generateContentMock, googleGenAiConstructorMock } = vi.hoisted(() => ({
@@ -44,22 +43,22 @@ describe('moderatePost', () => {
     )
   })
 
-  it('Geminiが503を返した場合はサービス利用不可エラーを送出する', async () => {
+  it('Geminiが503を返した場合はモデレーションをスキップする', async () => {
     generateContentMock.mockRejectedValue(
       Object.assign(new Error('This model is currently experiencing high demand.'), {
         status: 503,
       }),
     )
 
-    await expect(moderatePost('質問', '本文')).rejects.toBeInstanceOf(GeminiServiceUnavailableError)
+    await expect(moderatePost('質問', '本文')).resolves.toBeNull()
   })
 
-  it('Gemini呼び出しがタイムアウトした場合もサービス利用不可エラーを送出する', async () => {
+  it('Gemini呼び出しがタイムアウトした場合もモデレーションをスキップする', async () => {
     const timeoutError = new Error('Request timed out')
     timeoutError.name = 'TimeoutError'
     generateContentMock.mockRejectedValue(timeoutError)
 
-    await expect(moderatePost('質問', '本文')).rejects.toBeInstanceOf(GeminiServiceUnavailableError)
+    await expect(moderatePost('質問', '本文')).resolves.toBeNull()
   })
 
   it('503以外のGeminiエラーは従来どおり判定なしへ倒す', async () => {
@@ -70,17 +69,7 @@ describe('moderatePost', () => {
     await expect(moderatePost('質問', '本文')).resolves.toBeNull()
   })
 
-  it('Q&A回答では503をサービス利用不可エラーとして送出できる', async () => {
-    generateContentMock.mockRejectedValue(
-      Object.assign(new Error('Service unavailable'), { status: 503 }),
-    )
-
-    await expect(moderateAnswer('回答', { failOnServiceUnavailable: true })).rejects.toBeInstanceOf(
-      GeminiServiceUnavailableError,
-    )
-  })
-
-  it('ひろば回答向けの既定動作では503を判定なしへ倒す', async () => {
+  it('回答でも503の場合はモデレーションをスキップする', async () => {
     generateContentMock.mockRejectedValue(
       Object.assign(new Error('Service unavailable'), { status: 503 }),
     )

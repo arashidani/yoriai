@@ -2,7 +2,6 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import type { HirobaPost, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity } from '@/app/generated/prisma/enums'
-import { GeminiServiceUnavailableError } from '@/lib/ai/errors'
 import { findHiroba, HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -121,10 +120,6 @@ const createPostRoute = createRoute({
     409: errorResponse(
       '同じキーで、前回とは異なる投稿内容が送信された',
       '同じ投稿操作に異なる内容が指定されています',
-    ),
-    503: errorResponse(
-      'AIサービス利用不可',
-      'AIサービスが混雑しています。時間をおいてもう一度お試しください',
     ),
     500: errorResponse('投稿の作成に失敗した', '投稿の作成に失敗しました'),
   },
@@ -259,19 +254,8 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       return c.json({ post: { ...existingPost, tags: [] } }, 200)
     }
 
-    let moderation: import('@/lib/ai/moderate-post').ModerationResult | null
-    try {
-      const { moderatePost } = await import('@/lib/ai/moderate-post')
-      moderation = await moderatePost(data.title, '')
-    } catch (error) {
-      if (error instanceof GeminiServiceUnavailableError) {
-        return c.json(
-          { error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください' },
-          503,
-        )
-      }
-      throw error
-    }
+    const { moderatePost } = await import('@/lib/ai/moderate-post')
+    const moderation = await moderatePost(data.title, '')
 
     let post: HirobaPostWithAuthor
     try {

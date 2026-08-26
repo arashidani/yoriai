@@ -1,9 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
-import {
-  GEMINI_REQUEST_TIMEOUT_MS,
-  GeminiServiceUnavailableError,
-  isGeminiServiceUnavailable,
-} from '@/lib/ai/errors'
+import { GEMINI_REQUEST_TIMEOUT_MS } from '@/lib/ai/errors'
 import { requireEnv } from '@/lib/env'
 
 const SYSTEM_INSTRUCTION =
@@ -25,10 +21,7 @@ export type ModerationResult = {
   reason: string
 }
 
-async function moderate(
-  contents: string,
-  options: { failOnServiceUnavailable?: boolean } = {},
-): Promise<ModerationResult | null> {
+async function moderate(contents: string): Promise<ModerationResult | null> {
   try {
     const ai = new GoogleGenAI({
       apiKey: requireEnv('GEMINI_API_KEY'),
@@ -49,22 +42,16 @@ async function moderate(
     return JSON.parse(text) as ModerationResult
   } catch (error) {
     console.error('Gemini moderation failed', error)
-    if (options.failOnServiceUnavailable && isGeminiServiceUnavailable(error)) {
-      throw new GeminiServiceUnavailableError()
-    }
     return null
   }
 }
 
-/** 503・タイムアウトは送出し、それ以外のGemini失敗は判定なしへ倒す。 */
+/** Gemini呼び出しに失敗した場合は判定をスキップし、投稿作成を継続する。 */
 export async function moderatePost(title: string, body: string): Promise<ModerationResult | null> {
-  return moderate(`タイトル: ${title}\n本文: ${body}`, { failOnServiceUnavailable: true })
+  return moderate(`タイトル: ${title}\n本文: ${body}`)
 }
 
-/** 既定は判定なしへ倒す。Q&A回答では503・タイムアウトを呼び出し側へ送出できる。 */
-export async function moderateAnswer(
-  body: string,
-  options: { failOnServiceUnavailable?: boolean } = {},
-): Promise<ModerationResult | null> {
-  return moderate(`本文: ${body}`, options)
+/** Gemini呼び出しに失敗した場合は判定をスキップし、回答作成を継続する。 */
+export async function moderateAnswer(body: string): Promise<ModerationResult | null> {
+  return moderate(`本文: ${body}`)
 }

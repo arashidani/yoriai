@@ -1,7 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, QuestionStatus } from '@/app/generated/prisma/enums'
-import { GeminiServiceUnavailableError } from '@/lib/ai/errors'
 import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -326,10 +325,6 @@ const createQuestionRoute = createRoute({
     400: errorResponse('不正なタグ', '選択されたタグが見つかりません'),
     401: errorResponse('未認証', 'Unauthorized'),
     409: errorResponse('同じキーで異なる内容', '同じ投稿操作に異なる内容が指定されています'),
-    503: errorResponse(
-      'AIサービス利用不可',
-      'AIサービスが混雑しています。時間をおいてもう一度お試しください',
-    ),
     500: errorResponse('作成失敗', '投稿の作成に失敗しました'),
   },
 })
@@ -391,10 +386,6 @@ const createAnswerRoute = createRoute({
     404: errorResponse('質問が存在しない', '投稿が見つかりません'),
     410: errorResponse('質問が削除済み', 'この投稿は削除されたため、回答できません'),
     409: errorResponse('回答受付終了', '回答を受け付けていない質問です'),
-    503: errorResponse(
-      'AIサービス利用不可',
-      'AIサービスが混雑しています。時間をおいてもう一度お試しください',
-    ),
     500: errorResponse('作成失敗', '回答の作成に失敗しました'),
   },
 })
@@ -836,19 +827,8 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         200,
       )
     }
-    let moderation: import('@/lib/ai/moderate-post').ModerationResult | null
-    try {
-      const { moderatePost } = await import('@/lib/ai/moderate-post')
-      moderation = await moderatePost(postData.title, postData.body)
-    } catch (error) {
-      if (error instanceof GeminiServiceUnavailableError) {
-        return c.json(
-          { error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください' },
-          503,
-        )
-      }
-      throw error
-    }
+    const { moderatePost } = await import('@/lib/ai/moderate-post')
+    const moderation = await moderatePost(postData.title, postData.body)
     // biome-ignore lint/suspicious/noExplicitAny: Prisma result variants share one variable
     let post: any
     try {
@@ -1110,19 +1090,8 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         ),
       ]
     }
-    let moderation: import('@/lib/ai/moderate-post').ModerationResult | null
-    try {
-      const { moderateAnswer } = await import('@/lib/ai/moderate-post')
-      moderation = await moderateAnswer(data.body, { failOnServiceUnavailable: true })
-    } catch (error) {
-      if (error instanceof GeminiServiceUnavailableError) {
-        return c.json(
-          { error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください' },
-          503,
-        )
-      }
-      throw error
-    }
+    const { moderateAnswer } = await import('@/lib/ai/moderate-post')
+    const moderation = await moderateAnswer(data.body)
     let assignment: Awaited<ReturnType<typeof getOrAssignAnonymousProfile>>
     try {
       assignment = await getOrAssignAnonymousProfile(id, user.id)

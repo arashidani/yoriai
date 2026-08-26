@@ -84,7 +84,6 @@ vi.mock('@/lib/hono/middleware/auth', async () => {
 
 import { Prisma } from '@/app/generated/prisma/client'
 import { QuestionStatus } from '@/app/generated/prisma/enums'
-import { GeminiServiceUnavailableError } from '@/lib/ai/errors'
 import app from '@/lib/hono/app'
 import { MOCK_ANONYMOUS_PROFILES, MOCK_USERS } from '@/lib/mocks/fixtures'
 
@@ -176,21 +175,21 @@ describe('Q&A作成APIのモデレーション結果', () => {
     expect((await response.json()).moderation).toEqual({ isHidden: true })
   })
 
-  it('Geminiモデレーションが503の場合は投稿を作成せず503を返す', async () => {
-    moderationMock.moderatePost.mockRejectedValue(new GeminiServiceUnavailableError())
+  it('Geminiモデレーションをスキップした場合も質問を作成する', async () => {
+    prismaMock.post.create.mockResolvedValue(basePost)
+    prismaMock.post.update.mockResolvedValue({
+      ...basePost,
+      postAnonymousProfileId: 'assignment-test',
+    })
 
     const response = await createRequest('/api/questions', {
       title: basePost.title,
       body: basePost.body,
     })
 
-    expect(response.status).toBe(503)
-    expect(await response.json()).toEqual({
-      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
-    })
-    expect(prismaMock.post.create).not.toHaveBeenCalled()
-    expect(assignmentMock.getOrAssignAnonymousProfile).not.toHaveBeenCalled()
-    expect(assignTagsMock).not.toHaveBeenCalled()
+    expect(response.status).toBe(201)
+    expect(prismaMock.post.create).toHaveBeenCalled()
+    expect(assignmentMock.getOrAssignAnonymousProfile).toHaveBeenCalled()
   })
 
   it('その他タグが手動指定された質問ではAI割り当てをスキップする', async () => {
@@ -335,21 +334,18 @@ describe('Q&A作成APIのモデレーション結果', () => {
     expect((await response.json()).moderation).toEqual({ isHidden: true })
   })
 
-  it('回答のGeminiモデレーションが503の場合は回答を作成せず503を返す', async () => {
+  it('Geminiモデレーションをスキップした場合も回答を作成する', async () => {
     prismaMock.post.findUnique.mockResolvedValue(basePost)
-    moderationMock.moderateAnswer.mockRejectedValue(new GeminiServiceUnavailableError())
+    txMock.answer.create.mockResolvedValue(baseAnswer)
+    txMock.post.update.mockResolvedValue({ ...basePost, answerCount: 1 })
 
     const response = await createRequest('/api/questions/post-test/answers', {
       body: baseAnswer.body,
     })
 
-    expect(response.status).toBe(503)
-    expect(await response.json()).toEqual({
-      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
-    })
-    expect(assignmentMock.getOrAssignAnonymousProfile).not.toHaveBeenCalled()
-    expect(prismaMock.$transaction).not.toHaveBeenCalled()
-    expect(txMock.answer.create).not.toHaveBeenCalled()
+    expect(response.status).toBe(201)
+    expect(assignmentMock.getOrAssignAnonymousProfile).toHaveBeenCalled()
+    expect(txMock.answer.create).toHaveBeenCalled()
   })
 
   it('ひろば回答をAI判定で非公開にすると公開回答件数を減らす', async () => {
@@ -393,7 +389,7 @@ describe('Q&A作成APIのモデレーション結果', () => {
     })
   })
 
-  it('ひろば投稿のGeminiモデレーションが503の場合は投稿を作成しない', async () => {
+  it('Geminiモデレーションをスキップした場合もひろば投稿を作成する', async () => {
     prismaMock.hiroba.findUnique.mockResolvedValue({
       id: 'hiroba-feature-testing',
       slug: 'feature-testing',
@@ -407,38 +403,40 @@ describe('Q&A作成APIのモデレーション結果', () => {
       author: MOCK_USERS[0],
       deletedAt: null,
     })
-    moderationMock.moderatePost.mockRejectedValue(new GeminiServiceUnavailableError())
-
     const response = await createRequest('/api/hiroba/feature-testing/posts', {
       title: '投稿テスト',
     })
 
-    expect(response.status).toBe(503)
-    expect(await response.json()).toEqual({
-      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
-    })
-    expect(prismaMock.hirobaPost.create).not.toHaveBeenCalled()
+    expect(response.status).toBe(201)
+    expect(prismaMock.hirobaPost.create).toHaveBeenCalled()
   })
 
-  it('ひろば返信のGeminiモデレーションが503の場合は返信を作成しない', async () => {
+  it('Geminiモデレーションをスキップした場合もひろば返信を作成する', async () => {
     prismaMock.hirobaPost.findFirst.mockResolvedValue({
       id: 'hiroba-post-test',
       hirobaId: 'hiroba-feature-testing',
       authorId: MOCK_USERS[1].id,
       deletedAt: null,
     })
-    moderationMock.moderateAnswer.mockRejectedValue(new GeminiServiceUnavailableError())
+    txMock.hirobaAnswer.create.mockResolvedValue({
+      id: 'hiroba-answer-test',
+      hirobaPostId: 'hiroba-post-test',
+      authorId: MOCK_USERS[0].id,
+      author: MOCK_USERS[0],
+      body: 'ひろば返信テスト',
+      isHidden: false,
+      likeCount: 0,
+      createdAt: new Date('2026-08-08T01:00:00.000Z'),
+      updatedAt: new Date('2026-08-08T01:00:00.000Z'),
+    })
+    txMock.hirobaPost.update.mockResolvedValue({ id: 'hiroba-post-test', answerCount: 1 })
 
     const response = await createRequest('/api/hiroba-posts/hiroba-post-test/answers', {
       body: 'ひろば返信テスト',
     })
 
-    expect(response.status).toBe(503)
-    expect(await response.json()).toEqual({
-      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
-    })
-    expect(prismaMock.$transaction).not.toHaveBeenCalled()
-    expect(txMock.hirobaAnswer.create).not.toHaveBeenCalled()
+    expect(response.status).toBe(201)
+    expect(txMock.hirobaAnswer.create).toHaveBeenCalled()
   })
 
   it('匿名プロフィールIDのメンションを実ユーザーIDへ解決して通知する', async () => {

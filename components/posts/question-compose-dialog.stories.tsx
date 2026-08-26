@@ -89,31 +89,3 @@ export const TagAssignmentFailed: Story = {
     await expect(screen.getByText('自分でカテゴリーを選ぶ')).toBeVisible()
   },
 }
-
-export const ModerationUnavailable: Story = {
-  args: {},
-  parameters: {
-    msw: {
-      handlers: [
-        http.post('/api/questions', () =>
-          HttpResponse.json(
-            { error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください' },
-            { status: 503 },
-          ),
-        ),
-      ],
-    },
-  },
-  play: async ({ canvas }) => {
-    await userEvent.click(canvas.getByRole('button', { name: '質問する' }))
-    await userEvent.type(await screen.findByLabelText('質問のタイトル'), '有給申請について')
-    await userEvent.type(screen.getByLabelText('質問の本文'), '申請方法を教えてください。')
-    await userEvent.click(screen.getByRole('button', { name: /投稿する/ }))
-
-    await expect(
-      await screen.findByText('AIサービスが混雑しています。時間をおいてもう一度お試しください'),
-    ).toBeVisible()
-    await expect(screen.queryByLabelText('投稿中')).not.toBeInTheDocument()
-    await expect(screen.getByRole('button', { name: /投稿する/ })).toBeEnabled()
-  },
-}
