@@ -102,6 +102,10 @@
   --color-tenurechip-foreground: var(--tenurechip-foreground);
   --color-statuschip-success: var(--statuschip-success);
   --color-statuschip-success-foreground: var(--statuschip-success-foreground);
+  --color-aichat-ai: var(--aichat-ai);
+  --color-aichat-ai-foreground: var(--aichat-ai-foreground);
+  --color-aichat-user: var(--aichat-user);
+  --color-aichat-user-foreground: var(--aichat-user-foreground);
 
   /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
      3種類に限定し、独自の font-* ユーティリティは増やさない。
@@ -522,6 +526,10 @@
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.1);
+
+  /* Figma: AIchatbot の外枠。方向を持たない neutral-900 24% のグロー。
+     デザインシステムの 2xs〜2xl（いずれも黒・y方向オフセットあり）に該当なし */
+  --shadow-aichat: 0 0 5px rgb(47 43 39 / 0.24);
 }
 
 /* ── Light ── */
@@ -627,6 +635,12 @@
   /* Figma: badge/statuschip-success, badge/statuschip-success-foreground（解決済みチップ）。Light/Dark 共通の固定色 */
   --statuschip-success: #ece7df; /* neutral-300 */
   --statuschip-success-foreground: #a59a8d; /* neutral-600 */
+
+  /* Figma: unofficial/AIchat 系（AIチャットの吹き出し）。Light/Dark 共通の固定色 */
+  --aichat-ai: #f6f3ed; /* neutral-200 */
+  --aichat-ai-foreground: #544d46; /* neutral-800 */
+  --aichat-user: #33c1ed; /* sky-500 */
+  --aichat-user-foreground: #fffefc; /* neutral-50 */
 }
 
 /* ── Dark ── */
@@ -701,6 +715,10 @@
   --tenurechip-foreground: #65a30d; /* Light と固定 */
   --statuschip-success: #ece7df; /* Light と固定 */
   --statuschip-success-foreground: #a59a8d; /* Light と固定 */
+  --aichat-ai: #f6f3ed; /* Light と固定 */
+  --aichat-ai-foreground: #544d46; /* Light と固定 */
+  --aichat-user: #33c1ed; /* Light と固定 */
+  --aichat-user-foreground: #fffefc; /* Light と固定 */
 }
 
 @layer base {
