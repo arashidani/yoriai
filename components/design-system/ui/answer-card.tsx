@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import imageNone from '@/assets/image-none.svg'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
+import { MentionText } from '@/components/mentions/mention-text'
 import { client } from '@/lib/hono/client'
 import { LikeButton } from './like-button'
 import { LunchChip, type LunchChipType } from './lunch-chip'
@@ -133,7 +134,7 @@ export function AnswerCard({
                 {name}さん
               </span>
             ))}
-            {answer.body}
+            <MentionText text={answer.body} />
           </p>
         </div>
         <LikeButton

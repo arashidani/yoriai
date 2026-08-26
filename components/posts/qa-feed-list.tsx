@@ -3,6 +3,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Pagination } from '@/components/design-system/ui/pagination'
+import { TUTORIAL_QA_POSTS, useFeatureTutorial } from '@/components/tutorial/feature-tutorial'
 import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
 import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
@@ -103,6 +104,7 @@ function QaFeedList({
   initialTotal = 0,
   now,
 }: QaFeedListProps) {
+  const { active: tutorialActive } = useFeatureTutorial()
   const keyword = useQaFeedFilterStore((state) => state.keyword)
   const status = useQaFeedFilterStore((state) => state.status)
   const selectedCategoryIds = useQaFeedFilterStore((state) => state.selectedCategoryIds)
@@ -139,9 +141,12 @@ function QaFeedList({
     staleTime: 30_000,
   })
 
-  const visiblePosts = data?.posts ?? []
-  const totalPages = data?.totalPages ?? initialTotalPages
-  const total = data?.total ?? initialTotal
+  const postsFromApi = data?.posts ?? []
+  const visiblePosts = tutorialActive
+    ? [...TUTORIAL_QA_POSTS, ...postsFromApi].slice(0, PAGE_SIZE)
+    : postsFromApi
+  const total = (data?.total ?? initialTotal) + (tutorialActive ? TUTORIAL_QA_POSTS.length : 0)
+  const totalPages = Math.max(data?.totalPages ?? initialTotalPages, Math.ceil(total / PAGE_SIZE))
   const showSkeleton = isPending
   const showSpinner = isFetching && isPlaceholderData
 

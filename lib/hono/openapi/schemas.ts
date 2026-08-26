@@ -49,6 +49,7 @@ export const ProfileOptionSchema = z
     id: z.string().openapi({ example: 'option-1' }),
     name: z.string().openapi({ example: '開発部' }),
     isActive: z.boolean().openapi({ example: true }),
+    sortOrder: z.number().int().openapi({ example: 0 }),
     createdAt: dateTime(),
     updatedAt: dateTime(),
   })
@@ -119,7 +120,6 @@ export const HirobaPostSchema = z
     id: z.string().openapi({ example: 'hiroba-post-1' }),
     hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
     title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
-    body: z.string().openapi({ example: '近くに新しくできたお店に行ってみました。' }),
     imageUrl: z.string().nullable().openapi({ example: null }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
     author: z.union([UserSchema, z.null()]).optional(),
@@ -194,6 +194,13 @@ export const NotificationTypeSchema = z
   ])
   .openapi('NotificationType')
 
+export const MentionCandidateSchema = z
+  .object({
+    id: z.string().openapi({ example: 'user-1' }),
+    displayName: z.string().openapi({ example: 'ねこ' }),
+  })
+  .openapi('MentionCandidate')
+
 export const NotificationSchema = z
   .object({
     id: z.string().openapi({ example: 'notification-1' }),
@@ -229,34 +236,6 @@ export const SavedStatusSchema = z
     bookmarkCount: z.number().int().nonnegative().optional().openapi({ example: 1 }),
   })
   .openapi('SavedStatus')
-
-export const BadgeSchema = z
-  .object({
-    id: z.string().openapi({ example: 'badge-1' }),
-    name: z.string().openapi({ example: '初投稿' }),
-    description: z.string().openapi({ example: '初めて投稿を作成した' }),
-    icon: z.string().openapi({ example: 'Medal' }),
-    rarity: z.enum(['BRONZE', 'SILVER', 'GOLD', 'PLATINUM']).openapi({ example: 'BRONZE' }),
-    earnedCount: z.number().openapi({ example: 842 }),
-    createdAt: dateTime(),
-  })
-  .openapi('Badge')
-
-export const MissionSchema = z
-  .object({
-    id: z.string().openapi({ example: 'mission-1' }),
-    name: z.string().openapi({ example: '週に5件投稿' }),
-    description: z.string().openapi({ example: '1週間で5件の投稿を作成する' }),
-    durationLabel: z.string().openapi({ example: '1週間' }),
-    targetCount: z.number().openapi({ example: 5 }),
-    active: z.boolean().openapi({ example: true }),
-    participantsCount: z.number().openapi({ example: 189 }),
-    progressPercent: z.number().openapi({ example: 62 }),
-    rewardBadgeId: z.string().nullable().openapi({ example: 'badge-1' }),
-    rewardBadge: z.union([BadgeSchema, z.null()]).optional(),
-    createdAt: dateTime(),
-  })
-  .openapi('Mission')
 
 export const AiFlagSchema = z
   .object({

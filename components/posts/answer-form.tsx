@@ -3,9 +3,10 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useCallback, useRef, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
 import { AnswerForm as AnswerFormUI } from '@/components/design-system/ui/answer-form'
+import { type MentionCandidate, MentionTextarea } from '@/components/mentions/mention-textarea'
 import { client } from '@/lib/hono/client'
 import { type CreateAnswerInput, createAnswerSchema } from '@/lib/schemas/answer'
 
@@ -17,23 +18,34 @@ export function AnswerForm({ postId }: AnswerFormProps) {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isPostUnavailable, setIsPostUnavailable] = useState(false)
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([])
   const isSubmittingRef = useRef(false)
   const idempotencyKeyRef = useRef<{ key: string; requestBody: string } | null>(null)
   const {
-    register,
+    control,
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
   } = useForm<CreateAnswerInput>({
     resolver: zodResolver(createAnswerSchema),
+    defaultValues: { body: '', mentionedUserIds: [] },
   })
+
+  const loadCandidates = useCallback(async (): Promise<MentionCandidate[]> => {
+    const res = await client.api.questions[':id']['mention-candidates'].$get({
+      param: { id: postId },
+    })
+    if (!res.ok) return []
+    return (await res.json()).candidates
+  }, [postId])
 
   async function onSubmit(data: CreateAnswerInput) {
     if (isSubmittingRef.current || isPostUnavailable) return
     isSubmittingRef.current = true
     setError(null)
 
-    const requestBody = JSON.stringify(data)
+    const submission = { ...data, mentionedUserIds }
+    const requestBody = JSON.stringify(submission)
     if (idempotencyKeyRef.current?.requestBody !== requestBody) {
       idempotencyKeyRef.current = { key: crypto.randomUUID(), requestBody }
     }
@@ -42,7 +54,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
       const res = await client.api.questions[':id'].answers.$post({
         param: { id: postId },
         header: { 'idempotency-key': idempotencyKeyRef.current.key },
-        json: data,
+        json: submission,
       })
       if (!res.ok) {
         const body = await res.json()
@@ -52,6 +64,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
         return
       }
       reset()
+      setMentionedUserIds([])
       const body = await res.json()
       if (body.moderation.isHidden) {
         window.alert('AIによる確認の結果、この回答は公開されませんでした。')
@@ -82,7 +95,25 @@ export function AnswerForm({ postId }: AnswerFormProps) {
           placeholder="回答を入力する"
           submitLabel={isSubmitting ? '送信中...' : '回答'}
           disabled={isSubmitting || isPostUnavailable}
-          textareaProps={{ rows: 4, ...register('body'), 'aria-invalid': !!errors.body }}
+          textarea={
+            <Controller
+              name="body"
+              control={control}
+              render={({ field }) => (
+                <MentionTextarea
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  selectedIds={mentionedUserIds}
+                  onSelectedIdsChange={setMentionedUserIds}
+                  loadCandidates={loadCandidates}
+                  placeholder="回答を入力する"
+                  disabled={isSubmitting || isPostUnavailable}
+                  ariaInvalid={!!errors.body}
+                />
+              )}
+            />
+          }
         />
         {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
       </div>

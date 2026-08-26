@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -20,6 +20,7 @@ type ProfileOption = {
   id: string
   name: string
   isActive: boolean
+  sortOrder: number
   createdAt: Date | string
   updatedAt: Date | string
 }
@@ -52,9 +53,17 @@ async function fetchOptions(category: ProfileOptionCategory): Promise<ProfileOpt
 function OptionRow({
   category,
   option,
+  isFirst,
+  isLast,
+  isReordering,
+  onMove,
 }: {
   category: ProfileOptionCategory
   option: ProfileOption
+  isFirst: boolean
+  isLast: boolean
+  isReordering: boolean
+  onMove: (offset: -1 | 1) => void
 }) {
   const queryClient = useQueryClient()
   const [name, setName] = useState(option.name)
@@ -79,6 +88,28 @@ function OptionRow({
 
   return (
     <li className="flex flex-col gap-3 rounded-lg border border-input p-4 sm:flex-row sm:items-center">
+      <div className="flex gap-1">
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          disabled={isFirst || isReordering}
+          onClick={() => onMove(-1)}
+          aria-label={`${option.name}を上へ移動`}
+        >
+          <ArrowUp />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          disabled={isLast || isReordering}
+          onClick={() => onMove(1)}
+          aria-label={`${option.name}を下へ移動`}
+        >
+          <ArrowDown />
+        </Button>
+      </div>
       <Input
         value={name}
         onChange={(event) => setName(event.target.value)}
@@ -147,6 +178,34 @@ function ProfileOptionSection({ category, title, description }: (typeof categori
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : '追加に失敗しました'),
   })
+  const reorderMutation = useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      const res = await client.api.admin['profile-options'][':category'].order.$put({
+        param: { category },
+        json: { orderedIds },
+      })
+      if (!res.ok) {
+        const body = await res.json()
+        throw new Error('error' in body ? body.error : '並び順の更新に失敗しました')
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile-options', category] })
+      toast.success('並び順を更新しました')
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : '並び順の更新に失敗しました'),
+  })
+
+  const moveOption = (index: number, offset: -1 | 1) => {
+    const orderedIds = options.map(({ id }) => id)
+    const targetIndex = index + offset
+    const targetId = orderedIds[targetIndex]
+    orderedIds[targetIndex] = orderedIds[index]
+    orderedIds[index] = targetId
+    reorderMutation.mutate(orderedIds)
+  }
 
   return (
     <section className="space-y-4 rounded-xl border border-input bg-card p-6">
@@ -178,8 +237,16 @@ function ProfileOptionSection({ category, title, description }: (typeof categori
         <p className="text-sm text-muted-foreground">項目がありません</p>
       ) : (
         <ul className="space-y-2">
-          {options.map((option) => (
-            <OptionRow key={option.id} category={category} option={option} />
+          {options.map((option, index) => (
+            <OptionRow
+              key={option.id}
+              category={category}
+              option={option}
+              isFirst={index === 0}
+              isLast={index === options.length - 1}
+              isReordering={reorderMutation.isPending}
+              onMove={(offset) => moveOption(index, offset)}
+            />
           ))}
         </ul>
       )}

@@ -91,4 +91,15 @@ describe('管理者投稿削除API', () => {
     expect(response.status).toBe(404)
     expect(prismaMock.post.delete).not.toHaveBeenCalled()
   })
+
+  it.each([
+    ['/api/admin/badges', 'GET'],
+    ['/api/admin/badges', 'POST'],
+    ['/api/admin/missions', 'GET'],
+    ['/api/admin/missions', 'POST'],
+  ] as const)('%s %s の管理APIは廃止されている', async (path, method) => {
+    const response = await app.request(path, { method })
+
+    expect(response.status).toBe(404)
+  })
 })
