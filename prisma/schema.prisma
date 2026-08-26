@@ -139,6 +139,7 @@ model Post {
 
   @@unique([authorId, idempotencyKey])
   @@index([activityAt, id])
+  @@index([deletedAt, status, activityAt, id])
 }
 
 /// 質問スレッドごとの「実ユーザー ⇔ 匿名キャラ」の対応
@@ -309,6 +310,7 @@ model PostTag {
   createdAt DateTime @default(now())
 
   @@unique([postId, tagId])
+  @@index([tagId, postId])
 }
 
 /// ひろば（サブフォーラム）の固定マスタ

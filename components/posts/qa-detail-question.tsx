@@ -4,15 +4,16 @@ import { QuestionCard } from '@/components/design-system/ui/question-card'
 import { QuestionItemActions } from '@/components/design-system/ui/question-item-actions'
 import { AnswerForm } from '@/components/posts/answer-form'
 import { QaAnswerSection } from '@/components/posts/qa-answer-section'
-import { getQaQuestion } from '@/lib/questions/get-qa-question'
+import { getQaDetail } from '@/lib/questions/get-qa-question'
 
 type QaDetailQuestionProps = {
   id: string
 }
 
 async function QaDetailQuestion({ id }: QaDetailQuestionProps) {
-  const question = await getQaQuestion(id)
-  if (!question) notFound()
+  const detail = await getQaDetail(id)
+  if (!detail) notFound()
+  const { question } = detail
 
   const canAnswer = question.status === 'OPEN'
 

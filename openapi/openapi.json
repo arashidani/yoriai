@@ -284,6 +284,24 @@
           "title"
         ]
       },
+      "QuestionDetailResponse": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "$ref": "#/components/schemas/Question"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionAnswer"
+            }
+          }
+        },
+        "required": [
+          "question",
+          "answers"
+        ]
+      },
       "QuestionAnswer": {
         "type": "object",
         "properties": {
@@ -1942,15 +1960,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "question": {
-                      "$ref": "#/components/schemas/Question"
-                    }
-                  },
-                  "required": [
-                    "question"
-                  ]
+                  "$ref": "#/components/schemas/QuestionDetailResponse"
                 }
               }
             }
@@ -1990,6 +2000,7 @@
           "questions"
         ],
         "summary": "回答一覧を取得。募集終了済みの場合だけ最多いいね回答1件を示す",
+        "deprecated": true,
         "security": [
           {
             "supabaseSession": []

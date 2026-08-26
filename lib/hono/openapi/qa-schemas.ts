@@ -74,6 +74,13 @@ export const QaAnswerSchema = z
   })
   .openapi('QuestionAnswer')
 
+export const QuestionDetailResponseSchema = z
+  .object({
+    question: QuestionSchema,
+    answers: z.array(QaAnswerSchema),
+  })
+  .openapi('QuestionDetailResponse')
+
 export const ModerationResultSchema = z
   .object({
     isHidden: z.boolean().openapi({ description: 'AI判定によって非公開になった場合はtrue' }),

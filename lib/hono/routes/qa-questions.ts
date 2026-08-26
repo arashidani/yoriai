@@ -1,8 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity, NotificationType, QuestionStatus } from '@/app/generated/prisma/enums'
-import { assignTagsWithStatus } from '@/lib/ai/assign-tags'
-import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
@@ -11,6 +9,7 @@ import {
   ModerationResultSchema,
   PageQuerySchema,
   QaAnswerSchema,
+  QuestionDetailResponseSchema,
   QuestionListQuerySchema,
   QuestionListResponseSchema,
   QuestionSchema,
@@ -53,10 +52,26 @@ const auth = {
 }
 
 const questionInclude = (userId: string) => ({
-  author: true,
-  postAnonymousProfile: { include: { anonymousProfile: true } },
+  author: { select: { name: true, email: true } },
+  postAnonymousProfile: {
+    select: {
+      aliasNumber: true,
+      anonymousProfile: { select: { displayName: true, avatarUrls: true } },
+    },
+  },
   tags: {
-    include: { tag: { include: { categoryDefinition: true } } },
+    select: {
+      id: true,
+      createdAt: true,
+      tag: {
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          categoryDefinition: { select: { id: true, name: true } },
+        },
+      },
+    },
     orderBy: [{ createdAt: 'asc' as const }, { id: 'asc' as const }],
   },
   likes: { where: { userId }, select: { userId: true } },
@@ -223,7 +238,7 @@ const getRoute = createRoute({
   responses: {
     200: {
       description: '質問詳細',
-      content: { 'application/json': { schema: z.object({ question: QuestionSchema }) } },
+      content: { 'application/json': { schema: QuestionDetailResponseSchema } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     404: errorResponse('質問が見つからない', 'Not found'),
@@ -235,6 +250,7 @@ const listAnswersRoute = createRoute({
   path: '/{id}/answers',
   tags: ['questions'],
   summary: '回答一覧を取得。募集終了済みの場合だけ最多いいね回答1件を示す',
+  deprecated: true,
   ...auth,
   request: { params: IdParamSchema },
   responses: {
@@ -625,15 +641,50 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const { id } = c.req.valid('param')
     if (process.env.MOCK_MODE === 'true') {
       const question = mockQuestions(user.id).find((item) => item.id === id)
-      return question ? c.json({ question }, 200) : c.json({ error: 'Not found' }, 404)
+      if (!question) return c.json({ error: 'Not found' }, 404)
+      const answers = MOCK_ANSWERS.filter(
+        (answer) => answer.postId === id && !answer.isHidden,
+      ).sort(
+        (a, b) =>
+          b.likeCount - a.likeCount ||
+          a.createdAt.getTime() - b.createdAt.getTime() ||
+          a.id.localeCompare(b.id),
+      )
+      const mostLikedId = getMostLikedAnswerId(question.status, answers)
+      return c.json(
+        {
+          question,
+          answers: answers.map((answer) =>
+            toQaAnswerResponse({ ...answer, likes: [] }, user.id, mostLikedId),
+          ),
+        },
+        200,
+      )
     }
     const post = await prisma.post.findFirst({
       where: { id, deletedAt: null, status: { not: QuestionStatus.HIDDEN } },
-      include: questionInclude(user.id),
+      include: {
+        ...questionInclude(user.id),
+        answers: {
+          where: { isHidden: false },
+          include: {
+            author: true,
+            postAnonymousProfile: { include: { anonymousProfile: true } },
+            likes: { where: { userId: user.id }, select: { userId: true } },
+          },
+          orderBy: [{ likeCount: 'desc' }, { createdAt: 'asc' }, { id: 'asc' }],
+        },
+      },
     })
-    return post
-      ? c.json({ question: toQuestionResponse(post, user.id) }, 200)
-      : c.json({ error: 'Not found' }, 404)
+    if (!post) return c.json({ error: 'Not found' }, 404)
+    const mostLikedId = getMostLikedAnswerId(post.status, post.answers)
+    return c.json(
+      {
+        question: toQuestionResponse(post, user.id),
+        answers: post.answers.map((answer) => toQaAnswerResponse(answer, user.id, mostLikedId)),
+      },
+      200,
+    )
   })
   .openapi(listAnswersRoute, async (c) => {
     const user = c.get('user')
@@ -795,6 +846,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     } catch (error) {
       console.error('Failed to assign anonymous profile', { postId: post.id, error })
     }
+    const { moderatePost } = await import('@/lib/ai/moderate-post')
     const moderation = await moderatePost(post.title, post.body)
     if (moderation?.flagged) {
       try {
@@ -837,6 +889,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
               createdAt: true,
             },
           })
+          const { assignTagsWithStatus } = await import('@/lib/ai/assign-tags')
           const assignment = await assignTagsWithStatus(post.title, post.body, allTags)
           tagAssignment = assignment.status === 'assigned' ? 'assigned' : 'failed'
           selected =
@@ -917,6 +970,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
 
     let selected: (typeof candidates)[number] | null = candidates[0] ?? null
     if (input.mode === 'ai') {
+      const { assignTagsWithStatus } = await import('@/lib/ai/assign-tags')
       const assignment = await assignTagsWithStatus(post.title, post.body, candidates)
       if (assignment.status !== 'assigned')
         return c.json({ error: 'AIによるタグ付与に失敗しました' }, 503)
@@ -1045,6 +1099,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         200,
       )
     }
+    const { moderateAnswer } = await import('@/lib/ai/moderate-post')
     const moderation = await moderateAnswer(answer.body)
     if (moderation?.flagged) {
       try {
@@ -1065,6 +1120,10 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
               author: true,
               postAnonymousProfile: { include: { anonymousProfile: true } },
             },
+          }),
+          prisma.post.update({
+            where: { id: answer.postId },
+            data: { answerCount: { decrement: 1 } },
           }),
         ])
         answer = hidden
