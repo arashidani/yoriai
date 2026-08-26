@@ -180,4 +180,32 @@ describe('返信・リアクション通知', () => {
       ],
     })
   })
+
+  it('本文にないひろば参加者のメンションを拒否する', async () => {
+    prismaMock.hirobaPost.findFirst
+      .mockResolvedValueOnce({
+        id: 'hiroba-post-1',
+        hirobaId: 'hiroba-alcohol',
+        authorId: 'user-2',
+        deletedAt: null,
+      })
+      .mockResolvedValueOnce({
+        authorId: 'user-2',
+        author: MOCK_USERS[1],
+        answers: [],
+      })
+
+    const response = await app.request('/api/hiroba-posts/hiroba-post-1/answers', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': '550e8400-e29b-41d4-a716-446655440000',
+      },
+      body: JSON.stringify({ body: '通常の返信です', mentionedUserIds: ['user-2'] }),
+    })
+
+    expect(response.status).toBe(400)
+    expect(prismaMock.hirobaAnswer.create).not.toHaveBeenCalled()
+    expect(prismaMock.notification.createMany).not.toHaveBeenCalled()
+  })
 })

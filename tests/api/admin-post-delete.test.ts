@@ -93,10 +93,12 @@ describe('管理者投稿削除API', () => {
   })
 
   it.each([
-    '/api/admin/badges',
-    '/api/admin/missions',
-  ])('%s の管理APIは廃止されている', async (path) => {
-    const response = await app.request(path)
+    ['/api/admin/badges', 'GET'],
+    ['/api/admin/badges', 'POST'],
+    ['/api/admin/missions', 'GET'],
+    ['/api/admin/missions', 'POST'],
+  ] as const)('%s %s の管理APIは廃止されている', async (path, method) => {
+    const response = await app.request(path, { method })
 
     expect(response.status).toBe(404)
   })

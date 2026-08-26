@@ -25,6 +25,7 @@ import {
   MentionCandidateSchema,
   SavedStatusSchema,
 } from '@/lib/hono/openapi/schemas'
+import { hasBodyMention } from '@/lib/mentions/has-body-mention'
 import {
   MOCK_ANSWERS,
   MOCK_BUSINESS_SKILLS,
@@ -980,6 +981,15 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       )
       if (!requestedMentionIds.every((candidateId) => userIdByCandidateId.has(candidateId)))
         return c.json({ error: 'このスレッドの参加者のみメンションできます' }, 400)
+      const displayNameByCandidateId = new Map(
+        candidates?.map((item) => [item.id, item.displayName] as const),
+      )
+      if (
+        !requestedMentionIds.every((candidateId) =>
+          hasBodyMention(data.body, displayNameByCandidateId.get(candidateId) ?? ''),
+        )
+      )
+        return c.json({ error: '本文内のメンションを指定してください' }, 400)
       mentionedUserIds = [
         ...new Set(
           requestedMentionIds
