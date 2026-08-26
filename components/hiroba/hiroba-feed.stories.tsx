@@ -45,7 +45,6 @@ export const Default: Story = {
       category: 'pickup',
     },
     posts,
-    isAdmin: false,
     initialJoined: false,
   },
   play: async ({ canvas }) => {

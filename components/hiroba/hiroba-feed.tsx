@@ -22,7 +22,6 @@ import { TextareaFocus } from '../design-system/ui/textarea-focus'
 type HirobaFeedProps = {
   hiroba: HirobaCatalogItem
   posts: HirobaPost[]
-  isAdmin: boolean
   initialJoined: boolean
 }
 
@@ -40,7 +39,7 @@ const bannerTones = {
 } as const
 
 /** ひろばの紹介、参加導線、投稿フィード、補助情報をまとめた詳細画面。 */
-export function HirobaFeed({ hiroba, posts, isAdmin, initialJoined }: HirobaFeedProps) {
+export function HirobaFeed({ hiroba, posts, initialJoined }: HirobaFeedProps) {
   const router = useRouter()
   const [joined, setJoined] = useState(initialJoined)
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
@@ -144,7 +143,7 @@ export function HirobaFeed({ hiroba, posts, isAdmin, initialJoined }: HirobaFeed
         id: post.id,
         hirobaSlug: hiroba.slug,
         title: post.title,
-        body: post.body,
+        body: '',
         imageUrl,
         authorId: post.authorId,
         displayName:
@@ -202,6 +201,11 @@ export function HirobaFeed({ hiroba, posts, isAdmin, initialJoined }: HirobaFeed
             </Link>
           </div>
         </div>
+        {membershipError && (
+          <p role="alert" className="mb-4 text-paragraph-small text-destructive">
+            {membershipError}
+          </p>
+        )}
       </section>
 
       <section className="px-3 space-y-4">

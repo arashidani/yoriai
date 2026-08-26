@@ -2,7 +2,13 @@ import Image from 'next/image'
 import hirobaCover from '@/assets/hiroba-cover.svg'
 import { SquareCard } from '@/components/design-system/ui/square-card'
 import { getCurrentUser } from '@/lib/auth/current-user'
-import { HIROBA_CATALOG, LEFT_SECTIONS, PICKUP_SECTION, RIGHT_SECTIONS } from '@/lib/hiroba/catalog'
+import {
+  DEFAULT_HIROBA_SLUGS,
+  HIROBA_CATALOG,
+  LEFT_SECTIONS,
+  PICKUP_SECTION,
+  RIGHT_SECTIONS,
+} from '@/lib/hiroba/catalog'
 import { MOCK_JOINED_HIROBA_SLUGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
@@ -19,7 +25,7 @@ async function getJoinedHirobas() {
             select: { hiroba: { select: { slug: true } } },
           })
         ).map((membership) => membership.hiroba.slug)
-  const joinedSlugs = new Set<string>(slugs)
+  const joinedSlugs = new Set<string>([...slugs, ...DEFAULT_HIROBA_SLUGS])
   return HIROBA_CATALOG.filter((hiroba) => joinedSlugs.has(hiroba.slug))
 }
 
