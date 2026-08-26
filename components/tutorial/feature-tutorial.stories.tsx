@@ -52,24 +52,24 @@ export const CompleteTour: Story = {
     })
     await expect(document.querySelector('[data-slot="dialog-overlay"]')).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Q&Aを見てみるワン！' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Q&Aを見てみる' }))
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: 'なんでもQ&Aをたしかめるワン！' })).toBeVisible(),
     )
 
-    await userEvent.click(screen.getByRole('button', { name: 'ひろばへ行くワン！' }))
+    await userEvent.click(screen.getByRole('button', { name: 'ひろばへ行く' }))
     await waitFor(() =>
       expect(
         screen.getByRole('heading', { name: '機能たしかめ広場へようこそだワン！' }),
       ).toBeVisible(),
     )
 
-    await userEvent.click(screen.getByRole('button', { name: '最後の確認へ進むワン！' }))
+    await userEvent.click(screen.getByRole('button', { name: '最後の確認へ進む' }))
     await waitFor(() =>
       expect(screen.getByRole('heading', { name: '探検完了だワン！' })).toBeVisible(),
     )
 
-    await userEvent.click(screen.getByRole('button', { name: '探検を終えるワン！' }))
+    await userEvent.click(screen.getByRole('button', { name: 'チュートリアルを終える' }))
     await expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     await expect(canvas.getByText('練習投稿は非表示')).toBeVisible()
     await expect(window.localStorage.getItem(FEATURE_TUTORIAL_COMPLETED_KEY)).toBe('true')
@@ -79,7 +79,7 @@ export const CompleteTour: Story = {
 export const SkipTour: Story = {
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('練習投稿を表示中')).toBeVisible()
-    await userEvent.click(screen.getByRole('button', { name: '今回はここまでにするワン！' }))
+    await userEvent.click(screen.getByRole('button', { name: '今回はここまでにする' }))
     await expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     await expect(canvas.getByText('練習投稿は非表示')).toBeVisible()
   },
@@ -98,7 +98,7 @@ export const DummyPostsOnlyDuringTour: Story = {
       await canvas.findByText('会議で知らない言葉が出たとき、どう質問すればいいですか？'),
     ).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: '今回はここまでにするワン！' }))
+    await userEvent.click(screen.getByRole('button', { name: '今回はここまでにする' }))
     await expect(
       canvas.queryByText('会議で知らない言葉が出たとき、どう質問すればいいですか？'),
     ).not.toBeInTheDocument()
