@@ -17,6 +17,7 @@ import { IconPaw } from './icon-paw'
 import { IconPencil } from './icon-pencil'
 import { IconPlus } from './icon-plus'
 import { IconPoint } from './icon-point'
+import { IconRefresh } from './icon-refresh'
 import { IconSend } from './icon-send'
 import { IconSupport } from './icon-support'
 import { IconSword } from './icon-sword'
@@ -44,6 +45,7 @@ const icons = [
   { name: 'support', Icon: IconSupport },
   { name: 'title', Icon: IconTitle },
   { name: 'point', Icon: IconPoint },
+  { name: 'refresh', Icon: IconRefresh },
 ]
 
 function IconGallery() {
