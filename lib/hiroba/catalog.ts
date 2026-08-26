@@ -24,6 +24,12 @@ export type HirobaCatalogItem = {
   category: HirobaCategory
 }
 
+export const DEFAULT_HIROBA_SLUGS = ['feature-testing'] as const
+
+export function isDefaultHiroba(slug: string) {
+  return (DEFAULT_HIROBA_SLUGS as readonly string[]).includes(slug)
+}
+
 type HirobaSection = {
   title: string
   category: HirobaCategory
@@ -44,6 +50,13 @@ export const PICKUP_SECTION: HirobaSection = {
   title: '迷ったらこれ',
   category: 'pickup',
   items: [
+    item(
+      'feature-testing',
+      '機能たしかめ広場',
+      '新しい機能を気軽に試して、感想や気づきを共有するひろばです。',
+      'tutorial',
+      'pickup',
+    ),
     item(
       'outdoor',
       'アウトドア派',
