@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { assignTagsWithStatus, selectValidTagNames, type TagCandidate } from '@/lib/ai/assign-tags'
 
 const { generateContentMock, googleGenAiConstructorMock } = vi.hoisted(() => ({
@@ -28,6 +28,10 @@ beforeEach(() => {
   generateContentMock.mockReset()
   googleGenAiConstructorMock.mockReset()
   vi.stubEnv('GEMINI_API_KEY', 'test-api-key')
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('selectValidTagNames', () => {
@@ -90,7 +94,20 @@ describe('assignTagsWithStatus', () => {
     )
     expect(googleGenAiConstructorMock).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
-      httpOptions: { timeout: 30_000 },
+      httpOptions: { timeout: 30_000, retryOptions: { attempts: 1 } },
+    })
+  })
+
+  it('Gemini SDKが応答しなくても30秒でタグ付与を失敗扱いにする', async () => {
+    vi.useFakeTimers()
+    generateContentMock.mockImplementation(() => new Promise(() => {}))
+
+    const assignment = assignTagsWithStatus('質問', '本文', candidates)
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    await expect(Promise.race([assignment, Promise.resolve('still-pending')])).resolves.toEqual({
+      status: 'failed',
+      tagNames: [],
     })
   })
 })

@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
-import { GEMINI_REQUEST_TIMEOUT_MS } from '@/lib/ai/errors'
+import { GEMINI_REQUEST_TIMEOUT_MS, withGeminiRequestTimeout } from '@/lib/ai/errors'
 import { requireEnv } from '@/lib/env'
 
 const SYSTEM_INSTRUCTION =
@@ -25,17 +25,23 @@ async function moderate(contents: string): Promise<ModerationResult | null> {
   try {
     const ai = new GoogleGenAI({
       apiKey: requireEnv('GEMINI_API_KEY'),
-      httpOptions: { timeout: GEMINI_REQUEST_TIMEOUT_MS },
-    })
-    const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
-      contents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: 'application/json',
-        responseJsonSchema: RESPONSE_JSON_SCHEMA,
+      httpOptions: {
+        timeout: GEMINI_REQUEST_TIMEOUT_MS,
+        retryOptions: { attempts: 1 },
       },
     })
+    const response = await withGeminiRequestTimeout((abortSignal) =>
+      ai.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents,
+        config: {
+          abortSignal,
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json',
+          responseJsonSchema: RESPONSE_JSON_SCHEMA,
+        },
+      }),
+    )
 
     const text = response.text
     if (!text) return null

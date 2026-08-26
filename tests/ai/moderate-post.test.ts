@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 
 const { generateContentMock, googleGenAiConstructorMock } = vi.hoisted(() => ({
@@ -22,6 +22,10 @@ beforeEach(() => {
   vi.stubEnv('GEMINI_API_KEY', 'test-api-key')
 })
 
+afterEach(() => {
+  vi.useRealTimers()
+})
+
 describe('moderatePost', () => {
   it('Gemini呼び出しを30秒でタイムアウトする', async () => {
     generateContentMock.mockResolvedValue({
@@ -32,7 +36,7 @@ describe('moderatePost', () => {
 
     expect(googleGenAiConstructorMock).toHaveBeenCalledWith({
       apiKey: 'test-api-key',
-      httpOptions: { timeout: 30_000 },
+      httpOptions: { timeout: 30_000, retryOptions: { attempts: 1 } },
     })
     expect(generateContentMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -59,6 +63,26 @@ describe('moderatePost', () => {
     generateContentMock.mockRejectedValue(timeoutError)
 
     await expect(moderatePost('質問', '本文')).resolves.toBeNull()
+  })
+
+  it('Geminiが504を返した場合もモデレーションをスキップする', async () => {
+    generateContentMock.mockRejectedValue(
+      Object.assign(new Error('Deadline expired before operation could complete.'), {
+        status: 504,
+      }),
+    )
+
+    await expect(moderatePost('質問', '本文')).resolves.toBeNull()
+  })
+
+  it('Gemini SDKが応答しなくても30秒でモデレーションを打ち切る', async () => {
+    vi.useFakeTimers()
+    generateContentMock.mockImplementation(() => new Promise(() => {}))
+
+    const moderation = moderatePost('質問', '本文')
+    await vi.advanceTimersByTimeAsync(30_000)
+
+    await expect(Promise.race([moderation, Promise.resolve('still-pending')])).resolves.toBeNull()
   })
 
   it('503以外のGeminiエラーは従来どおり判定なしへ倒す', async () => {

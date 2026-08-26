@@ -1,5 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
-import { GEMINI_REQUEST_TIMEOUT_MS } from '@/lib/ai/errors'
+import { GEMINI_REQUEST_TIMEOUT_MS, withGeminiRequestTimeout } from '@/lib/ai/errors'
 import { requireEnv } from '@/lib/env'
 
 const SYSTEM_INSTRUCTION =
@@ -52,22 +52,28 @@ export async function assignTagsWithStatus(
   try {
     const ai = new GoogleGenAI({
       apiKey: requireEnv('GEMINI_API_KEY'),
-      httpOptions: { timeout: GEMINI_REQUEST_TIMEOUT_MS },
+      httpOptions: {
+        timeout: GEMINI_REQUEST_TIMEOUT_MS,
+        retryOptions: { attempts: 1 },
+      },
     })
     const promptCandidates = candidates.map(({ name, category, description }) => ({
       name,
       category,
       description,
     }))
-    const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
-      contents: `候補タグ: ${JSON.stringify(promptCandidates)}\nタイトル: ${title}\n本文: ${body}`,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        responseMimeType: 'application/json',
-        responseJsonSchema: RESPONSE_JSON_SCHEMA,
-      },
-    })
+    const response = await withGeminiRequestTimeout((abortSignal) =>
+      ai.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents: `候補タグ: ${JSON.stringify(promptCandidates)}\nタイトル: ${title}\n本文: ${body}`,
+        config: {
+          abortSignal,
+          systemInstruction: SYSTEM_INSTRUCTION,
+          responseMimeType: 'application/json',
+          responseJsonSchema: RESPONSE_JSON_SCHEMA,
+        },
+      }),
+    )
 
     const text = response.text
     if (!text) return { status: 'failed', tagNames: [] }
