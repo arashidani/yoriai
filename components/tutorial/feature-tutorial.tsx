@@ -100,7 +100,7 @@ const TUTORIAL_STEPS = [
       '張り切りすぎて転ばないように先導するから、ついてきてほしいワン！',
     ],
     route: '/',
-    nextLabel: 'Q&Aを見てみるワン！',
+    nextLabel: 'Q&Aを見てみる',
   },
   {
     title: 'なんでもQ&Aをたしかめるワン！',
@@ -111,7 +111,7 @@ const TUTORIAL_STEPS = [
       '検索やカテゴリー、回答状況の絞り込みを使うと、知りたい質問を見つけやすいワン！',
     ],
     route: '/',
-    nextLabel: 'ひろばへ行くワン！',
+    nextLabel: 'ひろばへ行く',
   },
   {
     title: '機能たしかめ広場へようこそだワン！',
@@ -122,7 +122,7 @@ const TUTORIAL_STEPS = [
       '機能たしかめ広場はいつでも参加済みだから、まずはここで操作を試せるワン！',
     ],
     route: '/hiroba/feature-testing',
-    nextLabel: '最後の確認へ進むワン！',
+    nextLabel: '最後の確認へ進む',
   },
   {
     title: '探検完了だワン！',
@@ -133,7 +133,7 @@ const TUTORIAL_STEPS = [
       '困ったらメニューの使い方ガイドから、いつでもよりあイヌを呼んでほしいワン！',
     ],
     route: '/hiroba/feature-testing',
-    nextLabel: '探検を終えるワン！',
+    nextLabel: 'チュートリアルを終える',
   },
 ] as const
 
@@ -239,13 +239,13 @@ function FeatureTutorialProvider({ children }: { children: ReactNode }) {
           <div className="flex flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
             <Button type="button" variant="ghost" onClick={finish}>
               <X aria-hidden />
-              今回はここまでにするワン！
+              今回はここまでにする
             </Button>
             <div className="flex flex-col gap-2 sm:flex-row">
               {stepIndex > 0 && (
                 <Button type="button" variant="outline" onClick={() => goToStep(stepIndex - 1)}>
                   <ChevronLeft aria-hidden />
-                  ひとつ戻るワン！
+                  ひとつ戻る
                 </Button>
               )}
               <Button type="button" onClick={handleNext}>
@@ -273,7 +273,7 @@ function FeatureTutorialStartButton({ onStart }: { onStart?: () => void }) {
       className="flex items-center gap-2 rounded-full px-6 py-3 text-left text-paragraph-small font-bold text-sidebar-foreground transition-colors hover:bg-muted"
     >
       <BookOpen className="size-4" aria-hidden />
-      使い方ガイドを見るワン！
+      使い方ガイドを見る
     </button>
   )
 }
