@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { AuthorAvatar } from '@/components/design-system/ui/author-avatar'
 
 type Question = {
   id: string
   title: string
+  displayAuthor: { displayName: string; avatarUrl?: string | null }
 }
 
 type AnswerableQuestionsProps = {
@@ -31,7 +33,11 @@ export function AnswerableQuestions({ posts }: AnswerableQuestionsProps) {
                   href={`/posts/${question.id}`}
                   className="-mx-2 flex gap-3 rounded-lg p-2 transition-colors hover:bg-muted"
                 >
-                  <span className="mt-0.5 size-8 shrink-0 rounded-full bg-muted" aria-hidden />
+                  <AuthorAvatar
+                    src={question.displayAuthor.avatarUrl ?? undefined}
+                    alt={question.displayAuthor.displayName}
+                    className="mt-0.5 size-8 rounded-full"
+                  />
                   <span className="line-clamp-2 text-paragraph-small font-medium">
                     {question.title}
                   </span>

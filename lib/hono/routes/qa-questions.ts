@@ -23,6 +23,7 @@ import {
   SavedStatusSchema,
 } from '@/lib/hono/openapi/schemas'
 import {
+  MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
   MOCK_BUSINESS_SKILLS,
   MOCK_POSTS,
@@ -462,14 +463,20 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         (question) => question.status === QuestionStatus.OPEN && !question.isOwnQuestion,
       )
       const postById = new Map(MOCK_POSTS.map((post) => [post.id, post]))
-      const skillQuestions = candidates.filter((question) =>
-        postById.get(question.id)?.tags.some((tag) => businessSkillNames.includes(tag.category)),
-      )
-      const otherQuestions = candidates.filter((question) =>
-        postById.get(question.id)?.tags.some((tag) => tag.name.startsWith('その他')),
-      )
+      const skillQuestions = candidates
+        .filter((question) =>
+          postById.get(question.id)?.tags.some((tag) => businessSkillNames.includes(tag.category)),
+        )
+        .map(({ id }) => ({ id }))
+      const otherQuestions = candidates
+        .filter((question) =>
+          postById.get(question.id)?.tags.some((tag) => tag.name.startsWith('その他')),
+        )
+        .map(({ id }) => ({ id }))
+      const selected = selectAnswerableQuestions(skillQuestions, otherQuestions)
+      const questionById = new Map(candidates.map((question) => [question.id, question]))
 
-      return c.json({ questions: selectAnswerableQuestions(skillQuestions, otherQuestions) }, 200)
+      return c.json({ questions: selected.flatMap(({ id }) => questionById.get(id) ?? []) }, 200)
     }
 
     const businessSkillNames = (
@@ -495,16 +502,23 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
                 },
               },
             },
-            include: questionInclude(user.id),
+            select: { id: true },
           }),
       prisma.post.findMany({
         where: { ...baseWhere, tags: { some: { tag: { name: { startsWith: 'その他' } } } } },
-        include: questionInclude(user.id),
+        select: { id: true },
       }),
     ])
-    const questions = selectAnswerableQuestions(skillQuestions, otherQuestions).map((post) =>
-      toQuestionResponse(post, user.id),
-    )
+    const selected = selectAnswerableQuestions(skillQuestions, otherQuestions)
+    const posts = await prisma.post.findMany({
+      where: { id: { in: selected.map(({ id }) => id) } },
+      include: questionInclude(user.id),
+    })
+    const postById = new Map(posts.map((post) => [post.id, post]))
+    const questions = selected.flatMap(({ id }) => {
+      const post = postById.get(id)
+      return post ? [toQuestionResponse(post, user.id)] : []
+    })
 
     return c.json({ questions }, 200)
   })
@@ -584,6 +598,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
               ...postData,
               authorId: user.id,
               author: user,
+              postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[1] },
               status: QuestionStatus.OPEN,
               answerCount: 0,
               likeCount: 0,
@@ -634,14 +649,18 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     try {
       post = await prisma.post.create({
         data: { ...postData, authorId: user.id, idempotencyKey },
-        include: { author: true },
+        include: { author: true, postAnonymousProfile: { include: { anonymousProfile: true } } },
       })
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002')
         return c.json({ error: '投稿の作成に失敗しました' }, 500)
       const existing = await prisma.post.findUnique({
         where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
-        include: { author: true, tags: { include: { tag: true } } },
+        include: {
+          author: true,
+          postAnonymousProfile: { include: { anonymousProfile: true } },
+          tags: { include: { tag: true } },
+        },
       })
       if (!existing) return c.json({ error: '投稿の作成に失敗しました' }, 500)
       if (existing.title !== data.title || existing.body !== data.body)
@@ -666,7 +685,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       post = await prisma.post.update({
         where: { id: post.id },
         data: { postAnonymousProfileId: assignment.id },
-        include: { author: true },
+        include: { author: true, postAnonymousProfile: { include: { anonymousProfile: true } } },
       })
     } catch (error) {
       console.error('Failed to assign anonymous profile', { postId: post.id, error })
@@ -687,7 +706,10 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           prisma.post.update({
             where: { id: post.id },
             data: { deletedAt: new Date() },
-            include: { author: true },
+            include: {
+              author: true,
+              postAnonymousProfile: { include: { anonymousProfile: true } },
+            },
           }),
         ])
         post = flagged
@@ -829,6 +851,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
               postId: id,
               authorId: user.id,
               author: user,
+              postAnonymousProfile: { anonymousProfile: MOCK_ANONYMOUS_PROFILES[1] },
               body: data.body,
               likeCount: 0,
               likes: [],

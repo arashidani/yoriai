@@ -102,6 +102,11 @@ describe('Q&A API contract (MOCK_MODE)', () => {
           question.status === 'OPEN' && !question.isOwnQuestion,
       ),
     ).toBe(true)
+    expect(
+      body.questions.every((question: { displayAuthor: { avatarUrl: string | null } }) =>
+        Boolean(question.displayAuthor.avatarUrl),
+      ),
+    ).toBe(true)
   })
 
   it('page/pageSizeを適用する', async () => {

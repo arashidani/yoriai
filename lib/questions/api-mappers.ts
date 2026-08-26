@@ -17,15 +17,9 @@ function firstTagCategory(post: LooseRecord) {
 }
 
 function displayAuthor(record: LooseRecord, isOwn: boolean) {
-  if (isOwn) {
-    return {
-      displayName: record.author?.name ?? record.author?.email ?? '自分',
-      avatarUrl: null,
-    }
-  }
   const profile = record.postAnonymousProfile?.anonymousProfile ?? record.anonymousProfile ?? null
   return {
-    displayName: profile?.displayName ?? '匿名',
+    displayName: `${profile?.displayName ?? '匿名'}${isOwn ? '（あなた）' : ''}`,
     avatarUrl: profile?.avatarUrl ?? null,
   }
 }

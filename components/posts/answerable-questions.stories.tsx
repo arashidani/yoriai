@@ -22,10 +22,26 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 const basePosts = [
-  { id: 'post-1', title: '夏季休暇って必須ですか？年末年始で5日達成している場合は不要でしょうか' },
-  { id: 'post-2', title: 'IBJスタンダードについて教えてください。というのも上長に確認したところ…' },
-  { id: 'post-3', title: 'Prismaでリレーションを使う方法' },
-  { id: 'post-4', title: '4件目は表示されない' },
+  {
+    id: 'post-1',
+    title: '夏季休暇って必須ですか？年末年始で5日達成している場合は不要でしょうか',
+    displayAuthor: { displayName: 'ねこ', avatarUrl: '/anonymous-profiles/cat.svg' },
+  },
+  {
+    id: 'post-2',
+    title: 'IBJスタンダードについて教えてください。というのも上長に確認したところ…',
+    displayAuthor: { displayName: 'いぬ', avatarUrl: '/anonymous-profiles/dog.svg' },
+  },
+  {
+    id: 'post-3',
+    title: 'Prismaでリレーションを使う方法',
+    displayAuthor: { displayName: 'うさぎ', avatarUrl: '/anonymous-profiles/rabbit.svg' },
+  },
+  {
+    id: 'post-4',
+    title: '4件目は表示されない',
+    displayAuthor: { displayName: '匿名', avatarUrl: null },
+  },
 ]
 
 export const Default: Story = {
