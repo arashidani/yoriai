@@ -43,11 +43,14 @@ export const Visual: Story = {}
 export const CompleteTour: Story = {
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('練習投稿を表示中')).toBeVisible()
-    await waitFor(() =>
-      expect(
+    await waitFor(async () => {
+      const guide = screen.getByRole('dialog')
+      await expect(guide).toHaveAttribute('aria-modal', 'false')
+      await expect(
         screen.getByRole('heading', { name: 'よりあイヌと探検をはじめるワン！' }),
-      ).toBeVisible(),
-    )
+      ).toBeVisible()
+    })
+    await expect(document.querySelector('[data-slot="dialog-overlay"]')).not.toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Q&Aを見てみるワン！' }))
     await waitFor(() =>

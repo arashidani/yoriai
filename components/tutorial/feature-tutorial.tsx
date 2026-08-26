@@ -6,14 +6,6 @@ import { createContext, type ReactNode, useContext, useEffect, useRef, useState 
 import { MascotContainer } from '@/components/design-system/ui/mascot-container'
 import type { HirobaPost } from '@/components/design-system/ui/post-card'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import type { QaPost } from '@/lib/questions/qa-post'
 
 const FEATURE_TUTORIAL_COMPLETED_KEY = 'yoriai-feature-tutorial-completed-v1'
@@ -213,63 +205,57 @@ function FeatureTutorialProvider({ children }: { children: ReactNode }) {
   return (
     <FeatureTutorialContext.Provider value={{ active, start }}>
       {children}
-      <Dialog
-        open={active}
-        onOpenChange={(open) => {
-          if (!open) finish()
-        }}
-        disablePointerDismissal
-        modal="trap-focus"
-      >
-        {tutorialStep && (
-          <DialogContent
-            showCloseButton={false}
-            className="max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-2xl"
-          >
-            <div className="grid gap-6 p-6 sm:grid-cols-[12rem_1fr] sm:p-8">
-              <MascotContainer
-                className="self-center"
-                variant={stepIndex === TUTORIAL_STEPS.length - 1 ? 'closeEye' : 'uruuru'}
-                message={tutorialStep.message}
-              />
-              <div className="min-w-0">
-                <DialogHeader>
-                  <p className="text-caption font-bold text-primary">
-                    {stepIndex + 1} / {TUTORIAL_STEPS.length}
-                  </p>
-                  <DialogTitle className="text-heading-3">{tutorialStep.title}</DialogTitle>
-                  <DialogDescription className="sr-only">
-                    Yoriaiの主な機能をよりあイヌが案内するチュートリアルだワン！
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="mt-5 space-y-3 text-paragraph text-secondary-foreground">
-                  {tutorialStep.body.map((sentence) => (
-                    <p key={sentence}>{sentence}</p>
-                  ))}
-                </div>
+      {tutorialStep && (
+        <aside
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="feature-tutorial-title"
+          aria-describedby="feature-tutorial-description"
+          className="fixed inset-x-4 bottom-4 z-50 max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-xl bg-popover text-popover-foreground shadow-2xl ring-1 ring-foreground/10 sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-2xl"
+        >
+          <div className="grid gap-5 p-5 sm:grid-cols-[10rem_1fr] sm:p-6">
+            <MascotContainer
+              className="hidden self-center sm:flex [&_img]:h-auto [&_img]:w-32"
+              variant={stepIndex === TUTORIAL_STEPS.length - 1 ? 'closeEye' : 'uruuru'}
+              message={tutorialStep.message}
+            />
+            <div className="min-w-0" aria-live="polite">
+              <p className="text-caption font-bold text-primary">
+                {stepIndex + 1} / {TUTORIAL_STEPS.length}
+              </p>
+              <h2 id="feature-tutorial-title" className="mt-2 text-heading-3">
+                {tutorialStep.title}
+              </h2>
+              <p id="feature-tutorial-description" className="sr-only">
+                Yoriaiの主な機能をよりあイヌが案内するチュートリアルだワン！
+              </p>
+              <div className="mt-4 space-y-2 text-paragraph-small text-secondary-foreground">
+                {tutorialStep.body.map((sentence) => (
+                  <p key={sentence}>{sentence}</p>
+                ))}
               </div>
             </div>
-            <DialogFooter className="m-0 items-stretch rounded-b-xl sm:items-center sm:justify-between">
-              <Button type="button" variant="ghost" onClick={finish}>
-                <X aria-hidden />
-                今回はここまでにするワン！
-              </Button>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                {stepIndex > 0 && (
-                  <Button type="button" variant="outline" onClick={() => goToStep(stepIndex - 1)}>
-                    <ChevronLeft aria-hidden />
-                    ひとつ戻るワン！
-                  </Button>
-                )}
-                <Button type="button" onClick={handleNext}>
-                  {tutorialStep.nextLabel}
-                  {stepIndex < TUTORIAL_STEPS.length - 1 && <ChevronRight aria-hidden />}
+          </div>
+          <div className="flex flex-col-reverse gap-2 border-t bg-muted/50 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <Button type="button" variant="ghost" onClick={finish}>
+              <X aria-hidden />
+              今回はここまでにするワン！
+            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {stepIndex > 0 && (
+                <Button type="button" variant="outline" onClick={() => goToStep(stepIndex - 1)}>
+                  <ChevronLeft aria-hidden />
+                  ひとつ戻るワン！
                 </Button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        )}
-      </Dialog>
+              )}
+              <Button type="button" onClick={handleNext}>
+                {tutorialStep.nextLabel}
+                {stepIndex < TUTORIAL_STEPS.length - 1 && <ChevronRight aria-hidden />}
+              </Button>
+            </div>
+          </div>
+        </aside>
+      )}
     </FeatureTutorialContext.Provider>
   )
 }
