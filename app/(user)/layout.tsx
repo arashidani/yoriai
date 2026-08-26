@@ -12,7 +12,7 @@ export default async function UserLayout({ children }: { children: React.ReactNo
 
   return (
     <FeatureTutorialProvider>
-      <div className="flex min-h-screen flex-col lg:flex-row">
+      <div className="flex min-h-screen flex-col border-t-[6px] border-primary lg:flex-row">
         <Sidebar isAdmin={user?.role === Role.ADMIN} />
         <main className="flex min-w-0 flex-1 flex-col bg-background">{children}</main>
         {isChatEnabled() && <AiChatWidget />}

@@ -1,58 +1,69 @@
 'use client'
 
-import { ArrowLeft, Bot, Flame, Info, Sparkles, UserRound } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { TUTORIAL_HIROBA_POSTS, useFeatureTutorial } from '@/components/tutorial/feature-tutorial'
-import { buttonVariants } from '@/components/ui/button'
+import { useRef, useState } from 'react'
+import { Button, buttonVariants as designButtonVariants } from '@/components/design-system/button'
+import { IconHuman } from '@/components/design-system/icons/icon-human'
+import { SquareIcon } from '@/components/design-system/ui/square-icon'
 import type { HirobaCatalogItem } from '@/lib/hiroba/catalog'
-import { HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
 import { client } from '@/lib/hono/client'
+import {
+  ACCEPTED_HIROBA_POST_IMAGE_TYPES,
+  HirobaPostImageClientValidationError,
+  prepareHirobaPostImageForUpload,
+} from '@/lib/image/process-hiroba-post-image-client'
+import type { CreateHirobaPostInput } from '@/lib/schemas/hiroba'
 import { cn } from '@/lib/utils'
-import { HirobaCard } from './hiroba-card'
-import { HirobaIcon } from './hiroba-icon'
-import { HirobaJoinDialog } from './hiroba-join-dialog'
-import type { HirobaPost } from './hiroba-post-list'
-import { HirobaPostList } from './hiroba-post-list'
+import { AssistBanner } from '../design-system/ui/assist-banner'
+import { type HirobaPost, PostCard } from '../design-system/ui/post-card'
+import { TextareaFocus } from '../design-system/ui/textarea-focus'
 
 type HirobaFeedProps = {
   hiroba: HirobaCatalogItem
   posts: HirobaPost[]
-  popularPosts: { id: string; hirobaSlug: string; title: string }[]
-  isAdmin: boolean
   initialJoined: boolean
 }
 
 const bannerTones = {
-  yellow: 'bg-hiroba-yellow-border text-hiroba-yellow-foreground',
-  blue: 'bg-hiroba-blue-border text-hiroba-blue-foreground',
-  purple: 'bg-hiroba-purple-border text-hiroba-purple-foreground',
-  rose: 'bg-hiroba-rose-border text-hiroba-rose-foreground',
-  lime: 'bg-hiroba-lime-border text-hiroba-lime-foreground',
-  mint: 'bg-hiroba-mint-border text-hiroba-mint-foreground',
+  pickup: 'bg-hiroba-pickup-border text-hiroba-pickup-foreground',
+  active: 'bg-hiroba-active-border text-hiroba-active-foreground',
+  indoor: 'bg-hiroba-indoor-border text-hiroba-indoor-foreground',
+  maniac: 'bg-hiroba-maniac-border text-hiroba-maniac-foreground',
+  food: 'bg-hiroba-food-border text-hiroba-food-foreground',
+  knowhow: 'bg-hiroba-knowhow-border text-hiroba-knowhow-foreground',
+  mbtiGreen: 'bg-hiroba-mbti-green-border text-hiroba-mbti-green-foreground',
+  mbtiBlue: 'bg-hiroba-mbti-blue-border text-hiroba-mbti-blue-foreground',
+  mbtiYellow: 'bg-hiroba-mbti-yellow-border text-hiroba-mbti-yellow-foreground',
+  mbtiPurple: 'bg-hiroba-mbti-purple-border text-hiroba-mbti-purple-foreground',
 } as const
 
 /** ひろばの紹介、参加導線、投稿フィード、補助情報をまとめた詳細画面。 */
-export function HirobaFeed({
-  hiroba,
-  posts,
-  popularPosts,
-  isAdmin,
-  initialJoined,
-}: HirobaFeedProps) {
+export function HirobaFeed({ hiroba, posts, initialJoined }: HirobaFeedProps) {
   const router = useRouter()
-  const { active: tutorialActive } = useFeatureTutorial()
   const [joined, setJoined] = useState(initialJoined)
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
   const [membershipError, setMembershipError] = useState<string | null>(null)
-  const [joinDialogOpen, setJoinDialogOpen] = useState(false)
-  const isDefault = isDefaultHiroba(hiroba.slug)
-  const visiblePosts =
-    tutorialActive && hiroba.slug === 'feature-testing'
-      ? [...TUTORIAL_HIROBA_POSTS, ...posts]
-      : posts
-  const popularHirobas = HIROBA_CATALOG.filter((item) => item.slug !== hiroba.slug).slice(0, 3)
+  const [localPosts, setLocalPosts] = useState(posts)
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false)
+  const [postError, setPostError] = useState<string | null>(null)
+  const [postImagePreviewUrl, setPostImagePreviewUrl] = useState<string | null>(null)
+  const isSubmittingPostRef = useRef(false)
+  const idempotencyKeyRef = useRef<{ key: string; requestBody: string } | null>(null)
+
+  function handlePostImageSelect(file: File) {
+    setPostImagePreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+  }
+
+  function clearPostImagePreview() {
+    setPostImagePreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+  }
 
   async function toggleMembership() {
     if (isUpdatingMembership) return
@@ -77,161 +88,163 @@ export function HirobaFeed({
     }
   }
 
-  return (
-    <div className="min-w-0 flex-1 px-4 py-6 sm:px-8">
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="grid min-w-0 grid-cols-1 items-start gap-7 xl:grid-cols-[minmax(0,1fr)_17rem]">
-          <div className="min-w-0">
-            <section>
-              <div className={cn('h-24 rounded-xl', bannerTones[hiroba.tone])} />
-              <div className="relative -mt-8 flex flex-col gap-4 px-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <div
-                    className={cn(
-                      'flex size-18 items-center justify-center rounded-full border-4 border-background',
-                      bannerTones[hiroba.tone],
-                    )}
-                  >
-                    <HirobaIcon name={hiroba.icon} className="size-9" aria-hidden />
-                  </div>
-                  <h1 className="mt-3 font-heading text-heading-2">{hiroba.name}</h1>
-                </div>
-                <div className="flex flex-wrap gap-3 pb-1">
-                  {!isDefault && (
-                    <button
-                      type="button"
-                      aria-pressed={joined}
-                      onClick={toggleMembership}
-                      disabled={isUpdatingMembership}
-                      className={buttonVariants({
-                        variant: joined ? 'outline' : 'default',
-                        className: 'rounded-full px-6',
-                      })}
-                    >
-                      <UserRound className="size-4" aria-hidden />
-                      {joined ? '参加中' : '参加する'}
-                    </button>
-                  )}
-                  <Link
-                    href="/hiroba"
-                    className={buttonVariants({
-                      variant: 'outline',
-                      className: 'rounded-full px-6',
-                    })}
-                  >
-                    <ArrowLeft className="size-4" aria-hidden />
-                    一覧に戻る
-                  </Link>
-                </div>
-              </div>
-              {membershipError && (
-                <p role="alert" className="mt-3 px-4 text-paragraph-small text-destructive">
-                  {membershipError}
-                </p>
-              )}
-              <div className="mt-6 flex items-start gap-2 rounded-lg bg-hiroba-blue-soft px-4 py-3 text-hiroba-blue-foreground">
-                <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-                <p className="text-paragraph-small">
-                  投稿と返信にはひろばへの参加が必要です。閲覧といいねは参加前でもできます。
-                </p>
-              </div>
-            </section>
+  async function handleCreatePost({
+    image,
+    ...data
+  }: CreateHirobaPostInput & { image: File | null }) {
+    if (isSubmittingPostRef.current) return
 
-            <section className="mt-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="font-heading text-heading-3">みんなの投稿</h2>
-                {joined ? (
-                  <Link
-                    href={`/hiroba/${hiroba.slug}/new`}
-                    className={buttonVariants({
-                      size: 'default',
-                      className: 'shrink-0 rounded-full',
-                    })}
-                  >
-                    投稿する
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setJoinDialogOpen(true)}
-                    className={buttonVariants({ className: 'shrink-0 rounded-full' })}
-                  >
-                    投稿する
-                  </button>
-                )}
-              </div>
-              <HirobaPostList
-                posts={visiblePosts}
-                isAdmin={isAdmin}
-                canReply={joined}
-                onJoinRequired={() => setJoinDialogOpen(true)}
-              />
-            </section>
+    isSubmittingPostRef.current = true
+    setIsSubmittingPost(true)
+    setPostError(null)
+
+    const requestBody = JSON.stringify(data)
+    if (idempotencyKeyRef.current?.requestBody !== requestBody) {
+      idempotencyKeyRef.current = { key: crypto.randomUUID(), requestBody }
+    }
+
+    try {
+      const res = await client.api.hiroba[':slug'].posts.$post({
+        param: { slug: hiroba.slug },
+        header: { 'idempotency-key': idempotencyKeyRef.current.key },
+        json: data,
+      })
+      if (!res.ok) {
+        const body = await res.json()
+        setPostError('error' in body ? body.error : '投稿に失敗しました')
+        return
+      }
+
+      const { post } = await res.json()
+      let imageUrl = post.imageUrl
+
+      if (image) {
+        try {
+          const preparedImage = await prepareHirobaPostImageForUpload(image)
+          const imageRes = await client.api['hiroba-posts'][':id'].image.$put({
+            param: { id: post.id },
+            form: { file: preparedImage },
+          })
+          if (imageRes.ok) {
+            imageUrl = (await imageRes.json()).post.imageUrl
+          }
+        } catch (error) {
+          setPostError(
+            error instanceof HirobaPostImageClientValidationError
+              ? error.message
+              : '画像のアップロードに失敗しました',
+          )
+        } finally {
+          clearPostImagePreview()
+        }
+      }
+
+      const newPost: HirobaPost = {
+        id: post.id,
+        hirobaSlug: hiroba.slug,
+        title: post.title,
+        body: '',
+        imageUrl,
+        authorId: post.authorId,
+        displayName:
+          post.author?.username ?? post.author?.name ?? post.author?.email ?? '削除されたユーザー',
+        displayNameColor: post.author?.displayNameColor ?? null,
+        avatarUrl: post.author?.avatarUrl ?? null,
+        lunchPreference: null,
+        isOwnPost: true,
+        likeCount: post.likeCount,
+        liked: false,
+        saved: false,
+        answerCount: post.answerCount,
+        tags: post.tags ?? [],
+        createdAt: post.createdAt,
+      }
+      setLocalPosts((prev) => [newPost, ...prev])
+    } catch {
+      setPostError('通信に失敗しました。画面をリロードせず、もう一度お試しください')
+    } finally {
+      isSubmittingPostRef.current = false
+      setIsSubmittingPost(false)
+    }
+  }
+
+  return (
+    <div className="min-w-0 flex-1">
+      <section>
+        <div className={cn('h-25 rounded-lg', bannerTones[hiroba.category])} />
+
+        <div className="relative -mt-10 flex justify-between items-end gap-4 pl-6 mb-8">
+          <div>
+            <SquareIcon size="large" hirobaIcon={hiroba.icon} category={hiroba.category} />
+            <h1 className="mt-3 text-foreground text-heading-1">{hiroba.name}</h1>
           </div>
 
-          <aside className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:sticky xl:top-6 xl:grid-cols-1">
-            <section className="rounded-xl bg-hiroba-blue-soft p-5 text-hiroba-blue-foreground">
-              <h2 className="mb-2 flex items-center gap-2 font-heading text-heading-4">
-                <Bot className="size-5" aria-hidden />
-                AI要約
-              </h2>
-              <p className="text-paragraph-small">
-                {hiroba.description} お気に入りの話題や新しい発見を、気軽に共有できます。
-              </p>
-              <p className="mt-3 flex items-center gap-1 text-paragraph-mini opacity-75">
-                <Sparkles className="size-3" aria-hidden />
-                サンプル要約
-              </p>
-            </section>
+          <div className="flex flex-wrap gap-3 pb-1">
+            {!joined && (
+              <Button
+                type="button"
+                variant="primary"
+                size="large"
+                aria-pressed={joined}
+                onClick={toggleMembership}
+              >
+                <IconHuman className="size-4" aria-hidden />
+                参加する
+              </Button>
+            )}
 
-            <section className="rounded-xl bg-background-subtle p-5">
-              <h2 className="mb-4 flex items-center gap-2 font-heading text-heading-4">
-                <Flame className="size-5 text-primary" aria-hidden />
-                人気のひろば
-              </h2>
-              <div className="grid min-w-0 grid-cols-1 gap-2">
-                {popularHirobas.map((item) => (
-                  <HirobaCard key={item.id} hiroba={item} />
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-xl bg-background-subtle p-5 sm:col-span-2 xl:col-span-1">
-              <h2 className="mb-4 flex items-center gap-2 font-heading text-heading-4">
-                <Flame className="size-5 text-primary" aria-hidden />
-                人気の投稿
-              </h2>
-              {popularPosts.length === 0 ? (
-                <p className="text-paragraph-small text-secondary-foreground">
-                  投稿が集まると、ここに人気の投稿が表示されます。
-                </p>
-              ) : (
-                <div className="grid min-w-0 grid-cols-1 gap-2">
-                  {popularPosts.map((post) => (
-                    <Link
-                      key={post.id}
-                      href={`/hiroba/${post.hirobaSlug}/posts/${post.id}`}
-                      className="min-w-0 rounded-lg border border-input bg-background p-3 hover:border-primary"
-                    >
-                      <p className="truncate text-paragraph-small font-bold">{post.title}</p>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
-          </aside>
+            <Link
+              href="/hiroba"
+              className={designButtonVariants({ variant: 'secondary', size: 'large' })}
+            >
+              一覧に戻る
+            </Link>
+          </div>
         </div>
-      </div>
-      <HirobaJoinDialog
-        open={joinDialogOpen}
-        onOpenChange={setJoinDialogOpen}
-        hirobaSlug={hiroba.slug}
-        hirobaName={hiroba.name}
-        onJoined={() => {
-          setJoined(true)
-          router.refresh()
-        }}
-      />
+        {membershipError && (
+          <p role="alert" className="mb-4 text-paragraph-small text-destructive">
+            {membershipError}
+          </p>
+        )}
+      </section>
+
+      <section className="px-3 space-y-4">
+        {!joined ? (
+          <AssistBanner variant="support">
+            広場に参加すると投稿、返信、いいねができるようになります。
+          </AssistBanner>
+        ) : (
+          <div>
+            <div className="mb-4">
+              {postError && (
+                <p role="alert" className="mb-2 text-paragraph-small text-destructive">
+                  {postError}
+                </p>
+              )}
+
+              <TextareaFocus
+                onSubmit={handleCreatePost}
+                isSubmitting={isSubmittingPost}
+                onImageSelect={handlePostImageSelect}
+                imagePreviewUrl={postImagePreviewUrl}
+                onImageClear={clearPostImagePreview}
+                acceptedImageTypes={ACCEPTED_HIROBA_POST_IMAGE_TYPES}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="grid min-w-0 grid-cols-1 gap-4">
+          {localPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              joined={joined}
+              postHref={`/hiroba/${hiroba.slug}/posts/${post.id}`}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
