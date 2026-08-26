@@ -24,9 +24,13 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
     },
   },
   prismaMock: {
+    hiroba: {
+      findUnique: vi.fn(),
+    },
     post: {
       create: vi.fn(),
       update: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
     answer: {
@@ -34,7 +38,9 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
       update: vi.fn(),
     },
     hirobaPost: {
+      create: vi.fn(),
       findFirst: vi.fn(),
+      findUnique: vi.fn(),
       update: vi.fn(),
     },
     hirobaAnswer: {
@@ -53,6 +59,7 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
     },
     notification: {
       create: vi.fn(),
+      createMany: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -348,6 +355,7 @@ describe('Q&A作成APIのモデレーション結果', () => {
   it('ひろば回答をAI判定で非公開にすると公開回答件数を減らす', async () => {
     const hirobaPost = {
       id: 'hiroba-post-test',
+      hirobaId: 'hiroba-feature-testing',
       authorId: MOCK_USERS[1].id,
       deletedAt: null,
     }
@@ -383,6 +391,126 @@ describe('Q&A作成APIのモデレーション結果', () => {
       where: { id: hirobaPost.id },
       data: { answerCount: { decrement: 1 } },
     })
+  })
+
+  it('ひろば投稿のGeminiモデレーションが503の場合は投稿を作成しない', async () => {
+    prismaMock.hiroba.findUnique.mockResolvedValue({
+      id: 'hiroba-feature-testing',
+      slug: 'feature-testing',
+    })
+    prismaMock.hirobaPost.create.mockResolvedValue({
+      id: 'hiroba-post-test',
+      hirobaId: 'hiroba-feature-testing',
+      title: '投稿テスト',
+      body: '',
+      authorId: MOCK_USERS[0].id,
+      author: MOCK_USERS[0],
+      deletedAt: null,
+    })
+    moderationMock.moderatePost.mockRejectedValue(new GeminiServiceUnavailableError())
+
+    const response = await createRequest('/api/hiroba/feature-testing/posts', {
+      title: '投稿テスト',
+    })
+
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({
+      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
+    })
+    expect(prismaMock.hirobaPost.create).not.toHaveBeenCalled()
+  })
+
+  it('ひろば返信のGeminiモデレーションが503の場合は返信を作成しない', async () => {
+    prismaMock.hirobaPost.findFirst.mockResolvedValue({
+      id: 'hiroba-post-test',
+      hirobaId: 'hiroba-feature-testing',
+      authorId: MOCK_USERS[1].id,
+      deletedAt: null,
+    })
+    moderationMock.moderateAnswer.mockRejectedValue(new GeminiServiceUnavailableError())
+
+    const response = await createRequest('/api/hiroba-posts/hiroba-post-test/answers', {
+      body: 'ひろば返信テスト',
+    })
+
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({
+      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
+    })
+    expect(prismaMock.$transaction).not.toHaveBeenCalled()
+    expect(txMock.hirobaAnswer.create).not.toHaveBeenCalled()
+  })
+
+  it('匿名プロフィールIDのメンションを実ユーザーIDへ解決して通知する', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(basePost)
+    prismaMock.post.findFirst.mockResolvedValue({
+      authorId: basePost.authorId,
+      postAnonymousProfile: {
+        id: 'assignment-user-1',
+        aliasNumber: 1,
+        anonymousProfile: MOCK_ANONYMOUS_PROFILES[0],
+      },
+      answers: [
+        {
+          authorId: MOCK_USERS[1].id,
+          postAnonymousProfile: {
+            id: 'assignment-user-2',
+            aliasNumber: 1,
+            anonymousProfile: MOCK_ANONYMOUS_PROFILES[1],
+          },
+        },
+      ],
+    })
+    txMock.answer.create.mockResolvedValue(baseAnswer)
+    txMock.post.update.mockResolvedValue({ ...basePost, answerCount: 1 })
+
+    const response = await createRequest('/api/questions/post-test/answers', {
+      body: '@いぬ 回答テスト',
+      mentionedUserIds: ['assignment-user-2'],
+    })
+
+    expect(response.status).toBe(201)
+    expect(prismaMock.notification.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: MOCK_USERS[1].id,
+          type: 'MENTIONED',
+          postId: basePost.id,
+          answerId: baseAnswer.id,
+        },
+      ],
+    })
+  })
+
+  it('本文にない匿名プロフィールIDのメンションを拒否する', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(basePost)
+    prismaMock.post.findFirst.mockResolvedValue({
+      authorId: basePost.authorId,
+      postAnonymousProfile: {
+        id: 'assignment-user-1',
+        aliasNumber: 1,
+        anonymousProfile: MOCK_ANONYMOUS_PROFILES[0],
+      },
+      answers: [
+        {
+          authorId: MOCK_USERS[1].id,
+          postAnonymousProfile: {
+            id: 'assignment-user-2',
+            aliasNumber: 1,
+            anonymousProfile: MOCK_ANONYMOUS_PROFILES[1],
+          },
+        },
+      ],
+    })
+
+    const response = await createRequest('/api/questions/post-test/answers', {
+      body: baseAnswer.body,
+      mentionedUserIds: ['assignment-user-2'],
+    })
+
+    expect(response.status).toBe(400)
+    expect(txMock.answer.create).not.toHaveBeenCalled()
+    expect(prismaMock.notification.createMany).not.toHaveBeenCalled()
   })
 
   it('回答の冪等再送でも保存済みの非公開状態を返す', async () => {

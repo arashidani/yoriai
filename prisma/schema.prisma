@@ -50,6 +50,7 @@ model Department {
   id        String   @id @default(uuid(7))
   name      String   @unique
   isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -59,6 +60,7 @@ model BusinessArea {
   id        String   @id @default(uuid(7))
   name      String   @unique
   isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
   users     User[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -68,6 +70,7 @@ model BusinessSkill {
   id        String              @id @default(uuid(7))
   name      String              @unique
   isActive  Boolean             @default(true)
+  sortOrder Int                 @default(0)
   users     UserBusinessSkill[]
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
@@ -77,6 +80,7 @@ model Interest {
   id        String         @id @default(uuid(7))
   name      String         @unique
   isActive  Boolean        @default(true)
+  sortOrder Int            @default(0)
   users     UserInterest[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
@@ -254,31 +258,6 @@ model PostBookmark {
   createdAt DateTime @default(now())
 
   @@unique([postId, userId])
-}
-
-model Badge {
-  id          String      @id @default(uuid(7))
-  name        String
-  description String
-  icon        String
-  rarity      BadgeRarity
-  earnedCount Int         @default(0)
-  missions    Mission[]
-  createdAt   DateTime    @default(now())
-}
-
-model Mission {
-  id                String   @id @default(uuid(7))
-  name              String
-  description       String
-  durationLabel     String
-  targetCount       Int
-  active            Boolean  @default(true)
-  participantsCount Int      @default(0)
-  progressPercent   Int      @default(0)
-  rewardBadgeId     String?
-  rewardBadge       Badge?   @relation(fields: [rewardBadgeId], references: [id], onDelete: SetNull)
-  createdAt         DateTime @default(now())
 }
 
 model AiFlag {
@@ -496,13 +475,6 @@ enum DisplayNameColor {
   GRAY
 }
 
-enum BadgeRarity {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
-}
-
 enum FlagSeverity {
   LOW
   MEDIUM
@@ -521,6 +493,7 @@ enum QuestionStatus {
 }
 
 enum NotificationType {
+  MENTIONED
   POST_ANSWERED
   POST_LIKED
   ANSWER_LIKED

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
-import { onboardingSchema } from '@/lib/schemas/onboarding'
+import { onboardingSchema, reorderProfileOptionsSchema } from '@/lib/schemas/onboarding'
 
 const validInput = {
   username: 'みどりさん',
@@ -40,6 +40,21 @@ describe('onboardingSchema', () => {
         ...validInput,
         businessSkillIds: ['skill-1', 'skill-1'],
       }).success,
+    ).toBe(false)
+  })
+})
+
+describe('reorderProfileOptionsSchema', () => {
+  it('重複のない項目IDを許可する', () => {
+    expect(
+      reorderProfileOptionsSchema.safeParse({ orderedIds: ['option-2', 'option-1'] }).success,
+    ).toBe(true)
+  })
+
+  it('空または重複した項目IDを拒否する', () => {
+    expect(reorderProfileOptionsSchema.safeParse({ orderedIds: [] }).success).toBe(false)
+    expect(
+      reorderProfileOptionsSchema.safeParse({ orderedIds: ['option-1', 'option-1'] }).success,
     ).toBe(false)
   })
 })

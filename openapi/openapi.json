@@ -75,6 +75,34 @@
       }
     },
     "schemas": {
+      "MentionCandidate": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "user-1"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "ねこ"
+          }
+        },
+        "required": [
+          "id",
+          "displayName"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
       "Question": {
         "type": "object",
         "properties": {
@@ -239,17 +267,6 @@
           "pageSize",
           "total",
           "totalPages"
-        ]
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "error"
         ]
       },
       "AnswerableQuestion": {
@@ -447,6 +464,10 @@
             "type": "boolean",
             "example": true
           },
+          "sortOrder": {
+            "type": "integer",
+            "example": 0
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -462,8 +483,21 @@
           "id",
           "name",
           "isActive",
+          "sortOrder",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
         ]
       },
       "Hiroba": {
@@ -513,10 +547,6 @@
           "title": {
             "type": "string",
             "example": "今日のランチどこ行きました？"
-          },
-          "body": {
-            "type": "string",
-            "example": "近くに新しくできたお店に行ってみました。"
           },
           "imageUrl": {
             "type": [
@@ -585,7 +615,6 @@
           "id",
           "hirobaId",
           "title",
-          "body",
           "imageUrl",
           "authorId",
           "answerCount",
@@ -755,18 +784,6 @@
           "likeCount",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "Success": {
-        "type": "object",
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "example": true
-          }
-        },
-        "required": [
-          "success"
         ]
       },
       "InviteCreated": {
@@ -1051,126 +1068,6 @@
           "id",
           "displayName",
           "avatarUrl"
-        ]
-      },
-      "Badge": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "badge-1"
-          },
-          "name": {
-            "type": "string",
-            "example": "初投稿"
-          },
-          "description": {
-            "type": "string",
-            "example": "初めて投稿を作成した"
-          },
-          "icon": {
-            "type": "string",
-            "example": "Medal"
-          },
-          "rarity": {
-            "type": "string",
-            "enum": [
-              "BRONZE",
-              "SILVER",
-              "GOLD",
-              "PLATINUM"
-            ],
-            "example": "BRONZE"
-          },
-          "earnedCount": {
-            "type": "number",
-            "example": 842
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "description",
-          "icon",
-          "rarity",
-          "earnedCount",
-          "createdAt"
-        ]
-      },
-      "Mission": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "mission-1"
-          },
-          "name": {
-            "type": "string",
-            "example": "週に5件投稿"
-          },
-          "description": {
-            "type": "string",
-            "example": "1週間で5件の投稿を作成する"
-          },
-          "durationLabel": {
-            "type": "string",
-            "example": "1週間"
-          },
-          "targetCount": {
-            "type": "number",
-            "example": 5
-          },
-          "active": {
-            "type": "boolean",
-            "example": true
-          },
-          "participantsCount": {
-            "type": "number",
-            "example": 189
-          },
-          "progressPercent": {
-            "type": "number",
-            "example": 62
-          },
-          "rewardBadgeId": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "badge-1"
-          },
-          "rewardBadge": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/Badge"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "description",
-          "durationLabel",
-          "targetCount",
-          "active",
-          "participantsCount",
-          "progressPercent",
-          "rewardBadgeId",
-          "createdAt"
         ]
       },
       "AiFlag": {
@@ -1627,6 +1524,79 @@
     "parameters": {}
   },
   "paths": {
+    "/api/questions/{id}/mention-candidates": {
+      "get": {
+        "tags": [
+          "questions"
+        ],
+        "summary": "質問スレッドでメンションできる匿名参加者を最新の回答順で取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "メンション候補",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MentionCandidate"
+                      }
+                    }
+                  },
+                  "required": [
+                    "candidates"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "質問が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/questions": {
       "get": {
         "tags": [
@@ -2150,6 +2120,14 @@
                   "body": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "mentionedUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxItems": 50
                   }
                 },
                 "required": [
@@ -2200,6 +2178,19 @@
                     "answer",
                     "moderation"
                   ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "メンション対象が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "このスレッドの参加者のみメンションできます"
                 }
               }
             }
@@ -3521,6 +3512,109 @@
         }
       }
     },
+    "/api/admin/profile-options/{category}/order": {
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "プロフィール選択肢の並び順を更新（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "departments",
+                "business-areas",
+                "business-skills",
+                "interests"
+              ]
+            },
+            "required": true,
+            "name": "category",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "orderedIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "orderedIds"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "並び順を更新",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Success"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "選択肢の指定が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "すべての項目を重複なく指定してください"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/admin/profile-options/{category}/{id}": {
       "patch": {
         "tags": [
@@ -3924,15 +4018,10 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
-                  },
-                  "body": {
-                    "type": "string",
-                    "minLength": 1
                   }
                 },
                 "required": [
-                  "title",
-                  "body"
+                  "title"
                 ]
               }
             }
@@ -3988,6 +4077,19 @@
               }
             }
           },
+          "403": {
+            "description": "ひろばに未参加",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ひろばに参加してください"
+                }
+              }
+            }
+          },
           "404": {
             "description": "ひろばが見つからない",
             "content": {
@@ -4023,6 +4125,92 @@
                 },
                 "example": {
                   "error": "投稿の作成に失敗しました"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "AIサービス利用不可",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "AIサービスが混雑しています。時間をおいてもう一度お試しください"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hiroba-posts/{id}/mention-candidates": {
+      "get": {
+        "tags": [
+          "hiroba-posts"
+        ],
+        "summary": "ひろば投稿でメンションできる参加者を最新の回答順で取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "メンション候補",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "candidates": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MentionCandidate"
+                      }
+                    }
+                  },
+                  "required": [
+                    "candidates"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
                 }
               }
             }
@@ -4252,6 +4440,14 @@
                   "body": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "mentionedUserIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxItems": 50
                   }
                 },
                 "required": [
@@ -4298,6 +4494,19 @@
               }
             }
           },
+          "400": {
+            "description": "メンション対象が不正",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "このスレッドの参加者のみメンションできます"
+                }
+              }
+            }
+          },
           "401": {
             "description": "未認証",
             "content": {
@@ -4307,6 +4516,19 @@
                 },
                 "example": {
                   "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ひろばに未参加",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ひろばに参加してください"
                 }
               }
             }
@@ -4346,6 +4568,19 @@
                 },
                 "example": {
                   "error": "回答の作成に失敗しました"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "AIサービス利用不可",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "AIサービスが混雑しています。時間をおいてもう一度お試しください"
                 }
               }
             }
@@ -5767,327 +6002,6 @@
                 },
                 "example": {
                   "error": "自分自身は削除できません"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "未認証",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Unauthorized"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限不足（管理者専用）",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Forbidden"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/badges": {
-      "get": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "バッジ一覧を取得（管理者専用）",
-        "security": [
-          {
-            "supabaseSession": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "バッジ一覧",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "badges": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Badge"
-                      }
-                    }
-                  },
-                  "required": [
-                    "badges"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "未認証",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Unauthorized"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限不足（管理者専用）",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Forbidden"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "バッジを作成（管理者専用）",
-        "security": [
-          {
-            "supabaseSession": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
-                  },
-                  "description": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 300
-                  },
-                  "icon": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "rarity": {
-                    "type": "string",
-                    "enum": [
-                      "BRONZE",
-                      "SILVER",
-                      "GOLD",
-                      "PLATINUM"
-                    ]
-                  }
-                },
-                "required": [
-                  "name",
-                  "description",
-                  "icon",
-                  "rarity"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "作成されたバッジ",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "badge": {
-                      "$ref": "#/components/schemas/Badge"
-                    }
-                  },
-                  "required": [
-                    "badge"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "未認証",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Unauthorized"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限不足（管理者専用）",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Forbidden"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/missions": {
-      "get": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "ミッション一覧を取得（管理者専用）",
-        "security": [
-          {
-            "supabaseSession": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ミッション一覧",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "missions": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/Mission"
-                      }
-                    }
-                  },
-                  "required": [
-                    "missions"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "未認証",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Unauthorized"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "権限不足（管理者専用）",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "Forbidden"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "admin"
-        ],
-        "summary": "ミッションを作成（管理者専用）",
-        "security": [
-          {
-            "supabaseSession": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 100
-                  },
-                  "description": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 300
-                  },
-                  "durationLabel": {
-                    "type": "string",
-                    "minLength": 1
-                  },
-                  "targetCount": {
-                    "type": "integer",
-                    "minimum": 1
-                  },
-                  "rewardBadgeId": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "required": [
-                  "name",
-                  "description",
-                  "durationLabel",
-                  "targetCount"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "作成されたミッション",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "mission": {
-                      "$ref": "#/components/schemas/Mission"
-                    }
-                  },
-                  "required": [
-                    "mission"
-                  ]
                 }
               }
             }

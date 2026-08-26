@@ -22,8 +22,10 @@ import {
   errorResponse,
   IdParamSchema,
   LikeStatusSchema,
+  MentionCandidateSchema,
   SavedStatusSchema,
 } from '@/lib/hono/openapi/schemas'
+import { hasBodyMention } from '@/lib/mentions/has-body-mention'
 import {
   MOCK_ANSWERS,
   MOCK_BUSINESS_SKILLS,
@@ -34,6 +36,7 @@ import {
   mockPostHasTagId,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { anonymousProfileDisplayName } from '@/lib/questions/anonymous-profile-display'
 import {
   getMostLikedAnswerId,
   toQaAnswerResponse,
@@ -87,6 +90,81 @@ function commaSeparatedIds(value?: string) {
       .map((id) => id.trim())
       .filter(Boolean) ?? []
   )
+}
+
+async function getQaMentionCandidates(postId: string) {
+  if (process.env.MOCK_MODE === 'true') {
+    const post = MOCK_POSTS.find((item) => item.id === postId)
+    if (!post || post.deletedAt) return null
+    const participants = [
+      ...MOCK_ANSWERS.filter((answer) => answer.postId === postId && !answer.isHidden).sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      ),
+      post,
+    ]
+    const seen = new Set<string>()
+    return participants.flatMap((participant) => {
+      if (!participant.authorId || seen.has(participant.authorId)) return []
+      seen.add(participant.authorId)
+      const profile =
+        'anonymousProfile' in participant
+          ? participant.anonymousProfile
+          : participant.postAnonymousProfile?.anonymousProfile
+      return profile
+        ? [
+            {
+              id: `mock-assignment-${participant.id}`,
+              displayName: anonymousProfileDisplayName(profile.displayName, 1),
+              userId: participant.authorId,
+            },
+          ]
+        : []
+    })
+  }
+
+  const post = await prisma.post.findFirst({
+    where: { id: postId, deletedAt: null, status: { not: QuestionStatus.HIDDEN } },
+    select: {
+      authorId: true,
+      postAnonymousProfile: { include: { anonymousProfile: true } },
+      answers: {
+        where: { isHidden: false, authorId: { not: null } },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: {
+          authorId: true,
+          postAnonymousProfile: { include: { anonymousProfile: true } },
+        },
+      },
+    },
+  })
+  if (!post) return null
+
+  const seen = new Set<string>()
+  const add = (
+    userId: string | null,
+    assignment: {
+      id: string
+      anonymousProfile: { displayName: string }
+      aliasNumber: number
+    } | null,
+  ) => {
+    if (!userId || !assignment || seen.has(userId)) return []
+    seen.add(userId)
+    return [
+      {
+        id: assignment.id,
+        displayName: anonymousProfileDisplayName(
+          assignment.anonymousProfile.displayName,
+          assignment.aliasNumber,
+        ),
+        userId,
+      },
+    ]
+  }
+  return [
+    ...post.answers.flatMap((answer) => add(answer.authorId, answer.postAnonymousProfile)),
+    ...add(post.authorId, post.postAnonymousProfile),
+  ]
 }
 
 function mockQuestions(viewerId: string) {
@@ -180,6 +258,25 @@ const listAnswersRoute = createRoute({
     200: {
       description: '回答一覧',
       content: { 'application/json': { schema: z.object({ answers: z.array(QaAnswerSchema) }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    404: errorResponse('質問が見つからない', 'Not found'),
+  },
+})
+
+const mentionCandidatesRoute = createRoute({
+  method: 'get',
+  path: '/{id}/mention-candidates',
+  tags: ['questions'],
+  summary: '質問スレッドでメンションできる匿名参加者を最新の回答順で取得',
+  ...auth,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: 'メンション候補',
+      content: {
+        'application/json': { schema: z.object({ candidates: z.array(MentionCandidateSchema) }) },
+      },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     404: errorResponse('質問が見つからない', 'Not found'),
@@ -290,6 +387,7 @@ const createAnswerRoute = createRoute({
       },
     },
     401: errorResponse('未認証', 'Unauthorized'),
+    400: errorResponse('メンション対象が不正', 'このスレッドの参加者のみメンションできます'),
     404: errorResponse('質問が存在しない', '投稿が見つかりません'),
     410: errorResponse('質問が削除済み', 'この投稿は削除されたため、回答できません'),
     409: errorResponse('回答受付終了', '回答を受け付けていない質問です'),
@@ -387,6 +485,15 @@ const unbookmarkRoute = createRoute({
 })
 
 export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
+  .openapi(mentionCandidatesRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const candidates = await getQaMentionCandidates(id)
+    if (!candidates) return c.json({ error: 'Not found' }, 404)
+    return c.json(
+      { candidates: candidates.map(({ id, displayName }) => ({ id, displayName })) },
+      200,
+    )
+  })
   .openapi(listRoute, async (c) => {
     const user = c.get('user')
     const { page, pageSize, keyword, status, tagId, categoryIds, tagIds } = c.req.valid('query')
@@ -977,6 +1084,32 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         200,
       )
     }
+    const requestedMentionIds = data.mentionedUserIds ?? []
+    let mentionedUserIds: string[] = []
+    if (requestedMentionIds.length > 0) {
+      const candidates = await getQaMentionCandidates(id)
+      const userIdByCandidateId = new Map(
+        candidates?.map((item) => [item.id, item.userId] as const),
+      )
+      if (!requestedMentionIds.every((candidateId) => userIdByCandidateId.has(candidateId)))
+        return c.json({ error: 'このスレッドの参加者のみメンションできます' }, 400)
+      const displayNameByCandidateId = new Map(
+        candidates?.map((item) => [item.id, item.displayName] as const),
+      )
+      if (
+        !requestedMentionIds.every((candidateId) =>
+          hasBodyMention(data.body, displayNameByCandidateId.get(candidateId) ?? ''),
+        )
+      )
+        return c.json({ error: '本文内のメンションを指定してください' }, 400)
+      mentionedUserIds = [
+        ...new Set(
+          requestedMentionIds
+            .map((id) => userIdByCandidateId.get(id))
+            .filter((id): id is string => id !== undefined),
+        ),
+      ]
+    }
     let moderation: import('@/lib/ai/moderate-post').ModerationResult | null
     try {
       const { moderateAnswer } = await import('@/lib/ai/moderate-post')
@@ -1079,6 +1212,23 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         })
       } catch (error) {
         console.error('Failed to create reply notification', { postId: post.id, error })
+      }
+    }
+    if (!answer.isHidden) {
+      const notificationUserIds = mentionedUserIds.filter((id) => id !== user.id)
+      if (notificationUserIds.length > 0) {
+        try {
+          await prisma.notification.createMany({
+            data: notificationUserIds.map((userId) => ({
+              userId,
+              type: NotificationType.MENTIONED,
+              postId: post.id,
+              answerId: answer.id,
+            })),
+          })
+        } catch (error) {
+          console.error('Failed to create mention notifications', { postId: post.id, error })
+        }
       }
     }
     return c.json(

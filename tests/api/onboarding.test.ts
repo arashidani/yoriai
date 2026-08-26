@@ -88,11 +88,11 @@ describe('オンボーディング完了API', () => {
     expect(response.status).toBe(200)
     expect(prismaMock.department.findMany).toHaveBeenCalledWith({
       where: { OR: [{ isActive: true }, { users: { some: { id: 'user-1' } } }] },
-      orderBy: { name: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     })
     expect(prismaMock.businessSkill.findMany).toHaveBeenCalledWith({
       where: { OR: [{ isActive: true }, { users: { some: { userId: 'user-1' } } }] },
-      orderBy: { name: 'asc' },
+      orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
     })
   })
 

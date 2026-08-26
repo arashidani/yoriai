@@ -35,6 +35,13 @@ describe('moderatePost', () => {
       apiKey: 'test-api-key',
       httpOptions: { timeout: 30_000 },
     })
+    expect(generateContentMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        config: expect.objectContaining({
+          systemInstruction: expect.stringMatching(/下品|下ネタ|不謹慎/),
+        }),
+      }),
+    )
   })
 
   it('Geminiが503を返した場合はサービス利用不可エラーを送出する', async () => {

@@ -20,6 +20,7 @@
   --color-background: var(--background);
   --color-background-subtle: var(--background-subtle);
   --color-background-2: var(--background-2);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
   --color-foreground-alt: var(--foreground-alt);
   --color-card: var(--card);
@@ -69,6 +70,8 @@
   --color-mbti-yellow-bg: var(--mbti-yellow-bg);
   --color-mbti-blue-bg: var(--mbti-blue-bg);
   --color-mbti-purple-bg: var(--mbti-purple-bg);
+  --color-lunch-style: var(--lunch-style);
+  --color-lunch-style-bg: var(--lunch-style-bg);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-sidebar: var(--sidebar);
@@ -80,28 +83,43 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-muted: var(--sidebar-muted);
-  --color-hiroba-yellow-soft: var(--hiroba-yellow-soft);
-  --color-hiroba-yellow-border: var(--hiroba-yellow-border);
-  --color-hiroba-yellow-foreground: var(--hiroba-yellow-foreground);
-  --color-hiroba-blue-soft: var(--hiroba-blue-soft);
-  --color-hiroba-blue-border: var(--hiroba-blue-border);
-  --color-hiroba-blue-foreground: var(--hiroba-blue-foreground);
-  --color-hiroba-purple-soft: var(--hiroba-purple-soft);
-  --color-hiroba-purple-border: var(--hiroba-purple-border);
-  --color-hiroba-purple-foreground: var(--hiroba-purple-foreground);
-  --color-hiroba-rose-soft: var(--hiroba-rose-soft);
-  --color-hiroba-rose-border: var(--hiroba-rose-border);
-  --color-hiroba-rose-foreground: var(--hiroba-rose-foreground);
-  --color-hiroba-lime-soft: var(--hiroba-lime-soft);
-  --color-hiroba-lime-border: var(--hiroba-lime-border);
-  --color-hiroba-lime-foreground: var(--hiroba-lime-foreground);
-  --color-hiroba-mint-soft: var(--hiroba-mint-soft);
-  --color-hiroba-mint-border: var(--hiroba-mint-border);
-  --color-hiroba-mint-foreground: var(--hiroba-mint-foreground);
+  --color-hiroba-pickup-soft: var(--hiroba-pickup-soft);
+  --color-hiroba-pickup-border: var(--hiroba-pickup-border);
+  --color-hiroba-pickup-foreground: var(--hiroba-pickup-foreground);
+  --color-hiroba-active-soft: var(--hiroba-active-soft);
+  --color-hiroba-active-border: var(--hiroba-active-border);
+  --color-hiroba-active-foreground: var(--hiroba-active-foreground);
+  --color-hiroba-indoor-soft: var(--hiroba-indoor-soft);
+  --color-hiroba-indoor-border: var(--hiroba-indoor-border);
+  --color-hiroba-indoor-foreground: var(--hiroba-indoor-foreground);
+  --color-hiroba-maniac-soft: var(--hiroba-maniac-soft);
+  --color-hiroba-maniac-border: var(--hiroba-maniac-border);
+  --color-hiroba-maniac-foreground: var(--hiroba-maniac-foreground);
+  --color-hiroba-food-soft: var(--hiroba-food-soft);
+  --color-hiroba-food-border: var(--hiroba-food-border);
+  --color-hiroba-food-foreground: var(--hiroba-food-foreground);
+  --color-hiroba-knowhow-soft: var(--hiroba-knowhow-soft);
+  --color-hiroba-knowhow-border: var(--hiroba-knowhow-border);
+  --color-hiroba-knowhow-foreground: var(--hiroba-knowhow-foreground);
+  --color-hiroba-mbti-green-soft: var(--hiroba-mbti-green-soft);
+  --color-hiroba-mbti-green-border: var(--hiroba-mbti-green-border);
+  --color-hiroba-mbti-green-foreground: var(--hiroba-mbti-green-foreground);
+  --color-hiroba-mbti-blue-soft: var(--hiroba-mbti-blue-soft);
+  --color-hiroba-mbti-blue-border: var(--hiroba-mbti-blue-border);
+  --color-hiroba-mbti-blue-foreground: var(--hiroba-mbti-blue-foreground);
+  --color-hiroba-mbti-yellow-soft: var(--hiroba-mbti-yellow-soft);
+  --color-hiroba-mbti-yellow-border: var(--hiroba-mbti-yellow-border);
+  --color-hiroba-mbti-yellow-foreground: var(--hiroba-mbti-yellow-foreground);
+  --color-hiroba-mbti-purple-soft: var(--hiroba-mbti-purple-soft);
+  --color-hiroba-mbti-purple-border: var(--hiroba-mbti-purple-border);
+  --color-hiroba-mbti-purple-foreground: var(--hiroba-mbti-purple-foreground);
   --color-tenurechip: var(--tenurechip);
   --color-tenurechip-foreground: var(--tenurechip-foreground);
   --color-statuschip-success: var(--statuschip-success);
   --color-statuschip-success-foreground: var(--statuschip-success-foreground);
+  --color-lunchchip: var(--lunchchip);
+  --color-lunchchip-foreground: var(--lunchchip-foreground);
+  --color-ghost-hover: var(--ghost-hover);
 
   /* Fonts（コンプライアンス上 font-sans / font-heading / font-mono の
      3種類に限定し、独自の font-* ユーティリティは増やさない。
@@ -131,6 +149,7 @@
   /* neutral: ウォームトーン独自スケール（= brand-neutrals） */
   --color-neutral-50: #fffefc;
   --color-neutral-100: #fdfbf7;
+  --color-neutral-150: #f9f7f2;
   --color-neutral-200: #f6f3ed;
   --color-neutral-300: #ece7df;
   --color-neutral-400: #ddd6cc;
@@ -401,10 +420,34 @@
   --color-brand-2-foreground: #b84221;
   --color-brand-3: #7d2a15;
   --color-brand-3-foreground: #ffb19a;
+  --color-border-2: #f6f3ed;
   /* Figma: unofficial/border-3。Light/Dark 共通の固定色 */
   --color-border-3: #ece7df;
   /* Figma: unofficial/border-4。Light/Dark 共通の固定色 */
   --color-border-4: #ddd6cc;
+}
+
+/* ── いいねボタン（肉球）を押した瞬間だけ1回再生するバウンス演出 ── */
+@theme {
+  --animate-paw-bounce: paw-bounce 0.4s ease-out;
+
+  @keyframes paw-bounce {
+    0% {
+      transform: translateY(0);
+    }
+    30% {
+      transform: translateY(-35%);
+    }
+    55% {
+      transform: translateY(0);
+    }
+    75% {
+      transform: translateY(-12%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
 }
 
 /* ── alpha プリミティブ ──
@@ -464,9 +507,9 @@
   --text-heading-1--line-height: 1.75rem;
   --text-heading-1--letter-spacing: 0.5px;
   --text-heading-1--font-weight: 700;
-  --text-heading-2: 1.875rem;
-  --text-heading-2--line-height: 1.875rem;
-  --text-heading-2--letter-spacing: 0.5px;
+  --text-heading-2: 1.25rem;
+  --text-heading-2--line-height: 1.625rem;
+  --text-heading-2--letter-spacing: 0.2px;
   --text-heading-2--font-weight: 700;
   --text-heading-3: 1.125rem;
   --text-heading-3--line-height: 1.5rem;
@@ -506,6 +549,9 @@
   --text-label-small: 0.75rem;
   --text-label-small--line-height: 1.25rem;
   --text-label-small--font-weight: 700;
+  --text-body-bold: 1rem;
+  --text-body-bold--line-height: 1.5rem;
+  --text-body-bold--font-weight: 700;
   --text-body-small: 0.875rem;
   --text-body-small--line-height: 1.25rem;
   --text-body-small--font-weight: 500;
@@ -531,6 +577,7 @@
   --background: #fffefc; /* neutral-50 */
   --background-subtle: #fdfbf7; /* neutral-100 */
   --background-2: #fdfbf7;
+  --surface: #ffffff;
   --foreground: #2f2b27; /* neutral-900 */
   --foreground-alt: #7d746a;
   --card: #ffffff;
@@ -588,6 +635,8 @@
   --mbti-yellow-bg: #fef3c7;
   --mbti-blue-bg: #cffafe;
   --mbti-purple-bg: #f3e8ff;
+  --lunch-style: #db5631;
+  --lunch-style-bg: #ffe7df;
   --positive: #009689;
   --negative: #f54a00;
 
@@ -601,24 +650,36 @@
   --sidebar-ring: #ece7df;
   --sidebar-muted: #ddd6cc;
 
-  --hiroba-yellow-soft: #fef3c7;
-  --hiroba-yellow-border: #fbbf24;
-  --hiroba-yellow-foreground: #d97706;
-  --hiroba-blue-soft: #dbeafe;
-  --hiroba-blue-border: #93c5fd;
-  --hiroba-blue-foreground: #3b82f6;
-  --hiroba-purple-soft: #f3e8ff;
-  --hiroba-purple-border: #d8b4fe;
-  --hiroba-purple-foreground: #a855f7;
-  --hiroba-rose-soft: #ffe4e6;
-  --hiroba-rose-border: #fda4af;
-  --hiroba-rose-foreground: #f43f5e;
-  --hiroba-lime-soft: #ecfccb;
-  --hiroba-lime-border: #a3e635;
-  --hiroba-lime-foreground: #4d7c0f;
-  --hiroba-mint-soft: #d1fae5;
-  --hiroba-mint-border: #6ee7b7;
-  --hiroba-mint-foreground: #059669;
+  --hiroba-pickup-soft: #ecfccb;
+  --hiroba-pickup-border: #bef264;
+  --hiroba-pickup-foreground: #65a30d;
+  --hiroba-active-soft: #fef3c7;
+  --hiroba-active-border: #fcd34d;
+  --hiroba-active-foreground: #d97706;
+  --hiroba-indoor-soft: #dbeafe;
+  --hiroba-indoor-border: #93c5fd;
+  --hiroba-indoor-foreground: #3b82f6;
+  --hiroba-maniac-soft: #ffe4e6;
+  --hiroba-maniac-border: #fda4af;
+  --hiroba-maniac-foreground: #f43f5e;
+  --hiroba-food-soft: #ffe2e2;
+  --hiroba-food-border: #fca5a5;
+  --hiroba-food-foreground: #ef4444;
+  --hiroba-knowhow-soft: #d1fae5;
+  --hiroba-knowhow-border: #6ee7b7;
+  --hiroba-knowhow-foreground: #059669;
+  --hiroba-mbti-green-soft: #d1fae5;
+  --hiroba-mbti-green-border: #6ee7b7;
+  --hiroba-mbti-green-foreground: #059669;
+  --hiroba-mbti-blue-soft: #cffafe;
+  --hiroba-mbti-blue-border: #67e8f9;
+  --hiroba-mbti-blue-foreground: #0891b2;
+  --hiroba-mbti-yellow-soft: #fef3c7;
+  --hiroba-mbti-yellow-border: #fcd34d;
+  --hiroba-mbti-yellow-foreground: #d97706;
+  --hiroba-mbti-purple-soft: #f3e8ff;
+  --hiroba-mbti-purple-border: #d8b4fe;
+  --hiroba-mbti-purple-foreground: #a855f7;
 
   /* Figma: badge/tenurechip, badge/tenurechip-foreground。Light/Dark 共通の固定色 */
   --tenurechip: #ecfccb;
@@ -627,6 +688,12 @@
   /* Figma: badge/statuschip-success, badge/statuschip-success-foreground（解決済みチップ）。Light/Dark 共通の固定色 */
   --statuschip-success: #ece7df; /* neutral-300 */
   --statuschip-success-foreground: #a59a8d; /* neutral-600 */
+
+  --lunchchip: #ffe7df;
+  --lunchchip-foreground: #ff8560;
+
+  /* Light/Dark 共通の固定色 */
+  --ghost-hover: #f6f3ed;
 }
 
 /* ── Dark ── */
@@ -634,6 +701,7 @@
   --background: #2f2b27; /* neutral-900 */
   --background-subtle: #544d46; /* neutral-800 */
   --background-2: #544d46;
+  --surface: #544d46;
   --foreground: #fffefc; /* neutral-50 */
   --card: #2f2b27;
   --card-foreground: #ffffff;
@@ -684,6 +752,8 @@
   --mbti-yellow-bg: #fef3c7;
   --mbti-blue-bg: #cffafe;
   --mbti-purple-bg: #f3e8ff;
+  --lunch-style: #ffb19a;
+  --lunch-style-bg: #7d2a15;
   --positive: #00bc7d;
   --negative: #ff2056;
 
@@ -701,6 +771,11 @@
   --tenurechip-foreground: #65a30d; /* Light と固定 */
   --statuschip-success: #ece7df; /* Light と固定 */
   --statuschip-success-foreground: #a59a8d; /* Light と固定 */
+
+  --lunchchip: #ffe7df; /* Light と固定 */
+  --lunchchip-foreground: #ff8560; /* Light と固定 */
+
+  --ghost-hover: #f6f3ed; /* Light と固定 */
 }
 
 @layer base {

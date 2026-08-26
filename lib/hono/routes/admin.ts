@@ -12,13 +12,11 @@ import {
   AiFlagSchema,
   AnonymousProfileSchema,
   AnswerSchema,
-  BadgeSchema,
   errorResponse,
   HirobaSchema,
   IdParamSchema,
   InviteCreatedSchema,
   InviteListItemSchema,
-  MissionSchema,
   PasswordResetCreatedSchema,
   PostSchema,
   SuccessSchema,
@@ -30,10 +28,8 @@ import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
-  MOCK_BADGES,
   MOCK_HIROBAS,
   MOCK_INVITES,
-  MOCK_MISSIONS,
   MOCK_POSTS,
   MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
@@ -48,9 +44,7 @@ import {
   createAnonymousProfileSchema,
   updateAnonymousProfileSchema,
 } from '@/lib/schemas/anonymous-profile'
-import { createBadgeSchema } from '@/lib/schemas/badge'
 import { createInviteSchema } from '@/lib/schemas/invite'
-import { createMissionSchema } from '@/lib/schemas/mission'
 import { createTagSchema, updateTagSchema } from '@/lib/schemas/tag'
 import { createTagCategorySchema } from '@/lib/schemas/tag-category'
 import { updateUserSchema } from '@/lib/schemas/user'
@@ -262,76 +256,6 @@ const deleteUserRoute = createRoute({
   responses: {
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     400: errorResponse('自分自身は削除できない', '自分自身は削除できません'),
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const listBadgesRoute = createRoute({
-  method: 'get',
-  path: '/badges',
-  tags: ['admin'],
-  summary: 'バッジ一覧を取得（管理者専用）',
-  security,
-  responses: {
-    200: {
-      description: 'バッジ一覧',
-      content: { 'application/json': { schema: z.object({ badges: z.array(BadgeSchema) }) } },
-    },
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const createBadgeRoute = createRoute({
-  method: 'post',
-  path: '/badges',
-  tags: ['admin'],
-  summary: 'バッジを作成（管理者専用）',
-  security,
-  request: {
-    body: { required: true, content: { 'application/json': { schema: createBadgeSchema } } },
-  },
-  responses: {
-    201: {
-      description: '作成されたバッジ',
-      content: { 'application/json': { schema: z.object({ badge: BadgeSchema }) } },
-    },
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const listMissionsRoute = createRoute({
-  method: 'get',
-  path: '/missions',
-  tags: ['admin'],
-  summary: 'ミッション一覧を取得（管理者専用）',
-  security,
-  responses: {
-    200: {
-      description: 'ミッション一覧',
-      content: { 'application/json': { schema: z.object({ missions: z.array(MissionSchema) }) } },
-    },
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const createMissionRoute = createRoute({
-  method: 'post',
-  path: '/missions',
-  tags: ['admin'],
-  summary: 'ミッションを作成（管理者専用）',
-  security,
-  request: {
-    body: { required: true, content: { 'application/json': { schema: createMissionSchema } } },
-  },
-  responses: {
-    201: {
-      description: '作成されたミッション',
-      content: { 'application/json': { schema: z.object({ mission: MissionSchema }) } },
-    },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
@@ -854,73 +778,6 @@ export const adminRoute = $(
       throw error
     }
     return c.json({ success: true }, 200)
-  })
-  .openapi(listBadgesRoute, async (c) => {
-    if (process.env.MOCK_MODE === 'true') {
-      return c.json({ badges: MOCK_BADGES }, 200)
-    }
-    const badges = await prisma.badge.findMany({ orderBy: { createdAt: 'desc' } })
-    return c.json({ badges }, 200)
-  })
-  .openapi(createBadgeRoute, async (c) => {
-    const data = c.req.valid('json')
-
-    if (process.env.MOCK_MODE === 'true') {
-      return c.json(
-        {
-          badge: {
-            id: `badge-${MOCK_BADGES.length + 1}`,
-            ...data,
-            earnedCount: 0,
-            createdAt: new Date(),
-          },
-        },
-        201,
-      )
-    }
-
-    const badge = await prisma.badge.create({ data })
-    return c.json({ badge }, 201)
-  })
-  .openapi(listMissionsRoute, async (c) => {
-    if (process.env.MOCK_MODE === 'true') {
-      return c.json({ missions: MOCK_MISSIONS }, 200)
-    }
-    const missions = await prisma.mission.findMany({
-      include: { rewardBadge: true },
-      orderBy: { createdAt: 'desc' },
-    })
-    return c.json({ missions }, 200)
-  })
-  .openapi(createMissionRoute, async (c) => {
-    const { rewardBadgeId, ...rest } = c.req.valid('json')
-
-    if (process.env.MOCK_MODE === 'true') {
-      const rewardBadge = rewardBadgeId
-        ? (MOCK_BADGES.find((b) => b.id === rewardBadgeId) ?? null)
-        : null
-      return c.json(
-        {
-          mission: {
-            id: `mission-${MOCK_MISSIONS.length + 1}`,
-            ...rest,
-            rewardBadgeId: rewardBadgeId ?? null,
-            rewardBadge,
-            active: true,
-            participantsCount: 0,
-            progressPercent: 0,
-            createdAt: new Date(),
-          },
-        },
-        201,
-      )
-    }
-
-    const mission = await prisma.mission.create({
-      data: { ...rest, rewardBadgeId: rewardBadgeId || null },
-      include: { rewardBadge: true },
-    })
-    return c.json({ mission }, 201)
   })
   .openapi(listAiFlagsRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
