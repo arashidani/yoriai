@@ -77,19 +77,19 @@ export const onboardingRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ d
     const [departments, businessAreas, businessSkills, interests] = await Promise.all([
       prisma.department.findMany({
         where: { OR: [{ isActive: true }, { users: { some: { id: user.id } } }] },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
       prisma.businessArea.findMany({
         where: { OR: [{ isActive: true }, { users: { some: { id: user.id } } }] },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
       prisma.businessSkill.findMany({
         where: { OR: [{ isActive: true }, { users: { some: { userId: user.id } } }] },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
       prisma.interest.findMany({
         where: { OR: [{ isActive: true }, { users: { some: { userId: user.id } } }] },
-        orderBy: { name: 'asc' },
+        orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       }),
     ])
     return c.json({ departments, businessAreas, businessSkills, interests }, 200)

@@ -140,7 +140,7 @@ function MultiSelectList({
   )
 }
 
-function ProfileView({
+export function ProfileView({
   profile,
   options,
   avatarUrl,

@@ -21,6 +21,7 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
     post: {
       create: vi.fn(),
       update: vi.fn(),
+      findFirst: vi.fn(),
       findUnique: vi.fn(),
     },
     answer: {
@@ -35,6 +36,10 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
       findMany: vi.fn(),
     },
     postTag: {
+      createMany: vi.fn(),
+    },
+    notification: {
+      create: vi.fn(),
       createMany: vi.fn(),
     },
     $transaction: vi.fn(),
@@ -287,6 +292,78 @@ describe('Q&A作成APIのモデレーション結果', () => {
       },
     })
     expect((await response.json()).moderation).toEqual({ isHidden: true })
+  })
+
+  it('匿名プロフィールIDのメンションを実ユーザーIDへ解決して通知する', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(basePost)
+    prismaMock.post.findFirst.mockResolvedValue({
+      authorId: basePost.authorId,
+      postAnonymousProfile: {
+        id: 'assignment-user-1',
+        aliasNumber: 1,
+        anonymousProfile: MOCK_ANONYMOUS_PROFILES[0],
+      },
+      answers: [
+        {
+          authorId: MOCK_USERS[1].id,
+          postAnonymousProfile: {
+            id: 'assignment-user-2',
+            aliasNumber: 1,
+            anonymousProfile: MOCK_ANONYMOUS_PROFILES[1],
+          },
+        },
+      ],
+    })
+    txMock.answer.create.mockResolvedValue(baseAnswer)
+    txMock.post.update.mockResolvedValue({ ...basePost, answerCount: 1 })
+
+    const response = await createRequest('/api/questions/post-test/answers', {
+      body: '@いぬ 回答テスト',
+      mentionedUserIds: ['assignment-user-2'],
+    })
+
+    expect(response.status).toBe(201)
+    expect(prismaMock.notification.createMany).toHaveBeenCalledWith({
+      data: [
+        {
+          userId: MOCK_USERS[1].id,
+          type: 'MENTIONED',
+          postId: basePost.id,
+          answerId: baseAnswer.id,
+        },
+      ],
+    })
+  })
+
+  it('本文にない匿名プロフィールIDのメンションを拒否する', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(basePost)
+    prismaMock.post.findFirst.mockResolvedValue({
+      authorId: basePost.authorId,
+      postAnonymousProfile: {
+        id: 'assignment-user-1',
+        aliasNumber: 1,
+        anonymousProfile: MOCK_ANONYMOUS_PROFILES[0],
+      },
+      answers: [
+        {
+          authorId: MOCK_USERS[1].id,
+          postAnonymousProfile: {
+            id: 'assignment-user-2',
+            aliasNumber: 1,
+            anonymousProfile: MOCK_ANONYMOUS_PROFILES[1],
+          },
+        },
+      ],
+    })
+
+    const response = await createRequest('/api/questions/post-test/answers', {
+      body: baseAnswer.body,
+      mentionedUserIds: ['assignment-user-2'],
+    })
+
+    expect(response.status).toBe(400)
+    expect(txMock.answer.create).not.toHaveBeenCalled()
+    expect(prismaMock.notification.createMany).not.toHaveBeenCalled()
   })
 
   it('回答の冪等再送でも保存済みの非公開状態を返す', async () => {

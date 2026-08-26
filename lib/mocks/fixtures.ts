@@ -1,5 +1,4 @@
 import {
-  BadgeRarity,
   DisplayNameColor,
   FlagSeverity,
   FlagStatus,
@@ -52,6 +51,7 @@ export const MOCK_USERS = [
 ]
 
 export const MOCK_JOINED_HIROBA_SLUGS = [
+  'feature-testing',
   'alcohol',
   'photography',
   'two-dimensional',
@@ -74,31 +74,44 @@ const optionDates = {
 }
 
 export const MOCK_DEPARTMENTS = [
-  { id: 'department-1', name: '開発部', isActive: true, ...optionDates },
-  { id: 'department-2', name: '営業部', isActive: true, ...optionDates },
+  { id: 'department-1', name: '開発部', isActive: true, sortOrder: 0, ...optionDates },
+  { id: 'department-2', name: '営業部', isActive: true, sortOrder: 1, ...optionDates },
 ]
 
 export const MOCK_BUSINESS_AREAS = [
-  { id: 'business-area-1', name: 'プロダクト開発', isActive: true, ...optionDates },
-  { id: 'business-area-2', name: '法人営業', isActive: true, ...optionDates },
+  { id: 'business-area-1', name: 'プロダクト開発', isActive: true, sortOrder: 0, ...optionDates },
+  { id: 'business-area-2', name: '法人営業', isActive: true, sortOrder: 1, ...optionDates },
 ]
 
 export const MOCK_BUSINESS_SKILLS = [
-  { id: 'business-skill-1', name: '社内ルール・手続き', isActive: true, ...optionDates },
-  { id: 'business-skill-2', name: 'IT・ツール操作', isActive: true, ...optionDates },
-  { id: 'business-skill-3', name: '業務スキル', isActive: true, ...optionDates },
+  {
+    id: 'business-skill-1',
+    name: '社内ルール・手続き',
+    isActive: true,
+    sortOrder: 0,
+    ...optionDates,
+  },
+  { id: 'business-skill-2', name: 'IT・ツール操作', isActive: true, sortOrder: 1, ...optionDates },
+  { id: 'business-skill-3', name: '業務スキル', isActive: true, sortOrder: 2, ...optionDates },
   {
     id: 'business-skill-4',
     name: '顧客対応・コミュニケーション',
     isActive: true,
+    sortOrder: 3,
     ...optionDates,
   },
-  { id: 'business-skill-5', name: 'IBJマインド・キャリア', isActive: true, ...optionDates },
+  {
+    id: 'business-skill-5',
+    name: 'IBJマインド・キャリア',
+    isActive: true,
+    sortOrder: 4,
+    ...optionDates,
+  },
 ]
 
 export const MOCK_INTERESTS = [
-  { id: 'interest-1', name: '生成AI', isActive: true, ...optionDates },
-  { id: 'interest-2', name: '組織づくり', isActive: true, ...optionDates },
+  { id: 'interest-1', name: '生成AI', isActive: true, sortOrder: 0, ...optionDates },
+  { id: 'interest-2', name: '組織づくり', isActive: true, sortOrder: 1, ...optionDates },
 ]
 
 export const MOCK_ANONYMOUS_PROFILES = [
@@ -548,100 +561,6 @@ export const MOCK_NOTIFICATIONS = [
     hirobaAnswer: null,
     isRead: false,
     createdAt: new Date('2024-01-12T00:00:00Z'),
-  },
-]
-
-export const MOCK_BADGES = [
-  {
-    id: 'badge-1',
-    name: '初投稿',
-    description: '初めて投稿を作成した',
-    icon: 'Medal',
-    rarity: BadgeRarity.BRONZE,
-    earnedCount: 842,
-    createdAt: new Date('2024-01-01'),
-  },
-  {
-    id: 'badge-2',
-    name: '質問マスター',
-    description: '質問を50件投稿した',
-    icon: 'Award',
-    rarity: BadgeRarity.SILVER,
-    earnedCount: 213,
-    createdAt: new Date('2024-01-02'),
-  },
-  {
-    id: 'badge-3',
-    name: 'ベストアンサー王',
-    description: 'ベストアンサーを100件獲得した',
-    icon: 'Crown',
-    rarity: BadgeRarity.GOLD,
-    earnedCount: 34,
-    createdAt: new Date('2024-01-03'),
-  },
-  {
-    id: 'badge-4',
-    name: '伝説の回答者',
-    description: '累計いいねを1000件獲得した',
-    icon: 'Sparkles',
-    rarity: BadgeRarity.PLATINUM,
-    earnedCount: 5,
-    createdAt: new Date('2024-01-04'),
-  },
-]
-
-export const MOCK_MISSIONS = [
-  {
-    id: 'mission-1',
-    name: '3日連続ログイン',
-    description: '3日間連続でログインする',
-    durationLabel: '3日間',
-    targetCount: 3,
-    active: true,
-    participantsCount: 421,
-    progressPercent: 100,
-    rewardBadgeId: 'badge-1',
-    rewardBadge: MOCK_BADGES[0],
-    createdAt: new Date('2024-01-01'),
-  },
-  {
-    id: 'mission-2',
-    name: '週に5件投稿',
-    description: '1週間で5件の投稿を作成する',
-    durationLabel: '1週間',
-    targetCount: 5,
-    active: true,
-    participantsCount: 189,
-    progressPercent: 62,
-    rewardBadgeId: 'badge-2',
-    rewardBadge: MOCK_BADGES[1],
-    createdAt: new Date('2024-01-02'),
-  },
-  {
-    id: 'mission-3',
-    name: 'コメントを10件つける',
-    description: '他のユーザーの投稿にコメントする',
-    durationLabel: '1週間',
-    targetCount: 10,
-    active: true,
-    participantsCount: 97,
-    progressPercent: 34,
-    rewardBadgeId: null,
-    rewardBadge: null,
-    createdAt: new Date('2024-01-03'),
-  },
-  {
-    id: 'mission-4',
-    name: '月間トップ回答者',
-    description: '月内で最も多くベストアンサーを獲得する',
-    durationLabel: '1ヶ月',
-    targetCount: 1,
-    active: false,
-    participantsCount: 26,
-    progressPercent: 8,
-    rewardBadgeId: 'badge-3',
-    rewardBadge: MOCK_BADGES[2],
-    createdAt: new Date('2024-01-04'),
   },
 ]
 
