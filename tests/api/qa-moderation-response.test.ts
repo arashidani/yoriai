@@ -328,6 +328,23 @@ describe('Q&A作成APIのモデレーション結果', () => {
     expect((await response.json()).moderation).toEqual({ isHidden: true })
   })
 
+  it('回答のGeminiモデレーションが503の場合は回答を作成せず503を返す', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(basePost)
+    moderationMock.moderateAnswer.mockRejectedValue(new GeminiServiceUnavailableError())
+
+    const response = await createRequest('/api/questions/post-test/answers', {
+      body: baseAnswer.body,
+    })
+
+    expect(response.status).toBe(503)
+    expect(await response.json()).toEqual({
+      error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください',
+    })
+    expect(assignmentMock.getOrAssignAnonymousProfile).not.toHaveBeenCalled()
+    expect(prismaMock.$transaction).not.toHaveBeenCalled()
+    expect(txMock.answer.create).not.toHaveBeenCalled()
+  })
+
   it('ひろば回答をAI判定で非公開にすると公開回答件数を減らす', async () => {
     const hirobaPost = {
       id: 'hiroba-post-test',

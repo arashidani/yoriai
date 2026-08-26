@@ -61,7 +61,10 @@ export async function moderatePost(title: string, body: string): Promise<Moderat
   return moderate(`タイトル: ${title}\n本文: ${body}`, { failOnServiceUnavailable: true })
 }
 
-/** Gemini呼び出しに失敗した場合はnullを返す（回答作成自体は失敗させない） */
-export async function moderateAnswer(body: string): Promise<ModerationResult | null> {
-  return moderate(`本文: ${body}`)
+/** 既定は判定なしへ倒す。Q&A回答では503・タイムアウトを呼び出し側へ送出できる。 */
+export async function moderateAnswer(
+  body: string,
+  options: { failOnServiceUnavailable?: boolean } = {},
+): Promise<ModerationResult | null> {
+  return moderate(`本文: ${body}`, options)
 }

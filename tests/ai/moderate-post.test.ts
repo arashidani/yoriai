@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { GeminiServiceUnavailableError } from '@/lib/ai/errors'
-import { moderatePost } from '@/lib/ai/moderate-post'
+import { moderateAnswer, moderatePost } from '@/lib/ai/moderate-post'
 
 const { generateContentMock, googleGenAiConstructorMock } = vi.hoisted(() => ({
   generateContentMock: vi.fn(),
@@ -61,5 +61,23 @@ describe('moderatePost', () => {
     )
 
     await expect(moderatePost('質問', '本文')).resolves.toBeNull()
+  })
+
+  it('Q&A回答では503をサービス利用不可エラーとして送出できる', async () => {
+    generateContentMock.mockRejectedValue(
+      Object.assign(new Error('Service unavailable'), { status: 503 }),
+    )
+
+    await expect(moderateAnswer('回答', { failOnServiceUnavailable: true })).rejects.toBeInstanceOf(
+      GeminiServiceUnavailableError,
+    )
+  })
+
+  it('ひろば回答向けの既定動作では503を判定なしへ倒す', async () => {
+    generateContentMock.mockRejectedValue(
+      Object.assign(new Error('Service unavailable'), { status: 503 }),
+    )
+
+    await expect(moderateAnswer('回答')).resolves.toBeNull()
   })
 })

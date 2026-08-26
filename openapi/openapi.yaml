@@ -1546,6 +1546,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: 回答の作成に失敗しました
+        "503":
+          description: AIサービス利用不可
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIサービスが混雑しています。時間をおいてもう一度お試しください
   /api/questions/{id}/tag-assignment:
     post:
       tags:

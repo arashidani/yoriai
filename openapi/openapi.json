@@ -2268,6 +2268,19 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "AIサービス利用不可",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "AIサービスが混雑しています。時間をおいてもう一度お試しください"
+                }
+              }
+            }
           }
         }
       }

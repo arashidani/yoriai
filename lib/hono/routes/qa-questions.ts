@@ -293,6 +293,10 @@ const createAnswerRoute = createRoute({
     404: errorResponse('質問が存在しない', '投稿が見つかりません'),
     410: errorResponse('質問が削除済み', 'この投稿は削除されたため、回答できません'),
     409: errorResponse('回答受付終了', '回答を受け付けていない質問です'),
+    503: errorResponse(
+      'AIサービス利用不可',
+      'AIサービスが混雑しています。時間をおいてもう一度お試しください',
+    ),
     500: errorResponse('作成失敗', '回答の作成に失敗しました'),
   },
 })
@@ -958,6 +962,34 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     if (post.deletedAt) return c.json({ error: 'この投稿は削除されたため、回答できません' }, 410)
     if (post.status !== QuestionStatus.OPEN)
       return c.json({ error: '回答を受け付けていない質問です' }, 409)
+    const existingAnswer = await prisma.answer.findUnique({
+      where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
+      include: { author: true, postAnonymousProfile: { include: { anonymousProfile: true } } },
+    })
+    if (existingAnswer) {
+      if (existingAnswer.body !== data.body)
+        return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
+      return c.json(
+        {
+          answer: toQaAnswerResponse(existingAnswer, user.id, null),
+          moderation: { isHidden: Boolean(existingAnswer.isHidden) },
+        },
+        200,
+      )
+    }
+    let moderation: import('@/lib/ai/moderate-post').ModerationResult | null
+    try {
+      const { moderateAnswer } = await import('@/lib/ai/moderate-post')
+      moderation = await moderateAnswer(data.body, { failOnServiceUnavailable: true })
+    } catch (error) {
+      if (error instanceof GeminiServiceUnavailableError) {
+        return c.json(
+          { error: 'AIサービスが混雑しています。時間をおいてもう一度お試しください' },
+          503,
+        )
+      }
+      throw error
+    }
     let assignment: Awaited<ReturnType<typeof getOrAssignAnonymousProfile>>
     try {
       assignment = await getOrAssignAnonymousProfile(id, user.id)
@@ -1005,8 +1037,6 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         200,
       )
     }
-    const { moderateAnswer } = await import('@/lib/ai/moderate-post')
-    const moderation = await moderateAnswer(answer.body)
     if (moderation?.flagged) {
       try {
         const [, hidden] = await prisma.$transaction([
