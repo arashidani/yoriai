@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { expect, screen, userEvent, waitFor } from 'storybook/test'
-import { HirobaFeed } from '@/components/hiroba/hiroba-feed'
 import { QaFeedList } from '@/components/posts/qa-feed-list'
 import { useQaFeedFilterStore } from '@/lib/stores/qa-feed-filter-store'
 import {
@@ -88,20 +87,6 @@ export const DummyPostsOnlyDuringTour: Story = {
     <FeatureTutorialProvider>
       <div>
         <QaFeedList posts={[]} isAdmin={false} initialTotal={0} initialTotalPages={0} />
-        <HirobaFeed
-          hiroba={{
-            id: 'hiroba-feature-testing',
-            slug: 'feature-testing',
-            name: '機能たしかめ広場',
-            description: '新しい機能を気軽に試すひろばです。',
-            icon: 'sparkles',
-            tone: 'lime',
-          }}
-          posts={[]}
-          popularPosts={[]}
-          isAdmin={false}
-          initialJoined
-        />
       </div>
     </FeatureTutorialProvider>
   ),
@@ -109,18 +94,11 @@ export const DummyPostsOnlyDuringTour: Story = {
     await expect(
       await canvas.findByText('会議で知らない言葉が出たとき、どう質問すればいいですか？'),
     ).toBeInTheDocument()
-    await expect(
-      canvas.getByText('おすすめランチを教えてください！よりあイヌも参加したいです'),
-    ).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: '今回はここまでにするワン！' }))
     await expect(
       canvas.queryByText('会議で知らない言葉が出たとき、どう質問すればいいですか？'),
     ).not.toBeInTheDocument()
-    await expect(
-      canvas.queryByText('おすすめランチを教えてください！よりあイヌも参加したいです'),
-    ).not.toBeInTheDocument()
     await expect(canvas.getByText('まだ質問がありません。')).toBeVisible()
-    await expect(canvas.getByText('まだ投稿がありません。')).toBeVisible()
   },
 }

@@ -4,7 +4,7 @@ import { BookOpen, ChevronLeft, ChevronRight, X } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 import { createContext, type ReactNode, useContext, useEffect, useRef, useState } from 'react'
 import { MascotContainer } from '@/components/design-system/ui/mascot-container'
-import type { HirobaPost } from '@/components/hiroba/hiroba-post-list'
+import type { HirobaPost } from '@/components/design-system/ui/post-card'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -62,10 +62,12 @@ const TUTORIAL_HIROBA_POSTS: HirobaPost[] = [
     id: 'tutorial-hiroba-lunch',
     hirobaSlug: 'feature-testing',
     title: 'おすすめランチを教えてください！よりあイヌも参加したいです',
+    body: '気軽におすすめを教えてください。',
     imageUrl: null,
     authorId: 'tutorial-user-lunch',
     displayName: '佐藤 はな',
     displayNameColor: 'GREEN',
+    avatarUrl: null,
     lunchPreference: 'TEAM',
     isOwnPost: false,
     likeCount: 8,
@@ -79,10 +81,12 @@ const TUTORIAL_HIROBA_POSTS: HirobaPost[] = [
     id: 'tutorial-hiroba-welcome',
     hirobaSlug: 'feature-testing',
     title: 'はじめまして！返信といいねを試してみます',
+    body: '練習用の投稿です。',
     imageUrl: null,
     authorId: 'tutorial-user-welcome',
     displayName: '鈴木 そら',
     displayNameColor: 'BLUE',
+    avatarUrl: null,
     lunchPreference: 'NO_PREFERENCE',
     isOwnPost: false,
     likeCount: 3,
