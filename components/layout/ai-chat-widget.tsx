@@ -1,8 +1,9 @@
 'use client'
 
-import { MessageCircle, X } from 'lucide-react'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
+import Image from 'next/image'
 import { useId, useState } from 'react'
+import mascotAiAvatarImage from '@/assets/mascots/mascot_ai_avatar.svg'
 import { ChatPanel } from '@/components/chat/chat-panel'
 import { cn } from '@/lib/utils'
 
@@ -22,22 +23,22 @@ export function AiChatWidget() {
       {mounted && (
         <div
           id={panelId}
+          // 枠線・角丸・影・ヘッダーは AiChatbot 側が持つので、ここは配置と大きさだけを決める。
+          // 起動ボタンは開いている間隠れるので、その 18（ボタン＋余白）分だけ下へ伸ばす（160 + 18 = 178）
           className={cn(
-            'absolute right-0 bottom-18 flex h-160 max-h-[80vh] w-128 max-w-[90vw] flex-col overflow-hidden rounded-2xl border border-border bg-popover shadow-xl',
+            'absolute right-0 bottom-0 h-178 max-h-[80vh] w-128 max-w-[90vw]',
             !open && 'invisible pointer-events-none',
           )}
           aria-hidden={!open}
           inert={!open}
         >
-          <div className="border-border border-b px-4 py-3">
-            <p className="font-medium text-paragraph-small">よりあいぬの小屋</p>
-          </div>
-          <div className="min-h-0 flex-1">
-            <ChatPanel />
-          </div>
+          <ChatPanel onClose={() => setOpen(false)} />
         </div>
       )}
       <motion.div
+        className={cn(open && 'invisible pointer-events-none')}
+        aria-hidden={open}
+        inert={open}
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20 }}
@@ -46,22 +47,18 @@ export function AiChatWidget() {
           type="button"
           aria-expanded={open}
           aria-controls={mounted ? panelId : undefined}
-          aria-label={open ? 'チャットを閉じる' : 'AIチャットサポートを開く'}
+          aria-label="AIチャットサポートを開く"
           onClick={handleToggle}
-          className="flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-colors hover:bg-primary-hover"
+          // Figma: AI icon = 90x90
+          className="flex size-[90px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-colors hover:bg-primary-hover"
         >
-          <AnimatePresence initial={false} mode="wait">
-            <motion.span
-              key={open ? 'close' : 'chat'}
-              initial={{ rotate: -90, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              exit={{ rotate: 90, opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="flex"
-            >
-              {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
-            </motion.span>
-          </AnimatePresence>
+          {/* よりあいぬのアイコン。円形の地色を持つのでボタン全面に敷く */}
+          <Image
+            src={mascotAiAvatarImage}
+            alt="よりあいぬのアイコン"
+            className="size-[90px]"
+            priority
+          />
         </button>
       </motion.div>
     </div>
