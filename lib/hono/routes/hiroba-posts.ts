@@ -27,6 +27,7 @@ import {
   processHirobaPostImage,
   UnsupportedHirobaPostImageError,
 } from '@/lib/image/process-hiroba-post-image'
+import { hasBodyMention } from '@/lib/mentions/has-body-mention'
 import {
   MOCK_HIROBA_ANSWERS,
   MOCK_HIROBA_POSTS,
@@ -490,6 +491,15 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         !requestedMentionIds.every((userId) => candidates.some((item) => item.id === userId))
       )
         return c.json({ error: 'このスレッドの参加者のみメンションできます' }, 400)
+      const displayNameByUserId = new Map(
+        candidates.map((candidate) => [candidate.id, candidate.displayName] as const),
+      )
+      if (
+        !requestedMentionIds.every((userId) =>
+          hasBodyMention(data.body, displayNameByUserId.get(userId) ?? ''),
+        )
+      )
+        return c.json({ error: '本文内のメンションを指定してください' }, 400)
     }
 
     let answer: HirobaAnswerWithAuthor
