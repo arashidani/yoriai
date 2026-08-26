@@ -31,7 +31,42 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   play: async ({ canvas }) => {
-    await userEvent.type(canvas.getByRole('textbox'), '@')
-    await expect(await canvas.findByRole('button', { name: '@ねこ' })).toBeVisible()
+    const textarea = canvas.getByRole('combobox')
+    await userEvent.type(textarea, '@')
+
+    const listbox = await canvas.findByRole('listbox')
+    await expect(textarea).toHaveAttribute('aria-expanded', 'true')
+    await expect(textarea).toHaveAttribute('aria-controls', listbox.id)
+    await expect(canvas.getByRole('option', { name: '@ねこ' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+
+    await userEvent.keyboard('{ArrowDown}{Enter}')
+    await expect(textarea).toHaveValue('@いぬ ')
+    await expect(canvas.queryByRole('listbox')).not.toBeInTheDocument()
+  },
+}
+
+export const TabSelectsCandidate: Story = {
+  play: async ({ canvas }) => {
+    const textarea = canvas.getByRole('combobox')
+    await userEvent.type(textarea, '@')
+    await canvas.findByRole('listbox')
+
+    await userEvent.keyboard('{Tab}')
+    await expect(textarea).toHaveValue('@ねこ ')
+  },
+}
+
+export const EscapeClosesList: Story = {
+  play: async ({ canvas }) => {
+    const textarea = canvas.getByRole('combobox')
+    await userEvent.type(textarea, '@')
+    await canvas.findByRole('listbox')
+
+    await userEvent.keyboard('{Escape}')
+    await expect(textarea).toHaveAttribute('aria-expanded', 'false')
+    await expect(canvas.queryByRole('listbox')).not.toBeInTheDocument()
   },
 }
