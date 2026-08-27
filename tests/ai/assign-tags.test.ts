@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { assignTagsWithStatus, selectValidTagNames, type TagCandidate } from '@/lib/ai/assign-tags'
+import {
+  assignTagsWithStatus,
+  selectValidTagNames,
+  type TagCandidate,
+  toTagAssignmentErrorStatus,
+} from '@/lib/ai/assign-tags'
 
 const generateContentMock = vi.hoisted(() => vi.fn())
 
@@ -80,5 +85,63 @@ describe('assignTagsWithStatus', () => {
           '候補タグ: [{"name":"給与","category":"人事","description":"給与計算や支給日の質問"},{"name":"その他（雑談に近い質問）","category":"その他","description":null}]\nタイトル: 給与の支給日\n本文: 今月の給与の支給日を教えてください',
       }),
     )
+  })
+
+  it('Geminiが429を返したらhttpStatusに保持する', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    generateContentMock.mockRejectedValue(Object.assign(new Error('quota'), { status: 429 }))
+
+    await expect(
+      assignTagsWithStatus('給与の支給日', '支給日を教えてください', candidates),
+    ).resolves.toEqual({
+      status: 'failed',
+      tagNames: [],
+      httpStatus: 429,
+    })
+    consoleError.mockRestore()
+  })
+
+  it('空テキストや未知のタグ名はhttpStatusなしの失敗にする', async () => {
+    generateContentMock.mockResolvedValue({ text: '' })
+    await expect(
+      assignTagsWithStatus('給与の支給日', '支給日を教えてください', candidates),
+    ).resolves.toEqual({
+      status: 'failed',
+      tagNames: [],
+      httpStatus: null,
+    })
+
+    generateContentMock.mockResolvedValue({ text: JSON.stringify({ tagNames: ['未知'] }) })
+    await expect(
+      assignTagsWithStatus('給与の支給日', '支給日を教えてください', candidates),
+    ).resolves.toEqual({
+      status: 'failed',
+      tagNames: [],
+      httpStatus: null,
+    })
+  })
+})
+
+describe('toTagAssignmentErrorStatus', () => {
+  it('GeminiのHTTPステータスをクライアントへ写す', () => {
+    expect(toTagAssignmentErrorStatus({ status: 'failed', tagNames: [], httpStatus: 429 })).toBe(
+      429,
+    )
+    expect(toTagAssignmentErrorStatus({ status: 'failed', tagNames: [], httpStatus: 503 })).toBe(
+      503,
+    )
+    expect(toTagAssignmentErrorStatus({ status: 'failed', tagNames: [], httpStatus: 504 })).toBe(
+      504,
+    )
+    expect(toTagAssignmentErrorStatus({ status: 'failed', tagNames: [], httpStatus: 500 })).toBe(
+      502,
+    )
+  })
+
+  it('有効なタグを選べない失敗と候補なしは422にする', () => {
+    expect(toTagAssignmentErrorStatus({ status: 'failed', tagNames: [], httpStatus: null })).toBe(
+      422,
+    )
+    expect(toTagAssignmentErrorStatus({ status: 'skipped', tagNames: [] })).toBe(422)
   })
 })

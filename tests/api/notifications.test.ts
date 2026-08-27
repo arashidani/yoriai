@@ -65,10 +65,11 @@ const answerNotification = {
     isHidden: true,
     likeCount: 0,
     postAnonymousProfile: {
+      aliasNumber: 1,
       anonymousProfile: {
         id: 'anon-1',
         displayName: 'ねこ',
-        avatarUrl: '/anonymous-profiles/cat.svg',
+        avatarUrls: ['/anonymous-profiles/cat.svg'],
       },
     },
     createdAt: new Date('2024-01-01T01:00:00Z'),
@@ -100,7 +101,13 @@ describe('通知API', () => {
         { id: 'notification-1', post: { id: 'post-1' } },
         {
           id: 'notification-2',
-          answer: { id: 'answer-1', anonymousProfile: { displayName: 'ねこ' } },
+          answer: {
+            id: 'answer-1',
+            anonymousProfile: {
+              displayName: 'ねこ',
+              avatarUrl: '/anonymous-profiles/cat.svg',
+            },
+          },
         },
       ],
       nextCursor: 'notification-2',

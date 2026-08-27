@@ -18,13 +18,40 @@ type AssignTagsResult = {
 
 export type TagAssignmentResult =
   | { status: 'assigned'; tagNames: string[] }
-  | { status: 'failed'; tagNames: [] }
+  | { status: 'failed'; tagNames: []; httpStatus: number | null }
   | { status: 'skipped'; tagNames: [] }
+
+export type TagAssignmentErrorStatus = 422 | 429 | 502 | 503 | 504
 
 export type TagCandidate = {
   name: string
   category: string
   description: string | null
+}
+
+function httpStatusFromError(error: unknown): number | null {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    typeof error.status === 'number'
+  ) {
+    return error.status
+  }
+  return null
+}
+
+/** Gemini失敗の原因を、クライアントへ返すHTTPステータスへ写す。 */
+export function toTagAssignmentErrorStatus(
+  result: Exclude<TagAssignmentResult, { status: 'assigned' }>,
+): TagAssignmentErrorStatus {
+  if (result.status === 'skipped') return 422
+  const status = result.httpStatus
+  if (status === 429) return 429
+  if (status === 503) return 503
+  if (status === 504) return 504
+  if (status == null) return 422
+  return 502
 }
 
 /** AIの出力を登録済みタグとの完全一致で検証し、最大1件へ絞る。 */
@@ -66,15 +93,20 @@ export async function assignTagsWithStatus(
     })
 
     const text = response.text
-    if (!text) return { status: 'failed', tagNames: [] }
-    const result = JSON.parse(text) as AssignTagsResult
-    const tagNames = selectValidTagNames(result.tagNames, candidates)
+    if (!text) return { status: 'failed', tagNames: [], httpStatus: null }
+    let parsed: AssignTagsResult
+    try {
+      parsed = JSON.parse(text) as AssignTagsResult
+    } catch {
+      return { status: 'failed', tagNames: [], httpStatus: null }
+    }
+    const tagNames = selectValidTagNames(parsed.tagNames, candidates)
     return tagNames.length > 0
       ? { status: 'assigned', tagNames }
-      : { status: 'failed', tagNames: [] }
+      : { status: 'failed', tagNames: [], httpStatus: null }
   } catch (error) {
     console.error('Gemini tag assignment failed', error)
-    return { status: 'failed', tagNames: [] }
+    return { status: 'failed', tagNames: [], httpStatus: httpStatusFromError(error) ?? 502 }
   }
 }
 

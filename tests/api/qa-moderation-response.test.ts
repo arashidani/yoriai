@@ -49,7 +49,10 @@ const { assignTagsMock, assignmentMock, moderationMock, prismaMock, txMock } = v
 vi.mock('@/lib/prisma/client', () => ({ prisma: prismaMock }))
 vi.mock('@/lib/ai/moderate-post', () => moderationMock)
 vi.mock('@/lib/questions/assign-anonymous-profile', () => assignmentMock)
-vi.mock('@/lib/ai/assign-tags', () => ({ assignTagsWithStatus: assignTagsMock }))
+vi.mock('@/lib/ai/assign-tags', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/ai/assign-tags')>()
+  return { ...actual, assignTagsWithStatus: assignTagsMock }
+})
 
 vi.mock('@/lib/hono/middleware/auth', async () => {
   const { createMiddleware } = await import('hono/factory')
@@ -126,7 +129,7 @@ describe('Q&A作成APIのモデレーション結果', () => {
     assignmentMock.getOrAssignAnonymousProfile.mockResolvedValue({ id: 'assignment-test' })
     moderationMock.moderatePost.mockResolvedValue(null)
     moderationMock.moderateAnswer.mockResolvedValue(null)
-    assignTagsMock.mockResolvedValue({ status: 'failed', tagNames: [] })
+    assignTagsMock.mockResolvedValue({ status: 'failed', tagNames: [], httpStatus: null })
     prismaMock.tag.findMany.mockResolvedValue([])
     prismaMock.postTag.createMany.mockResolvedValue({ count: 0 })
     prismaMock.$transaction.mockImplementation(async (operation) => {
@@ -232,12 +235,46 @@ describe('Q&A作成APIのモデレーション結果', () => {
     })
   })
 
-  it('ユーザー操作によるAI再試行が失敗した場合は503を返す', async () => {
+  it('ユーザー操作によるAI再試行で有効なタグを選べなかった場合は422を返す', async () => {
     prismaMock.post.findUnique.mockResolvedValue({ ...basePost, tags: [] })
     prismaMock.tag.findMany.mockResolvedValue([
       { id: 'tag-ai', name: 'その他', category: 'その他', description: null },
     ])
-    assignTagsMock.mockResolvedValue({ status: 'failed', tagNames: [] })
+    assignTagsMock.mockResolvedValue({ status: 'failed', tagNames: [], httpStatus: null })
+
+    const response = await app.request(`/api/questions/${basePost.id}/tag-assignment`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mode: 'ai' }),
+    })
+
+    expect(response.status).toBe(422)
+    expect(await response.json()).toEqual({ error: 'AIによるタグ付与に失敗しました' })
+  })
+
+  it('Geminiがレート制限した場合は429を返す', async () => {
+    prismaMock.post.findUnique.mockResolvedValue({ ...basePost, tags: [] })
+    prismaMock.tag.findMany.mockResolvedValue([
+      { id: 'tag-ai', name: 'その他', category: 'その他', description: null },
+    ])
+    assignTagsMock.mockResolvedValue({ status: 'failed', tagNames: [], httpStatus: 429 })
+
+    const response = await app.request(`/api/questions/${basePost.id}/tag-assignment`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mode: 'ai' }),
+    })
+
+    expect(response.status).toBe(429)
+    expect(await response.json()).toEqual({ error: 'AIによるタグ付与に失敗しました' })
+  })
+
+  it('Geminiが利用不可の場合は503を返す', async () => {
+    prismaMock.post.findUnique.mockResolvedValue({ ...basePost, tags: [] })
+    prismaMock.tag.findMany.mockResolvedValue([
+      { id: 'tag-ai', name: 'その他', category: 'その他', description: null },
+    ])
+    assignTagsMock.mockResolvedValue({ status: 'failed', tagNames: [], httpStatus: 503 })
 
     const response = await app.request(`/api/questions/${basePost.id}/tag-assignment`, {
       method: 'POST',
@@ -291,7 +328,26 @@ describe('Q&A作成APIのモデレーション結果', () => {
         activityAt: baseAnswer.createdAt,
       },
     })
+    expect(prismaMock.post.update).toHaveBeenCalledWith({
+      where: { id: baseAnswer.postId },
+      data: { answerCount: { decrement: 1 } },
+    })
     expect((await response.json()).moderation).toEqual({ isHidden: true })
+  })
+
+  it('AI判定で非公開にならない回答では回答数を減らさない', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(basePost)
+    txMock.answer.create.mockResolvedValue(baseAnswer)
+    txMock.post.update.mockResolvedValue({ ...basePost, answerCount: 1 })
+    moderationMock.moderateAnswer.mockResolvedValue(null)
+
+    const response = await createRequest('/api/questions/post-test/answers', {
+      body: baseAnswer.body,
+    })
+
+    expect(response.status).toBe(201)
+    expect(prismaMock.post.update).not.toHaveBeenCalled()
+    expect((await response.json()).moderation).toEqual({ isHidden: false })
   })
 
   it('匿名プロフィールIDのメンションを実ユーザーIDへ解決して通知する', async () => {
