@@ -1612,8 +1612,40 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: この質問にはタグを付与できません
+        "422":
+          description: AIが有効なタグを選べない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
+        "429":
+          description: AIレート制限
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
+        "502":
+          description: AI通信失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
         "503":
-          description: AIタグ付与失敗
+          description: AIサービス利用不可
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
+        "504":
+          description: AIタイムアウト
           content:
             application/json:
               schema:

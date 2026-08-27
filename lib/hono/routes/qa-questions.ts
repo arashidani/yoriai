@@ -350,7 +350,11 @@ const assignTagRoute = createRoute({
     403: errorResponse('質問者以外', 'Forbidden'),
     404: errorResponse('質問が見つからない', 'Not found'),
     409: errorResponse('操作不可', 'この質問にはタグを付与できません'),
-    503: errorResponse('AIタグ付与失敗', 'AIによるタグ付与に失敗しました'),
+    422: errorResponse('AIが有効なタグを選べない', 'AIによるタグ付与に失敗しました'),
+    429: errorResponse('AIレート制限', 'AIによるタグ付与に失敗しました'),
+    502: errorResponse('AI通信失敗', 'AIによるタグ付与に失敗しました'),
+    503: errorResponse('AIサービス利用不可', 'AIによるタグ付与に失敗しました'),
+    504: errorResponse('AIタイムアウト', 'AIによるタグ付与に失敗しました'),
   },
 })
 
@@ -950,7 +954,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           : MOCK_TAGS.find((item) => item.isWorkTag)
       if (!tag) {
         if (input.mode === 'manual') return c.json({ error: '選択されたタグが見つかりません' }, 400)
-        return c.json({ error: 'AIによるタグ付与に失敗しました' }, 503)
+        return c.json({ error: 'AIによるタグ付与に失敗しました' }, 422)
       }
       return c.json({ tag: { id: tag.id, name: tag.name } }, 200)
     }
@@ -986,12 +990,17 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
 
     let selected: (typeof candidates)[number] | null = candidates[0] ?? null
     if (input.mode === 'ai') {
-      const { assignTagsWithStatus } = await import('@/lib/ai/assign-tags')
+      const { assignTagsWithStatus, toTagAssignmentErrorStatus } = await import(
+        '@/lib/ai/assign-tags'
+      )
       const assignment = await assignTagsWithStatus(post.title, post.body, candidates)
       if (assignment.status !== 'assigned')
-        return c.json({ error: 'AIによるタグ付与に失敗しました' }, 503)
+        return c.json(
+          { error: 'AIによるタグ付与に失敗しました' },
+          toTagAssignmentErrorStatus(assignment),
+        )
       selected = candidates.find((tag) => tag.name === assignment.tagNames[0]) ?? null
-      if (!selected) return c.json({ error: 'AIによるタグ付与に失敗しました' }, 503)
+      if (!selected) return c.json({ error: 'AIによるタグ付与に失敗しました' }, 422)
     }
 
     if (!selected) return c.json({ error: '選択されたタグが見つかりません' }, 400)
