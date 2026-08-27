@@ -95,7 +95,10 @@ export function QuestionComposeDialog() {
 
       setCreatedQuestionId(body.question.id)
       if (body.tagAssignment === 'failed') {
-        console.log('質問作成後のAIタグ付与に失敗しました', { questionId: body.question.id })
+        console.log('質問作成後のAIタグ付与に失敗しました', {
+          questionId: body.question.id,
+          status: body.tagAssignmentErrorStatus ?? null,
+        })
       }
       setStep(body.tagAssignment === 'failed' ? 'tag-recovery' : 'completion')
     } catch (error) {
