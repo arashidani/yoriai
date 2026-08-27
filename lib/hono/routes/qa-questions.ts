@@ -39,6 +39,7 @@ import { prisma } from '@/lib/prisma/client'
 import { anonymousProfileDisplayName } from '@/lib/questions/anonymous-profile-display'
 import {
   getMostLikedAnswerId,
+  toAnswerableQuestionResponse,
   toQaAnswerResponse,
   toQuestionResponse,
 } from '@/lib/questions/api-mappers'
@@ -581,7 +582,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       )
 
       const questions = selectAnswerableQuestions(skillQuestions, otherQuestions).map(
-        ({ id, title }) => ({ id, title }),
+        ({ id, title, displayAuthor }) => ({ id, title, displayAuthor }),
       )
       return c.json({ questions }, 200)
     }
@@ -609,14 +610,29 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
                 },
               },
             },
-            select: { id: true, title: true },
+            select: { id: true },
           }),
       prisma.post.findMany({
         where: { ...baseWhere, tags: { some: { tag: { name: { startsWith: 'その他' } } } } },
-        select: { id: true, title: true },
+        select: { id: true },
       }),
     ])
-    const questions = selectAnswerableQuestions(skillQuestions, otherQuestions)
+    const selected = selectAnswerableQuestions(skillQuestions, otherQuestions)
+    if (selected.length === 0) return c.json({ questions: [] }, 200)
+
+    const posts = await prisma.post.findMany({
+      where: { id: { in: selected.map(({ id }) => id) } },
+      select: {
+        id: true,
+        title: true,
+        postAnonymousProfile: { include: { anonymousProfile: true } },
+      },
+    })
+    const postById = new Map(posts.map((post) => [post.id, post]))
+    const questions = selected.flatMap(({ id }) => {
+      const post = postById.get(id)
+      return post ? [toAnswerableQuestionResponse(post)] : []
+    })
 
     return c.json({ questions }, 200)
   })

@@ -3,7 +3,7 @@ import {
   anonymousProfileDisplayName,
   avatarUrlForAlias,
 } from '@/lib/questions/anonymous-profile-display'
-import { toQaAnswerResponse } from '@/lib/questions/api-mappers'
+import { toQaAnswerResponse, toQuestionResponse } from '@/lib/questions/api-mappers'
 
 describe('anonymous profile aliases', () => {
   it('uses an ordered avatar set for each alias round and cycles after the final image', () => {
@@ -38,5 +38,44 @@ describe('anonymous profile aliases', () => {
     )
 
     expect(answer.displayAuthor).toEqual({ displayName: 'Alien A#2', avatarUrl: 'second.webp' })
+  })
+
+  it('shows the anonymous profile to the author and marks it as their own', () => {
+    const question = toQuestionResponse(
+      {
+        id: 'post-1',
+        title: 'question',
+        body: 'body',
+        status: 'OPEN',
+        authorId: 'viewer',
+        author: { name: 'Real Name', email: 'real@example.com' },
+        postAnonymousProfile: {
+          aliasNumber: 2,
+          anonymousProfile: { displayName: 'Alien A', avatarUrls: ['first.webp', 'second.webp'] },
+        },
+      },
+      'viewer',
+    )
+
+    expect(question.displayAuthor).toEqual({
+      displayName: 'Alien A#2（あなた）',
+      avatarUrl: 'second.webp',
+    })
+  })
+
+  it('does not expose the real name while an own post is waiting for profile assignment', () => {
+    const answer = toQaAnswerResponse(
+      {
+        id: 'answer-1',
+        postId: 'post-1',
+        body: 'answer',
+        authorId: 'viewer',
+        author: { name: 'Real Name', email: 'real@example.com' },
+      },
+      'viewer',
+      null,
+    )
+
+    expect(answer.displayAuthor).toEqual({ displayName: '匿名（あなた）', avatarUrl: null })
   })
 })
