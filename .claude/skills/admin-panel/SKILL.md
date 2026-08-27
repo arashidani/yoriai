@@ -133,17 +133,16 @@ Badge/Missionは一覧・作成のみ（更新・削除は無い、リネーム�
 
 ---
 
-## 6. Geminiによる投稿モデレーション → AiFlag
+## 6. OpenAI Moderationによる投稿モデレーション → AiFlag
 
-**ルール: 新規投稿作成時（`POST /api/posts`、`lib/hono/routes/posts.ts` の `createPostRoute`）に、Gemini（`@google/genai`, `gemini-flash-latest`, 無料枠）でタイトル・本文を判定し、脅迫・ハラスメント等の職場で許容されない内容が疑われる場合のみ `AiFlag` を自動作成する。** 判定ロジックは `lib/ai/moderate-post.ts` の `moderatePost()` に集約。
+**ルール: 質問・回答の作成時に OpenAI Moderation API（`omni-moderation-latest`）で本文を判定し、`flagged: true` のときだけ `AiFlag` を自動作成して非公開にする。** 判定ロジックは `lib/ai/moderate-post.ts` の `moderatePost()` / `moderateAnswer()` に集約。タグ付与は Gemini のまま（§6.6）。
 
-- モデル文字列は日付固定の `gemini-2.5-flash` ではなく `gemini-flash-latest`（Googleが常時最新の推奨flashモデルを指すよう管理するエイリアス）を使う。Geminiは個別モデルの廃止サイクルが早く、固定モデル名は数ヶ月で404 (`... is no longer available to new users`) になりうる——地雷を踏んで判明した。
-
+- `fetch` で `POST https://api.openai.com/v1/moderations` を叩く。`openai` SDK は使わない。`input` は string 1本（配列にすると `results` が複数になり写像が曖昧になる）。
+- `results[0].flagged` を正とし、true カテゴリの日本語ラベルを `reason`、スコア最大値を `HIGH` (>= 0.8) / `MEDIUM` (>= 0.5) / `LOW` へ写す。カスタムプロンプトは使わない。
+- 呼び出しは 5 秒で打ち切り、失敗（キー未設定・非2xx・不正JSON・例外）は `null`。投稿作成自体は失敗させない。
+- `MOCK_MODE === 'true'` のときは Prisma 呼び出し前に早期returnするため、OpenAI は呼ばれない。
+- 必要な環境変数: `OPENAI_API_KEY`（サーバー専用、`requireEnv()` 経由）。
 - `AiFlag` に `postId`（`Post` への任意リレーション、`onDelete: Cascade`）を追加済み。投稿を削除すると紐づくフラグも自動的に消える。
-- Gemini呼び出しは `moderatePost()` 内で `try/catch` されており、失敗（APIキー未設定・レート制限・`API_KEY_SERVICE_BLOCKED` 等）しても投稿作成自体は失敗しない（`null` を返すだけ）。
-- `MOCK_MODE === 'true'` のときは Prisma 呼び出し前に早期returnするため、Gemini は一切呼ばれない（既存の MOCK_MODE パターンをそのまま踏襲）。
-- 必要な環境変数: `GEMINI_API_KEY`（サーバー専用、`requireEnv()` 経由）。取得は https://aistudio.google.com/apikey 。無料枠あり。
-- **地雷**: Google Cloud Console でAPIキーの制限をかける場合、選択すべきAPIは「Generative Language API」（AI Studioキー用）であり、「Gemini API」（Vertex AI用、サービスアカウント認証が必要）ではない。プロジェクトで有効化していないと制限リストに出てこない。それでも `API_KEY_SERVICE_BLOCKED` が出る場合は https://aistudio.google.com/apikey で新規キーを発行するのが最速（正しいAPIが自動で有効化された状態のプロジェクトが作られる）。
 - admin ai-flags 一覧（`components/admin/ai-flag-list.tsx`）は `flag.post` があれば投稿へのリンクと `DeletePostButton`（`components/posts/delete-post-button.tsx`）を表示する。投稿削除に成功すると `postId` カスケードでサーバー側のフラグ行も消えるため、フロントは楽観的にローカルの `flags` state から該当フラグを取り除くだけでよい。
 
 ## 6.5 投稿削除（管理者専用アイコン）
@@ -159,6 +158,8 @@ Badge/Missionは一覧・作成のみ（更新・削除は無い、リネーム�
 **ルール: 管理者が`/admin/tags`で維持する`Tag`マスタから、投稿作成時にGeminiが最も適切なものを最大3件、同じカテゴリーから最大1件選び自動付与する。** `Tag`はname/category/description/isWorkTagを持つ。categoryは`TagCategory.name`への外部キーで、`/admin/tag-categories`の管理マスタから選択する。descriptionは管理画面とAIだけで使い公開レスポンスへ出さない。QAはisWorkTag=trueのみ、ひろばは全タグを候補にする。ユーザー自身はタグを付与・変更できない。判定は`lib/ai/assign-tags.ts`へ集約し、失敗時も投稿作成を失敗させない。
 
 - **AIには候補のname/category/descriptionを渡し、IDではなく名前で答えさせる。** 返却名を登録済み候補と完全一致で照合し、重複、未知名、同カテゴリー2件目をコード側で捨ててから最大3件へ絞る。
+- 必要な環境変数: `GEMINI_API_KEY`（サーバー専用、`requireEnv()` 経由）。取得は https://aistudio.google.com/apikey 。無料枠あり。モデルは `gemini-flash-latest`。日付固定名は廃止で404になりうる。
+- **地雷**: Google Cloud Console でAPIキーの制限をかける場合、選択すべきAPIは「Generative Language API」（AI Studioキー用）であり、「Gemini API」（Vertex AI用、サービスアカウント認証が必要）ではない。プロジェクトで有効化していないと制限リストに出てこない。それでも `API_KEY_SERVICE_BLOCKED` が出る場合は https://aistudio.google.com/apikey で新規キーを発行するのが最速（正しいAPIが自動で有効化された状態のプロジェクトが作られる）。
 - **候補が0件なら即座に空配列を返しGemini自体を呼ばない。** QA routeは取得時点で`isWorkTag: true`へ絞り、ひろばrouteは絞らない。
 - **公開タグ取得には`lib/prisma/selects.ts`の`publicTagSelect`を使う。** description/isWorkTagをPrismaオブジェクトのspreadで公開APIやClient Componentへ漏らさない。管理APIだけ`AdminTagSchema`を使う。
 - isWorkTagをtrueからfalseへ変えるときは既存QAのPostTagを同一transactionで削除し、HirobaPostTagは維持する。カテゴリー変更が既存投稿の一カテゴリー一件制約に抵触する場合は409で拒否する。
