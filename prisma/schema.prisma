@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider        = "prisma-client"
+  output          = "../app/generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -139,7 +140,7 @@ model Post {
 
   @@unique([authorId, idempotencyKey])
   @@index([activityAt, id])
-  @@index([deletedAt, status, activityAt, id])
+  @@index([activityAt(sort: Desc), id(sort: Desc)], map: "Post_visible_activity_idx", where: raw("\"deletedAt\" IS NULL AND \"status\" IN ('OPEN', 'RESOLVED')"))
 }
 
 /// 質問スレッドごとの「実ユーザー ⇔ 匿名キャラ」の対応
