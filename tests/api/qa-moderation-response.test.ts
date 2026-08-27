@@ -291,7 +291,26 @@ describe('Q&A作成APIのモデレーション結果', () => {
         activityAt: baseAnswer.createdAt,
       },
     })
+    expect(prismaMock.post.update).toHaveBeenCalledWith({
+      where: { id: baseAnswer.postId },
+      data: { answerCount: { decrement: 1 } },
+    })
     expect((await response.json()).moderation).toEqual({ isHidden: true })
+  })
+
+  it('AI判定で非公開にならない回答では回答数を減らさない', async () => {
+    prismaMock.post.findUnique.mockResolvedValue(basePost)
+    txMock.answer.create.mockResolvedValue(baseAnswer)
+    txMock.post.update.mockResolvedValue({ ...basePost, answerCount: 1 })
+    moderationMock.moderateAnswer.mockResolvedValue(null)
+
+    const response = await createRequest('/api/questions/post-test/answers', {
+      body: baseAnswer.body,
+    })
+
+    expect(response.status).toBe(201)
+    expect(prismaMock.post.update).not.toHaveBeenCalled()
+    expect((await response.json()).moderation).toEqual({ isHidden: false })
   })
 
   it('匿名プロフィールIDのメンションを実ユーザーIDへ解決して通知する', async () => {
