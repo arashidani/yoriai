@@ -193,6 +193,38 @@ describe('Q&A作成APIのモデレーション結果', () => {
     expect(prismaMock.tag.findMany).not.toHaveBeenCalled()
   })
 
+  it('質問作成時のAIタグ付与失敗では原因のステータスを返す', async () => {
+    prismaMock.post.create.mockResolvedValue(basePost)
+    prismaMock.post.update.mockResolvedValue({
+      ...basePost,
+      postAnonymousProfileId: 'assignment-test',
+    })
+    prismaMock.tag.findMany.mockResolvedValue([
+      {
+        id: 'tag-ai',
+        name: 'その他',
+        category: 'その他',
+        categoryDefinition: { id: 'category-other', name: 'その他' },
+        description: null,
+        createdAt: new Date('2026-08-08T00:00:00.000Z'),
+      },
+    ])
+    assignTagsMock.mockResolvedValue({ status: 'failed', tagNames: [], httpStatus: 429 })
+
+    const response = await createRequest('/api/questions', {
+      title: basePost.title,
+      body: basePost.body,
+    })
+
+    expect(response.status).toBe(201)
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        tagAssignment: 'failed',
+        tagAssignmentErrorStatus: 429,
+      }),
+    )
+  })
+
   it('存在しない手動タグは400を返し、質問を作成しない', async () => {
     prismaMock.tag.findUnique.mockResolvedValue(null)
 

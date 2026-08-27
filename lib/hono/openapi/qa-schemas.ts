@@ -92,6 +92,10 @@ export const TagAssignmentStatusSchema = z
   .enum(['assigned', 'failed', 'skipped'])
   .openapi('TagAssignmentStatus')
 
+export const TagAssignmentErrorStatusSchema = z
+  .union([z.literal(422), z.literal(429), z.literal(502), z.literal(503), z.literal(504)])
+  .openapi('TagAssignmentErrorStatus')
+
 export const PaginationSchema = z
   .object({
     page: z.number().int().positive(),

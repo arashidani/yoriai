@@ -395,6 +395,40 @@
           "skipped"
         ]
       },
+      "TagAssignmentErrorStatus": {
+        "anyOf": [
+          {
+            "type": "number",
+            "enum": [
+              422
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              429
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              502
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              503
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              504
+            ]
+          }
+        ]
+      },
       "LikeStatus": {
         "type": "object",
         "properties": {
@@ -1794,6 +1828,9 @@
                     },
                     "tagAssignment": {
                       "$ref": "#/components/schemas/TagAssignmentStatus"
+                    },
+                    "tagAssignmentErrorStatus": {
+                      "$ref": "#/components/schemas/TagAssignmentErrorStatus"
                     }
                   },
                   "required": [
@@ -1820,6 +1857,9 @@
                     },
                     "tagAssignment": {
                       "$ref": "#/components/schemas/TagAssignmentStatus"
+                    },
+                    "tagAssignmentErrorStatus": {
+                      "$ref": "#/components/schemas/TagAssignmentErrorStatus"
                     }
                   },
                   "required": [
