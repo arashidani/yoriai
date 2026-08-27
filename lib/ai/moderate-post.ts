@@ -1,8 +1,9 @@
 import { GoogleGenAI } from '@google/genai'
+import { GEMINI_MODEL } from '@/lib/ai/gemini'
 import { requireEnv } from '@/lib/env'
 
 const SYSTEM_INSTRUCTION =
-  'あなたは職場向けQ&Aサービスのコンテンツモデレーターです。投稿のタイトルと本文を読み、脅迫・ハラスメント・差別的表現・暴力の示唆・個人攻撃など、職場で許容されない内容が含まれるかを判定してください。技術的な不満や単なるネガティブな感想は対象外です。'
+  'あなたは職場向けQ&Aサービスのコンテンツモデレーターです。投稿のタイトルと本文を読み、脅迫・ハラスメント・差別的表現・暴力の示唆・個人攻撃に加え、露骨な性的表現、侮辱的な罵り、排泄物などを用いた下品な表現、その他職場や公共の場で使うべきでない表現が含まれるかを判定してください。技術的な不満や単なるネガティブな感想は対象外です。'
 
 const RESPONSE_JSON_SCHEMA = {
   type: 'object',
@@ -24,7 +25,7 @@ async function moderate(contents: string): Promise<ModerationResult | null> {
   try {
     const ai = new GoogleGenAI({ apiKey: requireEnv('GEMINI_API_KEY') })
     const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
+      model: GEMINI_MODEL,
       contents,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
