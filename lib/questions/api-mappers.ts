@@ -21,17 +21,22 @@ function firstTagCategory(post: LooseRecord) {
 }
 
 function displayAuthor(record: LooseRecord, isOwn: boolean) {
-  if (isOwn) {
-    return {
-      displayName: record.author?.name ?? record.author?.email ?? '自分',
-      avatarUrl: null,
-    }
-  }
   const profile = record.postAnonymousProfile?.anonymousProfile ?? record.anonymousProfile ?? null
   const aliasNumber = record.postAnonymousProfile?.aliasNumber ?? 1
+  const anonymousName = profile
+    ? anonymousProfileDisplayName(profile.displayName, aliasNumber)
+    : '匿名'
   return {
-    displayName: profile ? anonymousProfileDisplayName(profile.displayName, aliasNumber) : '匿名',
+    displayName: `${anonymousName}${isOwn ? '（あなた）' : ''}`,
     avatarUrl: profile ? avatarUrlForAlias(profile.avatarUrls ?? [], aliasNumber) : null,
+  }
+}
+
+export function toAnswerableQuestionResponse(post: LooseRecord) {
+  return {
+    id: post.id,
+    title: post.title,
+    displayAuthor: displayAuthor(post, false),
   }
 }
 

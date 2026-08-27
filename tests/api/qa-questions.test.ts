@@ -99,7 +99,12 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(
       body.questions.every(
         (question: Record<string, unknown>) =>
-          Object.keys(question).sort().join(',') === 'id,title',
+          Object.keys(question).sort().join(',') === 'displayAuthor,id,title',
+      ),
+    ).toBe(true)
+    expect(
+      body.questions.every((question: { displayAuthor: { avatarUrl: string | null } }) =>
+        Boolean(question.displayAuthor.avatarUrl),
       ),
     ).toBe(true)
   })
