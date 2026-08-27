@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai'
+import { GEMINI_MODEL } from '@/lib/ai/gemini'
 import { requireEnv } from '@/lib/env'
 
 const SYSTEM_INSTRUCTION =
@@ -83,7 +84,7 @@ export async function assignTagsWithStatus(
       description,
     }))
     const response = await ai.models.generateContent({
-      model: 'gemini-flash-latest',
+      model: GEMINI_MODEL,
       contents: `候補タグ: ${JSON.stringify(promptCandidates)}\nタイトル: ${title}\n本文: ${body}`,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
