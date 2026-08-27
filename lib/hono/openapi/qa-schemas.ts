@@ -52,6 +52,7 @@ export const AnswerableQuestionSchema = z
   .object({
     id: z.string(),
     title: z.string(),
+    displayAuthor: DisplayAuthorSchema,
   })
   .openapi('AnswerableQuestion')
 
