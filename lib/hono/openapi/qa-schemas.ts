@@ -52,6 +52,7 @@ export const AnswerableQuestionSchema = z
   .object({
     id: z.string(),
     title: z.string(),
+    displayAuthor: DisplayAuthorSchema,
   })
   .openapi('AnswerableQuestion')
 
@@ -73,6 +74,13 @@ export const QaAnswerSchema = z
     updatedAt: dateTime(),
   })
   .openapi('QuestionAnswer')
+
+export const QuestionDetailResponseSchema = z
+  .object({
+    question: QuestionSchema,
+    answers: z.array(QaAnswerSchema),
+  })
+  .openapi('QuestionDetailResponse')
 
 export const ModerationResultSchema = z
   .object({

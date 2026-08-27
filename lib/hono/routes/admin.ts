@@ -706,11 +706,21 @@ export const adminRoute = $(
     const existing = await prisma.answer.findUnique({ where: { id } })
     if (!existing) return c.json({ error: 'Not found' }, 404)
 
-    const answer = await prisma.answer.update({
-      where: { id },
-      data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
-      include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
-    })
+    const [answer] = await prisma.$transaction([
+      prisma.answer.update({
+        where: { id },
+        data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
+        include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+      }),
+      ...(existing.isHidden
+        ? [
+            prisma.post.update({
+              where: { id: existing.postId },
+              data: { answerCount: { increment: 1 } },
+            }),
+          ]
+        : []),
+    ])
     return c.json({ answer: toAdminAnswerResponse(answer) }, 200)
   })
   .openapi(patchUserRoute, async (c) => {
