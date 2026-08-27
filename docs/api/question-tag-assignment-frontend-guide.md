@@ -90,6 +90,8 @@ AIにタグ選択を任せる場合:
 | `failed` | 質問作成は成功したがタグ付与失敗 | 画面を閉じず、AI再試行／手動選択UIを表示 |
 | `skipped` | 非公開判定などでタグ付与なし | `moderation.isHidden` を優先して非公開エラーを表示 |
 
+`tagAssignment: "failed"` のときは `tagAssignmentErrorStatus`（`422` / `429` / `502` / `503` / `504`）で原因を区別できます。質問作成のHTTPステータスは 201 のままです。
+
 質問作成自体が成功しているため、`tagAssignment: "failed"` の場合に `POST /api/questions` を再送しないでください。返却された `question.id` でタグ付与APIを呼びます。
 
 ### 主なエラー

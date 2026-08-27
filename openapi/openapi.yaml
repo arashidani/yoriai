@@ -271,6 +271,23 @@ components:
         - assigned
         - failed
         - skipped
+    TagAssignmentErrorStatus:
+      anyOf:
+        - type: number
+          enum:
+            - 422
+        - type: number
+          enum:
+            - 429
+        - type: number
+          enum:
+            - 502
+        - type: number
+          enum:
+            - 503
+        - type: number
+          enum:
+            - 504
     LikeStatus:
       type: object
       properties:
@@ -1246,6 +1263,8 @@ paths:
                     $ref: "#/components/schemas/ModerationResult"
                   tagAssignment:
                     $ref: "#/components/schemas/TagAssignmentStatus"
+                  tagAssignmentErrorStatus:
+                    $ref: "#/components/schemas/TagAssignmentErrorStatus"
                 required:
                   - question
                   - moderation
@@ -1263,6 +1282,8 @@ paths:
                     $ref: "#/components/schemas/ModerationResult"
                   tagAssignment:
                     $ref: "#/components/schemas/TagAssignmentStatus"
+                  tagAssignmentErrorStatus:
+                    $ref: "#/components/schemas/TagAssignmentErrorStatus"
                 required:
                   - question
                   - moderation

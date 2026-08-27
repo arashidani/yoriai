@@ -15,6 +15,7 @@ import {
   QuestionSchema,
   QuestionTagCategorySchema,
   QuestionTagSchema,
+  TagAssignmentErrorStatusSchema,
   TagAssignmentStatusSchema,
 } from '@/lib/hono/openapi/qa-schemas'
 import {
@@ -307,6 +308,7 @@ const createQuestionRoute = createRoute({
             question: QuestionSchema,
             moderation: ModerationResultSchema,
             tagAssignment: TagAssignmentStatusSchema,
+            tagAssignmentErrorStatus: TagAssignmentErrorStatusSchema.optional(),
           }),
         },
       },
@@ -319,6 +321,7 @@ const createQuestionRoute = createRoute({
             question: QuestionSchema,
             moderation: ModerationResultSchema,
             tagAssignment: TagAssignmentStatusSchema,
+            tagAssignmentErrorStatus: TagAssignmentErrorStatusSchema.optional(),
           }),
         },
       },
@@ -806,6 +809,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           ),
           moderation: { isHidden: false },
           tagAssignment,
+          ...(tagAssignment === 'failed' ? { tagAssignmentErrorStatus: 422 as const } : {}),
         },
         201,
       )
@@ -894,6 +898,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     // biome-ignore lint/suspicious/noExplicitAny: temporary PostTag include shape
     let tags: any[] = []
     let tagAssignment: 'assigned' | 'failed' | 'skipped' = post.deletedAt ? 'skipped' : 'failed'
+    let tagAssignmentErrorStatus: 422 | 429 | 502 | 503 | 504 | undefined
     if (!post.deletedAt) {
       try {
         let selected = manualTag
@@ -909,9 +914,14 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
               createdAt: true,
             },
           })
-          const { assignTagsWithStatus } = await import('@/lib/ai/assign-tags')
+          const { assignTagsWithStatus, toTagAssignmentErrorStatus } = await import(
+            '@/lib/ai/assign-tags'
+          )
           const assignment = await assignTagsWithStatus(post.title, post.body, allTags)
           tagAssignment = assignment.status === 'assigned' ? 'assigned' : 'failed'
+          if (assignment.status !== 'assigned') {
+            tagAssignmentErrorStatus = toTagAssignmentErrorStatus(assignment)
+          }
           selected =
             assignment.status === 'assigned'
               ? (allTags.find((tag) => tag.name === assignment.tagNames[0]) ?? null)
@@ -924,10 +934,14 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
           })
           tags = [{ id: `assigned-${selected.id}`, createdAt: selected.createdAt, tag: selected }]
           tagAssignment = 'assigned'
+          tagAssignmentErrorStatus = undefined
+        } else if (tagAssignment === 'failed' && tagAssignmentErrorStatus == null) {
+          tagAssignmentErrorStatus = 422
         }
       } catch (error) {
         console.error('Failed to assign tags', { postId: post.id, error })
         tagAssignment = 'failed'
+        tagAssignmentErrorStatus = 502
       }
     }
     return c.json(
@@ -935,6 +949,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
         question: toQuestionResponse({ ...post, tags }, user.id),
         moderation: { isHidden: Boolean(post.deletedAt) },
         tagAssignment,
+        ...(tagAssignmentErrorStatus ? { tagAssignmentErrorStatus } : {}),
       },
       201,
     )
