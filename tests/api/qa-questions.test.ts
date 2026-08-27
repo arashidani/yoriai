@@ -117,6 +117,16 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(body.pagination).toEqual({ page: 2, pageSize: 2, total: 5, totalPages: 3 })
   })
 
+  it('質問詳細を質問と公開回答の1レスポンスで返す', async () => {
+    const response = await app.request('/api/questions/post-3')
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.question.id).toBe('post-3')
+    expect(body.answers).toHaveLength(1)
+    expect(body.answers[0]).toMatchObject({ id: 'answer-2', isMostLiked: true })
+  })
+
   it('解決済みかつ1票以上の最多回答だけisMostLiked=trueにする', async () => {
     const response = await app.request('/api/questions/post-3/answers')
     const body = await response.json()
