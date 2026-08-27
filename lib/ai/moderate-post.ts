@@ -76,8 +76,10 @@ export function toModerationResult(payload: unknown): ModerationResult | null {
 
 async function moderate(input: string): Promise<ModerationResult | null> {
   try {
+    /** Next.js の fetch キャッシュが別投稿の判定を使い回さないようにする */
     const response = await fetch(MODERATION_URL, {
       method: 'POST',
+      cache: 'no-store',
       headers: {
         Authorization: `Bearer ${requireEnv('OPENAI_API_KEY')}`,
         'Content-Type': 'application/json',
