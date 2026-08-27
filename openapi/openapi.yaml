@@ -187,9 +187,12 @@ components:
           type: string
         title:
           type: string
+        displayAuthor:
+          $ref: "#/components/schemas/QuestionDisplayAuthor"
       required:
         - id
         - title
+        - displayAuthor
     QuestionAnswer:
       type: object
       properties:
