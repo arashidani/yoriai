@@ -1,3 +1,4 @@
+import { MentionText } from '@/components/mentions/mention-text'
 import { AnswerLikeButton } from '@/components/posts/answer-like-button'
 
 export type Answer = {
@@ -29,7 +30,9 @@ export function AnswerCard({ answer, liked }: AnswerCardProps) {
           {new Date(answer.createdAt).toLocaleDateString('ja-JP')}
         </span>
       </div>
-      <p className="whitespace-pre-wrap pt-3 text-paragraph-small">{answer.body}</p>
+      <p className="whitespace-pre-wrap pt-3 text-paragraph-small">
+        <MentionText text={answer.body} />
+      </p>
       {!answer.isOwnAnswer && (
         <div className="pt-3">
           <AnswerLikeButton

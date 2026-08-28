@@ -62,6 +62,19 @@ export const WithMention: Story = {
   },
 }
 
+export const WithUrl: Story = {
+  args: {
+    answer: { ...baseAnswer, body: 'お店のサイトは https://example.com です。' },
+    liked: false,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('link', { name: 'https://example.com' })).toHaveAttribute(
+      'href',
+      'https://example.com/',
+    )
+  },
+}
+
 export const NoAuthor: Story = {
   args: {
     answer: { ...baseAnswer, authorId: null, displayName: '削除されたユーザー' },

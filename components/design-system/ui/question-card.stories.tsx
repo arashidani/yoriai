@@ -32,6 +32,18 @@ export const Default: Story = {
   },
 }
 
+export const WithUrl: Story = {
+  args: {
+    body: '詳しくは https://example.com を見てください。',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('link', { name: 'https://example.com' })).toHaveAttribute(
+      'href',
+      'https://example.com/',
+    )
+  },
+}
+
 export const Resolved: Story = {
   args: { status: 'RESOLVED' },
   play: async ({ canvas }) => {

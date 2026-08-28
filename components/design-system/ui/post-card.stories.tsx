@@ -92,6 +92,22 @@ export const WithPostHref: Story = {
   },
 }
 
+export const WithUrl: Story = {
+  args: {
+    post: {
+      ...basePost,
+      body: 'お店のサイトは https://example.com です。おすすめがあれば教えてください。',
+    },
+    joined: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('link', { name: 'https://example.com' })).toHaveAttribute(
+      'href',
+      'https://example.com/',
+    )
+  },
+}
+
 export const Muted: Story = {
   args: { post: basePost, joined: true, state: 'muted' },
   play: async ({ canvas }) => {

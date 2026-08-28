@@ -15,3 +15,16 @@ export const Default: Story = {
     await expect(canvas.getByText('@ねこ')).toHaveClass('text-primary')
   },
 }
+
+export const WithUrl: Story = {
+  args: {
+    text: '社内ポータルは https://example.com を見てください。 @ねこ さんにも共有済みです。',
+  },
+  play: async ({ canvas }) => {
+    const link = canvas.getByRole('link', { name: 'https://example.com' })
+    await expect(link).toHaveAttribute('href', 'https://example.com/')
+    await expect(link).toHaveAttribute('target', '_blank')
+    await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+    await expect(canvas.getByText('@ねこ')).toHaveClass('text-primary')
+  },
+}

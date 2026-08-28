@@ -6,6 +6,7 @@ import { Square } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AiChatbot } from '@/components/design-system/ai-chat/ai-chatbot'
 import { MessageContainer } from '@/components/design-system/ai-chat/message-container'
+import { MentionText } from '@/components/mentions/mention-text'
 import type { ChatUIMessage } from '@/lib/chat/types'
 import { client } from '@/lib/hono/client'
 import type { ChatRequestInput } from '@/lib/schemas/chat'
@@ -133,7 +134,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
             size="body"
             className={message.role === 'user' ? 'self-end' : undefined}
           >
-            {messageText(message)}
+            <MentionText text={messageText(message)} />
           </MessageContainer>
         )
       })}
