@@ -7,6 +7,7 @@ type TransactionMock = {
   businessSkill: { count: ReturnType<typeof vi.fn> }
   interest: { count: ReturnType<typeof vi.fn> }
   user: { update: ReturnType<typeof vi.fn> }
+  hirobaMembership: { deleteMany: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> }
 }
 
 const { prismaMock, txMock } = vi.hoisted(() => {
@@ -16,6 +17,7 @@ const { prismaMock, txMock } = vi.hoisted(() => {
     businessSkill: { count: vi.fn() },
     interest: { count: vi.fn() },
     user: { update: vi.fn() },
+    hirobaMembership: { deleteMany: vi.fn(), create: vi.fn() },
   }
   return {
     txMock: tx,
@@ -127,5 +129,11 @@ describe('オンボーディング完了API', () => {
         }),
       }),
     )
+    expect(txMock.hirobaMembership.create).toHaveBeenCalledWith({
+      data: {
+        user: { connect: { id: 'user-1' } },
+        hiroba: { connect: { slug: 'mbti-green' } },
+      },
+    })
   })
 })

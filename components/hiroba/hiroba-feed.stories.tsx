@@ -46,6 +46,7 @@ export const Default: Story = {
     },
     posts,
     initialJoined: false,
+    canJoin: true,
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText(/近くに新しく/)).toBeVisible()
@@ -59,5 +60,26 @@ export const Default: Story = {
       'href',
       '/mypage/user-1',
     )
+  },
+}
+
+export const Joined: Story = {
+  args: {
+    ...Default.args,
+    initialJoined: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: '参加中' })).toBeDisabled()
+  },
+}
+
+export const DifferentMbtiGroup: Story = {
+  args: {
+    ...Default.args,
+    canJoin: false,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: '参加する' })).toBeDisabled()
+    await expect(canvas.getByText('参加できるのは、自分のグループの広場だけです。')).toBeVisible()
   },
 }

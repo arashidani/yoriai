@@ -1,3 +1,4 @@
+import type { DisplayNameColor } from '@/app/generated/prisma/enums'
 import type { SquareIconName } from '@/components/design-system/ui/square-icons'
 
 export const HIROBA_CATEGORIES = [
@@ -25,6 +26,23 @@ export type HirobaCatalogItem = {
 }
 
 export const DEFAULT_HIROBA_SLUGS = ['feature-testing'] as const
+
+export const MBTI_HIROBA_SLUG_BY_COLOR: Partial<Record<DisplayNameColor, string>> = {
+  GREEN: 'mbti-green',
+  YELLOW: 'mbti-yellow',
+  BLUE: 'mbti-blue',
+  PURPLE: 'mbti-purple',
+}
+
+export const MBTI_HIROBA_SLUGS = Object.values(MBTI_HIROBA_SLUG_BY_COLOR)
+
+export function getMbtiHirobaSlug(color: DisplayNameColor | null | undefined) {
+  return color ? MBTI_HIROBA_SLUG_BY_COLOR[color] : undefined
+}
+
+export function canJoinHiroba(slug: string, color: DisplayNameColor | null | undefined) {
+  return !MBTI_HIROBA_SLUGS.includes(slug) || getMbtiHirobaSlug(color) === slug
+}
 
 export function isDefaultHiroba(slug: string) {
   return (DEFAULT_HIROBA_SLUGS as readonly string[]).includes(slug)
@@ -178,8 +196,44 @@ export const RIGHT_SECTIONS: HirobaSection[] = [
   },
 ]
 
+export const MBTI_SECTION: HirobaSection = {
+  title: 'MBTI',
+  category: 'mbtiGreen',
+  items: [
+    item(
+      'mbti-green',
+      '緑の人の広場',
+      'MBTIが緑グループの人のためのひろばです。',
+      'humanHead',
+      'mbtiGreen',
+    ),
+    item(
+      'mbti-yellow',
+      '黄色の人の広場',
+      'MBTIが黄色グループの人のためのひろばです。',
+      'humanHead',
+      'mbtiYellow',
+    ),
+    item(
+      'mbti-blue',
+      '青の人の広場',
+      'MBTIが青グループの人のためのひろばです。',
+      'humanHead',
+      'mbtiBlue',
+    ),
+    item(
+      'mbti-purple',
+      '紫の人の広場',
+      'MBTIが紫グループの人のためのひろばです。',
+      'humanHead',
+      'mbtiPurple',
+    ),
+  ],
+}
+
 export const HIROBA_SECTIONS: HirobaSection[] = [
   PICKUP_SECTION,
+  MBTI_SECTION,
   ...LEFT_SECTIONS,
   ...RIGHT_SECTIONS,
 ]

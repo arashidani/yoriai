@@ -8,6 +8,7 @@ type TransactionMock = {
   businessSkill: { count: ReturnType<typeof vi.fn> }
   interest: { count: ReturnType<typeof vi.fn> }
   user: { update: ReturnType<typeof vi.fn> }
+  hirobaMembership: { deleteMany: ReturnType<typeof vi.fn>; create: ReturnType<typeof vi.fn> }
 }
 
 const { prismaMock, txMock } = vi.hoisted(() => {
@@ -17,6 +18,7 @@ const { prismaMock, txMock } = vi.hoisted(() => {
     businessSkill: { count: vi.fn() },
     interest: { count: vi.fn() },
     user: { update: vi.fn() },
+    hirobaMembership: { deleteMany: vi.fn(), create: vi.fn() },
   }
   return {
     txMock: tx,
@@ -124,6 +126,20 @@ describe('自分のプロフィールAPI', () => {
     const update = txMock.user.update.mock.calls[0][0]
     expect(update.data).toEqual(expect.objectContaining({ name: '山田 太郎' }))
     expect(update.data).not.toHaveProperty('email')
+    expect(txMock.hirobaMembership.deleteMany).toHaveBeenCalledWith({
+      where: {
+        userId: 'user-1',
+        hiroba: {
+          slug: { in: ['mbti-green', 'mbti-yellow', 'mbti-blue', 'mbti-purple'] },
+        },
+      },
+    })
+    expect(txMock.hirobaMembership.create).toHaveBeenCalledWith({
+      data: {
+        user: { connect: { id: 'user-1' } },
+        hiroba: { connect: { slug: 'mbti-green' } },
+      },
+    })
     expect(txMock.department.findFirst).toHaveBeenCalledWith({
       where: {
         id: 'department-1',

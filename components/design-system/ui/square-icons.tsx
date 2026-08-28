@@ -70,7 +70,7 @@ const SQUARE_ICONS = {
   mbtiYellow: { src: mbtiYellow, width: 16, height: 18 },
 } as const
 
-export type SquareIconName = keyof typeof SQUARE_ICONS
+export type SquareIconName = keyof typeof SQUARE_ICONS | 'humanHead'
 
 const MINI_SCALE = 0.78
 
@@ -88,6 +88,26 @@ export function SquareIcons({
   scale: scaleProp,
   className,
 }: SquareIconsProps) {
+  if (name === 'humanHead') {
+    return (
+      <span
+        role="img"
+        aria-label="人"
+        className={cn(
+          'block leading-none',
+          scaleProp
+            ? 'text-heading-1'
+            : size === 'mini'
+              ? 'text-paragraph-small'
+              : 'text-heading-4',
+          className,
+        )}
+      >
+        👤
+      </span>
+    )
+  }
+
   const { src, width, height } = SQUARE_ICONS[name]
   const scale = scaleProp ?? (size === 'mini' ? MINI_SCALE : 1)
 

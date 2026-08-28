@@ -7,6 +7,7 @@ import { HirobaAnswerTextarea } from '@/components/hiroba/hiroba-answer-textarea
 import { HirobaJoinButton } from '@/components/hiroba/hiroba-join-button'
 import { HirobaSidebar } from '@/components/hiroba/hiroba-sidebar'
 import { getCurrentUser } from '@/lib/auth/current-user'
+import { canJoinHiroba } from '@/lib/hiroba/catalog'
 import { getHirobaJoined } from '@/lib/hiroba/membership'
 import { getHiroba, getHirobaPost, getPopularPosts } from '@/lib/hiroba/posts'
 import { MOCK_HIROBA_ANSWERS } from '@/lib/mocks/fixtures'
@@ -75,7 +76,7 @@ export default async function HirobaPostDetailPage({ params }: Props) {
 
   const [post, joined, popularPosts] = await Promise.all([
     getHirobaPost(postId, slug, currentUser?.id),
-    getHirobaJoined(hiroba.slug, hiroba.id, currentUser?.id),
+    getHirobaJoined(hiroba.slug, hiroba.id, currentUser?.id, currentUser?.displayNameColor),
     getPopularPosts(),
   ])
   if (!post) notFound()
@@ -96,7 +97,11 @@ export default async function HirobaPostDetailPage({ params }: Props) {
             </Button>
           </Link>
 
-          {!joined && <HirobaJoinButton slug={slug} />}
+          <HirobaJoinButton
+            slug={slug}
+            joined={joined}
+            canJoin={canJoinHiroba(slug, currentUser?.displayNameColor)}
+          />
         </div>
 
         <div className="mx-3 flex min-h-0 flex-col space-y-4">
