@@ -47,26 +47,35 @@ function formatRelativeTime(input: Date | string) {
   return date.toLocaleDateString('ja-JP')
 }
 
+type PostCardState = 'default' | 'muted'
+
 type PostCardProps = {
   post: HirobaPost
   lunchVariant?: LunchChipType
   mbtiVariant?: MbtiChipVariant
   border?: 'default' | 'none'
+  /** default: いいねをトグルできる / muted: 表示専用（塗りつぶしの肉球） */
+  state?: PostCardState
   joined: boolean
   className?: string
-  /** 指定すると本文・画像部分がこのURL（投稿詳細）へのリンクになる */
+  /** 指定すると本文・画像部分がこのURL（投稿詳細）へのリンクになる。カードにホバー背景が付く */
   postHref?: string
 }
 
-const postCardVariants = cva('flex gap-3', {
+const postCardVariants = cva('flex gap-3 transition-colors', {
   variants: {
     border: {
-      default: 'border-2 border-neutral-200 p-4 rounded-lg',
+      default: 'border-2 border-neutral-200 p-4 rounded-lg bg-surface',
       none: 'border-none',
+    },
+    interactive: {
+      true: 'hover:bg-ghost-hover',
+      false: '',
     },
   },
   defaultVariants: {
     border: 'default',
+    interactive: false,
   },
 })
 
@@ -75,6 +84,7 @@ export function PostCard({
   lunchVariant,
   mbtiVariant,
   border,
+  state = 'default',
   joined,
   className,
   postHref,
@@ -140,23 +150,21 @@ export function PostCard({
   )
 
   return (
-    <div className={cn(postCardVariants({ border }), className)}>
+    <div className={cn(postCardVariants({ border, interactive: !!postHref }), className)}>
       {profileHref ? <Link href={profileHref}>{avatar}</Link> : avatar}
 
-      <div className="space-y-2 flex-1">
-        <div className="space-y-2 mr-10 w-full">
+      <div className="flex-1 min-w-0 space-y-2 pr-10">
+        <div className="space-y-2">
           <div className="flex gap-2 items-center">
             {profileHref ? (
               <Link
                 href={profileHref}
-                className="text-foreground text-sm font-bold hover:underline tracking-normal"
+                className="text-label text-foreground hover:underline tracking-normal"
               >
                 {post.displayName}
               </Link>
             ) : (
-              <p className="text-foreground text-sm font-bold tracking-normal">
-                {post.displayName}
-              </p>
+              <p className="text-label text-foreground tracking-normal">{post.displayName}</p>
             )}
 
             {resolvedLunchVariant && <LunchChip lunchType={resolvedLunchVariant} />}
@@ -178,6 +186,7 @@ export function PostCard({
           <CommentCount count={post.answerCount} />
 
           <LikeButton
+            state={state}
             count={likeCount}
             pressed={liked}
             disabled={!joined || pending}
