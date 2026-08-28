@@ -1,4 +1,6 @@
-import type { ComponentProps, ReactNode } from 'react'
+'use client'
+
+import type { ComponentProps, KeyboardEvent, ReactNode } from 'react'
 
 import { Button } from '@/components/design-system/button'
 import { IconPencil } from '@/components/design-system/icons/icon-pencil'
@@ -21,6 +23,10 @@ type AnswerFormProps = {
   textarea?: ReactNode
 } & Omit<ComponentProps<'form'>, 'className'>
 
+function isModEnter(event: KeyboardEvent<HTMLFormElement>) {
+  return event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing
+}
+
 function AnswerForm({
   className,
   placeholder = '回答を入力する',
@@ -28,10 +34,22 @@ function AnswerForm({
   disabled = false,
   textareaProps,
   textarea,
+  onKeyDown,
   ...formProps
 }: AnswerFormProps) {
   return (
-    <form data-slot="answer-form" className={cn('relative w-full', className)} {...formProps}>
+    <form
+      data-slot="answer-form"
+      className={cn('relative w-full', className)}
+      {...formProps}
+      onKeyDown={(event) => {
+        onKeyDown?.(event)
+        if (event.defaultPrevented || !isModEnter(event)) return
+        event.preventDefault()
+        if (disabled) return
+        event.currentTarget.requestSubmit()
+      }}
+    >
       {textarea ?? (
         <Textarea
           id="answer-body"

@@ -82,6 +82,12 @@ export function HirobaAnswerTextarea({ postId }: HirobaAnswerTextareaProps) {
           loadCandidates={loadCandidates}
           placeholder="コメントを入力する"
           disabled={isSubmitting}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return
+            if (event.nativeEvent.isComposing) return
+            event.preventDefault()
+            void handleSubmit()
+          }}
         />
         <div className="flex justify-end">
           <Button
