@@ -35,39 +35,39 @@ import yoga from '@/assets/yoga.svg'
 import { cn } from '@/lib/utils'
 
 const SQUARE_ICONS = {
-  alcohol: { src: alcohol, width: 19, height: 18 },
-  dumbbell: { src: dumbbell, width: 18, height: 9 },
-  event: { src: event, width: 18, height: 18 },
-  dog: { src: dog, width: 20, height: 18 },
-  cat: { src: cat, width: 19, height: 18 },
-  beauty: { src: beauty, width: 20, height: 16 },
-  hotSpring: { src: hotSpring, width: 18, height: 15 },
-  mountain: { src: mountain, width: 21, height: 15 },
-  house: { src: house, width: 18, height: 18 },
-  yoga: { src: yoga, width: 22, height: 18 },
-  baseball: { src: baseball, width: 18, height: 18 },
-  soccer: { src: soccer, width: 18, height: 18 },
-  camp: { src: camp, width: 21, height: 18 },
-  travel: { src: travel, width: 18, height: 18 },
-  fire: { src: fire, width: 14, height: 18 },
-  comic: { src: comic, width: 22, height: 18 },
-  camera: { src: camera, width: 21, height: 18 },
-  music: { src: music, width: 16, height: 18 },
-  drama: { src: drama, width: 20, height: 18 },
-  cook: { src: cook, width: 17, height: 18 },
-  art: { src: art, width: 18, height: 18 },
-  popcorn: { src: popcorn, width: 16, height: 18 },
-  game: { src: game, width: 21, height: 18 },
-  cafe: { src: cafe, width: 20, height: 18 },
-  food: { src: food, width: 15, height: 18 },
-  knowhow: { src: knowhow, width: 13, height: 18 },
-  idol: { src: idol, width: 18, height: 18 },
-  twoD: { src: twoD, width: 17, height: 18 },
-  tutorial: { src: tutorial, width: 18, height: 18 },
-  mbtiBlue: { src: mbtiBlue, width: 16, height: 18 },
-  mbtiGreen: { src: mbtiGreen, width: 16, height: 18 },
-  mbtiPurple: { src: mbtiPurple, width: 16, height: 18 },
-  mbtiYellow: { src: mbtiYellow, width: 16, height: 18 },
+  alcohol,
+  dumbbell,
+  event,
+  dog,
+  cat,
+  beauty,
+  hotSpring,
+  mountain,
+  house,
+  yoga,
+  baseball,
+  soccer,
+  camp,
+  travel,
+  fire,
+  comic,
+  camera,
+  music,
+  drama,
+  cook,
+  art,
+  popcorn,
+  game,
+  cafe,
+  food,
+  knowhow,
+  idol,
+  twoD,
+  tutorial,
+  mbtiBlue,
+  mbtiGreen,
+  mbtiPurple,
+  mbtiYellow,
 } as const
 
 export type SquareIconName = keyof typeof SQUARE_ICONS | 'humanHead'
@@ -108,16 +108,16 @@ export function SquareIcons({
     )
   }
 
-  const { src, width, height } = SQUARE_ICONS[name]
+  const src = SQUARE_ICONS[name]
   const scale = scaleProp ?? (size === 'mini' ? MINI_SCALE : 1)
 
   return (
     <Image
       src={src}
-      width={width * scale}
-      height={height * scale}
+      width={src.width * scale}
+      height={src.height * scale}
       alt=""
-      className={cn('block', className)}
+      className={cn('block h-auto', className)}
     />
   )
 }
