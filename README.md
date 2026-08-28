@@ -212,6 +212,42 @@ const { posts } = await res.json()
 
 **Supabase ダッシュボード → Authentication → Sign In / Providers → "Confirm email" をオフ**
 
+## デプロイとマイグレーション
+
+マイグレーションは**手動適用**（デプロイでは自動実行されない）。
+
+```bash
+npm run db:migrate   # prisma migrate deploy
+```
+
+`prisma.config.ts` の datasource は `DIRECT_URL` を参照するため、`DATABASE_URL` だけでは流れない点に注意。
+
+適用状況の確認:
+
+```sql
+-- finished_at が NULL のものは失敗して止まっているマイグレーション
+select migration_name, finished_at, rolled_back_at from "_prisma_migrations" order by started_at desc limit 10;
+```
+
+### マイグレーションが失敗して止まっている場合
+
+Prisma は1本失敗すると以降のマイグレーションを一切適用しない（`P3018`）。失敗した本文を冪等に直したうえで、失敗記録を rolled back 扱いにしてから再適用する。
+
+```bash
+npx prisma migrate resolve --rolled-back "<migration_name>"
+npm run db:migrate
+```
+
+なお、マイグレーションは1本がトランザクションになっているため、失敗したものは途中まで適用された状態にはならない。適用済みのマイグレーションファイルを冪等化する編集をしても、`migrate deploy` はチェックサム差分では失敗しない。
+
+### ひろばのマスタデータについて
+
+`Hiroba` テーブルの行はマイグレーションの `INSERT` で投入されるが、未適用でも詳細ページが404にならないよう、`lib/hiroba/record.ts` の `ensureHirobaBySlug()` が `lib/hiroba/catalog.ts` の定義から行を補完する。
+
+そのため、**ひろばの追加はカタログに書けば動く**（`lib/hiroba/catalog.ts` が正）。マイグレーションの `INSERT` は初期投入用で、カタログとの対応は `tests/hiroba-catalog.test.ts` で固定している。
+
+なお、これはマスタデータの補完のみ。**スキーマ変更のマイグレーションは従来どおり手動適用が必要**。
+
 ## TODO
 
 - [ ] **RLS（Row Level Security）の設定**

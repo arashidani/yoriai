@@ -23,10 +23,10 @@ WHERE p.id = sub.post_id
   AND p."answerCount" IS DISTINCT FROM sub.cnt;
 
 -- 公開質問の状態絞り込みと最終アクティビティ順ページングを支援する。
-CREATE INDEX "Post_visible_activity_idx"
+CREATE INDEX IF NOT EXISTS "Post_visible_activity_idx"
 ON "Post"("activityAt" DESC, "id" DESC)
 WHERE "deletedAt" IS NULL AND "status" IN ('OPEN', 'RESOLVED');
 
 -- タグ・カテゴリー絞り込み時に中間テーブルを tagId 側から探索できるようにする。
-CREATE INDEX "PostTag_tagId_postId_idx"
+CREATE INDEX IF NOT EXISTS "PostTag_tagId_postId_idx"
 ON "PostTag"("tagId", "postId");
