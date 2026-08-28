@@ -5,6 +5,9 @@ import { AiChatbot } from './ai-chatbot'
 
 const meta = {
   component: AiChatbot,
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
   decorators: [
     (Story) => (
       <div className="h-[673px] w-[495px]">

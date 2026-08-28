@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Logo } from '@/components/brand/logo'
+import { IconBell } from '@/components/design-system/icons/icon-bell'
+import { IconCircle } from '@/components/design-system/icons/icon-circle'
 import { IconClose } from '@/components/design-system/icons/icon-close'
 import { LogoutButton } from '@/components/logout-button'
 import { FeatureTutorialStartButton } from '@/components/tutorial/feature-tutorial'
@@ -18,7 +20,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
+import { useUnreadNotificationCount } from '@/hooks/use-notifications'
+import { useNotificationPanelStore } from '@/lib/stores/notification-panel-store'
 import { cn } from '@/lib/utils'
+
+/** ナビゲーションのピル。通知ボタンと各リンクで共通。 */
+const navItemClassName =
+  'flex items-center gap-2 rounded-full px-6 py-4 text-paragraph font-bold text-sidebar-foreground transition-colors hover:bg-muted'
 
 const navItems = [
   { href: '/hiroba', label: 'ひろば', icon: UsersRound },
@@ -36,31 +44,78 @@ function isNavActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+function NotificationNavButton({ onOpen }: { onOpen: () => void }) {
+  const unreadCount = useUnreadNotificationCount()
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className={cn(navItemClassName, 'w-full cursor-pointer justify-between')}
+    >
+      <span className="flex items-center gap-2">
+        <IconBell className="h-[17px] w-4" />
+        通知
+      </span>
+      {unreadCount > 0 && (
+        <>
+          <IconCircle aria-hidden className="size-3 shrink-0 text-primary" />
+          <span className="sr-only">{unreadCount}件の未読通知</span>
+        </>
+      )}
+    </button>
+  )
+}
+
+function SidebarNav({
+  onNavigate,
+  onOpenNotifications,
+  onCloseNotifications,
+}: {
+  onNavigate?: () => void
+  onOpenNotifications: () => void
+  onCloseNotifications: () => void
+}) {
   const pathname = usePathname()
+
+  function handleNavItemClick() {
+    onCloseNotifications()
+    onNavigate?.()
+  }
 
   return (
     <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-8">
+      <NotificationNavButton
+        onOpen={() => {
+          onNavigate?.()
+          onOpenNotifications()
+        }}
+      />
       {navItems.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
           href={href}
-          onClick={onNavigate}
-          className={cn(
-            'flex items-center gap-2 rounded-full px-6 py-4 text-paragraph font-bold text-sidebar-foreground transition-colors hover:bg-muted',
-            isNavActive(pathname, href) && 'bg-muted',
-          )}
+          onClick={handleNavItemClick}
+          className={cn(navItemClassName, isNavActive(pathname, href) && 'bg-muted')}
         >
           <Icon className="size-4" />
           {label}
         </Link>
       ))}
-      <FeatureTutorialStartButton onStart={onNavigate} />
+      <FeatureTutorialStartButton onStart={handleNavItemClick} />
     </nav>
   )
 }
 
-function MobileNav({ isAdmin }: { isAdmin: boolean }) {
+function MobileNav({
+  isAdmin,
+  onOpenNotifications,
+  onCloseNotifications,
+}: {
+  isAdmin: boolean
+  onOpenNotifications: () => void
+  onCloseNotifications: () => void
+}) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -95,12 +150,19 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
           </SheetClose>
         </div>
         <div className="flex min-h-0 flex-1 flex-col pb-8">
-          <SidebarNav onNavigate={() => setOpen(false)} />
+          <SidebarNav
+            onNavigate={() => setOpen(false)}
+            onOpenNotifications={onOpenNotifications}
+            onCloseNotifications={onCloseNotifications}
+          />
           <div className="flex shrink-0 flex-col items-start gap-2 p-8">
             {isAdmin && (
               <Link
                 href="/admin"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  onCloseNotifications()
+                  setOpen(false)
+                }}
                 className="text-paragraph-small text-secondary-foreground hover:text-foreground"
               >
                 管理者画面へ
@@ -116,12 +178,19 @@ function MobileNav({ isAdmin }: { isAdmin: boolean }) {
 
 /** ユーザー画面共通の左ナビゲーション。 */
 export function Sidebar({ isAdmin = false }: SidebarProps) {
+  const openNotifications = useNotificationPanelStore((state) => state.open)
+  const closeNotifications = useNotificationPanelStore((state) => state.close)
+
   return (
     <>
       <header className="flex items-center justify-between border-b border-input bg-background-subtle px-4 py-3 lg:hidden">
         <div className="flex items-center gap-1">
-          <MobileNav isAdmin={isAdmin} />
-          <Link href="/">
+          <MobileNav
+            isAdmin={isAdmin}
+            onOpenNotifications={openNotifications}
+            onCloseNotifications={closeNotifications}
+          />
+          <Link href="/" onClick={closeNotifications}>
             <Logo variant="full" preload className="h-8 w-auto" />
           </Link>
         </div>
@@ -129,31 +198,39 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {isAdmin && (
             <Link
               href="/admin"
+              onClick={closeNotifications}
               className="rounded-full px-3 py-2 text-paragraph-small text-secondary-foreground hover:bg-muted hover:text-foreground"
             >
               管理者
             </Link>
           )}
-          <Button variant="ghost" size="icon-lg" className="rounded-full" aria-label="通知">
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="rounded-full"
+            aria-label="通知"
+            onClick={openNotifications}
+          >
             <BellDot />
           </Button>
           <LogoutButton />
         </div>
       </header>
       <aside className="hidden w-80 shrink-0 flex-col bg-background-subtle lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start">
-        <div className="flex shrink-0 items-center justify-between p-8">
-          <Link href="/">
+        <div className="flex shrink-0 items-center p-8">
+          <Link href="/" onClick={closeNotifications}>
             <Logo variant="full" preload className="h-9 w-auto" />
           </Link>
-          <Button variant="ghost" size="icon-lg" className="rounded-full" aria-label="通知">
-            <BellDot />
-          </Button>
         </div>
-        <SidebarNav />
+        <SidebarNav
+          onOpenNotifications={openNotifications}
+          onCloseNotifications={closeNotifications}
+        />
         <div className="flex shrink-0 flex-col items-start gap-2 p-8">
           {isAdmin && (
             <Link
               href="/admin"
+              onClick={closeNotifications}
               className="text-paragraph-small text-secondary-foreground hover:text-foreground"
             >
               管理者画面へ

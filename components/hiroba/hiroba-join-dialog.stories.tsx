@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn, screen } from 'storybook/test'
+import { expect, fn, screen, waitFor } from 'storybook/test'
 import { HirobaJoinDialog } from './hiroba-join-dialog'
 
 const meta = {
@@ -19,7 +19,9 @@ export const Default: Story = {
     onJoined: fn(),
   },
   play: async () => {
-    await expect(screen.getByRole('dialog')).toBeVisible()
+    // ダイアログはフェードインで開くため、可視になるまで待つ
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(dialog).toBeVisible())
     await expect(screen.getByRole('button', { name: '参加する' })).toBeVisible()
   },
 }

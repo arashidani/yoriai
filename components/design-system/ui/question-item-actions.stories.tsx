@@ -60,12 +60,14 @@ export const SyncOptimisticInteractions: Story = {
   parameters: {
     msw: {
       handlers: [
-        http.post('/api/questions/:id/likes', () => {
-          likeRequest()
+        // 他ストーリーのアンマウント時同期が同じハンドラに届くため、
+        // このストーリーの postId のリクエストだけを数える
+        http.post('/api/questions/:id/likes', ({ params }) => {
+          if (params.id === 'post-sync') likeRequest()
           return HttpResponse.json({ liked: true, likeCount: 4 })
         }),
-        http.post('/api/questions/:id/bookmarks', () => {
-          bookmarkRequest()
+        http.post('/api/questions/:id/bookmarks', ({ params }) => {
+          if (params.id === 'post-sync') bookmarkRequest()
           return HttpResponse.json({ saved: true, bookmarkCount: 6 })
         }),
       ],

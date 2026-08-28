@@ -4,6 +4,9 @@ import { MessageContainer } from './message-container'
 
 const meta = {
   component: MessageContainer,
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
 } satisfies Meta<typeof MessageContainer>
 
 export default meta
@@ -16,8 +19,12 @@ export const Ai: Story = {
   },
   play: async ({ canvas, canvasElement }) => {
     await expect(canvas.getByText('こんにちは。どんなことでお困りですか？')).toBeVisible()
-    // AI のときだけ よりあいぬ のアイコンが付く
+    // AI のときだけ よりあいぬ のアイコンが付き、プロフィールへ遷移できる
     await expect(canvasElement.querySelector('img')).toBeInTheDocument()
+    await expect(canvas.getByRole('link', { name: 'よりあいぬのプロフィール' })).toHaveAttribute(
+      'href',
+      '/mypage/yoriainu',
+    )
   },
 }
 

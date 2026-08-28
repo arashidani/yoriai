@@ -232,7 +232,8 @@ export const CloseOnOutsideClick: Story = {
     await userEvent.click(canvas.getByText('カテゴリーを選択'))
     await expect(canvas.getByRole('checkbox', { name: '技術' })).toBeVisible()
     await userEvent.click(canvas.getByPlaceholderText('キーワードを入力'))
-    await expect(canvas.queryByRole('checkbox', { name: '技術' })).not.toBeInTheDocument()
+    // details を閉じても中身は DOM に残るため、可視性で判定する
+    await expect(canvas.getByRole('checkbox', { name: '技術' })).not.toBeVisible()
   },
 }
 
