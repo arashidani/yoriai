@@ -4,6 +4,9 @@ import { Header } from './header'
 
 const meta = {
   component: Header,
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
   decorators: [
     (Story) => (
       <div className="w-[495px]">
@@ -20,6 +23,10 @@ export const Default: Story = {
   args: { onRefresh: fn(), onClose: fn() },
   play: async ({ canvas, userEvent, args, canvasElement }) => {
     await expect(canvas.getByText('よりあいぬの小屋')).toBeVisible()
+    await expect(canvas.getByRole('link', { name: 'よりあいぬのプロフィール' })).toHaveAttribute(
+      'href',
+      '/mypage/yoriainu',
+    )
 
     const header = canvasElement.querySelector('[data-slot="chat-header"]')
     // Figma: primary/primary = #ff8560
