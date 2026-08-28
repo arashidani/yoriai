@@ -20,7 +20,7 @@ function AuthorAvatar({ src, alt = '', className, sizes = '50px' }: AuthorAvatar
     <div
       data-slot="author-avatar"
       className={cn(
-        'relative size-12.5 shrink-0 overflow-hidden rounded-md bg-informative',
+        'relative size-12.5 shrink-0 overflow-hidden rounded-md bg-primary',
         className,
       )}
     >
