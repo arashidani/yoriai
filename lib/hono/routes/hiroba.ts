@@ -2,9 +2,8 @@ import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import type { HirobaPost, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity } from '@/app/generated/prisma/enums'
-import { assignTags } from '@/lib/ai/assign-tags'
-import { moderatePost } from '@/lib/ai/moderate-post'
-import { findHiroba, HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
+import { canJoinHiroba, findHiroba, HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
+import { ensureHirobaBySlug } from '@/lib/hiroba/record'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -68,6 +67,7 @@ const joinRoute = createRoute({
       content: { 'application/json': { schema: membershipResponse } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('自分のMBTIグループではない', '自分のグループの広場にのみ参加できます'),
     404: errorResponse('ひろばが見つからない', 'Not found'),
   },
 })
@@ -76,13 +76,13 @@ const leaveRoute = createRoute({
   method: 'delete',
   path: '/{slug}/membership',
   tags: ['hiroba'],
-  summary: 'ひろばから退出する',
+  summary: 'ひろばの参加を継続する',
   security: [{ supabaseSession: [] }],
   middleware: [authMiddleware] as const,
   request: { params: SlugParamSchema },
   responses: {
     200: {
-      description: '退出後の状態',
+      description: '参加中の状態（ひろばからは退出できない）',
       content: { 'application/json': { schema: membershipResponse } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
@@ -152,7 +152,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       return c.json({ hiroba, posts }, 200)
     }
 
-    const hiroba = await prisma.hiroba.findUnique({ where: { slug } })
+    const hiroba = await ensureHirobaBySlug(slug)
     if (!hiroba) return c.json({ error: 'Not found' }, 404)
 
     const posts = await prisma.hirobaPost.findMany({
@@ -168,12 +168,15 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
   .openapi(joinRoute, async (c) => {
     const { slug } = c.req.valid('param')
     if (!findHiroba(slug)) return c.json({ error: 'Not found' }, 404)
+    const user = c.get('user')
+    if (!canJoinHiroba(slug, user.displayNameColor)) {
+      return c.json({ error: '自分のグループの広場にのみ参加できます' }, 403)
+    }
     if (process.env.MOCK_MODE === 'true') return c.json({ joined: true }, 200)
 
-    const hiroba = await prisma.hiroba.findUnique({ where: { slug }, select: { id: true } })
+    const hiroba = await ensureHirobaBySlug(slug)
     if (!hiroba) return c.json({ error: 'Not found' }, 404)
 
-    const user = c.get('user')
     await prisma.hirobaMembership.upsert({
       where: { userId_hirobaId: { userId: user.id, hirobaId: hiroba.id } },
       update: {},
@@ -184,15 +187,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
   .openapi(leaveRoute, async (c) => {
     const { slug } = c.req.valid('param')
     if (!findHiroba(slug)) return c.json({ error: 'Not found' }, 404)
-    if (isDefaultHiroba(slug)) return c.json({ joined: true }, 200)
-    if (process.env.MOCK_MODE === 'true') return c.json({ joined: false }, 200)
-
-    const hiroba = await prisma.hiroba.findUnique({ where: { slug }, select: { id: true } })
-    if (!hiroba) return c.json({ error: 'Not found' }, 404)
-
-    const user = c.get('user')
-    await prisma.hirobaMembership.deleteMany({ where: { userId: user.id, hirobaId: hiroba.id } })
-    return c.json({ joined: false }, 200)
+    return c.json({ joined: true }, 200)
   })
   .openapi(createPostRoute, async (c) => {
     const { slug } = c.req.valid('param')
@@ -214,7 +209,6 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
             id: `hiroba-post-${Date.now()}`,
             hirobaId: hiroba.id,
             ...data,
-            body: '',
             imageUrl: null,
             authorId: user.id,
             author: user,
@@ -230,7 +224,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       )
     }
 
-    const hiroba = await prisma.hiroba.findUnique({ where: { slug } })
+    const hiroba = await ensureHirobaBySlug(slug)
     if (!hiroba) return c.json({ error: 'Not found' }, 404)
 
     const user = c.get('user')
@@ -248,7 +242,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     let post: HirobaPostWithAuthor
     try {
       post = await prisma.hirobaPost.create({
-        data: { ...data, body: '', hirobaId: hiroba.id, authorId: user.id, idempotencyKey },
+        data: { ...data, hirobaId: hiroba.id, authorId: user.id, idempotencyKey },
         include: { author: true },
       })
     } catch (error) {
@@ -267,14 +261,15 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       }
 
       if (!existingPost) return c.json({ error: '投稿の作成に失敗しました' }, 500)
-      if (existingPost.title !== data.title) {
+      if (existingPost.title !== data.title || existingPost.body !== data.body) {
         return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
       }
 
       return c.json({ post: { ...existingPost, tags: [] } }, 200)
     }
 
-    const moderation = await moderatePost(post.title, '')
+    const { moderatePost } = await import('@/lib/ai/moderate-post')
+    const moderation = await moderatePost(post.title, post.body)
     if (moderation?.flagged) {
       try {
         const [, flaggedPost] = await prisma.$transaction([
@@ -305,6 +300,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
         const allTags = await prisma.tag.findMany({
           select: { id: true, name: true, category: true, description: true, createdAt: true },
         })
+        const { assignTags } = await import('@/lib/ai/assign-tags')
         const selectedNames = await assignTags(post.title, '', allTags)
         const selectedTags = allTags.filter((t) => selectedNames.includes(t.name)).slice(0, 1)
         if (selectedTags.length > 0) {

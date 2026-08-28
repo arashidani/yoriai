@@ -277,11 +277,33 @@
           },
           "title": {
             "type": "string"
+          },
+          "displayAuthor": {
+            "$ref": "#/components/schemas/QuestionDisplayAuthor"
           }
         },
         "required": [
           "id",
-          "title"
+          "title",
+          "displayAuthor"
+        ]
+      },
+      "QuestionDetailResponse": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "$ref": "#/components/schemas/Question"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionAnswer"
+            }
+          }
+        },
+        "required": [
+          "question",
+          "answers"
         ]
       },
       "QuestionAnswer": {
@@ -371,6 +393,40 @@
           "assigned",
           "failed",
           "skipped"
+        ]
+      },
+      "TagAssignmentErrorStatus": {
+        "anyOf": [
+          {
+            "type": "number",
+            "enum": [
+              422
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              429
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              502
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              503
+            ]
+          },
+          {
+            "type": "number",
+            "enum": [
+              504
+            ]
+          }
         ]
       },
       "LikeStatus": {
@@ -530,6 +586,10 @@
             "type": "string",
             "example": "今日のランチどこ行きました？"
           },
+          "body": {
+            "type": "string",
+            "example": "近くに新しくできたお店に行ってみたら、とても美味しかったです。"
+          },
           "imageUrl": {
             "type": [
               "string",
@@ -597,6 +657,7 @@
           "id",
           "hirobaId",
           "title",
+          "body",
           "imageUrl",
           "authorId",
           "answerCount",
@@ -716,6 +777,26 @@
           "hirobaPostId": {
             "type": "string",
             "example": "hiroba-post-1"
+          },
+          "hirobaPost": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "hiroba-post-1"
+              },
+              "hirobaId": {
+                "type": "string",
+                "example": "hiroba-alcohol"
+              }
+            },
+            "required": [
+              "id",
+              "hirobaId"
+            ]
           },
           "body": {
             "type": "string",
@@ -1501,6 +1582,18 @@
         "required": [
           "count"
         ]
+      },
+      "MarkAllNotificationsAsRead": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 5
+          }
+        },
+        "required": [
+          "count"
+        ]
       }
     },
     "parameters": {}
@@ -1737,7 +1830,7 @@
                   "title": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 200
+                    "maxLength": 48
                   },
                   "body": {
                     "type": "string",
@@ -1772,6 +1865,9 @@
                     },
                     "tagAssignment": {
                       "$ref": "#/components/schemas/TagAssignmentStatus"
+                    },
+                    "tagAssignmentErrorStatus": {
+                      "$ref": "#/components/schemas/TagAssignmentErrorStatus"
                     }
                   },
                   "required": [
@@ -1798,6 +1894,9 @@
                     },
                     "tagAssignment": {
                       "$ref": "#/components/schemas/TagAssignmentStatus"
+                    },
+                    "tagAssignmentErrorStatus": {
+                      "$ref": "#/components/schemas/TagAssignmentErrorStatus"
                     }
                   },
                   "required": [
@@ -1942,15 +2041,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "question": {
-                      "$ref": "#/components/schemas/Question"
-                    }
-                  },
-                  "required": [
-                    "question"
-                  ]
+                  "$ref": "#/components/schemas/QuestionDetailResponse"
                 }
               }
             }
@@ -1990,6 +2081,7 @@
           "questions"
         ],
         "summary": "回答一覧を取得。募集終了済みの場合だけ最多いいね回答1件を示す",
+        "deprecated": true,
         "security": [
           {
             "supabaseSession": []
@@ -2389,8 +2481,60 @@
               }
             }
           },
+          "422": {
+            "description": "AIが有効なタグを選べない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "AIによるタグ付与に失敗しました"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "AIレート制限",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "AIによるタグ付与に失敗しました"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "AI通信失敗",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "AIによるタグ付与に失敗しました"
+                }
+              }
+            }
+          },
           "503": {
-            "description": "AIタグ付与失敗",
+            "description": "AIサービス利用不可",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "AIによるタグ付与に失敗しました"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "AIタイムアウト",
             "content": {
               "application/json": {
                 "schema": {
@@ -3852,6 +3996,19 @@
               }
             }
           },
+          "403": {
+            "description": "自分のMBTIグループではない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "自分のグループの広場にのみ参加できます"
+                }
+              }
+            }
+          },
           "404": {
             "description": "ひろばが見つからない",
             "content": {
@@ -3871,7 +4028,7 @@
         "tags": [
           "hiroba"
         ],
-        "summary": "ひろばから退出する",
+        "summary": "ひろばの参加を継続する",
         "security": [
           {
             "supabaseSession": []
@@ -3890,7 +4047,7 @@
         ],
         "responses": {
           "200": {
-            "description": "退出後の状態",
+            "description": "参加中の状態（ひろばからは退出できない）",
             "content": {
               "application/json": {
                 "schema": {
@@ -3981,10 +4138,15 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
-                  "title"
+                  "title",
+                  "body"
                 ]
               }
             }
@@ -8102,6 +8264,44 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnreadNotificationCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "patch": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "自分の未読通知をすべて既読にする",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "既読化した件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAllNotificationsAsRead"
                 }
               }
             }

@@ -33,10 +33,11 @@ export const SelectOption: Story = {
 }
 
 export const SelectNone: Story = {
-  args: { defaultValue: 'pregnancy' },
+  args: { defaultValue: 'pregnancy', noneLabel: 'なし' },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('combobox'))
     await userEvent.click(await screen.findByRole('option', { name: 'なし' }))
-    await expect(canvas.getByText('カテゴリーを選択')).toBeVisible()
+    // 未選択を選ぶと noneLabel がトリガーに表示される
+    await expect(canvas.getByText('なし')).toBeVisible()
   },
 }

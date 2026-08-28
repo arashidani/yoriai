@@ -81,7 +81,9 @@ export function QuestionComposeDialog() {
       })
       if (!res.ok) {
         const body = await res.json()
-        setError('error' in body ? body.error : '投稿に失敗しました')
+        const message = 'error' in body ? body.error : '投稿に失敗しました'
+        console.log('質問の作成に失敗しました', { status: res.status, error: message })
+        setError(message)
         return
       }
 
@@ -92,8 +94,15 @@ export function QuestionComposeDialog() {
       }
 
       setCreatedQuestionId(body.question.id)
+      if (body.tagAssignment === 'failed') {
+        console.log('質問作成後のAIタグ付与に失敗しました', {
+          questionId: body.question.id,
+          status: body.tagAssignmentErrorStatus ?? null,
+        })
+      }
       setStep(body.tagAssignment === 'failed' ? 'tag-recovery' : 'completion')
-    } catch {
+    } catch (error) {
+      console.log('質問の作成に失敗しました', error)
       setError('通信に失敗しました。画面をリロードせず、もう一度お試しください')
     } finally {
       isSubmittingRef.current = false
@@ -109,7 +118,14 @@ export function QuestionComposeDialog() {
     })
     if (!res.ok) {
       const body = await res.json()
-      throw new Error('error' in body ? body.error : 'タグの付与に失敗しました')
+      const message = 'error' in body ? body.error : 'タグの付与に失敗しました'
+      console.log('AIタグ付与に失敗しました', {
+        status: res.status,
+        error: message,
+        mode: input.mode,
+        questionId: createdQuestionId,
+      })
+      throw new Error(message)
     }
     setStep('completion')
   }

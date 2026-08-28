@@ -6,6 +6,7 @@ const meta = {
   component: AiChatWidget,
   parameters: {
     layout: 'fullscreen',
+    nextjs: { appDirectory: true },
   },
 } satisfies Meta<typeof AiChatWidget>
 

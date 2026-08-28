@@ -52,6 +52,7 @@ export const AnswerableQuestionSchema = z
   .object({
     id: z.string(),
     title: z.string(),
+    displayAuthor: DisplayAuthorSchema,
   })
   .openapi('AnswerableQuestion')
 
@@ -74,6 +75,13 @@ export const QaAnswerSchema = z
   })
   .openapi('QuestionAnswer')
 
+export const QuestionDetailResponseSchema = z
+  .object({
+    question: QuestionSchema,
+    answers: z.array(QaAnswerSchema),
+  })
+  .openapi('QuestionDetailResponse')
+
 export const ModerationResultSchema = z
   .object({
     isHidden: z.boolean().openapi({ description: 'AI判定によって非公開になった場合はtrue' }),
@@ -83,6 +91,10 @@ export const ModerationResultSchema = z
 export const TagAssignmentStatusSchema = z
   .enum(['assigned', 'failed', 'skipped'])
   .openapi('TagAssignmentStatus')
+
+export const TagAssignmentErrorStatusSchema = z
+  .union([z.literal(422), z.literal(429), z.literal(502), z.literal(503), z.literal(504)])
+  .openapi('TagAssignmentErrorStatus')
 
 export const PaginationSchema = z
   .object({

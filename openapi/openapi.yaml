@@ -187,9 +187,24 @@ components:
           type: string
         title:
           type: string
+        displayAuthor:
+          $ref: "#/components/schemas/QuestionDisplayAuthor"
       required:
         - id
         - title
+        - displayAuthor
+    QuestionDetailResponse:
+      type: object
+      properties:
+        question:
+          $ref: "#/components/schemas/Question"
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestionAnswer"
+      required:
+        - question
+        - answers
     QuestionAnswer:
       type: object
       properties:
@@ -256,6 +271,23 @@ components:
         - assigned
         - failed
         - skipped
+    TagAssignmentErrorStatus:
+      anyOf:
+        - type: number
+          enum:
+            - 422
+        - type: number
+          enum:
+            - 429
+        - type: number
+          enum:
+            - 502
+        - type: number
+          enum:
+            - 503
+        - type: number
+          enum:
+            - 504
     LikeStatus:
       type: object
       properties:
@@ -372,6 +404,9 @@ components:
         title:
           type: string
           example: 今日のランチどこ行きました？
+        body:
+          type: string
+          example: 近くに新しくできたお店に行ってみたら、とても美味しかったです。
         imageUrl:
           type:
             - string
@@ -416,6 +451,7 @@ components:
         - id
         - hirobaId
         - title
+        - body
         - imageUrl
         - authorId
         - answerCount
@@ -508,6 +544,20 @@ components:
         hirobaPostId:
           type: string
           example: hiroba-post-1
+        hirobaPost:
+          type:
+            - object
+            - "null"
+          properties:
+            id:
+              type: string
+              example: hiroba-post-1
+            hirobaId:
+              type: string
+              example: hiroba-alcohol
+          required:
+            - id
+            - hirobaId
         body:
           type: string
           example: いいですね、今度行ってみます！
@@ -1056,6 +1106,14 @@ components:
           example: 3
       required:
         - count
+    MarkAllNotificationsAsRead:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 5
+      required:
+        - count
   parameters: {}
 paths:
   /api/questions/{id}/mention-candidates:
@@ -1207,7 +1265,7 @@ paths:
                 title:
                   type: string
                   minLength: 1
-                  maxLength: 200
+                  maxLength: 48
                 body:
                   type: string
                   minLength: 1
@@ -1231,6 +1289,8 @@ paths:
                     $ref: "#/components/schemas/ModerationResult"
                   tagAssignment:
                     $ref: "#/components/schemas/TagAssignmentStatus"
+                  tagAssignmentErrorStatus:
+                    $ref: "#/components/schemas/TagAssignmentErrorStatus"
                 required:
                   - question
                   - moderation
@@ -1248,6 +1308,8 @@ paths:
                     $ref: "#/components/schemas/ModerationResult"
                   tagAssignment:
                     $ref: "#/components/schemas/TagAssignmentStatus"
+                  tagAssignmentErrorStatus:
+                    $ref: "#/components/schemas/TagAssignmentErrorStatus"
                 required:
                   - question
                   - moderation
@@ -1332,12 +1394,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  question:
-                    $ref: "#/components/schemas/Question"
-                required:
-                  - question
+                $ref: "#/components/schemas/QuestionDetailResponse"
         "401":
           description: 未認証
           content:
@@ -1359,6 +1416,7 @@ paths:
       tags:
         - questions
       summary: 回答一覧を取得。募集終了済みの場合だけ最多いいね回答1件を示す
+      deprecated: true
       security: *a1
       parameters:
         - schema:
@@ -1601,8 +1659,40 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: この質問にはタグを付与できません
+        "422":
+          description: AIが有効なタグを選べない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
+        "429":
+          description: AIレート制限
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
+        "502":
+          description: AI通信失敗
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
         "503":
-          description: AIタグ付与失敗
+          description: AIサービス利用不可
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: AIによるタグ付与に失敗しました
+        "504":
+          description: AIタイムアウト
           content:
             application/json:
               schema:
@@ -2492,6 +2582,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Unauthorized
+        "403":
+          description: 自分のMBTIグループではない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 自分のグループの広場にのみ参加できます
         "404":
           description: ひろばが見つからない
           content:
@@ -2503,7 +2601,7 @@ paths:
     delete:
       tags:
         - hiroba
-      summary: ひろばから退出する
+      summary: ひろばの参加を継続する
       security:
         - supabaseSession: []
       parameters:
@@ -2515,7 +2613,7 @@ paths:
           in: path
       responses:
         "200":
-          description: 退出後の状態
+          description: 参加中の状態（ひろばからは退出できない）
           content:
             application/json:
               schema:
@@ -2575,8 +2673,12 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 200
+                body:
+                  type: string
+                  minLength: 1
               required:
                 - title
+                - body
       responses:
         "200":
           description: 再送された投稿（すでに作成済みの投稿）
@@ -5080,6 +5182,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UnreadNotificationCount"
+        "401":
+          description: 未認証
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: Unauthorized
+  /api/notifications/read-all:
+    patch:
+      tags:
+        - notifications
+      summary: 自分の未読通知をすべて既読にする
+      security:
+        - supabaseSession: []
+      responses:
+        "200":
+          description: 既読化した件数
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MarkAllNotificationsAsRead"
         "401":
           description: 未認証
           content:

@@ -57,6 +57,7 @@ export const MOCK_JOINED_HIROBA_SLUGS = [
   'two-dimensional',
   'gourmet',
   'outdoor',
+  'mbti-green',
 ] as const
 
 export const MOCK_USER_PROFILE = {
@@ -546,6 +547,21 @@ export const MOCK_NOTIFICATIONS = [
     hirobaAnswer: null,
     isRead: true,
     createdAt: new Date('2024-01-13T00:00:00Z'),
+  },
+  {
+    id: 'notification-4',
+    userId: 'user-1',
+    type: NotificationType.HIROBA_POST_LIKED,
+    postId: null,
+    post: null,
+    answerId: null,
+    answer: null,
+    hirobaPostId: 'hiroba-post-1',
+    hirobaPost: MOCK_HIROBA_POSTS[0],
+    hirobaAnswerId: null,
+    hirobaAnswer: null,
+    isRead: false,
+    createdAt: new Date('2024-01-13T12:00:00Z'),
   },
   {
     id: 'notification-3',

@@ -23,6 +23,7 @@ type HirobaFeedProps = {
   hiroba: HirobaCatalogItem
   posts: HirobaPost[]
   initialJoined: boolean
+  canJoin: boolean
 }
 
 const bannerTones = {
@@ -39,7 +40,7 @@ const bannerTones = {
 } as const
 
 /** ひろばの紹介、参加導線、投稿フィード、補助情報をまとめた詳細画面。 */
-export function HirobaFeed({ hiroba, posts, initialJoined }: HirobaFeedProps) {
+export function HirobaFeed({ hiroba, posts, initialJoined, canJoin }: HirobaFeedProps) {
   const router = useRouter()
   const [joined, setJoined] = useState(initialJoined)
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
@@ -71,9 +72,9 @@ export function HirobaFeed({ hiroba, posts, initialJoined }: HirobaFeedProps) {
     setMembershipError(null)
 
     try {
-      const res = joined
-        ? await client.api.hiroba[':slug'].membership.$delete({ param: { slug: hiroba.slug } })
-        : await client.api.hiroba[':slug'].membership.$post({ param: { slug: hiroba.slug } })
+      const res = await client.api.hiroba[':slug'].membership.$post({
+        param: { slug: hiroba.slug },
+      })
       if (!res.ok) {
         setMembershipError('参加状態を更新できませんでした。')
         return
@@ -143,14 +144,14 @@ export function HirobaFeed({ hiroba, posts, initialJoined }: HirobaFeedProps) {
         id: post.id,
         hirobaSlug: hiroba.slug,
         title: post.title,
-        body: '',
+        body: post.body,
         imageUrl,
         authorId: post.authorId,
         displayName:
           post.author?.username ?? post.author?.name ?? post.author?.email ?? '削除されたユーザー',
         displayNameColor: post.author?.displayNameColor ?? null,
         avatarUrl: post.author?.avatarUrl ?? null,
-        lunchPreference: null,
+        lunchPreference: post.author?.lunchPreference ?? null,
         isOwnPost: true,
         likeCount: post.likeCount,
         liked: false,
@@ -180,18 +181,17 @@ export function HirobaFeed({ hiroba, posts, initialJoined }: HirobaFeedProps) {
           </div>
 
           <div className="flex flex-wrap gap-3 pb-1">
-            {!joined && (
-              <Button
-                type="button"
-                variant="primary"
-                size="large"
-                aria-pressed={joined}
-                onClick={toggleMembership}
-              >
-                <IconHuman className="size-4" aria-hidden />
-                参加する
-              </Button>
-            )}
+            <Button
+              type="button"
+              variant="primary"
+              size="large"
+              aria-pressed={joined}
+              isDisabled={joined || !canJoin || isUpdatingMembership}
+              onClick={toggleMembership}
+            >
+              <IconHuman className="size-4" aria-hidden />
+              {joined ? '参加中' : '参加する'}
+            </Button>
 
             <Link
               href="/hiroba"
@@ -209,7 +209,11 @@ export function HirobaFeed({ hiroba, posts, initialJoined }: HirobaFeedProps) {
       </section>
 
       <section className="px-3 space-y-4">
-        {!joined ? (
+        {!canJoin ? (
+          <AssistBanner variant="support">
+            参加できるのは、自分のグループの広場だけです。
+          </AssistBanner>
+        ) : !joined ? (
           <AssistBanner variant="support">
             広場に参加すると投稿、返信、いいねができるようになります。
           </AssistBanner>

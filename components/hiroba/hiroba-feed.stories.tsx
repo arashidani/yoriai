@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect } from 'storybook/test'
+import { expect, userEvent } from 'storybook/test'
 import { HirobaFeed } from './hiroba-feed'
 
 const meta = {
@@ -46,6 +46,7 @@ export const Default: Story = {
     },
     posts,
     initialJoined: false,
+    canJoin: true,
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText(/近くに新しく/)).toBeVisible()
@@ -55,9 +56,47 @@ export const Default: Story = {
       'false',
     )
     await expect(canvas.getByText('チームで')).toBeVisible()
-    await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute(
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
       'href',
       '/mypage/user-1',
     )
+    await expect(canvas.queryByRole('link', { name: '田中太郎' })).toBeNull()
+  },
+}
+
+export const Joined: Story = {
+  args: {
+    ...Default.args,
+    initialJoined: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: '参加中' })).toBeDisabled()
+  },
+}
+
+/** 投稿すると、入力した本文がそのままフィードのカードに表示される。 */
+export const CreatePost: Story = {
+  args: {
+    ...Default.args,
+    initialJoined: true,
+  },
+  play: async ({ canvas }) => {
+    await userEvent.type(
+      canvas.getByPlaceholderText('今の気分をシェアしましょう'),
+      '昨日餃子食べてビール飲んで寝ました！',
+    )
+    await userEvent.click(canvas.getByRole('button', { name: '送信' }))
+    await expect(await canvas.findByText('昨日餃子食べてビール飲んで寝ました！')).toBeVisible()
+  },
+}
+
+export const DifferentMbtiGroup: Story = {
+  args: {
+    ...Default.args,
+    canJoin: false,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: '参加する' })).toBeDisabled()
+    await expect(canvas.getByText('参加できるのは、自分のグループの広場だけです。')).toBeVisible()
   },
 }

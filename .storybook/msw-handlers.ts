@@ -12,6 +12,7 @@ import {
   MOCK_HIROBAS,
   MOCK_INTERESTS,
   MOCK_INVITES,
+  MOCK_NOTIFICATIONS,
   MOCK_PASSWORD_RESETS,
   MOCK_POSTS,
   MOCK_TAG_CATEGORIES,
@@ -26,6 +27,30 @@ import { toQuestionResponse } from '../lib/questions/api-mappers'
 const MOCK_QUESTIONS = MOCK_POSTS.map((post) =>
   toQuestionResponse({ ...post, likes: [], bookmarks: [] }, MOCK_USERS[0].id),
 )
+
+/** 本番同様、ログイン中のユーザー宛ての通知だけを返す。 */
+const MY_NOTIFICATIONS = MOCK_NOTIFICATIONS.filter(
+  (notification) => notification.userId === MOCK_USERS[0].id,
+)
+
+/** 既読にした通知。既読化が未読件数に反映されないと、サイドバーのドットが消えない。 */
+const readNotificationIds = new Set<string>()
+
+const isNotificationRead = (notification: { id: string; isRead: boolean }) =>
+  notification.isRead || readNotificationIds.has(notification.id)
+
+/** ストーリー間で既読状態を持ち越さないためのリセット。 */
+export function resetMockNotificationReadState() {
+  readNotificationIds.clear()
+}
+
+/** `a,b,c` 形式のクエリを id 配列にする。lib/hono/routes/qa-questions.ts と同じ扱い。 */
+function commaSeparatedIds(value: string | null) {
+  return (value ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
+}
 
 /** AI SDK の UI Message Stream 形式(SSE)のレスポンスを組み立てる。 */
 export function uiMessageStreamResponse(chunks: object[]) {
@@ -77,6 +102,8 @@ export const mswHandlers = {
       const keyword = url.searchParams.get('keyword') ?? ''
       const status = url.searchParams.get('status') ?? 'all'
       const tagId = url.searchParams.get('tagId')
+      const categoryIds = commaSeparatedIds(url.searchParams.get('categoryIds'))
+      const tagIds = commaSeparatedIds(url.searchParams.get('tagIds'))
       const page = Number(url.searchParams.get('page') ?? '1')
       const pageSize = Number(url.searchParams.get('pageSize') ?? '10')
 
@@ -97,6 +124,18 @@ export const mswHandlers = {
       }
       if (tagId) {
         questions = questions.filter((question) => mockPostHasTagId(question.id, tagId))
+      }
+      // 親カテゴリー / 小ジャンルの複数選択。本番 API と同じく tags: { some } 判定。
+      if (categoryIds.length > 0 || tagIds.length > 0) {
+        const selectedCategoryNames = MOCK_TAG_CATEGORIES.filter((category) =>
+          categoryIds.includes(category.id),
+        ).map((category) => category.name)
+        const matchingPostIds = MOCK_POSTS.filter((post) =>
+          post.tags.some(
+            (tag) => tagIds.includes(tag.id) || selectedCategoryNames.includes(tag.category),
+          ),
+        ).map((post) => post.id)
+        questions = questions.filter((question) => matchingPostIds.includes(question.id))
       }
 
       const total = questions.length
@@ -157,6 +196,43 @@ export const mswHandlers = {
     http.post('/api/answers/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
     http.delete('/api/answers/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
   ],
+  notifications: [
+    http.get('/api/notifications', ({ request }) => {
+      const url = new URL(request.url)
+      const cursor = url.searchParams.get('cursor')
+      const limit = Number(url.searchParams.get('limit') ?? 20)
+      const notifications = MY_NOTIFICATIONS.map((notification) => ({
+        ...notification,
+        isRead: isNotificationRead(notification),
+      })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      const start = cursor ? notifications.findIndex((item) => item.id === cursor) + 1 : 0
+      const page = notifications.slice(start, start + limit + 1)
+      const hasNextPage = page.length > limit
+      const items = page.slice(0, limit)
+      return HttpResponse.json({
+        notifications: items,
+        nextCursor: hasNextPage ? (items.at(-1)?.id ?? null) : null,
+      })
+    }),
+    http.get('/api/notifications/unread-count', () =>
+      HttpResponse.json({
+        count: MY_NOTIFICATIONS.filter((notification) => !isNotificationRead(notification)).length,
+      }),
+    ),
+    http.patch('/api/notifications/read-all', () => {
+      const unread = MY_NOTIFICATIONS.filter((notification) => !isNotificationRead(notification))
+      for (const notification of unread) {
+        readNotificationIds.add(notification.id)
+      }
+      return HttpResponse.json({ count: unread.length })
+    }),
+    http.patch('/api/notifications/:id', ({ params }) => {
+      const notification = MOCK_NOTIFICATIONS.find((item) => item.id === params.id)
+      if (!notification) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      readNotificationIds.add(String(params.id))
+      return HttpResponse.json({ notification: { ...notification, isRead: true } })
+    }),
+  ],
   hiroba: [
     http.get('/api/hiroba', () => HttpResponse.json({ hirobas: MOCK_HIROBAS })),
     http.get('/api/hiroba/:slug', ({ params }) => {
@@ -168,13 +244,14 @@ export const mswHandlers = {
     http.post('/api/hiroba/:slug/membership', () => HttpResponse.json({ joined: true })),
     http.delete('/api/hiroba/:slug/membership', () => HttpResponse.json({ joined: false })),
     http.post('/api/hiroba/:slug/posts', async ({ request }) => {
-      const body = (await request.json()) as { title: string }
+      const requestBody = (await request.json()) as { title: string; body: string }
       return HttpResponse.json(
         {
           post: {
             id: 'hiroba-post-new',
             hirobaId: 'hiroba-1',
-            title: body.title,
+            title: requestBody.title,
+            body: requestBody.body,
             imageUrl: null,
             authorId: 'user-1',
             author: MOCK_USERS[0],

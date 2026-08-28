@@ -5,6 +5,8 @@ import { AnswerItem } from './answer-item'
 const meta = {
   component: AnswerItem,
   args: {
+    avatarSrc: '/anonymous-profiles/cat.svg',
+    avatarAlt: 'アバター',
     authorName: '名無しのおせワニ',
     tenure: 'IBJ歴',
     timestamp: '2時間前',
@@ -18,9 +20,22 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   play: async ({ canvas }) => {
+    await expect(canvas.getByRole('img', { name: 'アバター' })).toBeVisible()
     await expect(canvas.getByText('名無しのおせワニ')).toBeVisible()
     await expect(canvas.getByText('IBJ歴')).toBeVisible()
     await expect(canvas.getByText('2時間前')).toBeVisible()
+  },
+}
+
+export const WithUrl: Story = {
+  args: {
+    body: '詳しくは https://example.com を見てみてください。',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('link', { name: 'https://example.com' })).toHaveAttribute(
+      'href',
+      'https://example.com/',
+    )
   },
 }
 
@@ -44,5 +59,15 @@ export const MostLiked: Story = {
   args: { likeCount: 14, isMostLiked: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByAltText('ベストアンサー')).toBeVisible()
+  },
+}
+
+export const MissingAvatar: Story = {
+  args: { avatarSrc: undefined },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvas.getByText('名無しのおせワニ')).toBeVisible()
+    await expect(canvas.queryByRole('img')).toBeNull()
+    const avatar = canvasElement.querySelector('[data-slot="author-avatar"]')
+    expect(avatar).toHaveClass('bg-primary')
   },
 }
