@@ -19,10 +19,7 @@ function AuthorAvatar({ src, alt = '', className, sizes = '50px' }: AuthorAvatar
   return (
     <div
       data-slot="author-avatar"
-      className={cn(
-        'relative size-12.5 shrink-0 overflow-hidden rounded-md bg-primary',
-        className,
-      )}
+      className={cn('relative size-12.5 shrink-0 overflow-hidden rounded-md bg-primary', className)}
     >
       {src && showImage && (
         <Image

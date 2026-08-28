@@ -3,11 +3,11 @@ import type { ReactNode } from 'react'
 import { Suspense } from 'react'
 
 import { Button } from '@/components/design-system/button'
-import { Separator } from '@/components/ui/separator'
 import {
   HomeAnswerableQuestions,
   HomeAnswerableQuestionsFallback,
 } from '@/components/posts/home-answerable-questions'
+import { Separator } from '@/components/ui/separator'
 
 type QaDetailPageShellProps = {
   children: ReactNode

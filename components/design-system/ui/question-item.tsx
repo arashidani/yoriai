@@ -48,11 +48,13 @@ function QuestionItem({
   return (
     <div
       data-slot="question-item"
-      className={cn('relative flex w-full flex-col gap-4 p-6 hover:bg-muted', href && 'cursor-pointer', className)}
-    >
-      {href && (
-        <Link href={href} className="absolute inset-0" aria-label={title} tabIndex={-1} />
+      className={cn(
+        'relative flex w-full flex-col gap-4 p-6 hover:bg-muted',
+        href && 'cursor-pointer',
+        className,
       )}
+    >
+      {href && <Link href={href} className="absolute inset-0" aria-label={title} tabIndex={-1} />}
       <div className={cn('flex w-full items-start gap-4', href && 'pointer-events-none')}>
         <AuthorAvatar src={avatarSrc} alt={avatarAlt} />
         <div className="flex min-w-0 flex-1 flex-col gap-3">

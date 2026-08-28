@@ -139,6 +139,13 @@ export const HirobaAnswerSchema = z
   .object({
     id: z.string().openapi({ example: 'hiroba-answer-1' }),
     hirobaPostId: z.string().openapi({ example: 'hiroba-post-1' }),
+    // 通知からひろば投稿ページのURLを組み立てるために必要（通知APIでのみ含まれる）
+    hirobaPost: z
+      .object({
+        id: z.string().openapi({ example: 'hiroba-post-1' }),
+        hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
+      })
+      .nullish(),
     body: z.string().openapi({ example: 'いいですね、今度行ってみます！' }),
     authorId: z.string().nullable().openapi({ example: 'user-1' }),
     author: z.union([UserSchema, z.null()]).optional(),

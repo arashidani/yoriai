@@ -544,6 +544,20 @@ components:
         hirobaPostId:
           type: string
           example: hiroba-post-1
+        hirobaPost:
+          type:
+            - object
+            - "null"
+          properties:
+            id:
+              type: string
+              example: hiroba-post-1
+            hirobaId:
+              type: string
+              example: hiroba-alcohol
+          required:
+            - id
+            - hirobaId
         body:
           type: string
           example: いいですね、今度行ってみます！

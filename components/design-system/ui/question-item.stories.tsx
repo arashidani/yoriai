@@ -77,9 +77,8 @@ export const MissingAvatar: Story = {
 export const WithLink: Story = {
   args: { href: '/posts/post-1' },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('link', { name: 'キングオブタイムの有給申請について' })).toHaveAttribute(
-      'href',
-      '/posts/post-1',
-    )
+    await expect(
+      canvas.getByRole('link', { name: 'キングオブタイムの有給申請について' }),
+    ).toHaveAttribute('href', '/posts/post-1')
   },
 }
