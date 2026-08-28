@@ -38,10 +38,11 @@ export const Default: Story = {
     await expect(canvas.getByText(/近くに新しく/)).toBeVisible()
     await expect(canvas.getByText('田中太郎')).toBeVisible()
     await expect(canvas.getByText('チームで')).toBeVisible()
-    await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute(
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
       'href',
       '/mypage/user-1',
     )
+    await expect(canvas.queryByRole('link', { name: '田中太郎' })).toBeNull()
   },
 }
 
@@ -59,7 +60,10 @@ export const WithImage: Story = {
 export const OwnPost: Story = {
   args: { post: { ...basePost, isOwnPost: true }, joined: true },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute('href', '/mypage')
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
+      'href',
+      '/mypage',
+    )
   },
 }
 

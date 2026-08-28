@@ -67,14 +67,15 @@ const basePosts = [
   },
 ]
 
+/** 絞り込み後は msw 経由で fixtures の質問が返るため、id / 名前を fixtures と揃える。 */
 const baseCategories = [
   {
-    id: 'category-1',
-    name: '技術',
+    id: 'tag-category-1',
+    name: '社内ルール・手続き',
     tags: [
-      { id: 'tag-1', name: 'Next.js' },
-      { id: 'tag-2', name: 'TypeScript' },
-      { id: 'tag-3', name: 'Prisma' },
+      { id: 'tag-1', name: '勤怠・有給関連' },
+      { id: 'tag-2', name: '経費精算' },
+      { id: 'tag-3', name: '福利厚生' },
     ],
   },
 ]
@@ -146,20 +147,22 @@ export const TagFilter: Story = {
   args: { posts: basePosts, isAdmin: false, tagCategories: baseCategories },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByText('カテゴリーを選択'))
-    await userEvent.click(canvas.getByRole('checkbox', { name: 'Next.js' }))
-    await expect(await canvas.findByText(/Next\.jsのエラーを解決したい/)).toBeVisible()
-    await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
+    await userEvent.click(canvas.getByRole('checkbox', { name: '勤怠・有給関連' }))
+    // tag-1 を持つのは post-1 / post-4
+    await expect(await canvas.findByText(/有給休暇の申請方法/)).toBeVisible()
+    await expect(canvas.getByText(/会議室設備の使い方/)).toBeVisible()
+    await waitFor(() => expect(canvas.queryByText(/経費精算の申請期限/)).not.toBeInTheDocument())
   },
 }
 
-/** post-3 は公開 tag が Prisma だが、第2 PostTag に TypeScript がある。some 判定で返ること。 */
+/** post-3 は公開 tag が福利厚生だが、第2 PostTag に経費精算がある。some 判定で返ること。 */
 export const TagFilterSecondaryTag: Story = {
   args: { posts: basePosts, isAdmin: false, tagCategories: baseCategories },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByText('カテゴリーを選択'))
-    await userEvent.click(canvas.getByRole('checkbox', { name: 'TypeScript' }))
-    await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
-    await expect(await canvas.findByText(/Prismaでリレーション/)).toBeVisible()
+    await userEvent.click(canvas.getByRole('checkbox', { name: '経費精算' }))
+    await expect(await canvas.findByText(/経費精算の申請期限/)).toBeVisible()
+    await expect(await canvas.findByText(/利用できる福利厚生を知りたい/)).toBeVisible()
   },
 }
 
@@ -173,14 +176,15 @@ export const StatusFilter: Story = {
       'aria-pressed',
       'false',
     )
-    await expect(await canvas.findByText(/Prismaでリレーション/)).toBeVisible()
-    await expect(canvas.queryByText(/TypeScriptの型エラー/)).not.toBeInTheDocument()
+    // RESOLVED は post-3 のみ
+    await expect(await canvas.findByText(/利用できる福利厚生を知りたい/)).toBeVisible()
+    await waitFor(() => expect(canvas.queryByText(/有給休暇の申請方法/)).not.toBeInTheDocument())
     await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
 
     const unanswered = canvas.getByRole('button', { name: '回答募集中' })
     await userEvent.click(unanswered)
-    await expect(await canvas.findByText(/TypeScriptの型エラー/)).toBeVisible()
-    await expect(canvas.queryByText(/Prismaでリレーション/)).not.toBeInTheDocument()
+    await expect(await canvas.findByText(/有給休暇の申請方法/)).toBeVisible()
+    await waitFor(() => expect(canvas.queryByText(/利用できる福利厚生を知りたい/)).not.toBeInTheDocument())
   },
 }
 

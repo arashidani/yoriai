@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn, screen, within } from 'storybook/test'
+import { expect, fn, screen, waitFor, within } from 'storybook/test'
 import { QuestionFormModal } from './question-form-modal'
 
 const meta = {
@@ -39,13 +39,25 @@ export const Default: Story = {
 export const CategorySelect: Story = {
   args: {
     onSubmit: fn(),
+    tagCategories: [
+      {
+        id: 'tag-category-1',
+        name: '社内ルール・手続き',
+        tags: [
+          { id: 'tag-1', name: '勤怠・有給関連' },
+          { id: 'tag-2', name: '経費精算' },
+        ],
+      },
+    ],
   },
   play: async ({ canvas, userEvent }) => {
     await userEvent.click(canvas.getByRole('combobox', { name: 'カテゴリー' }))
     const body = within(document.body)
-    await expect(await body.findByRole('option', { name: 'Next.js' })).toBeVisible()
-    await userEvent.click(body.getByRole('option', { name: 'Next.js' }))
-    await expect(canvas.getByRole('combobox', { name: 'カテゴリー' })).toHaveTextContent('Next.js')
+    const option = await body.findByRole('option', { name: '経費精算' })
+    // ポップアップはフェード/ズームで開くため、可視になるまで待つ
+    await waitFor(() => expect(option).toBeVisible())
+    await userEvent.click(option)
+    await expect(canvas.getByRole('combobox', { name: 'カテゴリー' })).toHaveTextContent('経費精算')
   },
 }
 

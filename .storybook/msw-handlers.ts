@@ -27,6 +27,14 @@ const MOCK_QUESTIONS = MOCK_POSTS.map((post) =>
   toQuestionResponse({ ...post, likes: [], bookmarks: [] }, MOCK_USERS[0].id),
 )
 
+/** `a,b,c` 形式のクエリを id 配列にする。lib/hono/routes/qa-questions.ts と同じ扱い。 */
+function commaSeparatedIds(value: string | null) {
+  return (value ?? '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean)
+}
+
 /** AI SDK の UI Message Stream 形式(SSE)のレスポンスを組み立てる。 */
 export function uiMessageStreamResponse(chunks: object[]) {
   const encoder = new TextEncoder()
@@ -77,6 +85,8 @@ export const mswHandlers = {
       const keyword = url.searchParams.get('keyword') ?? ''
       const status = url.searchParams.get('status') ?? 'all'
       const tagId = url.searchParams.get('tagId')
+      const categoryIds = commaSeparatedIds(url.searchParams.get('categoryIds'))
+      const tagIds = commaSeparatedIds(url.searchParams.get('tagIds'))
       const page = Number(url.searchParams.get('page') ?? '1')
       const pageSize = Number(url.searchParams.get('pageSize') ?? '10')
 
@@ -97,6 +107,18 @@ export const mswHandlers = {
       }
       if (tagId) {
         questions = questions.filter((question) => mockPostHasTagId(question.id, tagId))
+      }
+      // 親カテゴリー / 小ジャンルの複数選択。本番 API と同じく tags: { some } 判定。
+      if (categoryIds.length > 0 || tagIds.length > 0) {
+        const selectedCategoryNames = MOCK_TAG_CATEGORIES.filter((category) =>
+          categoryIds.includes(category.id),
+        ).map((category) => category.name)
+        const matchingPostIds = MOCK_POSTS.filter((post) =>
+          post.tags.some(
+            (tag) => tagIds.includes(tag.id) || selectedCategoryNames.includes(tag.category),
+          ),
+        ).map((post) => post.id)
+        questions = questions.filter((question) => matchingPostIds.includes(question.id))
       }
 
       const total = questions.length
