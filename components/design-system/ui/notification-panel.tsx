@@ -79,7 +79,10 @@ function NotificationPanel({
   return (
     <div
       data-slot="notification-panel"
-      className={cn('flex h-full w-full flex-col gap-6 rounded-lg bg-background-2 p-6', className)}
+      className={cn(
+        'flex h-full min-h-0 w-full flex-col gap-6 overflow-hidden rounded-lg bg-background-2 p-6',
+        className,
+      )}
     >
       <div className="flex shrink-0 items-center justify-between gap-2">
         <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -117,7 +120,7 @@ function NotificationPanel({
       ) : (
         <ul
           ref={listRef}
-          className="scrollbar-custom flex min-h-0 flex-1 flex-col divide-y divide-border-3 overflow-y-auto"
+          className="scrollbar-custom flex min-h-0 flex-1 flex-col divide-y divide-border-3 overflow-y-auto overscroll-y-contain"
         >
           {notifications.map((notification) => (
             <li key={notification.id}>

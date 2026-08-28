@@ -49,7 +49,7 @@ export function NotificationPanelColumn() {
   return (
     <aside
       data-slot="notification-panel-column"
-      className="fixed inset-0 z-50 bg-black/10 p-4 lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:h-screen lg:w-[350px] lg:shrink-0 lg:self-start lg:bg-transparent"
+      className="fixed inset-0 z-50 overflow-hidden bg-black/10 p-4 lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:h-screen lg:max-h-screen lg:w-[350px] lg:shrink-0 lg:self-start lg:overflow-hidden lg:bg-transparent"
     >
       {isPending ? (
         <div className="flex h-full w-full items-center justify-center rounded-lg bg-background-2">
