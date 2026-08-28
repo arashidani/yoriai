@@ -14,6 +14,8 @@ type MentionTextareaProps = {
   onSelectedIdsChange: (ids: string[]) => void
   loadCandidates: () => Promise<MentionCandidate[]>
   placeholder: string
+  id?: string
+  name?: string
   rows?: number
   disabled?: boolean
   ariaInvalid?: boolean
@@ -27,11 +29,14 @@ export function MentionTextarea({
   onSelectedIdsChange,
   loadCandidates,
   placeholder,
+  id,
+  name = 'body',
   rows = 4,
   disabled = false,
   ariaInvalid = false,
 }: MentionTextareaProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const defaultId = useId()
   const listboxId = useId()
   const [candidates, setCandidates] = useState<MentionCandidate[]>([])
   const [cursor, setCursor] = useState(0)
@@ -103,6 +108,8 @@ export function MentionTextarea({
     <div className="relative">
       <Textarea
         ref={inputRef}
+        id={id ?? defaultId}
+        name={name}
         value={value}
         placeholder={placeholder}
         disabled={disabled}

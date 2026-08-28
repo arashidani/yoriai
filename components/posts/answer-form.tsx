@@ -101,6 +101,8 @@ export function AnswerForm({ postId }: AnswerFormProps) {
               control={control}
               render={({ field }) => (
                 <MentionTextarea
+                  id="answer-body"
+                  name="body"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
