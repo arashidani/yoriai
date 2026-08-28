@@ -88,6 +88,21 @@ export const MarkAsRead: Story = {
   },
 }
 
+/** すべて既読でサイドバーの未読ドットが消える */
+export const MarkAllAsRead: Story = {
+  play: async ({ canvas }) => {
+    const notificationButton = canvas.getByRole('button', { name: /^通知/ })
+    await waitFor(() => expect(notificationButton).toHaveAccessibleName(/未読通知/))
+
+    await userEvent.click(notificationButton)
+    await userEvent.click(await canvas.findByRole('button', { name: 'すべて既読' }))
+
+    await waitFor(() =>
+      expect(notificationButton).toHaveAccessibleName(/^通知$/),
+    )
+  },
+}
+
 export const Empty: Story = {
   parameters: {
     msw: {

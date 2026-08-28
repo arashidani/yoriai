@@ -3,7 +3,12 @@
 import { useEffect } from 'react'
 import { NotificationPanel } from '@/components/design-system/ui/notification-panel'
 import { Spinner } from '@/components/ui/spinner'
-import { useMarkNotificationAsRead, useNotifications } from '@/hooks/use-notifications'
+import {
+  useMarkAllNotificationsAsRead,
+  useMarkNotificationAsRead,
+  useNotifications,
+  useUnreadNotificationCount,
+} from '@/hooks/use-notifications'
 import { toNotificationEntry } from '@/lib/notifications/notification-entry'
 import { useNotificationPanelStore } from '@/lib/stores/notification-panel-store'
 
@@ -15,8 +20,17 @@ import { useNotificationPanelStore } from '@/lib/stores/notification-panel-store
 export function NotificationPanelColumn() {
   const isOpen = useNotificationPanelStore((state) => state.isOpen)
   const close = useNotificationPanelStore((state) => state.close)
-  const { data, isPending, isError } = useNotifications(isOpen)
+  const {
+    data,
+    isPending,
+    isError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotifications(isOpen)
+  const unreadCount = useUnreadNotificationCount()
   const markAsRead = useMarkNotificationAsRead()
+  const markAllAsRead = useMarkAllNotificationsAsRead()
 
   useEffect(() => {
     if (!isOpen) return
@@ -29,7 +43,8 @@ export function NotificationPanelColumn() {
 
   if (!isOpen) return null
 
-  const notifications = (data ?? []).map((notification) => toNotificationEntry(notification))
+  const apiNotifications = data?.pages.flatMap((page) => page.notifications) ?? []
+  const notifications = apiNotifications.map((notification) => toNotificationEntry(notification))
 
   return (
     <aside
@@ -38,17 +53,26 @@ export function NotificationPanelColumn() {
     >
       {isPending ? (
         <div className="flex h-full w-full items-center justify-center rounded-lg bg-background-2">
-          <Spinner aria-label="読み込み中" className="size-6" />
+          <Spinner className="size-8 text-primary" aria-label="読み込み中" />
         </div>
       ) : (
         <NotificationPanel
           notifications={notifications}
           onClose={close}
+          onMarkAllAsRead={
+            unreadCount > 0 ? () => markAllAsRead.mutate() : undefined
+          }
+          isMarkingAllAsRead={markAllAsRead.isPending}
           onNotificationClick={(id) => {
-            const target = data?.find((notification) => notification.id === id)
+            const target = apiNotifications.find((notification) => notification.id === id)
             if (target && !target.isRead) markAsRead.mutate(id)
             close()
           }}
+          onLoadMore={() => {
+            if (hasNextPage && !isFetchingNextPage) fetchNextPage()
+          }}
+          hasMore={hasNextPage}
+          isLoadingMore={isFetchingNextPage}
           emptyMessage={isError ? '通知を取得できませんでした' : undefined}
         />
       )}

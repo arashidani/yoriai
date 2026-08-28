@@ -5,6 +5,7 @@ import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
   errorResponse,
   IdParamSchema,
+  MarkAllNotificationsAsReadSchema,
   NotificationSchema,
   UnreadNotificationCountSchema,
 } from '@/lib/hono/openapi/schemas'
@@ -101,6 +102,22 @@ const unreadCountRoute = createRoute({
   },
 })
 
+const markAllAsReadRoute = createRoute({
+  method: 'patch',
+  path: '/read-all',
+  tags: ['notifications'],
+  summary: '自分の未読通知をすべて既読にする',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  responses: {
+    200: {
+      description: '既読化した件数',
+      content: { 'application/json': { schema: MarkAllNotificationsAsReadSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+  },
+})
+
 const markAsReadRoute = createRoute({
   method: 'patch',
   path: '/{id}',
@@ -184,6 +201,25 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
     }
 
     const count = await prisma.notification.count({ where: { userId: user.id, isRead: false } })
+    return c.json({ count }, 200)
+  })
+  .openapi(markAllAsReadRoute, async (c) => {
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const unread = MOCK_NOTIFICATIONS.filter(
+        (notification) => notification.userId === user.id && !isMockNotificationRead(notification),
+      )
+      for (const notification of unread) {
+        mockReadNotificationIds.add(notification.id)
+      }
+      return c.json({ count: unread.length }, 200)
+    }
+
+    const { count } = await prisma.notification.updateMany({
+      where: { userId: user.id, isRead: false },
+      data: { isRead: true },
+    })
     return c.json({ count }, 200)
   })
   .openapi(markAsReadRoute, async (c) => {

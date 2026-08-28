@@ -1582,6 +1582,18 @@
         "required": [
           "count"
         ]
+      },
+      "MarkAllNotificationsAsRead": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 5
+          }
+        },
+        "required": [
+          "count"
+        ]
       }
     },
     "parameters": {}
@@ -8252,6 +8264,44 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnreadNotificationCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "patch": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "自分の未読通知をすべて既読にする",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "既読化した件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAllNotificationsAsRead"
                 }
               }
             }

@@ -197,20 +197,35 @@ export const mswHandlers = {
     http.delete('/api/answers/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
   ],
   notifications: [
-    http.get('/api/notifications', () =>
-      HttpResponse.json({
-        notifications: MY_NOTIFICATIONS.map((notification) => ({
-          ...notification,
-          isRead: isNotificationRead(notification),
-        })),
-        nextCursor: null,
-      }),
-    ),
+    http.get('/api/notifications', ({ request }) => {
+      const url = new URL(request.url)
+      const cursor = url.searchParams.get('cursor')
+      const limit = Number(url.searchParams.get('limit') ?? 20)
+      const notifications = MY_NOTIFICATIONS.map((notification) => ({
+        ...notification,
+        isRead: isNotificationRead(notification),
+      })).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      const start = cursor ? notifications.findIndex((item) => item.id === cursor) + 1 : 0
+      const page = notifications.slice(start, start + limit + 1)
+      const hasNextPage = page.length > limit
+      const items = page.slice(0, limit)
+      return HttpResponse.json({
+        notifications: items,
+        nextCursor: hasNextPage ? (items.at(-1)?.id ?? null) : null,
+      })
+    }),
     http.get('/api/notifications/unread-count', () =>
       HttpResponse.json({
         count: MY_NOTIFICATIONS.filter((notification) => !isNotificationRead(notification)).length,
       }),
     ),
+    http.patch('/api/notifications/read-all', () => {
+      const unread = MY_NOTIFICATIONS.filter((notification) => !isNotificationRead(notification))
+      for (const notification of unread) {
+        readNotificationIds.add(notification.id)
+      }
+      return HttpResponse.json({ count: unread.length })
+    }),
     http.patch('/api/notifications/:id', ({ params }) => {
       const notification = MOCK_NOTIFICATIONS.find((item) => item.id === params.id)
       if (!notification) return HttpResponse.json({ error: 'Not found' }, { status: 404 })

@@ -87,3 +87,24 @@ export const ClickNotification: Story = {
     await expect(args.onNotificationClick).toHaveBeenCalledWith('notification-1')
   },
 }
+
+export const MarkAllAsRead: Story = {
+  args: { notifications, onClose: fn(), onMarkAllAsRead: fn() },
+  play: async ({ canvas, args }) => {
+    await expect(canvas.getByRole('button', { name: 'すべて既読' })).toBeVisible()
+    await userEvent.click(canvas.getByRole('button', { name: 'すべて既読' }))
+    await expect(args.onMarkAllAsRead).toHaveBeenCalled()
+  },
+}
+
+export const LoadMore: Story = {
+  args: {
+    notifications,
+    onClose: fn(),
+    hasMore: true,
+    isLoadingMore: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('status', { name: '読み込み中' })).toBeVisible()
+  },
+}
