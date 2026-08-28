@@ -1,0 +1,15 @@
+# Cursor Rules
+
+## Commit Messages
+
+- Write commit messages in Japanese.
+- Keep Conventional Commits prefixes in English (`feat`, `fix`, `refactor`, `docs`, `style`, `update`).
+- The subject after the prefix must be Japanese.
+
+Examples:
+
+```
+feat: 投稿カードにアバターを表示する
+fix: 質問タイトルを48文字に制限する
+refactor: 質問一覧のクリック範囲をカード全体に広げる
+```
