@@ -85,6 +85,7 @@ export function QuestionFormModal({
           <FormField
             label="質問のタイトル"
             error={errors.title?.message}
+            maxLength={48}
             inputProps={{
               id: 'title',
               placeholder: '例：キングオブタイムの有給申請について',
