@@ -270,7 +270,7 @@ function FeatureTutorialStartButton({ onStart }: { onStart?: () => void }) {
         start()
         onStart?.()
       }}
-      className="flex items-center gap-2 rounded-full px-6 py-3 text-left text-paragraph-small font-bold text-sidebar-foreground transition-colors hover:bg-muted"
+      className="flex cursor-pointer items-center gap-2 rounded-full px-6 py-4 text-left text-paragraph font-bold text-sidebar-foreground transition-colors hover:bg-muted"
     >
       <BookOpen className="size-4" aria-hidden />
       使い方ガイドを見る

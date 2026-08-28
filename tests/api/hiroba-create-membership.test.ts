@@ -46,7 +46,7 @@ describe('ひろば投稿・返信の参加制限', () => {
         'content-type': 'application/json',
         'idempotency-key': '550e8400-e29b-41d4-a716-446655440000',
       },
-      body: JSON.stringify({ title: '未参加の投稿' }),
+      body: JSON.stringify({ title: '未参加の投稿', body: '未参加の投稿の本文' }),
     })
 
     expect(response.status).toBe(403)

@@ -50,7 +50,7 @@ function Pagination({
         aria-label="前へ"
         disabled={page <= 1 || disabled}
         onClick={() => onPageChange(page - 1)}
-        className="inline-flex size-9 items-center justify-center rounded-lg text-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronLeft className="size-4" aria-hidden />
       </button>
@@ -84,8 +84,8 @@ function Pagination({
             className={cn(
               'inline-flex min-h-9 w-8.5 items-center justify-center rounded-lg text-paragraph-small disabled:pointer-events-none disabled:opacity-50',
               isActive
-                ? 'bg-primary font-bold text-primary-foreground shadow-xs'
-                : 'font-medium text-foreground',
+                ? 'cursor-default bg-primary font-bold text-primary-foreground shadow-xs'
+                : 'cursor-pointer font-medium text-foreground',
             )}
           >
             {item}
@@ -97,7 +97,7 @@ function Pagination({
         aria-label="次へ"
         disabled={page >= totalPages || disabled}
         onClick={() => onPageChange(page + 1)}
-        className="inline-flex size-9 items-center justify-center rounded-lg text-foreground disabled:pointer-events-none disabled:opacity-50"
+        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg text-foreground disabled:pointer-events-none disabled:opacity-50"
       >
         <ChevronRight className="size-4" aria-hidden />
       </button>

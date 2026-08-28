@@ -25,6 +25,7 @@ const preview: Preview = {
         ...mswHandlers.posts,
         ...mswHandlers.answers,
         ...mswHandlers.hiroba,
+        ...mswHandlers.notifications,
         ...mswHandlers.admin,
         ...mswHandlers.invites,
         ...mswHandlers.passwordResets,

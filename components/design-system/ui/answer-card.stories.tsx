@@ -52,6 +52,7 @@ export const OwnAnswer: Story = {
       'href',
       '/mypage',
     )
+    await expect(canvas.queryByRole('button', { name: /3/ })).toBeNull()
   },
 }
 
@@ -59,6 +60,19 @@ export const WithMention: Story = {
   args: { answer: baseAnswer, liked: false, mentionNames: ['たろちゃん'] },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('たろちゃんさん')).toBeVisible()
+  },
+}
+
+export const WithUrl: Story = {
+  args: {
+    answer: { ...baseAnswer, body: 'お店のサイトは https://example.com です。' },
+    liked: false,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('link', { name: 'https://example.com' })).toHaveAttribute(
+      'href',
+      'https://example.com/',
+    )
   },
 }
 

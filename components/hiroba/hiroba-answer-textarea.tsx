@@ -73,13 +73,17 @@ export function HirobaAnswerTextarea({ postId }: HirobaAnswerTextareaProps) {
 
       <div className="space-y-3 rounded-lg border-2 border-border-3 p-4">
         <MentionTextarea
+          id="hiroba-answer-body"
+          name="body"
           value={body}
           onChange={setBody}
           selectedIds={mentionedUserIds}
           onSelectedIdsChange={setMentionedUserIds}
           loadCandidates={loadCandidates}
           placeholder="コメントを入力する"
+          className="resize-none"
           disabled={isSubmitting}
+          onSubmit={handleSubmit}
         />
         <div className="flex justify-end">
           <Button

@@ -1,9 +1,11 @@
 import { Button as ButtonPrimitive } from '@base-ui/react/button'
+import Link from 'next/link'
 
 import { IconAi } from '@/components/design-system/icons/icon-ai'
 import { IconClose } from '@/components/design-system/icons/icon-close'
 import { IconRefresh } from '@/components/design-system/icons/icon-refresh'
 import { cn } from '@/lib/utils'
+import { YORIAINU_PROFILE_PATH } from '@/lib/yoriainu/profile'
 
 /** ヘッダー右側の丸アイコンボタン。地色はヘッダーと同色で、hover のときだけ濃くなる */
 function HeaderIconButton({
@@ -47,7 +49,13 @@ function Header({
       className={cn('flex w-full items-center justify-between bg-primary p-6', className)}
     >
       <div className="flex items-center gap-2">
-        <IconAi className="size-[25px] shrink-0 text-primary-foreground" />
+        <Link
+          href={YORIAINU_PROFILE_PATH}
+          aria-label="よりあいぬのプロフィール"
+          className="shrink-0 rounded-full outline-none focus-visible:ring-3 focus-visible:ring-ring"
+        >
+          <IconAi className="size-[25px] shrink-0 text-primary-foreground" />
+        </Link>
         <p className="whitespace-nowrap text-background-2 text-heading-1">{title}</p>
       </div>
       <div className="flex items-center gap-1">

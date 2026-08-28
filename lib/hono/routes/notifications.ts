@@ -5,6 +5,7 @@ import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
   errorResponse,
   IdParamSchema,
+  MarkAllNotificationsAsReadSchema,
   NotificationSchema,
   UnreadNotificationCountSchema,
 } from '@/lib/hono/openapi/schemas'
@@ -35,11 +36,21 @@ const listQuerySchema = z.object({
     }),
 })
 
+/**
+ * MOCK_MODE 用の既読状態。フィクスチャは書き換えず、プロセス内だけで保持する。
+ * これがないと既読にしても未読件数が減らず、サイドバーのドットが消えない。
+ */
+const mockReadNotificationIds = new Set<string>()
+
+function isMockNotificationRead(notification: { id: string; isRead: boolean }) {
+  return notification.isRead || mockReadNotificationIds.has(notification.id)
+}
+
 const notificationInclude = {
   post: true,
   answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
   hirobaPost: true,
-  hirobaAnswer: true,
+  hirobaAnswer: { include: { hirobaPost: { select: { id: true, hirobaId: true } } } },
 } satisfies Prisma.NotificationInclude
 
 type NotificationWithRelations = Prisma.NotificationGetPayload<{
@@ -91,6 +102,22 @@ const unreadCountRoute = createRoute({
   },
 })
 
+const markAllAsReadRoute = createRoute({
+  method: 'patch',
+  path: '/read-all',
+  tags: ['notifications'],
+  summary: '自分の未読通知をすべて既読にする',
+  security: [{ supabaseSession: [] }],
+  middleware: [authMiddleware] as const,
+  responses: {
+    200: {
+      description: '既読化した件数',
+      content: { 'application/json': { schema: MarkAllNotificationsAsReadSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+  },
+})
+
 const markAsReadRoute = createRoute({
   method: 'patch',
   path: '/{id}',
@@ -125,10 +152,12 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       const page = notifications.slice(start, start + limit + 1)
       const hasNextPage = page.length > limit
       const items = page.slice(0, limit).map((notification) => {
-        if (!notification.answer) return notification
+        const isRead = isMockNotificationRead(notification)
+        if (!notification.answer) return { ...notification, isRead }
         const { anonymousProfile, ...answer } = notification.answer
         return {
           ...notification,
+          isRead,
           answer: {
             ...answer,
             anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
@@ -166,12 +195,31 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
 
     if (process.env.MOCK_MODE === 'true') {
       const count = MOCK_NOTIFICATIONS.filter(
-        (notification) => notification.userId === user.id && !notification.isRead,
+        (notification) => notification.userId === user.id && !isMockNotificationRead(notification),
       ).length
       return c.json({ count }, 200)
     }
 
     const count = await prisma.notification.count({ where: { userId: user.id, isRead: false } })
+    return c.json({ count }, 200)
+  })
+  .openapi(markAllAsReadRoute, async (c) => {
+    const user = c.get('user')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const unread = MOCK_NOTIFICATIONS.filter(
+        (notification) => notification.userId === user.id && !isMockNotificationRead(notification),
+      )
+      for (const notification of unread) {
+        mockReadNotificationIds.add(notification.id)
+      }
+      return c.json({ count: unread.length }, 200)
+    }
+
+    const { count } = await prisma.notification.updateMany({
+      where: { userId: user.id, isRead: false },
+      data: { isRead: true },
+    })
     return c.json({ count }, 200)
   })
   .openapi(markAsReadRoute, async (c) => {
@@ -182,6 +230,7 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       const notification = MOCK_NOTIFICATIONS.find((item) => item.id === id)
       if (!notification) return c.json({ error: 'Not found' }, 404)
       if (notification.userId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+      mockReadNotificationIds.add(id)
       if (!notification.answer)
         return c.json({ notification: { ...notification, isRead: true } }, 200)
       const { anonymousProfile, ...answer } = notification.answer

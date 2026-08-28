@@ -85,6 +85,7 @@ export function QuestionFormModal({
           <FormField
             label="質問のタイトル"
             error={errors.title?.message}
+            maxLength={48}
             inputProps={{
               id: 'title',
               placeholder: '例：キングオブタイムの有給申請について',
@@ -98,7 +99,7 @@ export function QuestionFormModal({
             <Textarea
               id="body"
               placeholder="お疲れ様です！！！質問したいのですが..."
-              className="h-36 p-3"
+              className="h-36 resize-none p-3"
               {...register('body')}
               aria-invalid={!!errors.body}
             />

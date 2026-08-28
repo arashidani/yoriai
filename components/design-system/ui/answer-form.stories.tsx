@@ -30,6 +30,26 @@ export const Submit: Story = {
   },
 }
 
+export const SubmitWithModEnter: Story = {
+  play: async ({ canvas, args }) => {
+    const textarea = canvas.getByPlaceholderText('回答を入力する')
+    await userEvent.click(textarea)
+    await userEvent.type(textarea, 'テスト回答')
+    await userEvent.keyboard('{Control>}{Enter}{/Control}')
+    await expect(args.onSubmit).toHaveBeenCalled()
+  },
+}
+
+export const EnterInsertsNewline: Story = {
+  play: async ({ canvas, args }) => {
+    const textarea = canvas.getByPlaceholderText('回答を入力する')
+    await userEvent.click(textarea)
+    await userEvent.type(textarea, 'テスト{Enter}回答')
+    await expect(textarea).toHaveValue('テスト\n回答')
+    await expect(args.onSubmit).not.toHaveBeenCalled()
+  },
+}
+
 export const Disabled: Story = {
   args: { disabled: true },
   play: async ({ canvas }) => {

@@ -10,6 +10,7 @@ import imageNone from '@/assets/image-none.svg'
 import { CommentCount } from '@/components/design-system/ui/comment-count'
 import { LikeButton } from '@/components/design-system/ui/like-button'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
+import { MentionText } from '@/components/mentions/mention-text'
 import { client } from '@/lib/hono/client'
 import { cn } from '@/lib/utils'
 import { LunchChip, type LunchChipType } from './lunch-chip'
@@ -47,26 +48,35 @@ function formatRelativeTime(input: Date | string) {
   return date.toLocaleDateString('ja-JP')
 }
 
+type PostCardState = 'default' | 'muted'
+
 type PostCardProps = {
   post: HirobaPost
   lunchVariant?: LunchChipType
   mbtiVariant?: MbtiChipVariant
   border?: 'default' | 'none'
+  /** default: いいねをトグルできる / muted: 表示専用（塗りつぶしの肉球） */
+  state?: PostCardState
   joined: boolean
   className?: string
-  /** 指定すると本文・画像部分がこのURL（投稿詳細）へのリンクになる */
+  /** 指定するとカード全体（余白含む）がこのURL（投稿詳細）へのリンクになる。ホバー背景と cursor-pointer が付く */
   postHref?: string
 }
 
-const postCardVariants = cva('flex gap-3', {
+const postCardVariants = cva('flex items-start gap-3 transition-colors', {
   variants: {
     border: {
-      default: 'border-2 border-neutral-200 p-4 rounded-lg',
+      default: 'border-2 border-neutral-200 p-4 rounded-lg bg-surface',
       none: 'border-none',
+    },
+    interactive: {
+      true: 'relative cursor-pointer hover:bg-ghost-hover',
+      false: '',
     },
   },
   defaultVariants: {
     border: 'default',
+    interactive: false,
   },
 })
 
@@ -75,6 +85,7 @@ export function PostCard({
   lunchVariant,
   mbtiVariant,
   border,
+  state = 'default',
   joined,
   className,
   postHref,
@@ -86,7 +97,7 @@ export function PostCard({
   const [pending, setPending] = useState(false)
 
   async function handleLikeToggle(next: boolean) {
-    if (pending) return
+    if (pending || post.isOwnPost) return
     setPending(true)
     setLiked(next)
     setLikeCount((count) => count + (next ? 1 : -1))
@@ -110,7 +121,12 @@ export function PostCard({
 
   const body = (
     <div className="space-y-3">
-      <p className="text-body-small">{post.body}</p>
+      <p className="whitespace-pre-line text-body-small">
+        <MentionText
+          text={post.body}
+          linkClassName={postHref ? 'relative z-10 pointer-events-auto' : undefined}
+        />
+      </p>
 
       {post.imageUrl && (
         <Image
@@ -140,24 +156,27 @@ export function PostCard({
   )
 
   return (
-    <div className={cn(postCardVariants({ border }), className)}>
-      {profileHref ? <Link href={profileHref}>{avatar}</Link> : avatar}
+    <div className={cn(postCardVariants({ border, interactive: !!postHref }), className)}>
+      {postHref && (
+        <Link href={postHref} className="absolute inset-0" aria-label={post.title} tabIndex={-1} />
+      )}
 
-      <div className="space-y-2 flex-1">
-        <div className="space-y-2 mr-10 w-full">
+      {profileHref ? (
+        <Link
+          href={profileHref}
+          aria-label={`${post.displayName}のプロフィール`}
+          className="relative z-10 shrink-0"
+        >
+          {avatar}
+        </Link>
+      ) : (
+        avatar
+      )}
+
+      <div className={cn('flex-1 min-w-0 space-y-2 pr-10', postHref && 'pointer-events-none')}>
+        <div className="space-y-2">
           <div className="flex gap-2 items-center">
-            {profileHref ? (
-              <Link
-                href={profileHref}
-                className="text-foreground text-sm font-bold hover:underline tracking-normal"
-              >
-                {post.displayName}
-              </Link>
-            ) : (
-              <p className="text-foreground text-sm font-bold tracking-normal">
-                {post.displayName}
-              </p>
-            )}
+            <p className="text-label text-foreground tracking-normal">{post.displayName}</p>
 
             {resolvedLunchVariant && <LunchChip lunchType={resolvedLunchVariant} />}
 
@@ -171,22 +190,26 @@ export function PostCard({
             </div>
           </div>
 
-          {postHref ? <Link href={postHref}>{body}</Link> : body}
+          {body}
         </div>
 
         <div className="flex gap-2">
           <CommentCount count={post.answerCount} />
 
-          <LikeButton
-            count={likeCount}
-            pressed={liked}
-            disabled={!joined || pending}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-            }}
-            onPressedChange={handleLikeToggle}
-          />
+          {!post.isOwnPost && (
+            <LikeButton
+              className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
+              state={state}
+              count={likeCount}
+              pressed={liked}
+              disabled={!joined || pending}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onPressedChange={handleLikeToggle}
+            />
+          )}
         </div>
       </div>
     </div>

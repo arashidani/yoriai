@@ -38,10 +38,11 @@ export const Default: Story = {
     await expect(canvas.getByText(/近くに新しく/)).toBeVisible()
     await expect(canvas.getByText('田中太郎')).toBeVisible()
     await expect(canvas.getByText('チームで')).toBeVisible()
-    await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute(
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
       'href',
       '/mypage/user-1',
     )
+    await expect(canvas.queryByRole('link', { name: '田中太郎' })).toBeNull()
   },
 }
 
@@ -59,7 +60,11 @@ export const WithImage: Story = {
 export const OwnPost: Story = {
   args: { post: { ...basePost, isOwnPost: true }, joined: true },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute('href', '/mypage')
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
+      'href',
+      '/mypage',
+    )
+    await expect(canvas.queryByRole('button', { name: /2/ })).toBeNull()
   },
 }
 
@@ -77,8 +82,44 @@ export const WithPostHref: Story = {
     postHref: '/hiroba/alcohol/posts/hiroba-post-1',
   },
   play: async ({ canvas }) => {
-    const bodyLink = canvas.getByText(/近くに新しく/).closest('a')
-    await expect(bodyLink).toHaveAttribute('href', '/hiroba/alcohol/posts/hiroba-post-1')
+    await expect(canvas.getByRole('link', { name: 'title' })).toHaveAttribute(
+      'href',
+      '/hiroba/alcohol/posts/hiroba-post-1',
+    )
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
+      'href',
+      '/mypage/user-1',
+    )
+  },
+}
+
+export const WithUrl: Story = {
+  args: {
+    post: {
+      ...basePost,
+      body: 'お店のサイトは https://example.com です。おすすめがあれば教えてください。',
+    },
+    joined: true,
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('link', { name: 'https://example.com' })).toHaveAttribute(
+      'href',
+      'https://example.com/',
+    )
+  },
+}
+
+export const Muted: Story = {
+  args: { post: basePost, joined: true, state: 'muted' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: /2/ })).toBeVisible()
+  },
+}
+
+export const Borderless: Story = {
+  args: { post: basePost, joined: true, border: 'none' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('田中太郎')).toBeVisible()
   },
 }
 

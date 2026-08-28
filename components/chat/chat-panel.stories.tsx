@@ -6,6 +6,9 @@ import { ChatPanel } from './chat-panel'
 
 const meta = {
   component: ChatPanel,
+  parameters: {
+    nextjs: { appDirectory: true },
+  },
   decorators: [
     // ai-chat-widget のパネルと同じ大きさ（枠線・角丸・影は AiChatbot 側が持つ）
     (Story) => (
@@ -29,6 +32,10 @@ export const Default: Story = {
     await expect(canvas.getByText('よりあいぬの小屋')).toBeVisible()
     await expect(canvas.getByText(/よりあいぬに相談/)).toBeVisible()
     await expect(canvas.getByLabelText('送信')).toBeDisabled()
+    await expect(canvas.getByRole('link', { name: 'よりあいぬのプロフィール' })).toHaveAttribute(
+      'href',
+      '/mypage/yoriainu',
+    )
   },
 }
 
@@ -43,8 +50,9 @@ export const Answered: Story = {
     await waitFor(async () => {
       await expect(canvas.getByText(/モック回答です。/)).toBeVisible()
     })
-    // 回答のふきだしにだけ よりあいぬ のアイコンが付く
+    // 回答のふきだしにだけ よりあいぬ のアイコンが付き、プロフィールへ遷移できる
     await expect(avatarCount(canvasElement)).toBe(1)
+    await expect(canvas.getAllByRole('link', { name: 'よりあいぬのプロフィール' })).toHaveLength(2)
   },
 }
 
