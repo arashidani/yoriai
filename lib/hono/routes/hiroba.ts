@@ -3,6 +3,7 @@ import type { HirobaPost, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity } from '@/app/generated/prisma/enums'
 import { canJoinHiroba, findHiroba, HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
+import { ensureHirobaBySlug } from '@/lib/hiroba/record'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -151,7 +152,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       return c.json({ hiroba, posts }, 200)
     }
 
-    const hiroba = await prisma.hiroba.findUnique({ where: { slug } })
+    const hiroba = await ensureHirobaBySlug(slug)
     if (!hiroba) return c.json({ error: 'Not found' }, 404)
 
     const posts = await prisma.hirobaPost.findMany({
@@ -173,7 +174,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     }
     if (process.env.MOCK_MODE === 'true') return c.json({ joined: true }, 200)
 
-    const hiroba = await prisma.hiroba.findUnique({ where: { slug }, select: { id: true } })
+    const hiroba = await ensureHirobaBySlug(slug)
     if (!hiroba) return c.json({ error: 'Not found' }, 404)
 
     await prisma.hirobaMembership.upsert({
@@ -224,7 +225,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       )
     }
 
-    const hiroba = await prisma.hiroba.findUnique({ where: { slug } })
+    const hiroba = await ensureHirobaBySlug(slug)
     if (!hiroba) return c.json({ error: 'Not found' }, 404)
 
     const user = c.get('user')

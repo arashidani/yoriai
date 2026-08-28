@@ -1,4 +1,5 @@
 import { findHiroba, HIROBA_CATALOG } from '@/lib/hiroba/catalog'
+import { ensureHirobaBySlug } from '@/lib/hiroba/record'
 import { MOCK_HIROBA_POSTS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { publicTagSelect } from '@/lib/prisma/selects'
@@ -12,7 +13,7 @@ export async function getHiroba(slug: string) {
   if (process.env.MOCK_MODE === 'true') {
     return catalogHiroba
   }
-  const persistedHiroba = await prisma.hiroba.findUnique({ where: { slug } })
+  const persistedHiroba = await ensureHirobaBySlug(slug)
   return persistedHiroba ? { ...catalogHiroba, id: persistedHiroba.id } : null
 }
 
