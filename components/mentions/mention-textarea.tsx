@@ -1,6 +1,14 @@
 'use client'
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+  type KeyboardEvent,
+  type KeyboardEventHandler,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
@@ -10,6 +18,7 @@ type MentionTextareaProps = {
   value: string
   onChange: (value: string) => void
   onBlur?: () => void
+  onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
   loadCandidates: () => Promise<MentionCandidate[]>
@@ -26,6 +35,7 @@ export function MentionTextarea({
   value,
   onChange,
   onBlur,
+  onKeyDown,
   selectedIds,
   onSelectedIdsChange,
   loadCandidates,
@@ -88,22 +98,36 @@ export function MentionTextarea({
     requestAnimationFrame(() => inputRef.current?.setSelectionRange(nextCursor, nextCursor))
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (!isOpen) return
-
-    if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      setActiveIndex((index) => (index + 1) % matches.length)
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      setActiveIndex((index) => (index - 1 + matches.length) % matches.length)
-    } else if (event.key === 'Enter' || event.key === 'Tab') {
-      event.preventDefault()
-      selectCandidate(matches[activeIndex])
-    } else if (event.key === 'Escape') {
-      event.preventDefault()
-      setDismissedQuery(query ?? null)
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (isOpen) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setActiveIndex((index) => (index + 1) % matches.length)
+        return
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setActiveIndex((index) => (index - 1 + matches.length) % matches.length)
+        return
+      }
+      // Ctrl/⌘+Enter は送信ショートカットとして親へ渡す
+      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        onKeyDown?.(event)
+        return
+      }
+      if (event.key === 'Enter' || event.key === 'Tab') {
+        event.preventDefault()
+        selectCandidate(matches[activeIndex])
+        return
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setDismissedQuery(query ?? null)
+        return
+      }
     }
+
+    onKeyDown?.(event)
   }
 
   return (

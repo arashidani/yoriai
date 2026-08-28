@@ -70,3 +70,15 @@ export const EscapeClosesList: Story = {
     await expect(canvas.queryByRole('listbox')).not.toBeInTheDocument()
   },
 }
+
+export const ModEnterDoesNotSelectCandidate: Story = {
+  play: async ({ canvas }) => {
+    const textarea = canvas.getByRole('combobox')
+    await userEvent.type(textarea, '@')
+    await canvas.findByRole('listbox')
+
+    await userEvent.keyboard('{Control>}{Enter}{/Control}')
+    await expect(textarea).toHaveValue('@')
+    await expect(canvas.getByRole('listbox')).toBeVisible()
+  },
+}
