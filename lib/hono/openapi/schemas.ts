@@ -120,6 +120,9 @@ export const HirobaPostSchema = z
     id: z.string().openapi({ example: 'hiroba-post-1' }),
     hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
     title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
+    body: z
+      .string()
+      .openapi({ example: '近くに新しくできたお店に行ってみたら、とても美味しかったです。' }),
     imageUrl: z.string().nullable().openapi({ example: null }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
     author: z.union([UserSchema, z.null()]).optional(),

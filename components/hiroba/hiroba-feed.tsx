@@ -144,7 +144,7 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin }: HirobaFeed
         id: post.id,
         hirobaSlug: hiroba.slug,
         title: post.title,
-        body: '',
+        body: post.body,
         imageUrl,
         authorId: post.authorId,
         displayName:
