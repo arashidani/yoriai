@@ -97,7 +97,7 @@ export function PostCard({
   const [pending, setPending] = useState(false)
 
   async function handleLikeToggle(next: boolean) {
-    if (pending) return
+    if (pending || post.isOwnPost) return
     setPending(true)
     setLiked(next)
     setLikeCount((count) => count + (next ? 1 : -1))
@@ -196,18 +196,20 @@ export function PostCard({
         <div className="flex gap-2">
           <CommentCount count={post.answerCount} />
 
-          <LikeButton
-            className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
-            state={state}
-            count={likeCount}
-            pressed={liked}
-            disabled={!joined || pending}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-            }}
-            onPressedChange={handleLikeToggle}
-          />
+          {!post.isOwnPost && (
+            <LikeButton
+              className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
+              state={state}
+              count={likeCount}
+              pressed={liked}
+              disabled={!joined || pending}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onPressedChange={handleLikeToggle}
+            />
+          )}
         </div>
       </div>
     </div>
