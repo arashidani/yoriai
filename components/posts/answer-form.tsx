@@ -5,7 +5,10 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { AnswerForm as AnswerFormUI } from '@/components/design-system/ui/answer-form'
+import {
+  AnswerForm as AnswerFormUI,
+  answerFormTextareaClassName,
+} from '@/components/design-system/ui/answer-form'
 import { type MentionCandidate, MentionTextarea } from '@/components/mentions/mention-textarea'
 import { client } from '@/lib/hono/client'
 import { type CreateAnswerInput, createAnswerSchema } from '@/lib/schemas/answer'
@@ -112,6 +115,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
                   placeholder="回答を入力する"
                   disabled={isSubmitting || isPostUnavailable}
                   ariaInvalid={!!errors.body}
+                  className={answerFormTextareaClassName}
                 />
               )}
             />

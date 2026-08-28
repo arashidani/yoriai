@@ -5,6 +5,13 @@ import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { Textarea } from '@/components/design-system/ui/textarea'
 import { cn } from '@/lib/utils'
 
+/**
+ * 入力欄に当てるクラス。リサイズを禁止し、絶対配置の送信ボタン
+ * （bottom-3.5 + 高さ 40px）と入力文字が重ならないよう下余白を確保する。
+ * textarea スロットを差し替える場合も同じクラスを当てること。
+ */
+const answerFormTextareaClassName = 'resize-none pb-14'
+
 type AnswerFormProps = {
   className?: string
   placeholder?: string
@@ -32,6 +39,7 @@ function AnswerForm({
           placeholder={placeholder}
           disabled={disabled}
           rows={4}
+          className={answerFormTextareaClassName}
           {...textareaProps}
         />
       )}
@@ -50,4 +58,4 @@ function AnswerForm({
 }
 
 export type { AnswerFormProps }
-export { AnswerForm }
+export { AnswerForm, answerFormTextareaClassName }
