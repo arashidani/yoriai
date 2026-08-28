@@ -82,6 +82,20 @@ export const WithPostHref: Story = {
   },
 }
 
+export const Muted: Story = {
+  args: { post: basePost, joined: true, state: 'muted' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: /2/ })).toBeVisible()
+  },
+}
+
+export const Borderless: Story = {
+  args: { post: basePost, joined: true, border: 'none' },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('田中太郎')).toBeVisible()
+  },
+}
+
 export const NoAuthor: Story = {
   args: {
     post: { ...basePost, authorId: null, displayName: '削除されたユーザー' },
