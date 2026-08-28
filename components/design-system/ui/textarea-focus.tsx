@@ -64,6 +64,8 @@ export function TextareaFocus({
         </div>
       )}
       <textarea
+        id="hiroba-post-body"
+        name="body"
         placeholder="今の気分をシェアしましょう"
         value={body}
         onChange={(e) => setBody(e.target.value)}
@@ -97,6 +99,8 @@ export function TextareaFocus({
         {onImageSelect && (
           <input
             ref={fileInputRef}
+            id="hiroba-post-image"
+            name="image"
             type="file"
             accept={acceptedImageTypes?.join(',')}
             className="hidden"
