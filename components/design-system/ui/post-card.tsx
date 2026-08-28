@@ -120,7 +120,7 @@ export function PostCard({
 
   const body = (
     <div className="space-y-3">
-      <p className="text-body-small">{post.body}</p>
+      <p className="whitespace-pre-line text-body-small">{post.body}</p>
 
       {post.imageUrl && (
         <Image

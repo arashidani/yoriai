@@ -21,7 +21,7 @@ export const Default: Story = {
     await expect(canvas.queryByRole('link', { name: 'ミッション' })).not.toBeInTheDocument()
     await expect(canvas.queryByRole('link', { name: '投稿・保存した質問' })).not.toBeInTheDocument()
     await expect(canvas.getByText('マイページ')).toBeVisible()
-    await expect(canvas.getAllByLabelText('通知')[1]).toBeVisible()
+    await expect(canvas.getByRole('button', { name: /^通知/ })).toBeVisible()
     await expect(canvas.queryByText('管理者画面へ')).not.toBeInTheDocument()
   },
 }
@@ -42,6 +42,21 @@ export const PostsPageActive: Story = {
     // /posts/* でも「なんでもQ&A」がアクティブ表示になる
     const qaLink = canvas.getByText('なんでもQ&A').closest('a')
     await expect(qaLink).toHaveClass(/bg-muted/)
+  },
+}
+
+/** ナビ最上段に通知ボタンが並ぶ（パネル本体はレイアウト側の NotificationPanelColumn） */
+export const Notifications: Story = {
+  args: { isAdmin: false },
+  play: async ({ canvas }) => {
+    const notificationButton = canvas.getByRole('button', { name: /^通知/ })
+    await expect(notificationButton).toBeVisible()
+
+    // ナビの一番上（ひろばより前）に置く
+    const hirobaLink = canvas.getByRole('link', { name: 'ひろば' })
+    await expect(notificationButton.compareDocumentPosition(hirobaLink)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
   },
 }
 

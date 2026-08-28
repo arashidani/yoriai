@@ -12,6 +12,7 @@ import {
   MOCK_HIROBAS,
   MOCK_INTERESTS,
   MOCK_INVITES,
+  MOCK_NOTIFICATIONS,
   MOCK_PASSWORD_RESETS,
   MOCK_POSTS,
   MOCK_TAG_CATEGORIES,
@@ -26,6 +27,22 @@ import { toQuestionResponse } from '../lib/questions/api-mappers'
 const MOCK_QUESTIONS = MOCK_POSTS.map((post) =>
   toQuestionResponse({ ...post, likes: [], bookmarks: [] }, MOCK_USERS[0].id),
 )
+
+/** 本番同様、ログイン中のユーザー宛ての通知だけを返す。 */
+const MY_NOTIFICATIONS = MOCK_NOTIFICATIONS.filter(
+  (notification) => notification.userId === MOCK_USERS[0].id,
+)
+
+/** 既読にした通知。既読化が未読件数に反映されないと、サイドバーのドットが消えない。 */
+const readNotificationIds = new Set<string>()
+
+const isNotificationRead = (notification: { id: string; isRead: boolean }) =>
+  notification.isRead || readNotificationIds.has(notification.id)
+
+/** ストーリー間で既読状態を持ち越さないためのリセット。 */
+export function resetMockNotificationReadState() {
+  readNotificationIds.clear()
+}
 
 /** `a,b,c` 形式のクエリを id 配列にする。lib/hono/routes/qa-questions.ts と同じ扱い。 */
 function commaSeparatedIds(value: string | null) {
@@ -178,6 +195,28 @@ export const mswHandlers = {
   answers: [
     http.post('/api/answers/:id/likes', () => HttpResponse.json({ liked: true, likeCount: 1 })),
     http.delete('/api/answers/:id/likes', () => HttpResponse.json({ liked: false, likeCount: 0 })),
+  ],
+  notifications: [
+    http.get('/api/notifications', () =>
+      HttpResponse.json({
+        notifications: MY_NOTIFICATIONS.map((notification) => ({
+          ...notification,
+          isRead: isNotificationRead(notification),
+        })),
+        nextCursor: null,
+      }),
+    ),
+    http.get('/api/notifications/unread-count', () =>
+      HttpResponse.json({
+        count: MY_NOTIFICATIONS.filter((notification) => !isNotificationRead(notification)).length,
+      }),
+    ),
+    http.patch('/api/notifications/:id', ({ params }) => {
+      const notification = MOCK_NOTIFICATIONS.find((item) => item.id === params.id)
+      if (!notification) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      readNotificationIds.add(String(params.id))
+      return HttpResponse.json({ notification: { ...notification, isRead: true } })
+    }),
   ],
   hiroba: [
     http.get('/api/hiroba', () => HttpResponse.json({ hirobas: MOCK_HIROBAS })),
