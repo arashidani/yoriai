@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { HttpResponse, http } from 'msw'
-import { expect, screen, userEvent } from 'storybook/test'
+import { expect, screen, userEvent, waitFor } from 'storybook/test'
 import { QuestionComposeDialog } from './question-compose-dialog'
 
 const meta = {
@@ -27,7 +27,9 @@ export const OpenForm: Story = {
   args: {},
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: '質問する' }))
-    await expect(await screen.findByLabelText('質問のタイトル')).toBeVisible()
+    // ダイアログはフェードインで開くため、可視になるまで待つ
+    const titleInput = await screen.findByLabelText('質問のタイトル')
+    await waitFor(() => expect(titleInput).toBeVisible())
     await expect(screen.queryByText('名無しのおせワニ')).not.toBeInTheDocument()
   },
 }
