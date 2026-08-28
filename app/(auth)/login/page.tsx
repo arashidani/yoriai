@@ -63,7 +63,7 @@ export default function LoginPage() {
 
       <RegisterImagePanel image={leftImage} className="hidden lg:block" />
 
-      <RegisterSidePanel className="m-0 h-auto w-full flex-1 justify-start rounded-none px-5 pb-10 lg:mt-6 lg:mr-6 lg:mb-6 lg:h-[calc(100dvh-3rem)] lg:w-1/2 lg:justify-center lg:rounded-2xl lg:px-0 lg:pb-0">
+      <RegisterSidePanel className="m-0 h-auto w-full flex-1 rounded-none px-5 pb-10 lg:mt-6 lg:mr-6 lg:mb-6 lg:h-[calc(100dvh-3rem)] lg:w-1/2 lg:rounded-2xl lg:px-0 lg:pb-0">
         <div className="w-full max-w-90 space-y-10 lg:space-y-16">
           <div className="max-w-90 space-y-3 text-center lg:space-y-4">
             <p className="text-heading-1 font-bold text-foreground">おかえりなさい</p>
