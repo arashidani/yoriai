@@ -28,11 +28,17 @@ export function AnswerForm({ postId }: AnswerFormProps) {
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CreateAnswerInput>({
     resolver: zodResolver(createAnswerSchema),
     defaultValues: { body: '', mentionedUserIds: [] },
   })
+
+  const body = watch('body')
+  const canSubmit = body.trim().length > 0
+  const isInputDisabled = isSubmitting || isPostUnavailable
+  const isSubmitDisabled = isInputDisabled || !canSubmit
 
   const loadCandidates = useCallback(async (): Promise<MentionCandidate[]> => {
     const res = await client.api.questions[':id']['mention-candidates'].$get({
@@ -43,7 +49,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
   }, [postId])
 
   async function onSubmit(data: CreateAnswerInput) {
-    if (isSubmittingRef.current || isPostUnavailable) return
+    if (isSubmittingRef.current || isPostUnavailable || !data.body.trim()) return
     isSubmittingRef.current = true
     setError(null)
 
@@ -97,7 +103,7 @@ export function AnswerForm({ postId }: AnswerFormProps) {
           onSubmit={handleSubmit(onSubmit)}
           placeholder="回答を入力する"
           submitLabel={isSubmitting ? '送信中...' : '回答'}
-          disabled={isSubmitting || isPostUnavailable}
+          disabled={isSubmitDisabled}
           textarea={
             <Controller
               name="body"
@@ -109,11 +115,15 @@ export function AnswerForm({ postId }: AnswerFormProps) {
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
+                  onSubmit={() => {
+                    if (isSubmitDisabled) return
+                    void handleSubmit(onSubmit)()
+                  }}
                   selectedIds={mentionedUserIds}
                   onSelectedIdsChange={setMentionedUserIds}
                   loadCandidates={loadCandidates}
                   placeholder="回答を入力する"
-                  disabled={isSubmitting || isPostUnavailable}
+                  disabled={isInputDisabled}
                   ariaInvalid={!!errors.body}
                   className={answerFormTextareaClassName}
                 />
