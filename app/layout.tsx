@@ -33,6 +33,14 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: 'Yoriai - 会社の「はじめまして」を身近に',
   description: '社内向け質問共有プラットフォーム',
+  icons: {
+    icon: [
+      { url: '/favicon/favicon.ico', sizes: 'any' },
+      { url: '/favicon/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: '/favicon/apple-touch-icon.png',
+  },
 }
 
 export default function RootLayout({
