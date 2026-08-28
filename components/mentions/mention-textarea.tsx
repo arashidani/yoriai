@@ -18,6 +18,7 @@ type MentionTextareaProps = {
   value: string
   onChange: (value: string) => void
   onBlur?: () => void
+  onSubmit?: () => void
   onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
@@ -31,10 +32,15 @@ type MentionTextareaProps = {
   className?: string
 }
 
+function isModEnter(event: KeyboardEvent<HTMLTextAreaElement>) {
+  return event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing
+}
+
 export function MentionTextarea({
   value,
   onChange,
   onBlur,
+  onSubmit,
   onKeyDown,
   selectedIds,
   onSelectedIdsChange,
@@ -99,6 +105,18 @@ export function MentionTextarea({
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (isModEnter(event)) {
+      event.preventDefault()
+      if (!disabled) {
+        if (onSubmit) {
+          onSubmit()
+        } else {
+          onKeyDown?.(event)
+        }
+      }
+      return
+    }
+
     if (isOpen) {
       if (event.key === 'ArrowDown') {
         event.preventDefault()
@@ -108,11 +126,6 @@ export function MentionTextarea({
       if (event.key === 'ArrowUp') {
         event.preventDefault()
         setActiveIndex((index) => (index - 1 + matches.length) % matches.length)
-        return
-      }
-      // Ctrl/⌘+Enter は送信ショートカットとして親へ渡す
-      if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
-        onKeyDown?.(event)
         return
       }
       if (event.key === 'Enter' || event.key === 'Tab') {

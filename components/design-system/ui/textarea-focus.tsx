@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { type ChangeEvent, useRef, useState } from 'react'
+import { type ChangeEvent, type KeyboardEvent, useRef, useState } from 'react'
 import image from '@/assets/img.svg'
 import submitWhite from '@/assets/submit-white.svg'
 import { Spinner } from '@/components/ui/spinner'
@@ -9,6 +9,10 @@ import { Button } from '../button'
 import { TextareaWithActions } from './textarea'
 
 const TITLE_MAX_LENGTH = 200
+
+function isModEnter(event: KeyboardEvent<HTMLTextAreaElement>) {
+  return event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing
+}
 
 type TextareaFocusProps = {
   onSubmit: (data: { title: string; body: string; image: File | null }) => Promise<void>
@@ -64,6 +68,12 @@ export function TextareaFocus({
       placeholder="今の気分をシェアしましょう"
       value={body}
       onChange={(e) => setBody(e.target.value)}
+      onKeyDown={(event) => {
+        if (!isModEnter(event)) return
+        event.preventDefault()
+        if (isSubmitting || !body.trim()) return
+        void handleSubmit()
+      }}
       containerClassName="relative"
       leadingActions={
         onImageSelect && (
