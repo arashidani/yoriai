@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
-import { expect, userEvent } from 'storybook/test'
+import { expect, fn, userEvent } from 'storybook/test'
 import { MentionTextarea } from './mention-textarea'
 
-function MentionTextareaExample() {
+function MentionTextareaExample({ onSubmit }: { onSubmit?: () => void }) {
   const [value, setValue] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
@@ -18,6 +18,7 @@ function MentionTextareaExample() {
         { id: 'user-2', displayName: 'いぬ' },
       ]}
       placeholder="回答を入力する"
+      onSubmit={onSubmit}
     />
   )
 }
@@ -80,5 +81,18 @@ export const ModEnterDoesNotSelectCandidate: Story = {
     await userEvent.keyboard('{Control>}{Enter}{/Control}')
     await expect(textarea).toHaveValue('@')
     await expect(canvas.getByRole('listbox')).toBeVisible()
+  },
+}
+
+export const ModEnterSubmits: Story = {
+  args: {
+    onSubmit: fn(),
+  },
+  render: (args) => <MentionTextareaExample onSubmit={args.onSubmit} />,
+  play: async ({ args, canvas }) => {
+    const textarea = canvas.getByRole('combobox')
+    await userEvent.type(textarea, 'hello')
+    await userEvent.keyboard('{Control>}{Enter}{/Control}')
+    await expect(args.onSubmit).toHaveBeenCalled()
   },
 }
