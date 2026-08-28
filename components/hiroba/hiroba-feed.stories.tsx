@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect } from 'storybook/test'
+import { expect, userEvent } from 'storybook/test'
 import { HirobaFeed } from './hiroba-feed'
 
 const meta = {
@@ -71,6 +71,22 @@ export const Joined: Story = {
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: '参加中' })).toBeDisabled()
+  },
+}
+
+/** 投稿すると、入力した本文がそのままフィードのカードに表示される。 */
+export const CreatePost: Story = {
+  args: {
+    ...Default.args,
+    initialJoined: true,
+  },
+  play: async ({ canvas }) => {
+    await userEvent.type(
+      canvas.getByPlaceholderText('今の気分をシェアしましょう'),
+      '昨日餃子食べてビール飲んで寝ました！',
+    )
+    await userEvent.click(canvas.getByRole('button', { name: '送信' }))
+    await expect(await canvas.findByText('昨日餃子食べてビール飲んで寝ました！')).toBeVisible()
   },
 }
 

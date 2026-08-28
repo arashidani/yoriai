@@ -209,7 +209,6 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
             id: `hiroba-post-${Date.now()}`,
             hirobaId: hiroba.id,
             ...data,
-            body: '',
             imageUrl: null,
             authorId: user.id,
             author: user,
@@ -243,7 +242,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     let post: HirobaPostWithAuthor
     try {
       post = await prisma.hirobaPost.create({
-        data: { ...data, body: '', hirobaId: hiroba.id, authorId: user.id, idempotencyKey },
+        data: { ...data, hirobaId: hiroba.id, authorId: user.id, idempotencyKey },
         include: { author: true },
       })
     } catch (error) {
@@ -262,7 +261,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       }
 
       if (!existingPost) return c.json({ error: '投稿の作成に失敗しました' }, 500)
-      if (existingPost.title !== data.title) {
+      if (existingPost.title !== data.title || existingPost.body !== data.body) {
         return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
       }
 
@@ -270,7 +269,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     }
 
     const { moderatePost } = await import('@/lib/ai/moderate-post')
-    const moderation = await moderatePost(post.title, '')
+    const moderation = await moderatePost(post.title, post.body)
     if (moderation?.flagged) {
       try {
         const [, flaggedPost] = await prisma.$transaction([

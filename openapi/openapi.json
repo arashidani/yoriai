@@ -586,6 +586,10 @@
             "type": "string",
             "example": "今日のランチどこ行きました？"
           },
+          "body": {
+            "type": "string",
+            "example": "近くに新しくできたお店に行ってみたら、とても美味しかったです。"
+          },
           "imageUrl": {
             "type": [
               "string",
@@ -653,6 +657,7 @@
           "id",
           "hirobaId",
           "title",
+          "body",
           "imageUrl",
           "authorId",
           "answerCount",
@@ -1793,7 +1798,7 @@
                   "title": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 200
+                    "maxLength": 48
                   },
                   "body": {
                     "type": "string",
@@ -4101,10 +4106,15 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
-                  "title"
+                  "title",
+                  "body"
                 ]
               }
             }

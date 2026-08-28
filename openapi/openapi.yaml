@@ -404,6 +404,9 @@ components:
         title:
           type: string
           example: 今日のランチどこ行きました？
+        body:
+          type: string
+          example: 近くに新しくできたお店に行ってみたら、とても美味しかったです。
         imageUrl:
           type:
             - string
@@ -448,6 +451,7 @@ components:
         - id
         - hirobaId
         - title
+        - body
         - imageUrl
         - authorId
         - answerCount
@@ -1239,7 +1243,7 @@ paths:
                 title:
                   type: string
                   minLength: 1
-                  maxLength: 200
+                  maxLength: 48
                 body:
                   type: string
                   minLength: 1
@@ -2647,8 +2651,12 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 200
+                body:
+                  type: string
+                  minLength: 1
               required:
                 - title
+                - body
       responses:
         "200":
           description: 再送された投稿（すでに作成済みの投稿）

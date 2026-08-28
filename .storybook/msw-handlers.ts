@@ -190,13 +190,14 @@ export const mswHandlers = {
     http.post('/api/hiroba/:slug/membership', () => HttpResponse.json({ joined: true })),
     http.delete('/api/hiroba/:slug/membership', () => HttpResponse.json({ joined: false })),
     http.post('/api/hiroba/:slug/posts', async ({ request }) => {
-      const body = (await request.json()) as { title: string }
+      const requestBody = (await request.json()) as { title: string; body: string }
       return HttpResponse.json(
         {
           post: {
             id: 'hiroba-post-new',
             hirobaId: 'hiroba-1',
-            title: body.title,
+            title: requestBody.title,
+            body: requestBody.body,
             imageUrl: null,
             authorId: 'user-1',
             author: MOCK_USERS[0],
