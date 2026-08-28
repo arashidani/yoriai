@@ -81,6 +81,7 @@ export function HirobaAnswerTextarea({ postId }: HirobaAnswerTextareaProps) {
           onSelectedIdsChange={setMentionedUserIds}
           loadCandidates={loadCandidates}
           placeholder="コメントを入力する"
+          className="resize-none"
           disabled={isSubmitting}
           onKeyDown={(event) => {
             if (event.key !== 'Enter' || !(event.metaKey || event.ctrlKey)) return
