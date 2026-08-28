@@ -7,7 +7,6 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { type Dispatch, type SetStateAction, useState } from 'react'
 import { type Control, Controller, type UseFormReturn, useForm } from 'react-hook-form'
@@ -32,6 +31,7 @@ import { ActivityHistory, type ActivityItem } from './activity-history'
 import { ProfileAvatar } from './profile-avatar'
 import { ProfileEditField } from './profile-edit-field'
 import { ProfileField } from './profile-field'
+import { ProfileFormFallback } from './profile-form-fallback'
 
 type Option = { id: string; name: string }
 type Options = {
@@ -215,7 +215,7 @@ export function ProfileForm() {
   const optionsQuery = useQuery({ queryKey: ['onboarding-options'], queryFn: fetchOptions })
 
   if (profileQuery.isPending || optionsQuery.isPending) {
-    return <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="読み込み中" />
+    return <ProfileFormFallback />
   }
 
   if (profileQuery.error || optionsQuery.error) {
