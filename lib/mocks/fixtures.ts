@@ -57,6 +57,7 @@ export const MOCK_JOINED_HIROBA_SLUGS = [
   'two-dimensional',
   'gourmet',
   'outdoor',
+  'mbti-green',
 ] as const
 
 export const MOCK_USER_PROFILE = {
