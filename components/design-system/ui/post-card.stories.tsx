@@ -81,8 +81,14 @@ export const WithPostHref: Story = {
     postHref: '/hiroba/alcohol/posts/hiroba-post-1',
   },
   play: async ({ canvas }) => {
-    const bodyLink = canvas.getByText(/近くに新しく/).closest('a')
-    await expect(bodyLink).toHaveAttribute('href', '/hiroba/alcohol/posts/hiroba-post-1')
+    await expect(canvas.getByRole('link', { name: 'title' })).toHaveAttribute(
+      'href',
+      '/hiroba/alcohol/posts/hiroba-post-1',
+    )
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
+      'href',
+      '/mypage/user-1',
+    )
   },
 }
 
