@@ -5,6 +5,8 @@ import { QuestionItem } from './question-item'
 const meta = {
   component: QuestionItem,
   args: {
+    avatarSrc: '/anonymous-profiles/cat.svg',
+    avatarAlt: 'アバター',
     authorName: '名無しのおせワニ',
     category: 'カテゴリー',
     status: 'OPEN',
@@ -23,6 +25,7 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   play: async ({ canvas }) => {
+    await expect(canvas.getByRole('img', { name: 'アバター' })).toBeVisible()
     await expect(canvas.getByText('名無しのおせワニ')).toBeVisible()
     await expect(canvas.getByText('キングオブタイムの有給申請について')).toBeVisible()
     await expect(canvas.getByText('カテゴリー')).toBeVisible()
@@ -58,5 +61,15 @@ export const OwnQuestion: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.queryByRole('button', { name: '7' })).not.toBeInTheDocument()
     await expect(canvas.getByRole('button', { name: '0' })).toBeVisible()
+  },
+}
+
+export const MissingAvatar: Story = {
+  args: { avatarSrc: undefined },
+  play: async ({ canvas, canvasElement }) => {
+    await expect(canvas.getByText('名無しのおせワニ')).toBeVisible()
+    await expect(canvas.queryByRole('img')).toBeNull()
+    const avatar = canvasElement.querySelector('[data-slot="author-avatar"]')
+    expect(avatar).toHaveClass('bg-primary')
   },
 }
