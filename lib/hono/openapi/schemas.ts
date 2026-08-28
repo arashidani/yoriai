@@ -233,6 +233,10 @@ export const UnreadNotificationCountSchema = z
   .object({ count: z.number().int().openapi({ example: 3 }) })
   .openapi('UnreadNotificationCount')
 
+export const MarkAllNotificationsAsReadSchema = z
+  .object({ count: z.number().int().openapi({ example: 5 }) })
+  .openapi('MarkAllNotificationsAsRead')
+
 export const LikeStatusSchema = z
   .object({
     liked: z.boolean().openapi({ example: true }),

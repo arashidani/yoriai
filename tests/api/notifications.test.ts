@@ -7,6 +7,7 @@ const { prismaMock } = vi.hoisted(() => ({
       count: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }))
@@ -148,6 +149,19 @@ describe('通知API', () => {
     expect(response.status).toBe(200)
     expect(await response.json()).toMatchObject({
       notification: { id: 'notification-1', isRead: true },
+    })
+  })
+
+  it('未読通知をすべて既読にする', async () => {
+    prismaMock.notification.updateMany.mockResolvedValue({ count: 4 })
+
+    const response = await app.request('/api/notifications/read-all', { method: 'PATCH' })
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({ count: 4 })
+    expect(prismaMock.notification.updateMany).toHaveBeenCalledWith({
+      where: { userId: 'user-1', isRead: false },
+      data: { isRead: true },
     })
   })
 })

@@ -1,8 +1,14 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { Button } from '@/components/design-system/button'
+import { IconCheck } from '@/components/design-system/icons/icon-check'
 import { IconClose } from '@/components/design-system/icons/icon-close'
 import {
   NotificationItem,
   type NotificationItemType,
 } from '@/components/design-system/ui/notification-item'
+import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 
 type NotificationPanelEntry = {
@@ -22,10 +28,17 @@ type NotificationPanelProps = {
   title?: string
   /** 渡すとヘッダーに閉じるボタンを表示する */
   onClose?: () => void
+  /** 渡すと未読があるときヘッダーに表示する */
+  onMarkAllAsRead?: () => void
+  isMarkingAllAsRead?: boolean
   /** 通知を開いたとき（既読化など） */
   onNotificationClick?: (id: string) => void
   /** 通知が 0 件のときに中央へ表示する文言 */
   emptyMessage?: string
+  /** 次ページを読み込む（無限スクロール） */
+  onLoadMore?: () => void
+  hasMore?: boolean
+  isLoadingMore?: boolean
 }
 
 /** 受信トレイ。通知が 0 件のときは空状態を表示する。 */
@@ -34,16 +47,57 @@ function NotificationPanel({
   notifications,
   title = '受信トレイ',
   onClose,
+  onMarkAllAsRead,
+  isMarkingAllAsRead = false,
   onNotificationClick,
   emptyMessage = '通知が届いていません',
+  onLoadMore,
+  hasMore = false,
+  isLoadingMore = false,
 }: NotificationPanelProps) {
+  const listRef = useRef<HTMLUListElement>(null)
+  const loadMoreRef = useRef<HTMLLIElement>(null)
+
+  useEffect(() => {
+    if (!onLoadMore || !hasMore || isLoadingMore) return
+
+    const root = listRef.current
+    const target = loadMoreRef.current
+    if (!root || !target) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) onLoadMore()
+      },
+      { root, threshold: 0.1 },
+    )
+
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [onLoadMore, hasMore, isLoadingMore, notifications.length])
+
   return (
     <div
       data-slot="notification-panel"
       className={cn('flex h-full w-full flex-col gap-6 rounded-lg bg-background-2 p-6', className)}
     >
-      <div className="flex shrink-0 items-center justify-between">
-        <h2 className="text-heading-3 text-foreground">{title}</h2>
+      <div className="flex shrink-0 items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <h2 className="shrink-0 text-heading-3 text-foreground">{title}</h2>
+          {onMarkAllAsRead && (
+            <Button
+              type="button"
+              size="default"
+              variant="primary"
+              className="shrink-0"
+              leftIcon={<IconCheck className="size-full" />}
+              onClick={onMarkAllAsRead}
+              isDisabled={isMarkingAllAsRead}
+            >
+              すべて既読
+            </Button>
+          )}
+        </div>
         {onClose && (
           <button
             type="button"
@@ -61,7 +115,10 @@ function NotificationPanel({
           {emptyMessage}
         </p>
       ) : (
-        <ul className="scrollbar-custom flex min-h-0 flex-1 flex-col divide-y divide-border-3 overflow-y-auto">
+        <ul
+          ref={listRef}
+          className="scrollbar-custom flex min-h-0 flex-1 flex-col divide-y divide-border-3 overflow-y-auto"
+        >
           {notifications.map((notification) => (
             <li key={notification.id}>
               <NotificationItem
@@ -76,6 +133,13 @@ function NotificationPanel({
               />
             </li>
           ))}
+          {hasMore && (
+            <li ref={loadMoreRef} className="flex justify-center py-4">
+              {isLoadingMore && (
+                <Spinner className="size-8 text-primary" aria-label="読み込み中" />
+              )}
+            </li>
+          )}
         </ul>
       )}
     </div>

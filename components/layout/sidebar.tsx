@@ -70,11 +70,18 @@ function NotificationNavButton({ onOpen }: { onOpen: () => void }) {
 function SidebarNav({
   onNavigate,
   onOpenNotifications,
+  onCloseNotifications,
 }: {
   onNavigate?: () => void
   onOpenNotifications: () => void
+  onCloseNotifications: () => void
 }) {
   const pathname = usePathname()
+
+  function handleNavItemClick() {
+    onCloseNotifications()
+    onNavigate?.()
+  }
 
   return (
     <nav className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-8">
@@ -88,14 +95,14 @@ function SidebarNav({
         <Link
           key={href}
           href={href}
-          onClick={onNavigate}
+          onClick={handleNavItemClick}
           className={cn(navItemClassName, isNavActive(pathname, href) && 'bg-muted')}
         >
           <Icon className="size-4" />
           {label}
         </Link>
       ))}
-      <FeatureTutorialStartButton onStart={onNavigate} />
+      <FeatureTutorialStartButton onStart={handleNavItemClick} />
     </nav>
   )
 }
@@ -103,9 +110,11 @@ function SidebarNav({
 function MobileNav({
   isAdmin,
   onOpenNotifications,
+  onCloseNotifications,
 }: {
   isAdmin: boolean
   onOpenNotifications: () => void
+  onCloseNotifications: () => void
 }) {
   const [open, setOpen] = useState(false)
 
@@ -141,12 +150,19 @@ function MobileNav({
           </SheetClose>
         </div>
         <div className="flex min-h-0 flex-1 flex-col pb-8">
-          <SidebarNav onNavigate={() => setOpen(false)} onOpenNotifications={onOpenNotifications} />
+          <SidebarNav
+            onNavigate={() => setOpen(false)}
+            onOpenNotifications={onOpenNotifications}
+            onCloseNotifications={onCloseNotifications}
+          />
           <div className="flex shrink-0 flex-col items-start gap-2 p-8">
             {isAdmin && (
               <Link
                 href="/admin"
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  onCloseNotifications()
+                  setOpen(false)
+                }}
                 className="text-paragraph-small text-secondary-foreground hover:text-foreground"
               >
                 管理者画面へ
@@ -163,13 +179,18 @@ function MobileNav({
 /** ユーザー画面共通の左ナビゲーション。 */
 export function Sidebar({ isAdmin = false }: SidebarProps) {
   const openNotifications = useNotificationPanelStore((state) => state.open)
+  const closeNotifications = useNotificationPanelStore((state) => state.close)
 
   return (
     <>
       <header className="flex items-center justify-between border-b border-input bg-background-subtle px-4 py-3 lg:hidden">
         <div className="flex items-center gap-1">
-          <MobileNav isAdmin={isAdmin} onOpenNotifications={openNotifications} />
-          <Link href="/">
+          <MobileNav
+            isAdmin={isAdmin}
+            onOpenNotifications={openNotifications}
+            onCloseNotifications={closeNotifications}
+          />
+          <Link href="/" onClick={closeNotifications}>
             <Logo variant="full" preload className="h-8 w-auto" />
           </Link>
         </div>
@@ -177,6 +198,7 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
           {isAdmin && (
             <Link
               href="/admin"
+              onClick={closeNotifications}
               className="rounded-full px-3 py-2 text-paragraph-small text-secondary-foreground hover:bg-muted hover:text-foreground"
             >
               管理者
@@ -196,15 +218,19 @@ export function Sidebar({ isAdmin = false }: SidebarProps) {
       </header>
       <aside className="hidden w-80 shrink-0 flex-col bg-background-subtle lg:sticky lg:top-0 lg:flex lg:h-screen lg:self-start">
         <div className="flex shrink-0 items-center p-8">
-          <Link href="/">
+          <Link href="/" onClick={closeNotifications}>
             <Logo variant="full" preload className="h-9 w-auto" />
           </Link>
         </div>
-        <SidebarNav onOpenNotifications={openNotifications} />
+        <SidebarNav
+          onOpenNotifications={openNotifications}
+          onCloseNotifications={closeNotifications}
+        />
         <div className="flex shrink-0 flex-col items-start gap-2 p-8">
           {isAdmin && (
             <Link
               href="/admin"
+              onClick={closeNotifications}
               className="text-paragraph-small text-secondary-foreground hover:text-foreground"
             >
               管理者画面へ
