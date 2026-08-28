@@ -26,7 +26,14 @@ function AnswerForm({
   return (
     <form data-slot="answer-form" className={cn('relative w-full', className)} {...formProps}>
       {textarea ?? (
-        <Textarea placeholder={placeholder} disabled={disabled} rows={4} {...textareaProps} />
+        <Textarea
+          id="answer-body"
+          name="body"
+          placeholder={placeholder}
+          disabled={disabled}
+          rows={4}
+          {...textareaProps}
+        />
       )}
       <Button
         type="submit"
