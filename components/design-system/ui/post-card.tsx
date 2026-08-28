@@ -58,7 +58,7 @@ type PostCardProps = {
   state?: PostCardState
   joined: boolean
   className?: string
-  /** 指定すると本文・画像部分がこのURL（投稿詳細）へのリンクになる。カードにホバー背景が付く */
+  /** 指定するとカード全体（余白含む）がこのURL（投稿詳細）へのリンクになる。ホバー背景と cursor-pointer が付く */
   postHref?: string
 }
 
@@ -69,7 +69,7 @@ const postCardVariants = cva('flex items-start gap-3 transition-colors', {
       none: 'border-none',
     },
     interactive: {
-      true: 'hover:bg-ghost-hover',
+      true: 'relative cursor-pointer hover:bg-ghost-hover',
       false: '',
     },
   },
@@ -151,11 +151,15 @@ export function PostCard({
 
   return (
     <div className={cn(postCardVariants({ border, interactive: !!postHref }), className)}>
+      {postHref && (
+        <Link href={postHref} className="absolute inset-0" aria-label={post.title} tabIndex={-1} />
+      )}
+
       {profileHref ? (
         <Link
           href={profileHref}
           aria-label={`${post.displayName}のプロフィール`}
-          className="shrink-0"
+          className="relative z-10 shrink-0"
         >
           {avatar}
         </Link>
@@ -163,7 +167,7 @@ export function PostCard({
         avatar
       )}
 
-      <div className="flex-1 min-w-0 space-y-2 pr-10">
+      <div className={cn('flex-1 min-w-0 space-y-2 pr-10', postHref && 'pointer-events-none')}>
         <div className="space-y-2">
           <div className="flex gap-2 items-center">
             <p className="text-label text-foreground tracking-normal">{post.displayName}</p>
@@ -180,13 +184,14 @@ export function PostCard({
             </div>
           </div>
 
-          {postHref ? <Link href={postHref}>{body}</Link> : body}
+          {body}
         </div>
 
         <div className="flex gap-2">
           <CommentCount count={post.answerCount} />
 
           <LikeButton
+            className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
             state={state}
             count={likeCount}
             pressed={liked}
