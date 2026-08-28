@@ -151,7 +151,7 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin }: HirobaFeed
           post.author?.username ?? post.author?.name ?? post.author?.email ?? '削除されたユーザー',
         displayNameColor: post.author?.displayNameColor ?? null,
         avatarUrl: post.author?.avatarUrl ?? null,
-        lunchPreference: null,
+        lunchPreference: post.author?.lunchPreference ?? null,
         isOwnPost: true,
         likeCount: post.likeCount,
         liked: false,

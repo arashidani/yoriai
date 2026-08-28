@@ -29,6 +29,14 @@ export const UserSchema = z
   })
   .openapi('User')
 
+/** 投稿・返信カードでランチチップ表示に使う著者情報 */
+export const PostAuthorSchema = UserSchema.extend({
+  lunchPreference: z
+    .enum(['NO_PREFERENCE', 'TEAM', 'ALONE'])
+    .nullable()
+    .openapi({ example: 'TEAM' }),
+}).openapi('PostAuthor')
+
 export const UserProfileSchema = UserSchema.extend({
   departmentId: z.string().nullable().openapi({ example: 'department-1' }),
   businessAreaId: z.string().nullable().openapi({ example: 'business-area-1' }),
@@ -125,7 +133,7 @@ export const HirobaPostSchema = z
       .openapi({ example: '近くに新しくできたお店に行ってみたら、とても美味しかったです。' }),
     imageUrl: z.string().nullable().openapi({ example: null }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
-    author: z.union([UserSchema, z.null()]).optional(),
+    author: z.union([PostAuthorSchema, z.null()]).optional(),
     answerCount: z.number().openapi({ example: 0 }),
     likeCount: z.number().openapi({ example: 0 }),
     deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
@@ -148,7 +156,7 @@ export const HirobaAnswerSchema = z
       .nullish(),
     body: z.string().openapi({ example: 'いいですね、今度行ってみます！' }),
     authorId: z.string().nullable().openapi({ example: 'user-1' }),
-    author: z.union([UserSchema, z.null()]).optional(),
+    author: z.union([PostAuthorSchema, z.null()]).optional(),
     isHidden: z.boolean().openapi({ example: false }),
     likeCount: z.number().openapi({ example: 0 }),
     createdAt: dateTime(),
