@@ -2556,6 +2556,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Unauthorized
+        "403":
+          description: 自分のMBTIグループではない
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 自分のグループの広場にのみ参加できます
         "404":
           description: ひろばが見つからない
           content:
@@ -2567,7 +2575,7 @@ paths:
     delete:
       tags:
         - hiroba
-      summary: ひろばから退出する
+      summary: ひろばの参加を継続する
       security:
         - supabaseSession: []
       parameters:
@@ -2579,7 +2587,7 @@ paths:
           in: path
       responses:
         "200":
-          description: 退出後の状態
+          description: 参加中の状態（ひろばからは退出できない）
           content:
             application/json:
               schema:

@@ -3,7 +3,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 const { prismaMock } = vi.hoisted(() => ({
   prismaMock: {
     hiroba: { findUnique: vi.fn() },
-    hirobaMembership: { upsert: vi.fn(), deleteMany: vi.fn() },
+    hirobaMembership: { upsert: vi.fn() },
   },
 }))
 
@@ -43,24 +43,21 @@ describe('ひろば参加API', () => {
     })
   })
 
-  it('ユーザーをひろばから退出させる', async () => {
+  it('ひろばからは退出できない', async () => {
     const response = await app.request('/api/hiroba/alcohol/membership', { method: 'DELETE' })
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ joined: false })
-    expect(prismaMock.hirobaMembership.deleteMany).toHaveBeenCalledWith({
-      where: { userId: 'user-1', hirobaId: 'hiroba-alcohol' },
-    })
+    expect(await response.json()).toEqual({ joined: true })
   })
 
-  it('機能たしかめ広場からは退出できない', async () => {
-    const response = await app.request('/api/hiroba/feature-testing/membership', {
-      method: 'DELETE',
-    })
+  it('自分と異なるMBTIグループには参加できない', async () => {
+    const response = await app.request('/api/hiroba/mbti-purple/membership', { method: 'POST' })
 
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ joined: true })
-    expect(prismaMock.hirobaMembership.deleteMany).not.toHaveBeenCalled()
+    expect(response.status).toBe(403)
+    expect(await response.json()).toEqual({
+      error: '自分のグループの広場にのみ参加できます',
+    })
+    expect(prismaMock.hirobaMembership.upsert).not.toHaveBeenCalled()
   })
 
   it('固定カタログにないslugは参加させない', async () => {
