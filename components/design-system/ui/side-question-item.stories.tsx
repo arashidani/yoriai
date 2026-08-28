@@ -37,8 +37,10 @@ export const WithLink: Story = {
 
 export const MissingAvatar: Story = {
   args: { avatarSrc: undefined },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(canvas.getByText('デリについて')).toBeVisible()
     await expect(canvas.queryByRole('img')).toBeNull()
+    const avatar = canvasElement.querySelector('[data-slot="author-avatar"]')
+    expect(avatar).toHaveClass('bg-primary')
   },
 }

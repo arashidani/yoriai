@@ -1,6 +1,14 @@
 'use client'
 
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+  type KeyboardEvent,
+  type KeyboardEventHandler,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
 
@@ -10,28 +18,43 @@ type MentionTextareaProps = {
   value: string
   onChange: (value: string) => void
   onBlur?: () => void
+  onSubmit?: () => void
+  onKeyDown?: KeyboardEventHandler<HTMLTextAreaElement>
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
   loadCandidates: () => Promise<MentionCandidate[]>
   placeholder: string
+  id?: string
+  name?: string
   rows?: number
   disabled?: boolean
   ariaInvalid?: boolean
+  className?: string
+}
+
+function isModEnter(event: KeyboardEvent<HTMLTextAreaElement>) {
+  return event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing
 }
 
 export function MentionTextarea({
   value,
   onChange,
   onBlur,
+  onSubmit,
+  onKeyDown,
   selectedIds,
   onSelectedIdsChange,
   loadCandidates,
   placeholder,
+  id,
+  name = 'body',
   rows = 4,
   disabled = false,
   ariaInvalid = false,
+  className,
 }: MentionTextareaProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const defaultId = useId()
   const listboxId = useId()
   const [candidates, setCandidates] = useState<MentionCandidate[]>([])
   const [cursor, setCursor] = useState(0)
@@ -81,32 +104,56 @@ export function MentionTextarea({
     requestAnimationFrame(() => inputRef.current?.setSelectionRange(nextCursor, nextCursor))
   }
 
-  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (!isOpen) return
-
-    if (event.key === 'ArrowDown') {
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (isModEnter(event)) {
       event.preventDefault()
-      setActiveIndex((index) => (index + 1) % matches.length)
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      setActiveIndex((index) => (index - 1 + matches.length) % matches.length)
-    } else if (event.key === 'Enter' || event.key === 'Tab') {
-      event.preventDefault()
-      selectCandidate(matches[activeIndex])
-    } else if (event.key === 'Escape') {
-      event.preventDefault()
-      setDismissedQuery(query ?? null)
+      if (!disabled) {
+        if (onSubmit) {
+          onSubmit()
+        } else {
+          onKeyDown?.(event)
+        }
+      }
+      return
     }
+
+    if (isOpen) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault()
+        setActiveIndex((index) => (index + 1) % matches.length)
+        return
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault()
+        setActiveIndex((index) => (index - 1 + matches.length) % matches.length)
+        return
+      }
+      if (event.key === 'Enter' || event.key === 'Tab') {
+        event.preventDefault()
+        selectCandidate(matches[activeIndex])
+        return
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setDismissedQuery(query ?? null)
+        return
+      }
+    }
+
+    onKeyDown?.(event)
   }
 
   return (
     <div className="relative">
       <Textarea
         ref={inputRef}
+        id={id ?? defaultId}
+        name={name}
         value={value}
         placeholder={placeholder}
         disabled={disabled}
         rows={rows}
+        className={className}
         role="combobox"
         aria-expanded={isOpen}
         aria-controls={isOpen ? listboxId : undefined}

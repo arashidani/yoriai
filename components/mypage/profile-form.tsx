@@ -7,7 +7,6 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { type Dispatch, type SetStateAction, useState } from 'react'
 import { type Control, Controller, type UseFormReturn, useForm } from 'react-hook-form'
@@ -32,6 +31,7 @@ import { ActivityHistory, type ActivityItem } from './activity-history'
 import { ProfileAvatar } from './profile-avatar'
 import { ProfileEditField } from './profile-edit-field'
 import { ProfileField } from './profile-field'
+import { ProfileFormFallback } from './profile-form-fallback'
 
 type Option = { id: string; name: string }
 type Options = {
@@ -164,10 +164,10 @@ export function ProfileView({
       : mbtiColorChoices.find((choice) => choice.value === profile.displayNameColor)?.text
 
   return (
-    <div className="flex gap-8">
+    <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-8">
       <ProfileAvatar avatarUrl={avatarUrl} />
 
-      <div className="flex-1">
+      <div className="w-full flex-1">
         <ProfileField label="ニックネーム" value={profile.username || '未入力'} />
 
         <ProfileField label="所属部署" value={departmentName ?? '未選択'} />
@@ -215,7 +215,7 @@ export function ProfileForm() {
   const optionsQuery = useQuery({ queryKey: ['onboarding-options'], queryFn: fetchOptions })
 
   if (profileQuery.isPending || optionsQuery.isPending) {
-    return <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="読み込み中" />
+    return <ProfileFormFallback />
   }
 
   if (profileQuery.error || optionsQuery.error) {
@@ -246,10 +246,10 @@ function ProfileEditForm({
 }) {
   return (
     <form id="profile-edit-form" onSubmit={form.handleSubmit(onSubmit)}>
-      <div className="flex gap-8">
+      <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-8">
         <ProfileAvatar avatarUrl={avatarUrl} onAvatarUrlChange={onAvatarUrlChange} isEditable />
 
-        <div className="flex-1">
+        <div className="w-full flex-1">
           <ProfileEditField label="ニックネーム" htmlFor="username">
             <FormField
               error={form.formState.errors.username?.message}
@@ -468,9 +468,9 @@ function ProfileContainer({
   })
 
   return (
-    <div className="flex gap-8">
-      <div className="flex-1">
-        <div className="flex justify-between mb-6">
+    <div className="flex flex-col gap-8 lg:flex-row">
+      <div className="min-w-0 flex-1">
+        <div className="mb-6 flex justify-between">
           <h2 className="text-heading-1 text-foreground">プロフィール</h2>
           {isEditing ? (
             <Button
@@ -512,7 +512,9 @@ function ProfileContainer({
         )}
       </div>
 
-      <ActivityHistory items={ACTIVITY_ITEMS} />
+      <div className="hidden lg:block">
+        <ActivityHistory items={ACTIVITY_ITEMS} />
+      </div>
     </div>
   )
 }

@@ -60,7 +60,7 @@ export function AnswerCard({
   const [pending, setPending] = useState(false)
 
   async function handleLikeToggle(next: boolean) {
-    if (pending) return
+    if (pending || answer.isOwnAnswer) return
     setPending(true)
     setIsLiked(next)
     setLikeCount((count) => count + (next ? 1 : -1))
@@ -137,12 +137,14 @@ export function AnswerCard({
             <MentionText text={answer.body} />
           </p>
         </div>
-        <LikeButton
-          count={likeCount}
-          pressed={isLiked}
-          disabled={pending}
-          onPressedChange={handleLikeToggle}
-        />
+        {!answer.isOwnAnswer && (
+          <LikeButton
+            count={likeCount}
+            pressed={isLiked}
+            disabled={pending}
+            onPressedChange={handleLikeToggle}
+          />
+        )}
       </div>
     </div>
   )

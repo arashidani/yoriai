@@ -586,6 +586,10 @@
             "type": "string",
             "example": "今日のランチどこ行きました？"
           },
+          "body": {
+            "type": "string",
+            "example": "近くに新しくできたお店に行ってみたら、とても美味しかったです。"
+          },
           "imageUrl": {
             "type": [
               "string",
@@ -653,6 +657,7 @@
           "id",
           "hirobaId",
           "title",
+          "body",
           "imageUrl",
           "authorId",
           "answerCount",
@@ -772,6 +777,26 @@
           "hirobaPostId": {
             "type": "string",
             "example": "hiroba-post-1"
+          },
+          "hirobaPost": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "example": "hiroba-post-1"
+              },
+              "hirobaId": {
+                "type": "string",
+                "example": "hiroba-alcohol"
+              }
+            },
+            "required": [
+              "id",
+              "hirobaId"
+            ]
           },
           "body": {
             "type": "string",
@@ -1557,6 +1582,18 @@
         "required": [
           "count"
         ]
+      },
+      "MarkAllNotificationsAsRead": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "example": 5
+          }
+        },
+        "required": [
+          "count"
+        ]
       }
     },
     "parameters": {}
@@ -1793,7 +1830,7 @@
                   "title": {
                     "type": "string",
                     "minLength": 1,
-                    "maxLength": 200
+                    "maxLength": 48
                   },
                   "body": {
                     "type": "string",
@@ -4101,10 +4138,15 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
+                  },
+                  "body": {
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
-                  "title"
+                  "title",
+                  "body"
                 ]
               }
             }
@@ -8222,6 +8264,44 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UnreadNotificationCount"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/read-all": {
+      "patch": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "自分の未読通知をすべて既読にする",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "既読化した件数",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarkAllNotificationsAsRead"
                 }
               }
             }

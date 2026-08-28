@@ -16,7 +16,9 @@ export const Default: Story = {
     const nameInput = await screen.findByLabelText('名前（仮）')
     await userEvent.type(nameInput, '山田 太郎')
     await userEvent.click(screen.getByRole('button', { name: '発行する' }))
-    await expect(await screen.findByText(/招待リンク/)).toBeInTheDocument()
+    await expect(
+      await screen.findByText('招待リンク（7日間有効・1回のみ使用可能）'),
+    ).toBeInTheDocument()
   },
 }
 

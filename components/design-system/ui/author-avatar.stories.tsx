@@ -17,16 +17,20 @@ export const Default: Story = {
 }
 
 export const MissingSrc: Story = {
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await expect(canvas.queryByRole('img')).toBeNull()
+    const avatar = canvasElement.querySelector('[data-slot="author-avatar"]')
+    expect(avatar).toHaveClass('bg-primary')
   },
 }
 
 export const NotFound: Story = {
   args: { src: '/anonymous-profiles/does-not-exist.svg', alt: 'アバター' },
-  play: async ({ canvas }) => {
+  play: async ({ canvas, canvasElement }) => {
     await waitFor(() => {
       expect(canvas.queryByRole('img')).toBeNull()
     })
+    const avatar = canvasElement.querySelector('[data-slot="author-avatar"]')
+    expect(avatar).toHaveClass('bg-primary')
   },
 }

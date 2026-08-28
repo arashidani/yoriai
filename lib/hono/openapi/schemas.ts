@@ -29,6 +29,14 @@ export const UserSchema = z
   })
   .openapi('User')
 
+/** 投稿・返信カードでランチチップ表示に使う著者情報 */
+export const PostAuthorSchema = UserSchema.extend({
+  lunchPreference: z
+    .enum(['NO_PREFERENCE', 'TEAM', 'ALONE'])
+    .nullable()
+    .openapi({ example: 'TEAM' }),
+}).openapi('PostAuthor')
+
 export const UserProfileSchema = UserSchema.extend({
   departmentId: z.string().nullable().openapi({ example: 'department-1' }),
   businessAreaId: z.string().nullable().openapi({ example: 'business-area-1' }),
@@ -120,9 +128,12 @@ export const HirobaPostSchema = z
     id: z.string().openapi({ example: 'hiroba-post-1' }),
     hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
     title: z.string().openapi({ example: '今日のランチどこ行きました？' }),
+    body: z
+      .string()
+      .openapi({ example: '近くに新しくできたお店に行ってみたら、とても美味しかったです。' }),
     imageUrl: z.string().nullable().openapi({ example: null }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
-    author: z.union([UserSchema, z.null()]).optional(),
+    author: z.union([PostAuthorSchema, z.null()]).optional(),
     answerCount: z.number().openapi({ example: 0 }),
     likeCount: z.number().openapi({ example: 0 }),
     deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
@@ -136,9 +147,16 @@ export const HirobaAnswerSchema = z
   .object({
     id: z.string().openapi({ example: 'hiroba-answer-1' }),
     hirobaPostId: z.string().openapi({ example: 'hiroba-post-1' }),
+    // 通知からひろば投稿ページのURLを組み立てるために必要（通知APIでのみ含まれる）
+    hirobaPost: z
+      .object({
+        id: z.string().openapi({ example: 'hiroba-post-1' }),
+        hirobaId: z.string().openapi({ example: 'hiroba-alcohol' }),
+      })
+      .nullish(),
     body: z.string().openapi({ example: 'いいですね、今度行ってみます！' }),
     authorId: z.string().nullable().openapi({ example: 'user-1' }),
-    author: z.union([UserSchema, z.null()]).optional(),
+    author: z.union([PostAuthorSchema, z.null()]).optional(),
     isHidden: z.boolean().openapi({ example: false }),
     likeCount: z.number().openapi({ example: 0 }),
     createdAt: dateTime(),
@@ -222,6 +240,10 @@ export const NotificationSchema = z
 export const UnreadNotificationCountSchema = z
   .object({ count: z.number().int().openapi({ example: 3 }) })
   .openapi('UnreadNotificationCount')
+
+export const MarkAllNotificationsAsReadSchema = z
+  .object({ count: z.number().int().openapi({ example: 5 }) })
+  .openapi('MarkAllNotificationsAsRead')
 
 export const LikeStatusSchema = z
   .object({

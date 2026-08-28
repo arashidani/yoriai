@@ -24,17 +24,20 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   play: async ({ canvas }) => {
-    const email = await canvas.findByDisplayValue('dev@example.com')
-    await expect(email).toBeDisabled()
-    await expect(canvas.getByDisplayValue('開発者')).toBeVisible()
-    await expect(canvas.getByDisplayValue('みどりさん')).toBeVisible()
-    await expect(canvas.getByRole('checkbox', { name: 'プロジェクト管理' })).toBeChecked()
+    // 表示モード
+    await expect(await canvas.findByText('みどりさん')).toBeVisible()
+    await expect(canvas.getByText('開発部')).toBeVisible()
+    await expect(canvas.getByText('社内ルール・手続き')).toBeVisible()
 
-    await userEvent.clear(canvas.getByLabelText('氏名'))
-    await userEvent.type(canvas.getByLabelText('氏名'), '山田 太郎')
-    await userEvent.click(canvas.getByRole('button', { name: '変更を保存' }))
-    await expect(await canvas.findByRole('status')).toHaveTextContent(
-      'プロフィールを更新しました。',
-    )
+    // 編集モードへ切り替えてニックネームを変更する
+    await userEvent.click(canvas.getByRole('button', { name: '編集' }))
+    const username = await canvas.findByLabelText('ニックネーム')
+    await expect(username).toHaveValue('みどりさん')
+    await userEvent.clear(username)
+    await userEvent.type(username, 'あかさん')
+
+    // 保存すると表示モードへ戻る
+    await userEvent.click(canvas.getByRole('button', { name: '保存' }))
+    await expect(await canvas.findByRole('button', { name: '編集' })).toBeVisible()
   },
 }

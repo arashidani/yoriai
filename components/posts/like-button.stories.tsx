@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn } from 'storybook/test'
+import { expect, fn, waitFor } from 'storybook/test'
 import { LikeButton } from './like-button'
 
 const meta = {
@@ -21,7 +21,8 @@ export const Default: Story = {
     await expect(button).not.toHaveClass(/text-action-like/)
     await userEvent.click(button)
     await expect(await canvas.findByText('4')).toBeVisible()
-    await expect(args.onToggle).toHaveBeenCalledWith(true)
+    // onToggle はデバウンス（300ms）後に呼ばれる
+    await waitFor(() => expect(args.onToggle).toHaveBeenCalledWith(true))
   },
 }
 
