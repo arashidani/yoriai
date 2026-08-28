@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
-import { Button } from '@/components/design-system/button'
+import { Button, buttonVariants } from '@/components/design-system/button'
 import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { cn } from '@/lib/utils'
 
@@ -42,15 +42,14 @@ function ActionButtons({
         </Button>
       )}
       {secondaryHref ? (
-        <Button
-          size="large"
-          variant="secondary"
-          className="shrink-0"
-          render={<Link href={secondaryHref} />}
-          nativeButton={false}
+        // NOTE: base-ui の Button 経由だと role="button" が付与されリンクの
+        // セマンティクスが失われるため、Link にスタイルだけを当てる
+        <Link
+          href={secondaryHref}
+          className={cn(buttonVariants({ size: 'large', variant: 'secondary' }), 'shrink-0')}
         >
           {secondaryLabel}
-        </Button>
+        </Link>
       ) : (
         <Button
           type="button"

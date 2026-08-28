@@ -62,7 +62,7 @@ type PostCardProps = {
   postHref?: string
 }
 
-const postCardVariants = cva('flex gap-3 transition-colors', {
+const postCardVariants = cva('flex items-start gap-3 transition-colors', {
   variants: {
     border: {
       default: 'border-2 border-neutral-200 p-4 rounded-lg bg-surface',
@@ -151,21 +151,22 @@ export function PostCard({
 
   return (
     <div className={cn(postCardVariants({ border, interactive: !!postHref }), className)}>
-      {profileHref ? <Link href={profileHref}>{avatar}</Link> : avatar}
+      {profileHref ? (
+        <Link
+          href={profileHref}
+          aria-label={`${post.displayName}のプロフィール`}
+          className="shrink-0"
+        >
+          {avatar}
+        </Link>
+      ) : (
+        avatar
+      )}
 
       <div className="flex-1 min-w-0 space-y-2 pr-10">
         <div className="space-y-2">
           <div className="flex gap-2 items-center">
-            {profileHref ? (
-              <Link
-                href={profileHref}
-                className="text-label text-foreground hover:underline tracking-normal"
-              >
-                {post.displayName}
-              </Link>
-            ) : (
-              <p className="text-label text-foreground tracking-normal">{post.displayName}</p>
-            )}
+            <p className="text-label text-foreground tracking-normal">{post.displayName}</p>
 
             {resolvedLunchVariant && <LunchChip lunchType={resolvedLunchVariant} />}
 

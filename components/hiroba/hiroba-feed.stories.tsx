@@ -56,10 +56,11 @@ export const Default: Story = {
       'false',
     )
     await expect(canvas.getByText('チームで')).toBeVisible()
-    await expect(canvas.getByRole('link', { name: '田中太郎' })).toHaveAttribute(
+    await expect(canvas.getByRole('link', { name: '田中太郎のプロフィール' })).toHaveAttribute(
       'href',
       '/mypage/user-1',
     )
+    await expect(canvas.queryByRole('link', { name: '田中太郎' })).toBeNull()
   },
 }
 

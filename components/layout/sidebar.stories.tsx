@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, screen, userEvent } from 'storybook/test'
+import { expect, screen, userEvent, waitFor } from 'storybook/test'
 import { Sidebar } from './sidebar'
 
 const meta = {
@@ -52,7 +52,9 @@ export const MobileMenu: Story = {
   },
   play: async ({ canvas }) => {
     await userEvent.click(canvas.getByRole('button', { name: 'メニュー' }))
-    await expect(await screen.findByRole('link', { name: 'ひろば' })).toBeVisible()
+    // Sheet はスライドイン中は不可視なので、可視になるまで待つ
+    const hirobaLink = await screen.findByRole('link', { name: 'ひろば' })
+    await waitFor(() => expect(hirobaLink).toBeVisible())
     await expect(screen.getByRole('link', { name: 'なんでもQ&A' })).toBeVisible()
     await expect(screen.getByRole('link', { name: 'マイページ' })).toBeVisible()
     await expect(screen.getByRole('button', { name: '閉じる' })).toBeVisible()
