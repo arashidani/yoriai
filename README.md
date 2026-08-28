@@ -214,13 +214,20 @@ const { posts } = await res.json()
 
 ## デプロイとマイグレーション
 
-マイグレーションは**手動適用**（デプロイでは自動実行されない）。
+マイグレーションは**手動適用**（デプロイでは自動実行されない）。Vercelのビルドでも実行していないので、**手元から対象DBに向けて流す**。
 
 ```bash
+# .env.local の DIRECT_URL を対象環境のものにしてから実行する
 npm run db:migrate   # prisma migrate deploy
 ```
 
-`prisma.config.ts` の datasource は `DIRECT_URL` を参照するため、`DATABASE_URL` だけでは流れない点に注意。
+`prisma.config.ts` は `.env.local` → `.env` の順に読み込み、datasource には `DIRECT_URL` を使う。`DATABASE_URL` だけでは流れない点に注意（`DIRECT_URL` の取得場所は「Supabase接続」の項を参照）。
+
+一時的に切り替えるだけなら環境変数を直接渡してもよい。
+
+```bash
+DIRECT_URL="postgresql://..." npx prisma migrate deploy
+```
 
 適用状況の確認:
 
@@ -236,6 +243,16 @@ Prisma は1本失敗すると以降のマイグレーションを一切適用し
 ```bash
 npx prisma migrate resolve --rolled-back "<migration_name>"
 npm run db:migrate
+```
+
+`resolve --rolled-back` は失敗記録の `rolled_back_at` を埋めるだけなので、CLIが使えない場合は Supabase の SQL Editor で同じことができる（ただし再適用の `migrate deploy` はCLIが必要）。
+
+```sql
+update "_prisma_migrations"
+set rolled_back_at = now()
+where migration_name = '<migration_name>'
+  and finished_at is null
+  and rolled_back_at is null;
 ```
 
 なお、マイグレーションは1本がトランザクションになっているため、失敗したものは途中まで適用された状態にはならない。適用済みのマイグレーションファイルを冪等化する編集をしても、`migrate deploy` はチェックサム差分では失敗しない。
