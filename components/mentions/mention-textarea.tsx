@@ -19,6 +19,7 @@ type MentionTextareaProps = {
   rows?: number
   disabled?: boolean
   ariaInvalid?: boolean
+  className?: string
 }
 
 export function MentionTextarea({
@@ -34,6 +35,7 @@ export function MentionTextarea({
   rows = 4,
   disabled = false,
   ariaInvalid = false,
+  className,
 }: MentionTextareaProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const defaultId = useId()
@@ -114,6 +116,7 @@ export function MentionTextarea({
         placeholder={placeholder}
         disabled={disabled}
         rows={rows}
+        className={className}
         role="combobox"
         aria-expanded={isOpen}
         aria-controls={isOpen ? listboxId : undefined}
