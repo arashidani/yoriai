@@ -1,14 +1,16 @@
 import { MOCK_JOINED_HIROBA_SLUGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
-import { isDefaultHiroba } from './catalog'
+import { getMbtiHirobaSlug, isDefaultHiroba } from './catalog'
 
 export async function getHirobaJoined(
   hirobaSlug: string,
   hirobaId: string,
   userId: string | undefined,
+  displayNameColor?: Parameters<typeof getMbtiHirobaSlug>[0],
 ) {
   if (!userId) return false
   if (isDefaultHiroba(hirobaSlug)) return true
+  if (getMbtiHirobaSlug(displayNameColor) === hirobaSlug) return true
 
   if (process.env.MOCK_MODE === 'true') {
     return MOCK_JOINED_HIROBA_SLUGS.includes(

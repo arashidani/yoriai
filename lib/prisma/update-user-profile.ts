@@ -1,3 +1,4 @@
+import { getMbtiHirobaSlug, MBTI_HIROBA_SLUGS } from '@/lib/hiroba/catalog'
 import { prisma } from '@/lib/prisma/client'
 import type { OnboardingInput } from '@/lib/schemas/onboarding'
 
@@ -71,6 +72,20 @@ export async function updateUserProfile(
         },
       },
     })
+
+    await tx.hirobaMembership.deleteMany({
+      where: { userId, hiroba: { slug: { in: MBTI_HIROBA_SLUGS } } },
+    })
+
+    const mbtiHirobaSlug = getMbtiHirobaSlug(data.displayNameColor)
+    if (mbtiHirobaSlug) {
+      await tx.hirobaMembership.create({
+        data: {
+          user: { connect: { id: userId } },
+          hiroba: { connect: { slug: mbtiHirobaSlug } },
+        },
+      })
+    }
 
     return true
   })

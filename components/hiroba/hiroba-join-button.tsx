@@ -9,9 +9,11 @@ import { client } from '@/lib/hono/client'
 
 type HirobaJoinButtonProps = {
   slug: string
+  joined: boolean
+  canJoin: boolean
 }
 
-export function HirobaJoinButton({ slug }: HirobaJoinButtonProps) {
+export function HirobaJoinButton({ slug, joined, canJoin }: HirobaJoinButtonProps) {
   const router = useRouter()
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -42,10 +44,10 @@ export function HirobaJoinButton({ slug }: HirobaJoinButtonProps) {
         variant="primary"
         size="large"
         className="w-34.25"
-        isDisabled={isUpdatingMembership}
+        isDisabled={joined || !canJoin || isUpdatingMembership}
         onClick={handleJoin}
       >
-        参加する
+        {joined ? '参加中' : '参加する'}
       </Button>
       {error && (
         <p role="alert" className="text-paragraph-small text-destructive">
