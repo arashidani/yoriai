@@ -10,6 +10,7 @@ import imageNone from '@/assets/image-none.svg'
 import { CommentCount } from '@/components/design-system/ui/comment-count'
 import { LikeButton } from '@/components/design-system/ui/like-button'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
+import { MentionText } from '@/components/mentions/mention-text'
 import { client } from '@/lib/hono/client'
 import { cn } from '@/lib/utils'
 import { LunchChip, type LunchChipType } from './lunch-chip'
@@ -120,7 +121,12 @@ export function PostCard({
 
   const body = (
     <div className="space-y-3">
-      <p className="whitespace-pre-line text-body-small">{post.body}</p>
+      <p className="whitespace-pre-line text-body-small">
+        <MentionText
+          text={post.body}
+          linkClassName={postHref ? 'relative z-10 pointer-events-auto' : undefined}
+        />
+      </p>
 
       {post.imageUrl && (
         <Image
