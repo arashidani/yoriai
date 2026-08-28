@@ -13,6 +13,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check .",
+    "db:migrate": "prisma migrate deploy",
     "db:reset": "tsx scripts/reset-db.ts",
     "openapi:generate": "tsx scripts/generate-openapi.ts"
   },
