@@ -57,6 +57,8 @@ async function runPhase<T>(phase: ResetPhase, fn: () => T | Promise<T>): Promise
 const CONFIRMATION_FLAG = '--confirm-reset'
 const SUPER_ADMIN_EMAIL = 'superadmin@yoriai.dev'
 const SUPER_ADMIN_PASSWORD = '__REDACTED__'
+const SUPER_ADMIN_NAME = 'Super Admin'
+const SUPER_ADMIN_USER_METADATA = { name: SUPER_ADMIN_NAME }
 let disconnectPrisma: (() => Promise<void>) | undefined
 
 if (!process.argv.includes(CONFIRMATION_FLAG)) {
@@ -99,12 +101,14 @@ async function provisionSuperAdmin(
     ? await supabase.auth.admin.updateUserById(existingAuthUser.id, {
         password: SUPER_ADMIN_PASSWORD,
         app_metadata: { ...existingAuthUser.app_metadata, role: 'ADMIN' },
+        user_metadata: { ...existingAuthUser.user_metadata, ...SUPER_ADMIN_USER_METADATA },
       })
     : await supabase.auth.admin.createUser({
         email: SUPER_ADMIN_EMAIL,
         password: SUPER_ADMIN_PASSWORD,
         email_confirm: true,
         app_metadata: { role: 'ADMIN' },
+        user_metadata: SUPER_ADMIN_USER_METADATA,
       })
 
   if (authUser.error) throw authUser.error
@@ -113,7 +117,7 @@ async function provisionSuperAdmin(
     supabaseId: authUser.data.user.id,
     email: SUPER_ADMIN_EMAIL,
     username: '管理者',
-    name: 'Super Admin',
+    name: SUPER_ADMIN_NAME,
     role: 'ADMIN' as const,
     onboardingCompletedAt: new Date(),
   }
