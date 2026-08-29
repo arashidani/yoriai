@@ -5,8 +5,8 @@ import { config } from 'dotenv'
 config({ path: '.env.local' })
 config()
 
-import { prisma } from '@/lib/prisma/client'
-import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import type { PrismaClient } from '@/app/generated/prisma/client'
+import type { createSupabaseAdminClient } from '@/lib/supabase/admin'
 
 const DEFAULT_CSV_PATH = resolve(process.cwd(), 'admins.csv')
 
@@ -109,9 +109,10 @@ function loadAdminsFromCsv(csvPath: string): AdminInput[] {
   return parseCsv(content)
 }
 
-const supabaseAdmin = createSupabaseAdminClient()
-
-async function findAuthUserByEmail(email: string) {
+async function findAuthUserByEmail(
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  email: string,
+) {
   for (let page = 1; ; page++) {
     const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 })
     if (error) throw error
@@ -123,9 +124,13 @@ async function findAuthUserByEmail(email: string) {
   }
 }
 
-async function addAdmin({ email, password, name }: AdminInput) {
+async function addAdmin(
+  prisma: PrismaClient,
+  supabaseAdmin: ReturnType<typeof createSupabaseAdminClient>,
+  { email, password, name }: AdminInput,
+) {
   const displayName = name ?? defaultNameFromEmail(email)
-  const existingAuthUser = await findAuthUserByEmail(email)
+  const existingAuthUser = await findAuthUserByEmail(supabaseAdmin, email)
 
   const authResult = existingAuthUser
     ? await supabaseAdmin.auth.admin.updateUserById(existingAuthUser.id, {
@@ -179,9 +184,20 @@ async function main() {
     process.exit(1)
   }
 
-  for (const admin of admins) {
-    await addAdmin(admin)
+  const [{ createPrismaClient }, { createSupabaseAdminClient }] = await Promise.all([
+    import('@/lib/prisma/create-client'),
+    import('@/lib/supabase/admin'),
+  ])
+  const prisma = createPrismaClient()
+  const supabaseAdmin = createSupabaseAdminClient()
+
+  try {
+    for (const admin of admins) {
+      await addAdmin(prisma, supabaseAdmin, admin)
+    }
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
-void main().finally(() => prisma.$disconnect())
+void main()
