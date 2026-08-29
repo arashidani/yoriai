@@ -103,7 +103,7 @@ yoriai/
 ├── prisma/
 │   ├── schema.prisma             # DB スキーマ
 │   └── migrations/
-├── specs/                        # プロダクト仕様（yoriai / yoriainu / reakatsu）
+├── specs/                        # プロダクト仕様・会社公開情報（Dify ナレッジ用）
 ├── tests/                        # Vitest ユニットテスト
 ├── docs/api/                     # API 設計・フロント連携ガイド
 ├── .agents/skills/               # エージェント用実装スキル
@@ -179,9 +179,12 @@ npm run check
 
 ## ドキュメント
 
-- [specs/yoriai.md](./specs/yoriai.md) — プロダクト仕様
-- [specs/yoriainu.md](./specs/yoriainu.md) — よりあいぬキャラクター設定
+- [specs/yoriai.md](./specs/yoriai.md) — プロダクト概要
+- [specs/yoriai-qa.md](./specs/yoriai-qa.md) — なんでもQ&A
+- [specs/yoriai-hiroba.md](./specs/yoriai-hiroba.md) — ひろば
+- [specs/yoriainu.md](./specs/yoriainu.md) — よりあいぬ・小屋・おせわに
 - [specs/reakatsu.md](./specs/reakatsu.md) — 運営チーム「れあかつ」
+- [specs/ibj/](./specs/ibj/) — IBJ の公開情報（`_sources.md` は Dify に上げない）
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — 構成図・データフロー
 - [docs/api/](./docs/api/) — Q&A API 設計・フロント連携ガイド
 - [.agents/skills/](./.agents/skills/) — フロントエンド / バックエンド / 管理パネル / セットアップの実装スキル
