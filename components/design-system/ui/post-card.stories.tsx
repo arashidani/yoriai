@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect } from 'storybook/test'
+import { expect, fn, screen } from 'storybook/test'
 import { PostCard } from './post-card'
 
 const meta = {
@@ -131,5 +131,21 @@ export const NoAuthor: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByText('削除されたユーザー')).toBeVisible()
     await expect(canvas.queryByRole('link', { name: '削除されたユーザー' })).toBeNull()
+  },
+}
+
+export const AsAdmin: Story = {
+  args: { post: basePost, joined: true, isAdmin: true, onDeleted: fn() },
+  play: async ({ canvas, userEvent, args }) => {
+    await userEvent.click(canvas.getByRole('button', { name: '投稿を削除' }))
+    await userEvent.click(await screen.findByRole('button', { name: '削除する' }))
+    await expect(args.onDeleted).toHaveBeenCalledWith('hiroba-post-1')
+  },
+}
+
+export const AsMember: Story = {
+  args: { post: basePost, joined: true },
+  play: async ({ canvas }) => {
+    await expect(canvas.queryByRole('button', { name: '投稿を削除' })).toBeNull()
   },
 }
