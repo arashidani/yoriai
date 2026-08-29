@@ -419,7 +419,7 @@ components:
           example: user-2
         author:
           anyOf:
-            - $ref: "#/components/schemas/User"
+            - $ref: "#/components/schemas/PostAuthor"
             - type: "null"
         answerCount:
           type: number
@@ -459,6 +459,23 @@ components:
         - deletedAt
         - createdAt
         - updatedAt
+    PostAuthor:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            lunchPreference:
+              type:
+                - string
+                - "null"
+              enum:
+                - NO_PREFERENCE
+                - TEAM
+                - ALONE
+                - null
+              example: TEAM
+          required:
+            - lunchPreference
     User:
       type: object
       properties:
@@ -568,7 +585,7 @@ components:
           example: user-1
         author:
           anyOf:
-            - $ref: "#/components/schemas/User"
+            - $ref: "#/components/schemas/PostAuthor"
             - type: "null"
         isHidden:
           type: boolean
@@ -2821,7 +2838,7 @@ paths:
     delete:
       tags:
         - hiroba-posts
-      summary: 投稿を削除（管理者、または回答が付く前の投稿者本人）
+      summary: 投稿を削除（管理者のみ）
       security:
         - supabaseSession: []
       parameters:
@@ -2847,21 +2864,13 @@ paths:
               example:
                 error: Unauthorized
         "403":
-          description: 権限不足（管理者・投稿者本人以外）
+          description: 権限不足（管理者以外）
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
-        "409":
-          description: 回答が付いている投稿は投稿者本人には削除できない
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: 回答がある投稿は削除できません
   /api/hiroba-posts/{id}/answers:
     get:
       tags:

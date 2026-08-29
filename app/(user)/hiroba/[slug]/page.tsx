@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { Role } from '@/app/generated/prisma/enums'
 import { HirobaSidebar } from '@/components/hiroba/hiroba-sidebar'
 import { TutorialHirobaFeed } from '@/components/tutorial/tutorial-hiroba-feed'
 import { getCurrentUser } from '@/lib/auth/current-user'
@@ -25,6 +26,7 @@ export default async function HirobaDetailPage({ params }: { params: Promise<{ s
         posts={posts}
         initialJoined={joined}
         canJoin={canJoinHiroba(hiroba.slug, user?.displayNameColor)}
+        isAdmin={user?.role === Role.ADMIN}
       />
       <HirobaSidebar hiroba={hiroba} popularPosts={popularPosts} showAiSummary />
     </>

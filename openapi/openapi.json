@@ -607,7 +607,7 @@
           "author": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/User"
+                "$ref": "#/components/schemas/PostAuthor"
               },
               {
                 "type": "null"
@@ -665,6 +665,34 @@
           "deletedAt",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "PostAuthor": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lunchPreference": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "NO_PREFERENCE",
+                  "TEAM",
+                  "ALONE",
+                  null
+                ],
+                "example": "TEAM"
+              }
+            },
+            "required": [
+              "lunchPreference"
+            ]
+          }
         ]
       },
       "User": {
@@ -812,7 +840,7 @@
           "author": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/User"
+                "$ref": "#/components/schemas/PostAuthor"
               },
               {
                 "type": "null"
@@ -4385,7 +4413,7 @@
         "tags": [
           "hiroba-posts"
         ],
-        "summary": "投稿を削除（管理者、または回答が付く前の投稿者本人）",
+        "summary": "投稿を削除（管理者のみ）",
         "security": [
           {
             "supabaseSession": []
@@ -4427,7 +4455,7 @@
             }
           },
           "403": {
-            "description": "権限不足（管理者・投稿者本人以外）",
+            "description": "権限不足（管理者以外）",
             "content": {
               "application/json": {
                 "schema": {
@@ -4435,19 +4463,6 @@
                 },
                 "example": {
                   "error": "Forbidden"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "回答が付いている投稿は投稿者本人には削除できない",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                },
-                "example": {
-                  "error": "回答がある投稿は削除できません"
                 }
               }
             }

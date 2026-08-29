@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { Role } from '@/app/generated/prisma/enums'
 import { Button } from '@/components/design-system/button'
 import { AnswerCard } from '@/components/design-system/ui/answer-card'
 import { PostCard } from '@/components/design-system/ui/post-card'
@@ -106,7 +107,13 @@ export default async function HirobaPostDetailPage({ params }: Props) {
 
         <div className="mx-3 flex min-h-0 flex-col space-y-4">
           <div className="flex min-h-0 flex-1 flex-col">
-            <PostCard post={post} joined={joined} border="default" className="rounded-b-none" />
+            <PostCard
+              post={post}
+              joined={joined}
+              border="default"
+              className="rounded-b-none"
+              isAdmin={currentUser?.role === Role.ADMIN}
+            />
 
             {answers.length > 0 && (
               <div className="min-h-0 flex-1 overflow-y-auto scrollbar-custom border-x-2 border-b-2 border-border-2 rounded-b-lg px-6 py-4 space-y-3">
