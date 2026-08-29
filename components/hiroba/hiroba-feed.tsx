@@ -24,6 +24,7 @@ type HirobaFeedProps = {
   posts: HirobaPost[]
   initialJoined: boolean
   canJoin: boolean
+  isAdmin: boolean
 }
 
 const bannerTones = {
@@ -40,7 +41,7 @@ const bannerTones = {
 } as const
 
 /** ひろばの紹介、参加導線、投稿フィード、補助情報をまとめた詳細画面。 */
-export function HirobaFeed({ hiroba, posts, initialJoined, canJoin }: HirobaFeedProps) {
+export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: HirobaFeedProps) {
   const router = useRouter()
   const [joined, setJoined] = useState(initialJoined)
   const [isUpdatingMembership, setIsUpdatingMembership] = useState(false)
@@ -245,6 +246,10 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin }: HirobaFeed
               post={post}
               joined={joined}
               postHref={`/hiroba/${hiroba.slug}/posts/${post.id}`}
+              isAdmin={isAdmin}
+              onDeleted={(deletedId) =>
+                setLocalPosts((prev) => prev.filter((item) => item.id !== deletedId))
+              }
             />
           ))}
         </div>

@@ -3,12 +3,14 @@
 import { cva } from 'class-variance-authority'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import imageNone from '@/assets/image-none.svg'
 import { CommentCount } from '@/components/design-system/ui/comment-count'
 import { LikeButton } from '@/components/design-system/ui/like-button'
+import { DeleteHirobaPostButton } from '@/components/hiroba/delete-hiroba-post-button'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
 import { MentionText } from '@/components/mentions/mention-text'
 import { client } from '@/lib/hono/client'
@@ -61,16 +63,20 @@ type PostCardProps = {
   className?: string
   /** 指定するとカード全体（余白含む）がこのURL（投稿詳細）へのリンクになる。ホバー背景と cursor-pointer が付く */
   postHref?: string
+  /** true のとき削除ボタンを表示する（削除できるのは管理者のみ） */
+  isAdmin?: boolean
+  /** 削除完了時の処理。未指定ならひろばの投稿一覧へ戻る */
+  onDeleted?: (postId: string) => void
 }
 
-const postCardVariants = cva('flex items-start gap-3 transition-colors', {
+const postCardVariants = cva('relative flex items-start gap-3 transition-colors', {
   variants: {
     border: {
       default: 'border-2 border-neutral-200 p-4 rounded-lg bg-surface',
       none: 'border-none',
     },
     interactive: {
-      true: 'relative cursor-pointer hover:bg-ghost-hover',
+      true: 'cursor-pointer hover:bg-ghost-hover',
       false: '',
     },
   },
@@ -89,12 +95,24 @@ export function PostCard({
   joined,
   className,
   postHref,
+  isAdmin = false,
+  onDeleted,
 }: PostCardProps) {
   const resolvedLunchVariant = lunchVariant ?? lunchChipType(post.lunchPreference)
   const resolvedMbtiVariant = mbtiVariant ?? mbtiChipVariant(post.displayNameColor)
   const [liked, setLiked] = useState(post.liked)
   const [likeCount, setLikeCount] = useState(post.likeCount)
   const [pending, setPending] = useState(false)
+  const router = useRouter()
+
+  function handleDeleted(deletedPostId: string) {
+    if (onDeleted) {
+      onDeleted(deletedPostId)
+      return
+    }
+    router.push(`/hiroba/${post.hirobaSlug}`)
+    router.refresh()
+  }
 
   async function handleLikeToggle(next: boolean) {
     if (pending || post.isOwnPost) return
@@ -159,6 +177,16 @@ export function PostCard({
     <div className={cn(postCardVariants({ border, interactive: !!postHref }), className)}>
       {postHref && (
         <Link href={postHref} className="absolute inset-0" aria-label={post.title} tabIndex={-1} />
+      )}
+
+      {isAdmin && (
+        <div className="absolute top-3 right-3 z-10">
+          <DeleteHirobaPostButton
+            postId={post.id}
+            postTitle={post.title}
+            onDeleted={handleDeleted}
+          />
+        </div>
       )}
 
       {profileHref ? (
