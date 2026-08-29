@@ -281,14 +281,18 @@ const deleteRoute = createRoute({
   method: 'delete',
   path: '/{id}',
   tags: ['hiroba-posts'],
-  summary: '投稿を削除（管理者のみ）',
+  summary: '投稿を削除（管理者、または回答が付く前の投稿者本人）',
   security: [{ supabaseSession: [] }],
   middleware: [authMiddleware] as const,
   request: { params: IdParamSchema },
   responses: {
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者以外）', 'Forbidden'),
+    403: errorResponse('権限不足（管理者・投稿者本人以外）', 'Forbidden'),
+    409: errorResponse(
+      '回答が付いている投稿は投稿者本人には削除できない',
+      '回答がある投稿は削除できません',
+    ),
   },
 })
 
@@ -724,10 +728,16 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const user = c.get('user')
     const { id } = c.req.valid('param')
 
-    if (user.role !== Role.ADMIN) return c.json({ error: 'Forbidden' }, 403)
-
     if (process.env.MOCK_MODE === 'true') {
       return c.json({ success: true }, 200)
+    }
+
+    const post = await prisma.hirobaPost.findUnique({ where: { id } })
+    if (!post) return c.json({ success: true }, 200)
+
+    if (user.role !== Role.ADMIN) {
+      if (post.authorId !== user.id) return c.json({ error: 'Forbidden' }, 403)
+      if (post.answerCount > 0) return c.json({ error: '回答がある投稿は削除できません' }, 409)
     }
 
     try {
