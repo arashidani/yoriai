@@ -6,6 +6,8 @@ import { config } from 'dotenv'
 config({ path: '.env.local' })
 config()
 
+import { requireEnv } from '@/lib/env'
+
 const require = createRequire(import.meta.url)
 const prismaPackageJsonPath = require.resolve('prisma/package.json')
 const { bin } = require(prismaPackageJsonPath) as { bin: { prisma: string } }
@@ -56,7 +58,7 @@ async function runPhase<T>(phase: ResetPhase, fn: () => T | Promise<T>): Promise
 
 const CONFIRMATION_FLAG = '--confirm-reset'
 const SUPER_ADMIN_EMAIL = 'superadmin@yoriai.dev'
-const SUPER_ADMIN_PASSWORD = '__REDACTED__'
+const SUPER_ADMIN_PASSWORD = requireEnv('SUPER_ADMIN_PASSWORD')
 const SUPER_ADMIN_NAME = 'Super Admin'
 const SUPER_ADMIN_USER_METADATA = { name: SUPER_ADMIN_NAME }
 let disconnectPrisma: (() => Promise<void>) | undefined

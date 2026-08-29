@@ -15,6 +15,7 @@
     "check": "biome check .",
     "db:migrate": "prisma migrate deploy",
     "db:reset": "tsx scripts/reset-db.ts",
+    "db:add-admins": "tsx scripts/add_admin_usr.ts",
     "openapi:generate": "tsx scripts/generate-openapi.ts"
   },
   "dependencies": {

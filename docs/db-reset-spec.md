@@ -122,7 +122,7 @@ Storage 上のファイル（匿名キャラアバター、ひろば投稿画像
 | 項目 | 値 |
 |------|-----|
 | メール | `superadmin@yoriai.dev` |
-| パスワード | `__REDACTED__` |
+| パスワード | `.env.local` の `SUPER_ADMIN_PASSWORD`（開発用の例: `Admin@1234`） |
 | 表示名 | `Super Admin` |
 | ユーザー名 | `管理者` |
 
