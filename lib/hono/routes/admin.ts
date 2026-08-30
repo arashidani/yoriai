@@ -70,6 +70,19 @@ function inviteStatus(invite: InviteStatusSource): 'PENDING' | 'USED' | 'EXPIRED
   return 'PENDING'
 }
 
+const ANONYMOUS_PROFILE_DISPLAY_NAME_CONFLICT_MESSAGE =
+  '同じ表示名の匿名キャラがすでに登録されています'
+
+/** AnonymousProfile.displayName の一意制約違反（P2002）だけを判定する */
+function isDisplayNameConflict(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false
+  }
+  const target = error.meta?.target
+  const fields = Array.isArray(target) ? target : typeof target === 'string' ? [target] : []
+  return fields.some((field) => String(field).includes('displayName'))
+}
+
 const adminGuard = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
   if (c.get('user').role !== Role.ADMIN) return c.json({ error: 'Forbidden' }, 403)
   return next()
@@ -337,6 +350,10 @@ const createAnonymousProfileRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    409: errorResponse(
+      '同じ表示名の匿名キャラがすでに存在する',
+      ANONYMOUS_PROFILE_DISPLAY_NAME_CONFLICT_MESSAGE,
+    ),
   },
 })
 
@@ -852,8 +869,15 @@ export const adminRoute = $(
       )
     }
 
-    const profile = await prisma.anonymousProfile.create({ data })
-    return c.json({ profile }, 201)
+    try {
+      const profile = await prisma.anonymousProfile.create({ data })
+      return c.json({ profile }, 201)
+    } catch (error) {
+      if (isDisplayNameConflict(error)) {
+        return c.json({ error: ANONYMOUS_PROFILE_DISPLAY_NAME_CONFLICT_MESSAGE }, 409)
+      }
+      throw error
+    }
   })
   .openapi(updateAnonymousProfileRoute, async (c) => {
     const { id } = c.req.valid('param')
