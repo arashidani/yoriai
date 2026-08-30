@@ -72,7 +72,7 @@ function QuestionItemActions({
     initialPressed: resolvedLiked,
     initialCount: resolvedLikeCount,
     resetKey: postId,
-    enabled: !!postId,
+    enabled: !!postId && !isOwnQuestion,
     onSync: async (pressed) => {
       if (!postId) throw new Error('postId is required')
       const res = pressed
@@ -110,7 +110,7 @@ function QuestionItemActions({
   })
 
   function handleLikePressedChange(next: boolean) {
-    if (next === like.pressed) return
+    if (isOwnQuestion || next === like.pressed) return
     const nextCount = Math.max(0, (like.count ?? resolvedLikeCount) + (next ? 1 : -1))
     like.setPressed(next)
     if (postId) patchQuestionsCache(queryClient, postId, { liked: next, likeCount: nextCount })
@@ -128,14 +128,13 @@ function QuestionItemActions({
   return (
     <div className="flex w-full items-center gap-4">
       <CommentCount count={commentCount} size={size} />
-      {!isOwnQuestion && (
-        <LikeButton
-          count={like.count ?? resolvedLikeCount}
-          size={size}
-          pressed={like.pressed}
-          onPressedChange={handleLikePressedChange}
-        />
-      )}
+      <LikeButton
+        count={like.count ?? resolvedLikeCount}
+        size={size}
+        pressed={like.pressed}
+        disabled={isOwnQuestion}
+        onPressedChange={handleLikePressedChange}
+      />
       <BookmarkButton
         count={bookmark.count ?? resolvedBookmarkCount}
         size={size}

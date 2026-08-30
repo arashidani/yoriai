@@ -137,14 +137,12 @@ export function AnswerCard({
             <MentionText text={answer.body} />
           </p>
         </div>
-        {!answer.isOwnAnswer && (
-          <LikeButton
-            count={likeCount}
-            pressed={isLiked}
-            disabled={pending}
-            onPressedChange={handleLikeToggle}
-          />
-        )}
+        <LikeButton
+          count={likeCount}
+          pressed={isLiked}
+          disabled={pending || answer.isOwnAnswer}
+          onPressedChange={handleLikeToggle}
+        />
       </div>
     </div>
   )

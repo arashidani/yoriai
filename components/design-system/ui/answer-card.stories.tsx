@@ -52,7 +52,7 @@ export const OwnAnswer: Story = {
       'href',
       '/mypage',
     )
-    await expect(canvas.queryByRole('button', { name: /3/ })).toBeNull()
+    await expect(canvas.getByRole('button', { name: /3/ })).toBeDisabled()
   },
 }
 
