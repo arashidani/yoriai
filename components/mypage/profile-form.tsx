@@ -55,21 +55,7 @@ const mbtiColorChoices = [
 ]
 
 const ACTIVITY_ITEMS: ActivityItem[] = [
-  { id: 'activity-1', icon: badge, text: 'ひろばに10回参加を達成しました', time: '2時間前' },
-  {
-    id: 'activity-2',
-    icon: bubble,
-    text: 'チームビルディングについて質問しました',
-    time: '2時間前',
-  },
-  { id: 'activity-3', icon: human, text: '料理に参加しました', time: '2時間前' },
-  { id: 'activity-4', icon: human, text: '料理に参加しました', time: '2時間前' },
-  {
-    id: 'activity-5',
-    icon: bubble,
-    text: 'チームビルディングについて質問しました',
-    time: '2時間前',
-  },
+  { id: 'activity-1', icon: badge, text: 'yoriaiの一員になりました' },
 ]
 
 const years = Array.from({ length: new Date().getFullYear() - 1899 }, (_, index) =>
