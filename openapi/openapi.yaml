@@ -419,7 +419,7 @@ components:
           example: user-2
         author:
           anyOf:
-            - $ref: "#/components/schemas/User"
+            - $ref: "#/components/schemas/PostAuthor"
             - type: "null"
         answerCount:
           type: number
@@ -459,6 +459,23 @@ components:
         - deletedAt
         - createdAt
         - updatedAt
+    PostAuthor:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
+          properties:
+            lunchPreference:
+              type:
+                - string
+                - "null"
+              enum:
+                - NO_PREFERENCE
+                - TEAM
+                - ALONE
+                - null
+              example: TEAM
+          required:
+            - lunchPreference
     User:
       type: object
       properties:
@@ -568,7 +585,7 @@ components:
           example: user-1
         author:
           anyOf:
-            - $ref: "#/components/schemas/User"
+            - $ref: "#/components/schemas/PostAuthor"
             - type: "null"
         isHidden:
           type: boolean
@@ -4038,6 +4055,14 @@ paths:
                 $ref: "#/components/schemas/Error"
               example:
                 error: Forbidden
+        "409":
+          description: 同じ表示名の匿名キャラがすでに存在する
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: 同じ表示名の匿名キャラがすでに登録されています
   /api/admin/anonymous-profiles/{id}:
     patch:
       tags:

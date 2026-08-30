@@ -41,6 +41,7 @@ export function CreateAnonymousProfileDialog({ onCreated }: CreateAnonymousProfi
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateAnonymousProfileInput>({
     resolver: zodResolver(createAnonymousProfileSchema),
@@ -58,6 +59,7 @@ export function CreateAnonymousProfileDialog({ onCreated }: CreateAnonymousProfi
       const body = await res.json()
       const message =
         'error' in body && typeof body.error === 'string' ? body.error : '追加に失敗しました'
+      if (res.status === 409) setError('displayName', { type: 'server', message })
       toast.error(message)
       return
     }

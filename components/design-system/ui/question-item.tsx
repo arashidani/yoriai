@@ -70,7 +70,7 @@ function QuestionItem({
               <p className="truncate text-paragraph-mini text-muted-foreground">{excerpt}</p>
             </div>
           </div>
-          <div className="pointer-events-auto">
+          <div className="relative z-10 pointer-events-auto">
             <QuestionItemActions
               postId={postId}
               commentCount={commentCount}
