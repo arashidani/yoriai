@@ -30,7 +30,7 @@ const notifications = [
   },
   {
     id: 'notification-2',
-    type: 'square' as const,
+    type: 'like' as const,
     message: 'あなたの投稿にいいねがつきました',
     timestamp: '2時間前',
     isRead: false,

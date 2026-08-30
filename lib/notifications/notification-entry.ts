@@ -1,4 +1,5 @@
 import type { NotificationType } from '@/app/generated/prisma/enums'
+import type { NotificationItemType } from '@/components/design-system/ui/notification-item'
 import type { NotificationPanelEntry } from '@/components/design-system/ui/notification-panel'
 import { formatRelativeTime } from '@/lib/date-time'
 import { HIROBA_CATALOG } from '@/lib/hiroba/catalog'
@@ -47,6 +48,20 @@ function buildMessage(notification: NotificationApiItem, isHiroba: boolean) {
   }
 }
 
+function isLikeNotification(type: NotificationType) {
+  return (
+    type === 'POST_LIKED' ||
+    type === 'ANSWER_LIKED' ||
+    type === 'HIROBA_POST_LIKED' ||
+    type === 'HIROBA_ANSWER_LIKED'
+  )
+}
+
+function buildItemType(notification: NotificationApiItem, isHiroba: boolean): NotificationItemType {
+  if (isLikeNotification(notification.type)) return 'like'
+  return isHiroba ? 'square' : 'qa'
+}
+
 function hirobaSlug(hirobaId: string | undefined) {
   return HIROBA_CATALOG.find((hiroba) => hiroba.id === hirobaId)?.slug
 }
@@ -73,7 +88,7 @@ export function toNotificationEntry(
 
   return {
     id: notification.id,
-    type: isHiroba ? 'square' : 'qa',
+    type: buildItemType(notification, isHiroba),
     message: buildMessage(notification, isHiroba),
     timestamp: formatRelativeTime(notification.createdAt, now),
     isRead: notification.isRead,
