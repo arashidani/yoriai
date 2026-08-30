@@ -70,10 +70,18 @@ describe('メンション候補API', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
-      candidates: [
-        { id: 'user-1', displayName: '開発者' },
-        { id: 'user-2', displayName: '一般ユーザー' },
-      ],
+      candidates: [{ id: 'user-2', displayName: '一般ユーザー' }],
+    })
+  })
+
+  it('閲覧者自身はメンション候補に含めない', async () => {
+    vi.stubEnv('MOCK_MODE', 'true')
+
+    const response = await app.request('/api/questions/post-3/mention-candidates')
+
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({
+      candidates: [{ id: 'mock-assignment-post-3', displayName: 'ねこ' }],
     })
   })
 

@@ -93,7 +93,7 @@ function commaSeparatedIds(value?: string) {
   )
 }
 
-async function getQaMentionCandidates(postId: string) {
+async function getQaMentionCandidates(postId: string, viewerId: string) {
   if (process.env.MOCK_MODE === 'true') {
     const post = MOCK_POSTS.find((item) => item.id === postId)
     if (!post || post.deletedAt) return null
@@ -105,7 +105,12 @@ async function getQaMentionCandidates(postId: string) {
     ]
     const seen = new Set<string>()
     return participants.flatMap((participant) => {
-      if (!participant.authorId || seen.has(participant.authorId)) return []
+      if (
+        !participant.authorId ||
+        participant.authorId === viewerId ||
+        seen.has(participant.authorId)
+      )
+        return []
       seen.add(participant.authorId)
       const profile =
         'anonymousProfile' in participant
@@ -149,7 +154,7 @@ async function getQaMentionCandidates(postId: string) {
       aliasNumber: number
     } | null,
   ) => {
-    if (!userId || !assignment || seen.has(userId)) return []
+    if (!userId || userId === viewerId || !assignment || seen.has(userId)) return []
     seen.add(userId)
     return [
       {
@@ -486,7 +491,7 @@ const unbookmarkRoute = createRoute({
 export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
   .openapi(mentionCandidatesRoute, async (c) => {
     const { id } = c.req.valid('param')
-    const candidates = await getQaMentionCandidates(id)
+    const candidates = await getQaMentionCandidates(id, c.get('user').id)
     if (!candidates) return c.json({ error: 'Not found' }, 404)
     return c.json(
       { candidates: candidates.map(({ id, displayName }) => ({ id, displayName })) },
@@ -1069,7 +1074,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const requestedMentionIds = data.mentionedUserIds ?? []
     let mentionedUserIds: string[] = []
     if (requestedMentionIds.length > 0) {
-      const candidates = await getQaMentionCandidates(id)
+      const candidates = await getQaMentionCandidates(id, user.id)
       const userIdByCandidateId = new Map(
         candidates?.map((item) => [item.id, item.userId] as const),
       )
