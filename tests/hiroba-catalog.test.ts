@@ -8,7 +8,7 @@ import {
   HIROBA_CATALOG,
   HIROBA_SECTIONS,
   isDefaultHiroba,
-  MBTI_SECTION,
+  MBTI_HIROBA_SLUGS,
 } from '@/lib/hiroba/catalog'
 
 describe('fixed hiroba catalog', () => {
@@ -23,7 +23,7 @@ describe('fixed hiroba catalog', () => {
     expect(findHiroba('feature-testing')?.name).toBe('機能たしかめ広場')
     expect(findHiroba('alcohol')?.name).toBe('お酒')
     expect(findHiroba('company-events')?.name).toBe('社内イベント')
-    expect(findHiroba('mbti-purple')?.name).toBe('紫の人の広場')
+    expect(findHiroba('mbti-purple')?.name).toBe('むらさきの人')
     expect(findHiroba('legacy-hiroba')).toBeUndefined()
   })
 
@@ -70,7 +70,7 @@ describe('hiroba catalog is backed by seed migrations', () => {
   })
 
   it('seeds all four MBTI hirobas', () => {
-    for (const slug of MBTI_SECTION.items.map((hiroba) => hiroba.slug)) {
+    for (const slug of MBTI_HIROBA_SLUGS) {
       expect(seededSlugs.has(slug)).toBe(true)
     }
   })
