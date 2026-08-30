@@ -1,14 +1,48 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { delay, HttpResponse, http } from 'msw'
 import { expect, userEvent, within } from 'storybook/test'
 import { OnboardingForm } from './onboarding-form'
 
 const meta = {
   component: OnboardingForm,
   parameters: { nextjs: { appDirectory: true } },
+  decorators: [
+    (Story) => (
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Story />
+      </QueryClientProvider>
+    ),
+  ],
 } satisfies Meta<typeof OnboardingForm>
 
 export default meta
 type Story = StoryObj<typeof meta>
+
+export const Loading: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/onboarding/options', async () => {
+          await delay('infinite')
+          return HttpResponse.json({
+            departments: [],
+            businessAreas: [],
+            businessSkills: [],
+            interests: [],
+          })
+        }),
+      ],
+    },
+  },
+  play: async ({ canvas }) => {
+    const spinner = canvas.getByRole('status', { name: '読み込み中' })
+    await expect(spinner).toBeVisible()
+    await expect(spinner).toHaveClass('text-primary')
+  },
+}
 
 export const Default: Story = {
   args: { initialUsername: 'みどりさん' },

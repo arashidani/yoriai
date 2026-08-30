@@ -8,7 +8,7 @@ import {
   NotificationItem,
   type NotificationItemType,
 } from '@/components/design-system/ui/notification-item'
-import { Spinner } from '@/components/ui/spinner'
+import { Spinner } from '@/components/design-system/ui/spinner'
 import { cn } from '@/lib/utils'
 
 type NotificationPanelEntry = {
@@ -138,9 +138,7 @@ function NotificationPanel({
           ))}
           {hasMore && (
             <li ref={loadMoreRef} className="flex justify-center py-4">
-              {isLoadingMore && (
-                <Spinner className="size-8 text-primary" aria-label="読み込み中" />
-              )}
+              {isLoadingMore && <Spinner />}
             </li>
           )}
         </ul>

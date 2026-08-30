@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { NotificationPanel } from '@/components/design-system/ui/notification-panel'
-import { Spinner } from '@/components/ui/spinner'
+import { Spinner } from '@/components/design-system/ui/spinner'
 import {
   useMarkAllNotificationsAsRead,
   useMarkNotificationAsRead,
@@ -20,14 +20,8 @@ import { useNotificationPanelStore } from '@/lib/stores/notification-panel-store
 export function NotificationPanelColumn() {
   const isOpen = useNotificationPanelStore((state) => state.isOpen)
   const close = useNotificationPanelStore((state) => state.close)
-  const {
-    data,
-    isPending,
-    isError,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useNotifications(isOpen)
+  const { data, isPending, isError, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useNotifications(isOpen)
   const unreadCount = useUnreadNotificationCount()
   const markAsRead = useMarkNotificationAsRead()
   const markAllAsRead = useMarkAllNotificationsAsRead()
@@ -52,16 +46,12 @@ export function NotificationPanelColumn() {
       className="fixed inset-0 z-50 overflow-hidden bg-black/10 p-4 lg:sticky lg:inset-auto lg:top-0 lg:z-auto lg:h-screen lg:max-h-screen lg:w-[350px] lg:shrink-0 lg:self-start lg:overflow-hidden lg:bg-transparent"
     >
       {isPending ? (
-        <div className="flex h-full w-full items-center justify-center rounded-lg bg-background-2">
-          <Spinner className="size-8 text-primary" aria-label="読み込み中" />
-        </div>
+        <Spinner layout="center" className="h-full w-full rounded-lg bg-background-2" />
       ) : (
         <NotificationPanel
           notifications={notifications}
           onClose={close}
-          onMarkAllAsRead={
-            unreadCount > 0 ? () => markAllAsRead.mutate() : undefined
-          }
+          onMarkAllAsRead={unreadCount > 0 ? () => markAllAsRead.mutate() : undefined}
           isMarkingAllAsRead={markAllAsRead.isPending}
           onNotificationClick={(id) => {
             const target = apiNotifications.find((notification) => notification.id === id)

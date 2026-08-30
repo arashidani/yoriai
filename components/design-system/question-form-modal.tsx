@@ -8,9 +8,9 @@ import { IconAi } from '@/components/design-system/icons/icon-ai'
 import { IconClose } from '@/components/design-system/icons/icon-close'
 import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { SelectCategories } from '@/components/design-system/ui/select-categories'
+import { Spinner } from '@/components/design-system/ui/spinner'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
 import { type CreatePostInput, createPostSchema } from '@/lib/schemas/post'
 import { cn } from '@/lib/utils'
@@ -72,9 +72,7 @@ export function QuestionFormModal({
       </div>
       <Separator />
       {isLoading ? (
-        <div className="flex items-center justify-center py-16">
-          <Spinner className="size-8 text-primary" aria-label="投稿中" />
-        </div>
+        <Spinner layout="center" className="py-16" label="投稿中" />
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
           {error && (
