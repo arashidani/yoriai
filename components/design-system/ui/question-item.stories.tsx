@@ -75,10 +75,23 @@ export const MissingAvatar: Story = {
 }
 
 export const WithLink: Story = {
-  args: { href: '/posts/post-1' },
-  play: async ({ canvas }) => {
+  args: {
+    href: '/posts/post-1',
+    postId: 'post-1',
+    likeCount: 3,
+    bookmarkCount: 1,
+  },
+  play: async ({ canvas, userEvent }) => {
     await expect(
       canvas.getByRole('link', { name: 'キングオブタイムの有給申請について' }),
     ).toHaveAttribute('href', '/posts/post-1')
+
+    const likeButton = canvas.getByRole('button', { name: '3' })
+    const rect = likeButton.getBoundingClientRect()
+    const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2)
+    await expect(likeButton.contains(hit) || likeButton === hit).toBe(true)
+
+    await userEvent.click(likeButton)
+    await expect(canvas.getByRole('button', { name: '4' })).toHaveAttribute('aria-pressed', 'true')
   },
 }
