@@ -104,8 +104,8 @@ export const PICKUP_SECTION: HirobaSection = {
       'hotSpring',
       'pickup',
     ),
-    item('dogs', 'いぬ', '犬のかわいさや暮らしの知恵を共有するひろばです。', 'dog', 'pickup'),
-    item('cats', 'ねこ', '猫のかわいさや暮らしの知恵を共有するひろばです。', 'cat', 'pickup'),
+    item('dogs', 'いぬ', '犬のかわいさやを共有するひろばです。', 'dog', 'pickup'),
+    item('cats', 'ねこ', '猫のかわいさやを共有するひろばです。', 'cat', 'pickup'),
     item(
       'company-events',
       '社内イベント',
