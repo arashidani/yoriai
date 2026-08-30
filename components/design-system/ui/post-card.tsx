@@ -4,7 +4,6 @@ import { cva } from 'class-variance-authority'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
 import { toast } from 'sonner'
 import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import imageNone from '@/assets/image-none.svg'
@@ -13,6 +12,7 @@ import { LikeButton } from '@/components/design-system/ui/like-button'
 import { DeleteHirobaPostButton } from '@/components/hiroba/delete-hiroba-post-button'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
 import { MentionText } from '@/components/mentions/mention-text'
+import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { client } from '@/lib/hono/client'
 import { cn } from '@/lib/utils'
 import { LunchChip, type LunchChipType } from './lunch-chip'
@@ -100,10 +100,27 @@ export function PostCard({
 }: PostCardProps) {
   const resolvedLunchVariant = lunchVariant ?? lunchChipType(post.lunchPreference)
   const resolvedMbtiVariant = mbtiVariant ?? mbtiChipVariant(post.displayNameColor)
-  const [liked, setLiked] = useState(post.liked)
-  const [likeCount, setLikeCount] = useState(post.likeCount)
-  const [pending, setPending] = useState(false)
   const router = useRouter()
+
+  const {
+    pressed: liked,
+    count: likeCount,
+    toggle: toggleLike,
+  } = useDebouncedOptimisticToggle({
+    initialPressed: post.liked,
+    initialCount: post.likeCount,
+    resetKey: post.id,
+    enabled: !post.isOwnPost,
+    onSync: async (next) => {
+      const res = next
+        ? await client.api['hiroba-posts'][':id'].likes.$post({ param: { id: post.id } })
+        : await client.api['hiroba-posts'][':id'].likes.$delete({ param: { id: post.id } })
+      if (!res.ok) throw new Error('いいねの処理に失敗しました')
+      return res.json()
+    },
+    parseResult: (result) => ({ pressed: result.liked, count: result.likeCount }),
+    onError: () => toast.error('いいねの処理に失敗しました'),
+  })
 
   function handleDeleted(deletedPostId: string) {
     if (onDeleted) {
@@ -112,29 +129,6 @@ export function PostCard({
     }
     router.push(`/hiroba/${post.hirobaSlug}`)
     router.refresh()
-  }
-
-  async function handleLikeToggle(next: boolean) {
-    if (pending || post.isOwnPost) return
-    setPending(true)
-    setLiked(next)
-    setLikeCount((count) => count + (next ? 1 : -1))
-
-    try {
-      const res = next
-        ? await client.api['hiroba-posts'][':id'].likes.$post({ param: { id: post.id } })
-        : await client.api['hiroba-posts'][':id'].likes.$delete({ param: { id: post.id } })
-      if (!res.ok) throw new Error('いいねの処理に失敗しました')
-      const result = await res.json()
-      setLiked(result.liked)
-      setLikeCount(result.likeCount)
-    } catch {
-      setLiked(!next)
-      setLikeCount((count) => count + (next ? -1 : 1))
-      toast.error('いいねの処理に失敗しました')
-    } finally {
-      setPending(false)
-    }
   }
 
   const body = (
@@ -228,14 +222,14 @@ export function PostCard({
             <LikeButton
               className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
               state={state}
-              count={likeCount}
+              count={likeCount ?? 0}
               pressed={liked}
-              disabled={!joined || pending}
+              disabled={!joined}
               onClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
               }}
-              onPressedChange={handleLikeToggle}
+              onPressedChange={toggleLike}
             />
           )}
         </div>
