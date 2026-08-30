@@ -607,7 +607,7 @@
           "author": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/User"
+                "$ref": "#/components/schemas/PostAuthor"
               },
               {
                 "type": "null"
@@ -665,6 +665,34 @@
           "deletedAt",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "PostAuthor": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/User"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "lunchPreference": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "NO_PREFERENCE",
+                  "TEAM",
+                  "ALONE",
+                  null
+                ],
+                "example": "TEAM"
+              }
+            },
+            "required": [
+              "lunchPreference"
+            ]
+          }
         ]
       },
       "User": {
@@ -812,7 +840,7 @@
           "author": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/User"
+                "$ref": "#/components/schemas/PostAuthor"
               },
               {
                 "type": "null"
@@ -6411,6 +6439,19 @@
                 },
                 "example": {
                   "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "同じ表示名の匿名キャラがすでに存在する",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "同じ表示名の匿名キャラがすでに登録されています"
                 }
               }
             }
