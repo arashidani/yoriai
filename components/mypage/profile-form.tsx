@@ -148,6 +148,10 @@ export function ProfileView({
     profile.displayNameColor === DisplayNameColor.GRAY
       ? '回答しない'
       : mbtiColorChoices.find((choice) => choice.value === profile.displayNameColor)?.text
+  const ibjCareerName = getIbjCareerName(
+    profile.joinedYear ? String(profile.joinedYear) : '',
+    profile.joinedMonth ? String(profile.joinedMonth) : '',
+  )
 
   return (
     <div className="flex flex-col items-center gap-6 lg:flex-row lg:items-start lg:gap-8">
@@ -169,7 +173,7 @@ export function ProfileView({
                 : '未選択'
             }
           />
-          <TenureChip size="default">IBJ歴</TenureChip>
+          {ibjCareerName && <TenureChip size="default">{ibjCareerName}</TenureChip>}
         </div>
 
         <ProfileField
