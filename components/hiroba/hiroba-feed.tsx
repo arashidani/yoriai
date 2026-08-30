@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
-import { Button, buttonVariants as designButtonVariants } from '@/components/design-system/button'
-import { IconHuman } from '@/components/design-system/icons/icon-human'
+import { buttonVariants as designButtonVariants } from '@/components/design-system/button'
+import { JoinButton } from '@/components/design-system/ui/join-button'
 import { SquareIcon } from '@/components/design-system/ui/square-icon'
 import type { HirobaCatalogItem } from '@/lib/hiroba/catalog'
 import { client } from '@/lib/hono/client'
@@ -182,17 +182,13 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: H
           </div>
 
           <div className="flex flex-wrap gap-3 pb-1">
-            <Button
-              type="button"
-              variant="primary"
-              size="large"
-              aria-pressed={joined}
-              isDisabled={joined || !canJoin || isUpdatingMembership}
-              onClick={toggleMembership}
-            >
-              <IconHuman className="size-4" aria-hidden />
-              {joined ? '参加中' : '参加する'}
-            </Button>
+            <JoinButton
+              pressed={joined}
+              disabled={joined || !canJoin || isUpdatingMembership}
+              onPressedChange={(nextPressed) => {
+                if (nextPressed) void toggleMembership()
+              }}
+            />
 
             <Link
               href="/hiroba"

@@ -1,10 +1,8 @@
 'use client'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
-import human from '@/assets/human-white.svg'
-import { Button } from '@/components/design-system/button'
+import { JoinButton } from '@/components/design-system/ui/join-button'
 import { client } from '@/lib/hono/client'
 
 type HirobaJoinButtonProps = {
@@ -39,16 +37,13 @@ export function HirobaJoinButton({ slug, joined, canJoin }: HirobaJoinButtonProp
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button
-        leftIcon={<Image src={human} alt="" />}
-        variant="primary"
-        size="large"
-        className="w-34.25"
-        isDisabled={joined || !canJoin || isUpdatingMembership}
-        onClick={handleJoin}
-      >
-        {joined ? '参加中' : '参加する'}
-      </Button>
+      <JoinButton
+        pressed={joined}
+        disabled={joined || !canJoin || isUpdatingMembership}
+        onPressedChange={(nextPressed) => {
+          if (nextPressed) void handleJoin()
+        }}
+      />
       {error && (
         <p role="alert" className="text-paragraph-small text-destructive">
           {error}
