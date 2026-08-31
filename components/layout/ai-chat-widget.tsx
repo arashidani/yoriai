@@ -85,6 +85,14 @@ export function AiChatWidget() {
     return () => clearInterval(id)
   }, [happy])
 
+  // アンマウント時に happy 復帰タイマーを解除する
+  // （なでなで成功から HAPPY_DURATION 以内に画面遷移するとアンマウント後に setState が走るため）
+  useEffect(() => {
+    return () => {
+      if (happyTimerRef.current) clearTimeout(happyTimerRef.current)
+    }
+  }, [])
+
   function handleToggle() {
     if (!open) setMounted(true)
     setOpen((prev) => !prev)
@@ -167,14 +175,13 @@ export function AiChatWidget() {
         </div>
       )}
       {hydrated ? (
-        <motion.div
+        <div
           className={cn('relative', open && 'invisible pointer-events-none')}
           aria-hidden={open}
           inert={open}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         >
-          {/* ホバー中はよりあいぬのひとことの吹き出しをアイコンの上に出す */}
+          {/* ホバー中はよりあいぬのひとことの吹き出しをアイコンの上に出す。
+              ボタン(motion.button)の外に置き、タップ時の縮小に巻き込まれないようにする。 */}
           <AnimatePresence>
             {hover && !happy && (
               <motion.div
@@ -192,15 +199,17 @@ export function AiChatWidget() {
               </motion.div>
             )}
           </AnimatePresence>
-          <button
+          <motion.button
             {...launchButtonProps}
             onPointerEnter={handlePointerEnter}
             onPointerLeave={handlePointerLeave}
             onPointerMove={handlePointerMove}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             // Figma: AI icon = 90x90
-            // 背景は よりあいぬアイコンの円と同じ青(#33C1ED)。
+            // 背景は よりあいぬアイコンの円と同じ青(sky-500)。
             // なでなで中の笑顔SVGは円の地色を持たないので、透ける下地をこの青に合わせる。
-            className="relative flex size-[90px] items-center justify-center rounded-full bg-[#33C1ED] text-primary-foreground shadow-xl transition-colors hover:bg-[#25add6]"
+            className="relative flex size-[90px] items-center justify-center rounded-full bg-sky-500 text-primary-foreground shadow-xl transition-colors hover:bg-sky-600"
           >
             {/* よりあいぬのアイコン。円形の地色を持つのでボタン全面に敷く。 */}
             <LaunchIcon />
@@ -210,7 +219,7 @@ export function AiChatWidget() {
             <AnimatePresence>
               {happy && (
                 <motion.div
-                  className="absolute inset-0 rounded-full bg-[#33C1ED]"
+                  className="absolute inset-0 rounded-full bg-sky-500"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -226,14 +235,14 @@ export function AiChatWidget() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </button>
-        </motion.div>
+          </motion.button>
+        </div>
       ) : (
         <button
           {...launchButtonProps}
           // Figma: AI icon = 90x90
           className={cn(
-            'flex size-[90px] items-center justify-center rounded-full bg-[#33C1ED] text-primary-foreground shadow-xl transition-colors hover:bg-[#25add6]',
+            'flex size-[90px] items-center justify-center rounded-full bg-sky-500 text-primary-foreground shadow-xl transition-colors hover:bg-sky-600',
             open && 'invisible pointer-events-none',
           )}
         >
