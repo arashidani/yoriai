@@ -37,7 +37,7 @@ export function HirobaSidebar({ hiroba, popularPosts, showAiSummary = false }: H
   const popularHirobas = HIROBA_CATALOG.filter((item) => item.slug !== hiroba?.slug).slice(0, 3)
 
   return (
-    <aside className="max-w-[320px] space-y-4 sticky top-6">
+    <aside className="hidden max-w-[320px] shrink-0 space-y-4 xl:sticky xl:top-6 xl:block xl:self-start">
       {showAiSummary && hiroba && (
         <section className="bg-informative-background space-y-1 p-6 rounded-lg">
           <h2 className="flex items-center gap-2 text-heading-3 text-informative">
