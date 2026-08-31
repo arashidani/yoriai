@@ -70,7 +70,7 @@ describe('メンション候補API', () => {
 
     expect(response.status).toBe(200)
     expect(await response.json()).toEqual({
-      candidates: [{ id: 'user-2', displayName: '一般ユーザー' }],
+      candidates: [{ id: 'user-2', displayName: 'あおさん' }],
     })
   })
 

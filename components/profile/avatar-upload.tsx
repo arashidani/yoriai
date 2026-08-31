@@ -1,11 +1,11 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ImagePlus } from 'lucide-react'
 import Image from 'next/image'
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import imageNone from '@/assets/image-none.svg'
+import imagePlus from '@/assets/plus-round.svg'
 import { Spinner } from '@/components/design-system/ui/spinner'
 import { client } from '@/lib/hono/client'
 import {
@@ -117,7 +117,7 @@ export function AvatarUpload({
           }
         }}
         onDrop={handleDrop}
-        className="group relative grid size-40.5 place-items-center overflow-hidden rounded-2xl border-2 border-dashed border-input bg-muted/50 p-1.5 transition-[border-color,background-color,box-shadow,transform] hover:border-primary hover:bg-primary/10 focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none"
+        className="group relative size-35 rounded-2xl hover:transition-opacity hover:opacity-50"
         data-dragging={isDragging || undefined}
         aria-label="アイコン画像を選択"
       >
@@ -138,8 +138,8 @@ export function AvatarUpload({
             className="rounded-xl object-cover"
           />
         )}
-        <span className="absolute right-2 bottom-2 grid size-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
-          <ImagePlus className="size-5" aria-hidden />
+        <span className="absolute -right-2 bottom-2">
+          <Image src={imagePlus} alt="" width={48} height={48} aria-hidden />
         </span>
         {isPending && <Spinner layout="overlay" size="md" label="処理中" className="rounded-2xl" />}
         {isDragging && (

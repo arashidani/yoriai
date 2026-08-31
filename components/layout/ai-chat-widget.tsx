@@ -34,11 +34,22 @@ function pickTooltipMessage() {
   return TOOLTIP_MESSAGES[Math.floor(Math.random() * TOOLTIP_MESSAGES.length)]
 }
 
+function LaunchIcon() {
+  return (
+    <Image src={mascotAiAvatarImage} alt="よりあいぬのアイコン" className="size-[90px]" priority />
+  )
+}
+
 /** ログイン後の全画面に表示するAIチャットの起動ボタン兼ウィンドウ。 */
 export function AiChatWidget() {
   const panelId = useId()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   // hover=カーソルが乗っている（吹き出し表示） / happy=なでなで成功（笑顔アニメ表示）
   const [hover, setHover] = useState(false)
@@ -128,6 +139,16 @@ export function AiChatWidget() {
     }, HAPPY_DURATION)
   }
 
+  const launchButtonProps = {
+    type: 'button' as const,
+    'aria-expanded': open,
+    'aria-controls': mounted ? panelId : undefined,
+    'aria-label': 'AIチャットサポートを開く',
+    'aria-hidden': open || undefined,
+    inert: open || undefined,
+    onClick: handleToggle,
+  }
+
   return (
     <div className="fixed right-6 bottom-6 z-50">
       {mounted && (
@@ -145,76 +166,80 @@ export function AiChatWidget() {
           <ChatPanel onClose={() => setOpen(false)} />
         </div>
       )}
-      <motion.div
-        className={cn('relative', open && 'invisible pointer-events-none')}
-        aria-hidden={open}
-        inert={open}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      >
-        {/* ホバー中はよりあいぬのひとことの吹き出しをアイコンの上に出す */}
-        <AnimatePresence>
-          {hover && !happy && (
-            <motion.div
-              className="pointer-events-none absolute bottom-full left-1/2 mb-3 w-max -translate-x-1/2"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              transition={{ duration: 0.15 }}
-            >
-              <ToolChip
-                text={tooltipMessage}
-                side="bottom"
-                className="max-w-[110px] whitespace-normal"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={mounted ? panelId : undefined}
-          aria-label="AIチャットサポートを開く"
-          onClick={handleToggle}
-          onPointerEnter={handlePointerEnter}
-          onPointerLeave={handlePointerLeave}
-          onPointerMove={handlePointerMove}
-          // Figma: AI icon = 90x90
-          // 背景は よりあいぬアイコンの円と同じ青(#33C1ED)。
-          // なでなで中の笑顔SVGは円の地色を持たないので、透ける下地をこの青に合わせる。
-          className="relative flex size-[90px] items-center justify-center rounded-full bg-[#33C1ED] text-primary-foreground shadow-xl transition-colors hover:bg-[#25add6]"
+      {hydrated ? (
+        <motion.div
+          className={cn('relative', open && 'invisible pointer-events-none')}
+          aria-hidden={open}
+          inert={open}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         >
-          {/* よりあいぬのアイコン。円形の地色を持つのでボタン全面に敷く。 */}
-          <Image
-            src={mascotAiAvatarImage}
-            alt="よりあいぬのアイコン"
-            className="size-[90px]"
-            priority
-          />
-          {/* なでなで成功中は笑顔SVGをパラパラ漫画のように切り替えて見せる。
-              笑顔SVGは円の地色を持たず透けるので、レイヤー自身に青い円の下地を敷いて
-              不透明にしてからフェードインする（下の default 画像と混ざって濁らないように）。 */}
+          {/* ホバー中はよりあいぬのひとことの吹き出しをアイコンの上に出す */}
           <AnimatePresence>
-            {happy && (
+            {hover && !happy && (
               <motion.div
-                className="absolute inset-0 rounded-full bg-[#33C1ED]"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                className="pointer-events-none absolute bottom-full left-1/2 mb-3 w-max -translate-x-1/2"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
                 transition={{ duration: 0.15 }}
               >
-                <Image
-                  src={SMILE_FRAMES[smileFrame]}
-                  alt=""
-                  aria-hidden
-                  className="size-[90px]"
-                  priority
+                <ToolChip
+                  text={tooltipMessage}
+                  side="bottom"
+                  className="max-w-[110px] whitespace-normal"
                 />
               </motion.div>
             )}
           </AnimatePresence>
+          <button
+            {...launchButtonProps}
+            onPointerEnter={handlePointerEnter}
+            onPointerLeave={handlePointerLeave}
+            onPointerMove={handlePointerMove}
+            // Figma: AI icon = 90x90
+            // 背景は よりあいぬアイコンの円と同じ青(#33C1ED)。
+            // なでなで中の笑顔SVGは円の地色を持たないので、透ける下地をこの青に合わせる。
+            className="relative flex size-[90px] items-center justify-center rounded-full bg-[#33C1ED] text-primary-foreground shadow-xl transition-colors hover:bg-[#25add6]"
+          >
+            {/* よりあいぬのアイコン。円形の地色を持つのでボタン全面に敷く。 */}
+            <LaunchIcon />
+            {/* なでなで成功中は笑顔SVGをパラパラ漫画のように切り替えて見せる。
+                笑顔SVGは円の地色を持たず透けるので、レイヤー自身に青い円の下地を敷いて
+                不透明にしてからフェードインする（下の default 画像と混ざって濁らないように）。 */}
+            <AnimatePresence>
+              {happy && (
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-[#33C1ED]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <Image
+                    src={SMILE_FRAMES[smileFrame]}
+                    alt=""
+                    aria-hidden
+                    className="size-[90px]"
+                    priority
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+        </motion.div>
+      ) : (
+        <button
+          {...launchButtonProps}
+          // Figma: AI icon = 90x90
+          className={cn(
+            'flex size-[90px] items-center justify-center rounded-full bg-[#33C1ED] text-primary-foreground shadow-xl transition-colors hover:bg-[#25add6]',
+            open && 'invisible pointer-events-none',
+          )}
+        >
+          <LaunchIcon />
         </button>
-      </motion.div>
+      )}
     </div>
   )
 }

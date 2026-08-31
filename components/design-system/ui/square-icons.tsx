@@ -17,8 +17,10 @@ import event from '@/assets/event.svg'
 import fire from '@/assets/fire.svg'
 import food from '@/assets/food.svg'
 import game from '@/assets/game.svg'
+import gourmet from '@/assets/gourmet.svg'
 import hotSpring from '@/assets/hot-spring.svg'
 import house from '@/assets/house.svg'
+import lunch from '@/assets/icon-lunch.svg'
 import idol from '@/assets/idol.svg'
 import knowhow from '@/assets/knowhow.svg'
 import mbtiBlue from '@/assets/mbti-blue.svg'
@@ -40,6 +42,7 @@ const SQUARE_ICONS = {
   event,
   dog,
   cat,
+  lunch,
   beauty,
   hotSpring,
   mountain,
@@ -60,6 +63,7 @@ const SQUARE_ICONS = {
   game,
   cafe,
   food,
+  gourmet,
   knowhow,
   idol,
   twoD,

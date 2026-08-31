@@ -1,11 +1,11 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ImagePlus } from 'lucide-react'
 import Image from 'next/image'
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import imageNone from '@/assets/image-none.svg'
+import imagePlus from '@/assets/plus-round.svg'
 import { Spinner } from '@/components/design-system/ui/spinner'
 import { client } from '@/lib/hono/client'
 import {
@@ -101,16 +101,22 @@ export function ProfileAvatar({
 
   return (
     <div className="shrink-0">
-      <div className="relative size-35">
+      <div className="group relative size-35">
         {avatarUrl ? (
-          <Image src={avatarUrl} alt="" fill unoptimized className="rounded-lg object-cover" />
+          <Image
+            src={avatarUrl}
+            alt=""
+            fill
+            unoptimized
+            className="rounded-lg object-cover transition-opacity group-has-[button:hover]:opacity-50"
+          />
         ) : (
           <Image
             src={imageNone}
             alt=""
             width={140}
             height={140}
-            className="size-35 rounded-lg object-cover"
+            className="size-35 rounded-lg object-cover transition-opacity group-has-[button:hover]:opacity-50"
           />
         )}
 
@@ -135,14 +141,14 @@ export function ProfileAvatar({
               }
             }}
             onDrop={handleDrop}
-            className="absolute inset-0 overflow-hidden rounded-lg border-2 border-dashed border-transparent transition-[border-color,background-color] hover:border-primary focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed motion-reduce:transition-none data-[dragging]:border-primary data-[dragging]:bg-primary/20"
+            className="absolute inset-0 overflow-hidden rounded-lg hover:cursor-pointer disabled:cursor-not-allowed"
             data-dragging={isDragging || undefined}
             aria-label="アイコン画像を選択"
           />
         )}
         {isEditable && (
-          <span className="pointer-events-none absolute -right-3.25 bottom-[6.5px] grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm">
-            <ImagePlus className="size-5" aria-hidden />
+          <span className="pointer-events-none absolute -right-4 bottom-2.5 transition-opacity group-has-[button:hover]:opacity-50">
+            <Image src={imagePlus} alt="" width={48} height={48} aria-hidden />
           </span>
         )}
         {isDragging && (

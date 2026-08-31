@@ -8,23 +8,40 @@ import {
   HIROBA_CATALOG,
   HIROBA_SECTIONS,
   isDefaultHiroba,
-  MBTI_SECTION,
+  MBTI_HIROBA_SLUGS,
+  PICKUP_SECTION,
 } from '@/lib/hiroba/catalog'
 
 describe('fixed hiroba catalog', () => {
-  it('contains 32 unique fixed hirobas grouped into sections', () => {
-    expect(HIROBA_CATALOG).toHaveLength(32)
-    expect(new Set(HIROBA_CATALOG.map((hiroba) => hiroba.id)).size).toBe(32)
-    expect(new Set(HIROBA_CATALOG.map((hiroba) => hiroba.slug)).size).toBe(32)
+  it('contains 33 unique fixed hirobas grouped into sections', () => {
+    expect(HIROBA_CATALOG).toHaveLength(33)
+    expect(new Set(HIROBA_CATALOG.map((hiroba) => hiroba.id)).size).toBe(33)
+    expect(new Set(HIROBA_CATALOG.map((hiroba) => hiroba.slug)).size).toBe(33)
     expect(HIROBA_SECTIONS.flatMap((section) => section.items)).toEqual(HIROBA_CATALOG)
   })
 
   it('resolves only a catalog slug', () => {
     expect(findHiroba('feature-testing')?.name).toBe('機能たしかめ広場')
     expect(findHiroba('alcohol')?.name).toBe('お酒')
+    expect(findHiroba('lunch')?.name).toBe('ランチ')
     expect(findHiroba('company-events')?.name).toBe('社内イベント')
-    expect(findHiroba('mbti-purple')?.name).toBe('紫の人の広場')
+    expect(findHiroba('mbti-purple')?.name).toBe('むらさきの人')
     expect(findHiroba('legacy-hiroba')).toBeUndefined()
+  })
+
+  it('places lunch between cats and company-events in pickup', () => {
+    expect(PICKUP_SECTION.items.map((hiroba) => hiroba.slug)).toEqual([
+      'feature-testing',
+      'outdoor',
+      'indoor',
+      'alcohol',
+      'strength-training',
+      'sauna-onsen',
+      'dogs',
+      'cats',
+      'lunch',
+      'company-events',
+    ])
   })
 
   it('makes the feature-testing hiroba a default membership', () => {
@@ -70,7 +87,7 @@ describe('hiroba catalog is backed by seed migrations', () => {
   })
 
   it('seeds all four MBTI hirobas', () => {
-    for (const slug of MBTI_SECTION.items.map((hiroba) => hiroba.slug)) {
+    for (const slug of MBTI_HIROBA_SLUGS) {
       expect(seededSlugs.has(slug)).toBe(true)
     }
   })
