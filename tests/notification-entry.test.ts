@@ -36,7 +36,7 @@ describe('toNotificationEntry', () => {
     expect(entry.href).toBe('/posts/post-3')
   })
 
-  it('ひろば投稿の通知は square アイコンになり、slug 付きのURLになる', () => {
+  it('ひろば投稿のいいねは like アイコンになり、slug 付きのURLになる', () => {
     const entry = toNotificationEntry(
       {
         ...base,
@@ -46,7 +46,7 @@ describe('toNotificationEntry', () => {
       NOW,
     )
 
-    expect(entry.type).toBe('square')
+    expect(entry.type).toBe('like')
     expect(entry.message).toBe('あなたの投稿にいいねがつきました')
     expect(entry.href).toBe('/hiroba/alcohol/posts/hiroba-post-1')
   })
@@ -64,7 +64,7 @@ describe('toNotificationEntry', () => {
       NOW,
     )
 
-    expect(entry.type).toBe('square')
+    expect(entry.type).toBe('like')
     expect(entry.message).toBe('あなたのコメントにいいねがつきました')
     expect(entry.href).toBe('/hiroba/alcohol/posts/hiroba-post-1')
   })
@@ -86,7 +86,32 @@ describe('toNotificationEntry', () => {
   it('関連リソースが取れないときは鉤括弧を出さず、リンクも張らない', () => {
     const entry = toNotificationEntry({ ...base, type: 'POST_LIKED' }, NOW)
 
+    expect(entry.type).toBe('like')
     expect(entry.message).toBe('あなたの質問にいいねがつきました')
     expect(entry.href).toBeUndefined()
+  })
+
+  it('質問へのいいねは like アイコンになる', () => {
+    const entry = toNotificationEntry(
+      { ...base, type: 'POST_LIKED', post: { id: 'post-1', title: '経費精算の申請期限' } },
+      NOW,
+    )
+
+    expect(entry.type).toBe('like')
+    expect(entry.message).toBe('あなたの質問「経費精算の申請期限」にいいねがつきました')
+  })
+
+  it('ひろばのコメント通知は square アイコンになる', () => {
+    const entry = toNotificationEntry(
+      {
+        ...base,
+        type: 'HIROBA_POST_ANSWERED',
+        hirobaPost: { id: 'hiroba-post-1', hirobaId: 'hiroba-alcohol' },
+      },
+      NOW,
+    )
+
+    expect(entry.type).toBe('square')
+    expect(entry.message).toBe('あなたの投稿に新しいコメントがつきました')
   })
 })

@@ -52,7 +52,7 @@ function toAnswerResponse(answer: HirobaAnswerWithAuthor) {
   }
 }
 
-async function getHirobaMentionCandidates(postId: string) {
+async function getHirobaMentionCandidates(postId: string, viewerId: string) {
   if (process.env.MOCK_MODE === 'true') {
     const post = MOCK_HIROBA_POSTS.find((item) => item.id === postId)
     if (!post) return null
@@ -64,7 +64,13 @@ async function getHirobaMentionCandidates(postId: string) {
     ]
     const seen = new Set<string>()
     return participants.flatMap((participant) => {
-      if (!participant.authorId || !participant.author || seen.has(participant.authorId)) return []
+      if (
+        !participant.authorId ||
+        participant.authorId === viewerId ||
+        !participant.author ||
+        seen.has(participant.authorId)
+      )
+        return []
       seen.add(participant.authorId)
       return [
         {
@@ -97,7 +103,7 @@ async function getHirobaMentionCandidates(postId: string) {
     userId: string | null,
     author: { name: string | null; username: string | null } | null,
   ) => {
-    if (!userId || !author || seen.has(userId)) return []
+    if (!userId || userId === viewerId || !author || seen.has(userId)) return []
     seen.add(userId)
     return [{ id: userId, displayName: author.name ?? author.username ?? 'ユーザー' }]
   }
@@ -340,7 +346,7 @@ const uploadImageRoute = createRoute({
 export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaultHook })
   .openapi(mentionCandidatesRoute, async (c) => {
     const { id } = c.req.valid('param')
-    const candidates = await getHirobaMentionCandidates(id)
+    const candidates = await getHirobaMentionCandidates(id, c.get('user').id)
     if (!candidates) return c.json({ error: 'Not found' }, 404)
     return c.json({ candidates }, 200)
   })
@@ -483,7 +489,7 @@ export const hirobaPostsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       return c.json({ error: 'ひろばに参加してください' }, 403)
     const requestedMentionIds = data.mentionedUserIds ?? []
     if (requestedMentionIds.length > 0) {
-      const candidates = await getHirobaMentionCandidates(id)
+      const candidates = await getHirobaMentionCandidates(id, user.id)
       if (
         !candidates ||
         !requestedMentionIds.every((userId) => candidates.some((item) => item.id === userId))

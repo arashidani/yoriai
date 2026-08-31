@@ -191,11 +191,11 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: H
 
             {canJoin && (
               <JoinButton
-                type="button"
-                joined={joined}
-                aria-pressed={joined}
+                pressed={joined}
                 disabled={joined || isUpdatingMembership}
-                onClick={toggleMembership}
+                onPressedChange={(nextPressed) => {
+                  if (nextPressed) void toggleMembership()
+                }}
               />
             )}
           </div>

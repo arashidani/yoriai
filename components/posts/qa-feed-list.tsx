@@ -3,8 +3,8 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { Pagination } from '@/components/design-system/ui/pagination'
+import { Spinner } from '@/components/design-system/ui/spinner'
 import { TUTORIAL_QA_POSTS, useFeatureTutorial } from '@/components/tutorial/feature-tutorial'
-import { Spinner } from '@/components/ui/spinner'
 import { client } from '@/lib/hono/client'
 import { type QaPost, toQaPost } from '@/lib/questions/qa-post'
 import {
@@ -157,13 +157,7 @@ function QaFeedList({
 
   return (
     <div className="relative flex flex-1 flex-col">
-      {showSpinner && (
-        <div className="absolute inset-0 z-40 bg-background/70">
-          <div className="sticky top-1/2 flex -translate-y-1/2 justify-center">
-            <Spinner className="size-8 text-primary" aria-label="読み込み中" />
-          </div>
-        </div>
-      )}
+      {showSpinner && <Spinner layout="overlay" />}
       <div ref={listRef} className="flex-1 scroll-mt-[17rem] px-8 py-6" aria-busy={showSpinner}>
         {error ? (
           <p role="alert" className="text-destructive">

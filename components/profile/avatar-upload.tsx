@@ -1,12 +1,12 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { type ChangeEvent, type DragEvent, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import imageNone from '@/assets/image-none.svg'
 import imagePlus from '@/assets/plus-round.svg'
+import { Spinner } from '@/components/design-system/ui/spinner'
 import { client } from '@/lib/hono/client'
 import {
   ACCEPTED_AVATAR_TYPES,
@@ -141,12 +141,7 @@ export function AvatarUpload({
         <span className="absolute -right-2 bottom-2">
           <Image src={imagePlus} alt="" width={48} height={48} aria-hidden />
         </span>
-
-        {isPending && (
-          <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-background/70">
-            <Loader2 className="size-6 animate-spin" aria-label="処理中" />
-          </div>
-        )}
+        {isPending && <Spinner layout="overlay" size="md" label="処理中" className="rounded-2xl" />}
         {isDragging && (
           <span className="absolute inset-1 grid place-items-center rounded-xl bg-primary text-label text-primary-foreground shadow-sm">
             ここにドロップ

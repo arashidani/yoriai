@@ -1,48 +1,35 @@
-import { Button as ButtonPrimitive } from '@base-ui/react/button'
-import { cva } from 'class-variance-authority'
+'use client'
+
+import { Toggle as TogglePrimitive } from '@base-ui/react/toggle'
+
+import { IconCheck } from '@/components/design-system/icons/icon-check'
+import { IconHuman } from '@/components/design-system/icons/icon-human'
 import { cn } from '@/lib/utils'
-import { IconCheck } from '../icons/icon-check'
-import { IconHuman } from '../icons/icon-human'
 
-type JoinButtonProps = ButtonPrimitive.Props & {
-  joined?: boolean
-  className?: string
-}
+type JoinButtonProps = TogglePrimitive.Props
 
-const joinButtonVariants = cva(
-  'w-[131px] px-6 py-4 inline-flex cursor-pointer items-center justify-center gap-1 rounded-full font-bold whitespace-nowrap outline-none text-statuschip-foreground disabled:pointer-events-none ',
-  {
-    variants: {
-      joined: {
-        false:
-          'border-2 border-statuschip-foreground transition-colors hover:bg-statuschip hover:text-statuschip-success',
-        true: 'bg-statuschip',
-      },
-    },
-    defaultVariants: {
-      joined: false,
-    },
-  },
-)
-
-function JoinButton({ joined = false, className, disabled, ...props }: JoinButtonProps) {
-  const Icon = joined ? IconCheck : IconHuman
-
+function JoinButton({ className, ...props }: JoinButtonProps) {
   return (
-    <ButtonPrimitive
-      data-slot="button"
-      disabled={disabled}
-      className={cn(joinButtonVariants({ joined }), className)}
+    <TogglePrimitive
+      data-slot="join-button"
+      className={cn(
+        'group inline-flex w-[131px] cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-primary bg-card px-6 py-4 text-paragraph font-bold whitespace-nowrap text-primary outline-none transition-colors not-aria-pressed:hover:bg-brand-2 aria-pressed:border-transparent aria-pressed:bg-brand-2 disabled:pointer-events-none',
+        className,
+      )}
       {...props}
     >
-      <span className="size-4 shrink-0 overflow-clip">
-        <Icon className="size-4 text-statuschip-foreground" aria-hidden />
-      </span>
-      <p className="font-bold text-md text-statuschip-foreground">
-        {joined ? '参加中' : '参加する'}
-      </p>
-    </ButtonPrimitive>
+      <IconHuman
+        aria-hidden
+        className="h-[15.93px] w-[14.33px] shrink-0 group-aria-pressed:hidden"
+      />
+      <IconCheck
+        aria-hidden
+        className="hidden h-[10.75px] w-[14.33px] shrink-0 group-aria-pressed:block"
+      />
+      <span className="group-aria-pressed:hidden">参加する</span>
+      <span className="hidden group-aria-pressed:inline">参加中</span>
+    </TogglePrimitive>
   )
 }
 
-export { JoinButton, joinButtonVariants }
+export { JoinButton }

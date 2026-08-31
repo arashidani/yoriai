@@ -35,10 +35,20 @@ export const Qa: Story = {
 export const Square: Story = {
   args: {
     type: 'square',
-    message: 'あなたの投稿にいいねがつきました',
+    message: 'あなたの投稿に新しいコメントがつきました',
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByText('あなたの投稿にいいねがつきました')).toBeVisible()
+    await expect(canvas.getByText('あなたの投稿に新しいコメントがつきました')).toBeVisible()
+  },
+}
+
+export const Like: Story = {
+  args: {
+    type: 'like',
+    message: 'あなたの質問にいいねがつきました',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('あなたの質問にいいねがつきました')).toBeVisible()
   },
 }
 
@@ -62,13 +72,19 @@ export const List: Story = {
     <div className="flex flex-col rounded-lg bg-background-2 p-6">
       <NotificationItem {...args} />
       <hr className="border-border" />
-      <NotificationItem {...args} type="square" message="あなたの投稿にいいねがつきました" />
+      <NotificationItem {...args} type="like" message="あなたの質問にいいねがつきました" />
+      <hr className="border-border" />
+      <NotificationItem
+        {...args}
+        type="square"
+        message="あなたの投稿に新しいコメントがつきました"
+      />
       <hr className="border-border" />
       <NotificationItem {...args} isRead />
     </div>
   ),
   play: async ({ canvas }) => {
-    await expect(canvas.getAllByText('2時間前')).toHaveLength(3)
-    await expect(canvas.getAllByText('未読')).toHaveLength(2)
+    await expect(canvas.getAllByText('2時間前')).toHaveLength(4)
+    await expect(canvas.getAllByText('未読')).toHaveLength(3)
   },
 }

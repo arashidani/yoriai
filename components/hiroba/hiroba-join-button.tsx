@@ -38,11 +38,11 @@ export function HirobaJoinButton({ slug, joined, canJoin }: HirobaJoinButtonProp
   return (
     <div className="flex flex-col items-end gap-1">
       <JoinButton
-        type="button"
-        joined={joined}
-        aria-pressed={joined}
+        pressed={joined}
         disabled={joined || !canJoin || isUpdatingMembership}
-        onClick={handleJoin}
+        onPressedChange={(nextPressed) => {
+          if (nextPressed) void handleJoin()
+        }}
       />
       {error && (
         <p role="alert" className="text-paragraph-small text-destructive">

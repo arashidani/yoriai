@@ -218,20 +218,18 @@ export function PostCard({
         <div className="flex gap-2">
           <CommentCount count={post.answerCount} />
 
-          {!post.isOwnPost && (
-            <LikeButton
-              className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
-              state={state}
-              count={likeCount ?? 0}
-              pressed={liked}
-              disabled={!joined}
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-              }}
-              onPressedChange={toggleLike}
-            />
-          )}
+          <LikeButton
+            className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
+            state={state}
+            count={likeCount ?? 0}
+            pressed={liked}
+            disabled={!joined || post.isOwnPost}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onPressedChange={toggleLike}
+          />
         </div>
       </div>
     </div>

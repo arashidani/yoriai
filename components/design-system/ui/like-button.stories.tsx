@@ -41,7 +41,9 @@ export const Large: Story = {
 export const Disabled: Story = {
   args: { size: 'default', count: 1, disabled: true },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: '1' })).toBeDisabled()
+    const button = canvas.getByRole('button', { name: '1' })
+    await expect(button).toBeDisabled()
+    await expect(button).toHaveClass(/disabled:cursor-not-allowed/)
   },
 }
 

@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { type ChangeEvent, type KeyboardEvent, useRef, useState } from 'react'
 import image from '@/assets/img.svg'
 import submitWhite from '@/assets/submit-white.svg'
-import { Spinner } from '@/components/ui/spinner'
+import { Spinner } from '@/components/design-system/ui/spinner'
 import { Button } from '../button'
 import { TextareaWithActions } from './textarea'
 
@@ -98,11 +98,7 @@ export function TextareaFocus({
         </Button>
       }
     >
-      {isSubmitting && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center rounded bg-background/70">
-          <Spinner className="size-6" />
-        </div>
-      )}
+      {isSubmitting && <Spinner layout="overlay" size="md" />}
       {imagePreviewUrl && (
         <div className="px-4 pt-2">
           <Image

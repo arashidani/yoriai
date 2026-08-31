@@ -64,7 +64,7 @@ export const OwnPost: Story = {
       'href',
       '/mypage',
     )
-    await expect(canvas.queryByRole('button', { name: /2/ })).toBeNull()
+    await expect(canvas.getByRole('button', { name: /2/ })).toBeDisabled()
   },
 }
 
