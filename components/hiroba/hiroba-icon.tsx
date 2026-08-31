@@ -35,6 +35,7 @@ const icons = {
   book: BookOpen,
   camera: Camera,
   cat: Cat,
+  lunch: Utensils,
   'circle-dot': CircleDot,
   clapperboard: Clapperboard,
   coffee: Coffee,

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AiChatbot } from '@/components/design-system/ai-chat/ai-chatbot'
 import { MessageContainer } from '@/components/design-system/ai-chat/message-container'
 import { MentionText } from '@/components/mentions/mention-text'
+import { chatErrorText, toChatErrorMessage } from '@/lib/chat/error-message'
 import type { ChatUIMessage } from '@/lib/chat/types'
 import { client } from '@/lib/hono/client'
 import type { ChatRequestInput } from '@/lib/schemas/chat'
@@ -36,21 +37,28 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const [input, setInput] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const { messages, setMessages, sendMessage, status, stop, error } = useChat<ChatUIMessage>({
-    transport: new DefaultChatTransport<ChatUIMessage>({
-      fetch: async (_url, init) => {
-        const body = JSON.parse(init?.body as string) as ChatRequestInput
-        return client.api.chat.$post({ json: body })
-      },
-      prepareSendMessagesRequest: ({ messages }) => ({
-        // Difyは conversation_id で履歴を保持するため、最新の発話だけ送る
-        body: { messages: messages.slice(-1), conversationId: conversationId.current },
+  const { messages, setMessages, sendMessage, status, stop, error, clearError } =
+    useChat<ChatUIMessage>({
+      transport: new DefaultChatTransport<ChatUIMessage>({
+        fetch: async (_url, init) => {
+          const body = JSON.parse(init?.body as string) as ChatRequestInput
+          const response = await client.api.chat.$post({ json: body })
+          // AI SDK は非OKレスポンスの本文を Error.message にするため、JSONを文言に直して投げる
+          if (!response.ok) {
+            const payload = await response.json().catch(() => null)
+            throw new Error(toChatErrorMessage(payload))
+          }
+          return response
+        },
+        prepareSendMessagesRequest: ({ messages }) => ({
+          // Difyは conversation_id で履歴を保持するため、最新の発話だけ送る
+          body: { messages: messages.slice(-1), conversationId: conversationId.current },
+        }),
       }),
-    }),
-    onData: (part) => {
-      if (part.type === 'data-conversation') conversationId.current = part.data.conversationId
-    },
-  })
+      onData: (part) => {
+        if (part.type === 'data-conversation') conversationId.current = part.data.conversationId
+      },
+    })
 
   const isBusy = status === 'submitted' || status === 'streaming'
 
@@ -77,6 +85,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     conversationId.current = undefined
     setMessages([])
     setInput('')
+    clearError()
   }
 
   return (
@@ -141,7 +150,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
       {error && (
         <p className="w-full text-destructive text-paragraph-small" role="alert">
-          {error.message}
+          {chatErrorText(error)}
         </p>
       )}
     </AiChatbot>

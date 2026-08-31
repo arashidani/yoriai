@@ -104,8 +104,15 @@ export const PICKUP_SECTION: HirobaSection = {
       'hotSpring',
       'pickup',
     ),
-    item('dogs', 'いぬ', '犬のかわいさや暮らしの知恵を共有するひろばです。', 'dog', 'pickup'),
-    item('cats', 'ねこ', '猫のかわいさや暮らしの知恵を共有するひろばです。', 'cat', 'pickup'),
+    item('dogs', 'いぬ', '犬のかわいさやを共有するひろばです。', 'dog', 'pickup'),
+    item('cats', 'ねこ', '猫のかわいさやを共有するひろばです。', 'cat', 'pickup'),
+    item(
+      'lunch',
+      'ランチ',
+      'おすすめのランチや一緒に食べる仲間を探すひろばです。',
+      'lunch',
+      'pickup',
+    ),
     item(
       'company-events',
       '社内イベント',
@@ -171,7 +178,7 @@ export const RIGHT_SECTIONS: HirobaSection[] = [
     title: 'ライフスタイル・食',
     category: 'food',
     items: [
-      item('gourmet', 'グルメ', 'おいしかったお店や一皿を共有するひろばです。', 'food', 'food'),
+      item('gourmet', 'グルメ', 'おいしかったお店や一皿を共有するひろばです。', 'gourmet', 'food'),
       item(
         'cafe-sweets',
         'カフェ・スイーツ',
@@ -194,46 +201,44 @@ export const RIGHT_SECTIONS: HirobaSection[] = [
       ),
     ],
   },
+  {
+    title: 'mbti',
+    category: 'mbtiGreen',
+    items: [
+      item(
+        'mbti-green',
+        'みどりの人',
+        'MBTIが緑グループの人のためのひろばです。',
+        'mbtiGreen',
+        'mbtiGreen',
+      ),
+      item(
+        'mbti-yellow',
+        'きいろの人',
+        'MBTIが黄色グループの人のためのひろばです。',
+        'mbtiYellow',
+        'mbtiYellow',
+      ),
+      item(
+        'mbti-blue',
+        'あおの人',
+        'MBTIが青グループの人のためのひろばです。',
+        'mbtiBlue',
+        'mbtiBlue',
+      ),
+      item(
+        'mbti-purple',
+        'むらさきの人',
+        'MBTIが紫グループの人のためのひろばです。',
+        'mbtiPurple',
+        'mbtiPurple',
+      ),
+    ],
+  },
 ]
-
-export const MBTI_SECTION: HirobaSection = {
-  title: 'MBTI',
-  category: 'mbtiGreen',
-  items: [
-    item(
-      'mbti-green',
-      '緑の人の広場',
-      'MBTIが緑グループの人のためのひろばです。',
-      'humanHead',
-      'mbtiGreen',
-    ),
-    item(
-      'mbti-yellow',
-      '黄色の人の広場',
-      'MBTIが黄色グループの人のためのひろばです。',
-      'humanHead',
-      'mbtiYellow',
-    ),
-    item(
-      'mbti-blue',
-      '青の人の広場',
-      'MBTIが青グループの人のためのひろばです。',
-      'humanHead',
-      'mbtiBlue',
-    ),
-    item(
-      'mbti-purple',
-      '紫の人の広場',
-      'MBTIが紫グループの人のためのひろばです。',
-      'humanHead',
-      'mbtiPurple',
-    ),
-  ],
-}
 
 export const HIROBA_SECTIONS: HirobaSection[] = [
   PICKUP_SECTION,
-  MBTI_SECTION,
   ...LEFT_SECTIONS,
   ...RIGHT_SECTIONS,
 ]

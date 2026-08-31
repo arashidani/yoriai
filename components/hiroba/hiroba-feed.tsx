@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useRef, useState } from 'react'
-import { Button, buttonVariants as designButtonVariants } from '@/components/design-system/button'
-import { IconHuman } from '@/components/design-system/icons/icon-human'
+import { buttonVariants as designButtonVariants } from '@/components/design-system/button'
+import { JoinButton } from '@/components/design-system/ui/join-button'
 import { SquareIcon } from '@/components/design-system/ui/square-icon'
 import type { HirobaCatalogItem } from '@/lib/hiroba/catalog'
 import { client } from '@/lib/hono/client'
@@ -182,24 +182,22 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: H
           </div>
 
           <div className="flex flex-wrap gap-3 pb-1">
-            <Button
-              type="button"
-              variant="primary"
-              size="large"
-              aria-pressed={joined}
-              isDisabled={joined || !canJoin || isUpdatingMembership}
-              onClick={toggleMembership}
-            >
-              <IconHuman className="size-4" aria-hidden />
-              {joined ? '参加中' : '参加する'}
-            </Button>
-
             <Link
               href="/hiroba"
               className={designButtonVariants({ variant: 'secondary', size: 'large' })}
             >
               一覧に戻る
             </Link>
+
+            {canJoin && (
+              <JoinButton
+                pressed={joined}
+                disabled={joined || isUpdatingMembership}
+                onPressedChange={(nextPressed) => {
+                  if (nextPressed) void toggleMembership()
+                }}
+              />
+            )}
           </div>
         </div>
         {membershipError && (
@@ -212,7 +210,7 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: H
       <section className="px-3 space-y-4">
         {!canJoin ? (
           <AssistBanner variant="support">
-            参加できるのは、自分のグループの広場だけです。
+            自分のMBTIのひろばでのみ、投稿・返信・いいねができます。
           </AssistBanner>
         ) : !joined ? (
           <AssistBanner variant="support">

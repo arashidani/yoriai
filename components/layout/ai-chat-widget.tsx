@@ -2,20 +2,46 @@
 
 import { motion } from 'motion/react'
 import Image from 'next/image'
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import mascotAiAvatarImage from '@/assets/mascots/mascot_ai_avatar.svg'
 import { ChatPanel } from '@/components/chat/chat-panel'
 import { cn } from '@/lib/utils'
+
+function LaunchIcon() {
+  return (
+    <Image src={mascotAiAvatarImage} alt="よりあいぬのアイコン" className="size-[90px]" priority />
+  )
+}
 
 /** ログイン後の全画面に表示するAIチャットの起動ボタン兼ウィンドウ。 */
 export function AiChatWidget() {
   const panelId = useId()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
 
   function handleToggle() {
     if (!open) setMounted(true)
     setOpen((prev) => !prev)
+  }
+
+  const launchButtonProps = {
+    type: 'button' as const,
+    'aria-expanded': open,
+    'aria-controls': mounted ? panelId : undefined,
+    'aria-label': 'AIチャットサポートを開く',
+    'aria-hidden': open || undefined,
+    inert: open || undefined,
+    onClick: handleToggle,
+    // Figma: AI icon = 90x90
+    className: cn(
+      'flex size-[90px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-colors hover:bg-primary-hover',
+      open && 'invisible pointer-events-none',
+    ),
   }
 
   return (
@@ -35,32 +61,20 @@ export function AiChatWidget() {
           <ChatPanel onClose={() => setOpen(false)} />
         </div>
       )}
-      <motion.div
-        className={cn(open && 'invisible pointer-events-none')}
-        aria-hidden={open}
-        inert={open}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-      >
-        <button
-          type="button"
-          aria-expanded={open}
-          aria-controls={mounted ? panelId : undefined}
-          aria-label="AIチャットサポートを開く"
-          onClick={handleToggle}
-          // Figma: AI icon = 90x90
-          className="flex size-[90px] items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl transition-colors hover:bg-primary-hover"
+      {hydrated ? (
+        <motion.button
+          {...launchButtonProps}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20 }}
         >
-          {/* よりあいぬのアイコン。円形の地色を持つのでボタン全面に敷く */}
-          <Image
-            src={mascotAiAvatarImage}
-            alt="よりあいぬのアイコン"
-            className="size-[90px]"
-            priority
-          />
+          <LaunchIcon />
+        </motion.button>
+      ) : (
+        <button {...launchButtonProps}>
+          <LaunchIcon />
         </button>
-      </motion.div>
+      )}
     </div>
   )
 }

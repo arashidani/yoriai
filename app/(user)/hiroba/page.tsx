@@ -6,7 +6,6 @@ import {
   DEFAULT_HIROBA_SLUGS,
   HIROBA_CATALOG,
   LEFT_SECTIONS,
-  MBTI_SECTION,
   PICKUP_SECTION,
   RIGHT_SECTIONS,
 } from '@/lib/hiroba/catalog'
@@ -39,7 +38,10 @@ export default async function HirobaPage() {
         src={hirobaCover}
         alt="広場のカバーイラスト"
         sizes="100vw"
-        className="h-40 w-full object-cover"
+        className="h-auto w-full object-cover"
+        style={{ height: 'auto' }}
+        loading="eager"
+        preload
       />
 
       <div className="mx-auto w-full max-w-7xl space-y-8 p-8 sm:px-8">
@@ -66,15 +68,6 @@ export default async function HirobaPage() {
           <h2 className="mb-3 font-heading text-heading-2">{PICKUP_SECTION.title}</h2>
           <div className="grid gap-3 grid-cols-4">
             {PICKUP_SECTION.items.map((hiroba) => (
-              <SquareCard key={hiroba.id} hiroba={hiroba} size="default" />
-            ))}
-          </div>
-        </section>
-
-        <section>
-          <h2 className="mb-3 font-heading text-heading-2">{MBTI_SECTION.title}</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {MBTI_SECTION.items.map((hiroba) => (
               <SquareCard key={hiroba.id} hiroba={hiroba} size="default" />
             ))}
           </div>

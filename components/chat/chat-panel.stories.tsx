@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { delay, http } from 'msw'
+import { delay, HttpResponse, http } from 'msw'
 import { expect, fn, waitFor } from 'storybook/test'
 import { uiMessageStreamResponse } from '../../.storybook/msw-handlers'
 import { ChatPanel } from './chat-panel'
@@ -104,6 +104,35 @@ export const Refreshed: Story = {
       await expect(canvas.queryByText('経費精算のやり方は？')).not.toBeInTheDocument()
     })
     await expect(canvas.getByText(/よりあいぬに相談/)).toBeVisible()
+  },
+}
+
+/**
+ * Dify 通信失敗時、API の JSON 本文が画面に残り続けないこと。
+ * リフレッシュでエラー表示も消えること。
+ */
+export const CommunicationFailed: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.post('/api/chat', () =>
+          HttpResponse.json({ error: 'AIとの通信に失敗しました' }, { status: 502 }),
+        ),
+      ],
+    },
+  },
+  play: async ({ canvas, userEvent }) => {
+    await userEvent.type(canvas.getByLabelText('メッセージ'), 'こんにちは')
+    await userEvent.click(canvas.getByLabelText('送信'))
+
+    const alert = await canvas.findByRole('alert')
+    await expect(alert).toHaveTextContent('AIとの通信に失敗しました')
+    await expect(canvas.queryByText('{"error":"AIとの通信に失敗しました"}')).not.toBeInTheDocument()
+
+    await userEvent.click(canvas.getByLabelText('会話をリセット'))
+    await waitFor(async () => {
+      await expect(canvas.queryByRole('alert')).not.toBeInTheDocument()
+    })
   },
 }
 

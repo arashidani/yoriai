@@ -32,7 +32,9 @@ export const Default: Story = {
 export const OwnQuestion: Story = {
   args: { isOwnQuestion: true, likeCount: 7 },
   play: async ({ canvas }) => {
-    await expect(canvas.queryByRole('button', { name: '7' })).not.toBeInTheDocument()
+    const likeButton = canvas.getByRole('button', { name: '7' })
+    await expect(likeButton).toBeDisabled()
+    await expect(likeButton).toHaveClass(/disabled:cursor-not-allowed/)
     await expect(canvas.getByRole('button', { name: '5' })).toBeVisible()
   },
 }

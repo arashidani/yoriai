@@ -9,6 +9,8 @@ export function QaCover() {
         src={qaCover}
         alt=""
         className="h-auto w-full object-cover object-center"
+        style={{ height: 'auto' }}
+        loading="eager"
         preload
         sizes="100vw"
       />

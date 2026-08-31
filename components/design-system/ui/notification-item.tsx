@@ -3,10 +3,11 @@ import Link from 'next/link'
 import { IconBubbleOutline } from '@/components/design-system/icons/icon-bubble-outline'
 import { IconCircle } from '@/components/design-system/icons/icon-circle'
 import { IconHuman } from '@/components/design-system/icons/icon-human'
+import { IconPawOutline } from '@/components/design-system/icons/icon-paw-outline'
 import { cn } from '@/lib/utils'
 
-/** qa: なんでもQ&A の通知 / square: ひろばの通知 */
-type NotificationItemType = 'qa' | 'square'
+/** qa: なんでもQ&A の通知 / square: ひろばの通知 / like: いいねの通知 */
+type NotificationItemType = 'qa' | 'square' | 'like'
 
 type NotificationItemProps = {
   className?: string
@@ -35,7 +36,9 @@ function NotificationItem({
   const content = (
     <>
       <span className="flex shrink-0 items-center justify-center pt-1">
-        {type === 'qa' ? (
+        {type === 'like' ? (
+          <IconPawOutline className="h-[14px] w-[17px] text-secondary-foreground" />
+        ) : type === 'qa' ? (
           <IconBubbleOutline className="size-[15px] text-secondary-foreground" />
         ) : (
           <IconHuman className="h-[16.667px] w-[15px] text-secondary-foreground" />

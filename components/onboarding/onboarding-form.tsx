@@ -2,7 +2,6 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQuery } from '@tanstack/react-query'
-import { Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Controller, type FieldPath, useForm } from 'react-hook-form'
@@ -18,6 +17,7 @@ import { FormField } from '@/components/design-system/form-field'
 import { FormTextarea } from '@/components/design-system/form-textarea'
 import { MbtiButton } from '@/components/design-system/mbti-button'
 import { MultiSelectButton } from '@/components/design-system/multi-select-button'
+import { Spinner } from '@/components/design-system/ui/spinner'
 import { FormBottomButtons } from '@/components/onboarding/form-bottom-buttons'
 import { FormTitleMultiSelect } from '@/components/onboarding/form-title-multi-select'
 import { FormTitleRadioButton } from '@/components/onboarding/form-title-radio-button'
@@ -133,7 +133,7 @@ export function OnboardingForm({
   })
 
   if (isLoading) {
-    return <Loader2 className="size-6 animate-spin text-muted-foreground" aria-label="読み込み中" />
+    return <Spinner layout="center" className="min-h-dvh" />
   }
   if (error || !options)
     return <p className="text-sm text-destructive">選択肢の取得に失敗しました</p>

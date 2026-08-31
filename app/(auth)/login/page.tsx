@@ -117,7 +117,7 @@ export default function LoginPage() {
                     enterKeyHint="go"
                     {...passwordField}
                     aria-invalid={!!errors.password}
-                    className={cn('p-3 h-11 pr-14')}
+                    className={cn('p-3 h-11 pr-14 border-2 bg-surface')}
                   />
                   <button
                     type="button"

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { HttpResponse, http } from 'msw'
+import { delay, HttpResponse, http } from 'msw'
 import { expect, fn, screen, waitFor } from 'storybook/test'
 import { MOCK_AVATAR_URL } from '@/lib/mocks/fixtures'
 import { AvatarUpload } from './avatar-upload'
@@ -73,6 +73,25 @@ export const ValidationErrors: Story = {
     await expect(await canvas.findByRole('alert')).toHaveTextContent(
       '対応していない画像形式です（JPEG, PNG, WebP, GIFのいずれかを選択してください）',
     )
+  },
+}
+
+export const Uploading: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.put('/api/users/me/avatar', async () => {
+          await delay('infinite')
+          return HttpResponse.json({ user: { avatarUrl: MOCK_AVATAR_URL } })
+        }),
+      ],
+    },
+  },
+  play: async ({ canvas, canvasElement }) => {
+    await selectFile(canvasElement, new File(['avatar'], 'avatar.jpg', { type: 'image/jpeg' }))
+    const spinner = await canvas.findByRole('status', { name: '処理中' })
+    await expect(spinner).toBeVisible()
+    await expect(spinner).toHaveClass('text-primary')
   },
 }
 

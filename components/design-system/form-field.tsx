@@ -38,7 +38,7 @@ export function FormField({
       <Input
         {...restInputProps}
         aria-invalid={!!error}
-        className={cn('p-3 h-11', className)}
+        className={cn('p-3 h-11 bg-surface border-2', className)}
         maxLength={maxLength}
       />
 

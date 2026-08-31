@@ -26,10 +26,12 @@ export function RegisterImagePanel({
       <Image
         src={image}
         priority={priority}
+        loading={priority ? 'eager' : undefined}
         width={732}
         height={900}
         alt=""
         className="w-full h-auto object-cover"
+        style={{ height: 'auto' }}
       />
     </div>
   )

@@ -81,7 +81,7 @@ export function HirobaAnswerTextarea({ postId }: HirobaAnswerTextareaProps) {
           onSelectedIdsChange={setMentionedUserIds}
           loadCandidates={loadCandidates}
           placeholder="コメントを入力する"
-          className="resize-none"
+          className="resize-none border-0 p-0 focus-visible:border-0 focus-visible:ring-0"
           disabled={isSubmitting}
           onSubmit={handleSubmit}
         />

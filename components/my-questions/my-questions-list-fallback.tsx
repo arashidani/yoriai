@@ -1,11 +1,7 @@
-import { Spinner } from '@/components/ui/spinner'
+import { Spinner } from '@/components/design-system/ui/spinner'
 
 function MyQuestionsListFallback() {
-  return (
-    <div className="flex w-full justify-center py-16">
-      <Spinner className="size-8 text-primary" aria-label="読み込み中" />
-    </div>
-  )
+  return <Spinner layout="center" className="w-full py-16" />
 }
 
 export { MyQuestionsListFallback }
