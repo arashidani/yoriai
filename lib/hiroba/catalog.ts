@@ -107,6 +107,13 @@ export const PICKUP_SECTION: HirobaSection = {
     item('dogs', 'いぬ', '犬のかわいさやを共有するひろばです。', 'dog', 'pickup'),
     item('cats', 'ねこ', '猫のかわいさやを共有するひろばです。', 'cat', 'pickup'),
     item(
+      'lunch',
+      'ランチ',
+      'おすすめのランチや一緒に食べる仲間を探すひろばです。',
+      'lunch',
+      'pickup',
+    ),
+    item(
       'company-events',
       '社内イベント',
       '社内イベントの情報や感想を共有するひろばです。',
