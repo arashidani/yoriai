@@ -11,7 +11,7 @@ import { CommentCount } from '@/components/design-system/ui/comment-count'
 import { LikeButton } from '@/components/design-system/ui/like-button'
 import { DeleteHirobaPostButton } from '@/components/hiroba/delete-hiroba-post-button'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
-import { MentionText } from '@/components/mentions/mention-text'
+import { MarkdownBody } from '@/components/mentions/markdown-body'
 import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { client } from '@/lib/hono/client'
 import { cn } from '@/lib/utils'
@@ -133,12 +133,12 @@ export function PostCard({
 
   const body = (
     <div className="space-y-3">
-      <p className="whitespace-pre-line text-body-small">
-        <MentionText
+      <div className="text-body-small">
+        <MarkdownBody
           text={post.body}
           linkClassName={postHref ? 'relative z-10 pointer-events-auto' : undefined}
         />
-      </p>
+      </div>
 
       {post.imageUrl && (
         <Image

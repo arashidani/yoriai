@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, userEvent } from 'storybook/test'
+import { expect, userEvent, waitFor } from 'storybook/test'
 import { HirobaFeed } from './hiroba-feed'
 
 const meta = {
@@ -82,10 +82,15 @@ export const CreatePost: Story = {
     initialJoined: true,
   },
   play: async ({ canvas }) => {
-    await userEvent.type(
-      canvas.getByPlaceholderText('今の気分をシェアしましょう'),
-      '昨日餃子食べてビール飲んで寝ました！',
-    )
+    await waitFor(() => {
+      expect(canvas.getByRole('textbox', { name: '今の気分をシェアしましょう' })).toHaveAttribute(
+        'contenteditable',
+        'true',
+      )
+    })
+    const input = canvas.getByRole('textbox', { name: '今の気分をシェアしましょう' })
+    await userEvent.click(input)
+    await userEvent.type(input, '昨日餃子食べてビール飲んで寝ました！')
     await userEvent.click(canvas.getByRole('button', { name: '送信' }))
     await expect(await canvas.findByText('昨日餃子食べてビール飲んで寝ました！')).toBeVisible()
   },

@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import imageNone from '@/assets/image-none.svg'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
-import { MentionText } from '@/components/mentions/mention-text'
+import { MarkdownBody } from '@/components/mentions/markdown-body'
 import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { client } from '@/lib/hono/client'
 import { LikeButton } from './like-button'
@@ -122,14 +122,14 @@ export function AnswerCard({
             </span>
           </div>
 
-          <p className="text-body-small whitespace-pre-wrap">
+          <div className="text-body-small">
             {mentionNames.map((name) => (
               <span key={name} className="text-primary font-bold">
                 {name}さん
               </span>
             ))}
-            <MentionText text={answer.body} />
-          </p>
+            <MarkdownBody text={answer.body} />
+          </div>
         </div>
         <LikeButton
           count={likeCount ?? 0}

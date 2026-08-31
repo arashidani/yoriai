@@ -2,6 +2,7 @@ import type { BookmarkQuestionItemData } from '@/components/design-system/ui/boo
 import type { MyQuestionItemData } from '@/components/design-system/ui/my-question-item-list'
 import type { QuestionItemData } from '@/components/design-system/ui/question-item-list'
 import { formatDateJst, formatRelativeTime } from '@/lib/date-time'
+import { stripMarkdown } from '@/lib/text/strip-markdown'
 
 export type QaPost = {
   id: string
@@ -62,7 +63,8 @@ export function toQaPost(question: ApiQuestion): QaPost {
 }
 
 function excerpt(body: string) {
-  return body.length > 100 ? `${body.slice(0, 100)}…` : body
+  const plain = stripMarkdown(body)
+  return plain.length > 100 ? `${plain.slice(0, 100)}…` : plain
 }
 
 export function toQuestionItemData(post: QaPost, now?: number): QuestionItemData {

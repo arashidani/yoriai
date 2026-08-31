@@ -4,7 +4,7 @@ import { AuthorAvatar } from '@/components/design-system/ui/author-avatar'
 import { BestAnswerBadge } from '@/components/design-system/ui/best-answer-badge'
 import { LikeButton } from '@/components/design-system/ui/like-button'
 import { TenureChip } from '@/components/design-system/ui/tenure-chip'
-import { MentionText } from '@/components/mentions/mention-text'
+import { MarkdownBody } from '@/components/mentions/markdown-body'
 import { cn } from '@/lib/utils'
 
 type AnswerItemProps = {
@@ -48,9 +48,9 @@ function AnswerItem({
               {tenure && <TenureChip>{tenure}</TenureChip>}
               <span className="text-paragraph-mini text-muted-foreground">{timestamp}</span>
             </div>
-            <p className="w-full whitespace-pre-line text-paragraph text-foreground">
-              <MentionText text={body} />
-            </p>
+            <div className="w-full text-paragraph text-foreground">
+              <MarkdownBody text={body} />
+            </div>
           </div>
           {canLike && (
             <div className="flex w-full items-center gap-4">

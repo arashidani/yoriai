@@ -1,18 +1,15 @@
 'use client'
 
 import Image from 'next/image'
-import { type ChangeEvent, type KeyboardEvent, useRef, useState } from 'react'
+import { type ChangeEvent, useRef, useState } from 'react'
 import image from '@/assets/img.svg'
 import submitWhite from '@/assets/submit-white.svg'
 import { Spinner } from '@/components/design-system/ui/spinner'
+import { RichTextEditor } from '@/components/mentions/rich-text-editor'
+import { stripMarkdown } from '@/lib/text/strip-markdown'
 import { Button } from '../button'
-import { TextareaWithActions } from './textarea'
 
 const TITLE_MAX_LENGTH = 200
-
-function isModEnter(event: KeyboardEvent<HTMLTextAreaElement>) {
-  return event.key === 'Enter' && (event.metaKey || event.ctrlKey) && !event.nativeEvent.isComposing
-}
 
 type TextareaFocusProps = {
   onSubmit: (data: { title: string; body: string; image: File | null }) => Promise<void>
@@ -39,8 +36,9 @@ export function TextareaFocus({
     const trimmedBody = body.trim()
     if (!trimmedBody || isSubmitting) return
 
+    const titleSource = stripMarkdown(trimmedBody) || trimmedBody
     await onSubmit({
-      title: trimmedBody.slice(0, TITLE_MAX_LENGTH),
+      title: titleSource.slice(0, TITLE_MAX_LENGTH),
       body: trimmedBody,
       image: selectedImage,
     })
@@ -62,42 +60,21 @@ export function TextareaFocus({
   }
 
   return (
-    <TextareaWithActions
-      id="hiroba-post-body"
-      name="body"
-      placeholder="今の気分をシェアしましょう"
-      value={body}
-      onChange={(e) => setBody(e.target.value)}
-      onKeyDown={(event) => {
-        if (!isModEnter(event)) return
-        event.preventDefault()
-        if (isSubmitting || !body.trim()) return
-        void handleSubmit()
-      }}
-      containerClassName="relative"
-      leadingActions={
-        onImageSelect && (
-          <button
-            type="button"
-            onClick={handleImageButtonClick}
-            className="flex size-10 items-center justify-center rounded-full border-2 border-border-3 bg-primary-foreground transition-colors hover:bg-secondary-hover"
-          >
-            <Image src={image} width={17} height={17} alt="" />
-          </button>
-        )
-      }
-      actions={
-        <Button
-          variant="primary"
-          size="default"
-          leftIcon={<Image src={submitWhite} alt="" />}
-          onClick={handleSubmit}
-          isDisabled={isSubmitting || !body.trim()}
-        >
-          送信
-        </Button>
-      }
-    >
+    <div className="relative flex w-full flex-col overflow-hidden rounded-lg border-2 border-border-3 bg-card transition-colors focus-within:border-border-4">
+      <RichTextEditor
+        id="hiroba-post-body"
+        boxed={false}
+        value={body}
+        onChange={setBody}
+        onSubmit={() => {
+          if (isSubmitting || !body.trim()) return
+          void handleSubmit()
+        }}
+        placeholder="今の気分をシェアしましょう"
+        ariaLabel="今の気分をシェアしましょう"
+        disabled={isSubmitting}
+        editorClassName="h-16 overflow-y-auto px-4 pt-3.5 pb-2"
+      />
       {isSubmitting && <Spinner layout="overlay" size="md" />}
       {imagePreviewUrl && (
         <div className="px-4 pt-2">
@@ -123,6 +100,28 @@ export function TextareaFocus({
           onChange={handleFileChange}
         />
       )}
-    </TextareaWithActions>
+      <div className="flex items-end justify-between gap-2 px-4 pt-2 pb-4">
+        <div className="flex items-center gap-2">
+          {onImageSelect && (
+            <button
+              type="button"
+              onClick={handleImageButtonClick}
+              className="flex size-10 items-center justify-center rounded-full border-2 border-border-3 bg-primary-foreground transition-colors hover:bg-secondary-hover"
+            >
+              <Image src={image} width={17} height={17} alt="" />
+            </button>
+          )}
+        </div>
+        <Button
+          variant="primary"
+          size="default"
+          leftIcon={<Image src={submitWhite} alt="" />}
+          onClick={handleSubmit}
+          isDisabled={isSubmitting || !body.trim()}
+        >
+          送信
+        </Button>
+      </div>
+    </div>
   )
 }

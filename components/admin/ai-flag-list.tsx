@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { DeletePostButton } from '@/components/posts/delete-post-button'
 import { formatDateTimeJst } from '@/lib/date-time'
 import { client } from '@/lib/hono/client'
+import { stripMarkdown } from '@/lib/text/strip-markdown'
 
 const SEVERITY_ICONS = {
   HIGH: ShieldAlert,
@@ -180,7 +181,7 @@ export function AiFlagList() {
                 )}
                 {flag.answer && (
                   <p className="text-xs text-muted-foreground line-clamp-2">
-                    該当の回答: {flag.answer.body}
+                    該当の回答: {stripMarkdown(flag.answer.body)}
                   </p>
                 )}
                 {flag.answer?.isHidden && (
