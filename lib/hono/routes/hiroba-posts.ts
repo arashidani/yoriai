@@ -75,7 +75,7 @@ async function getHirobaMentionCandidates(postId: string, viewerId: string) {
       return [
         {
           id: participant.authorId,
-          displayName: participant.author.name ?? participant.author.username ?? 'ユーザー',
+          displayName: participant.author.username ?? participant.author.name ?? 'ユーザー',
         },
       ]
     })
@@ -105,7 +105,7 @@ async function getHirobaMentionCandidates(postId: string, viewerId: string) {
   ) => {
     if (!userId || userId === viewerId || !author || seen.has(userId)) return []
     seen.add(userId)
-    return [{ id: userId, displayName: author.name ?? author.username ?? 'ユーザー' }]
+    return [{ id: userId, displayName: author.username ?? author.name ?? 'ユーザー' }]
   }
   return [
     ...post.answers.flatMap((answer) => add(answer.authorId, answer.author)),
