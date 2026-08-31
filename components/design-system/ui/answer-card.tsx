@@ -2,12 +2,12 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
 import { toast } from 'sonner'
 import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
 import imageNone from '@/assets/image-none.svg'
 import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
 import { MentionText } from '@/components/mentions/mention-text'
+import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
 import { client } from '@/lib/hono/client'
 import { LikeButton } from './like-button'
 import { LunchChip, type LunchChipType } from './lunch-chip'
@@ -55,32 +55,26 @@ export function AnswerCard({
 }: AnswerCardProps) {
   const resolvedLunchVariant = lunchVariant ?? lunchChipType(answer.lunchPreference)
   const resolvedMbtiVariant = mbtiVariant ?? mbtiChipVariant(answer.displayNameColor)
-  const [isLiked, setIsLiked] = useState(liked)
-  const [likeCount, setLikeCount] = useState(answer.likeCount)
-  const [pending, setPending] = useState(false)
 
-  async function handleLikeToggle(next: boolean) {
-    if (pending || answer.isOwnAnswer) return
-    setPending(true)
-    setIsLiked(next)
-    setLikeCount((count) => count + (next ? 1 : -1))
-
-    try {
+  const {
+    pressed: isLiked,
+    count: likeCount,
+    toggle: toggleLike,
+  } = useDebouncedOptimisticToggle({
+    initialPressed: liked,
+    initialCount: answer.likeCount,
+    resetKey: answer.id,
+    enabled: !answer.isOwnAnswer,
+    onSync: async (next) => {
       const res = next
         ? await client.api['hiroba-answers'][':id'].likes.$post({ param: { id: answer.id } })
         : await client.api['hiroba-answers'][':id'].likes.$delete({ param: { id: answer.id } })
       if (!res.ok) throw new Error('いいねの処理に失敗しました')
-      const result = await res.json()
-      setIsLiked(result.liked)
-      setLikeCount(result.likeCount)
-    } catch {
-      setIsLiked(!next)
-      setLikeCount((count) => count + (next ? -1 : 1))
-      toast.error('いいねの処理に失敗しました')
-    } finally {
-      setPending(false)
-    }
-  }
+      return res.json()
+    },
+    parseResult: (result) => ({ pressed: result.liked, count: result.likeCount }),
+    onError: () => toast.error('いいねの処理に失敗しました'),
+  })
 
   const profileHref =
     answer.authorId && (answer.isOwnAnswer ? '/mypage' : `/mypage/${answer.authorId}`)
@@ -138,10 +132,10 @@ export function AnswerCard({
           </p>
         </div>
         <LikeButton
-          count={likeCount}
+          count={likeCount ?? 0}
           pressed={isLiked}
-          disabled={pending || answer.isOwnAnswer}
-          onPressedChange={handleLikeToggle}
+          disabled={answer.isOwnAnswer}
+          onPressedChange={toggleLike}
         />
       </div>
     </div>

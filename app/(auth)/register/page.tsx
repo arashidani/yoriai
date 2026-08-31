@@ -163,7 +163,7 @@ function RegisterForm() {
                       id="password"
                       type={passwordVisible ? 'text' : 'password'}
                       {...passwordField}
-                      className={cn('p-3 h-11 pr-16')}
+                      className={cn('p-3 h-11 pr-16 border-2 bg-surface')}
                     />
                     <button
                       type="button"
@@ -190,7 +190,10 @@ function RegisterForm() {
                         className="shrink-0"
                       />
                       <span
-                        className={isPasswordValid ? 'text-green-400' : 'text-secondary-foreground'}
+                        className={cn(
+                          isPasswordValid ? 'text-green-400' : 'text-secondary-foreground',
+                          'text-caption',
+                        )}
                       >
                         半角英数字両方を含む
                       </span>
@@ -205,9 +208,10 @@ function RegisterForm() {
                         className="shrink-0"
                       />
                       <span
-                        className={
-                          isOverEightWords ? 'text-green-400' : 'text-secondary-foreground'
-                        }
+                        className={cn(
+                          isOverEightWords ? 'text-green-400' : 'text-secondary-foreground',
+                          'text-caption',
+                        )}
                       >
                         8文字以上
                       </span>

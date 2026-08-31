@@ -97,8 +97,10 @@ export const DifferentMbtiGroup: Story = {
     canJoin: false,
   },
   play: async ({ canvas }) => {
-    await expect(canvas.getByRole('button', { name: '参加する' })).toBeDisabled()
-    await expect(canvas.getByText('参加できるのは、自分のグループの広場だけです。')).toBeVisible()
+    await expect(canvas.queryByRole('button', { name: '参加する' })).toBeNull()
+    await expect(
+      canvas.getByText('自分のMBTIのひろばでのみ、投稿・返信・いいねができます。'),
+    ).toBeVisible()
   },
 }
 

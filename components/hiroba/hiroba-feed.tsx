@@ -182,20 +182,22 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: H
           </div>
 
           <div className="flex flex-wrap gap-3 pb-1">
-            <JoinButton
-              pressed={joined}
-              disabled={joined || !canJoin || isUpdatingMembership}
-              onPressedChange={(nextPressed) => {
-                if (nextPressed) void toggleMembership()
-              }}
-            />
-
             <Link
               href="/hiroba"
               className={designButtonVariants({ variant: 'secondary', size: 'large' })}
             >
               一覧に戻る
             </Link>
+
+            {canJoin && (
+              <JoinButton
+                pressed={joined}
+                disabled={joined || isUpdatingMembership}
+                onPressedChange={(nextPressed) => {
+                  if (nextPressed) void toggleMembership()
+                }}
+              />
+            )}
           </div>
         </div>
         {membershipError && (
@@ -208,7 +210,7 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: H
       <section className="px-3 space-y-4">
         {!canJoin ? (
           <AssistBanner variant="support">
-            参加できるのは、自分のグループの広場だけです。
+            自分のMBTIのひろばでのみ、投稿・返信・いいねができます。
           </AssistBanner>
         ) : !joined ? (
           <AssistBanner variant="support">

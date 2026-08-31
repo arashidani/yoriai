@@ -29,7 +29,7 @@ export function FormTextarea({
       <Textarea
         {...restTextareaProps}
         aria-invalid={!!error}
-        className={cn('p-3 resize-none', className)}
+        className={cn('p-3 resize-none border-2 bg-surface', className)}
         maxLength={maxLength}
       />
 

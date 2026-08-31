@@ -13,7 +13,7 @@ function JoinButton({ className, ...props }: JoinButtonProps) {
     <TogglePrimitive
       data-slot="join-button"
       className={cn(
-        'group inline-flex w-[131px] cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-primary bg-card px-6 py-4 text-paragraph font-bold whitespace-nowrap text-primary outline-none transition-colors not-aria-pressed:hover:bg-brand-2 aria-pressed:border-transparent aria-pressed:bg-brand-2 disabled:pointer-events-none disabled:opacity-50',
+        'group inline-flex w-[131px] cursor-pointer items-center justify-center gap-1 rounded-full border-2 border-primary bg-card px-6 py-4 text-paragraph font-bold whitespace-nowrap text-primary outline-none transition-colors not-aria-pressed:hover:bg-brand-2 aria-pressed:border-transparent aria-pressed:bg-brand-2 disabled:pointer-events-none',
         className,
       )}
       {...props}

@@ -98,11 +98,13 @@ export default async function HirobaPostDetailPage({ params }: Props) {
             </Button>
           </Link>
 
-          <HirobaJoinButton
-            slug={slug}
-            joined={joined}
-            canJoin={canJoinHiroba(slug, currentUser?.displayNameColor)}
-          />
+          {!joined && (
+            <HirobaJoinButton
+              slug={slug}
+              joined={joined}
+              canJoin={canJoinHiroba(slug, currentUser?.displayNameColor)}
+            />
+          )}
         </div>
 
         <div className="mx-3 flex min-h-0 flex-col space-y-4">

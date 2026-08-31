@@ -117,6 +117,8 @@
   --color-tenurechip-foreground: var(--tenurechip-foreground);
   --color-statuschip-success: var(--statuschip-success);
   --color-statuschip-success-foreground: var(--statuschip-success-foreground);
+  --color-statuschip-foreground: var(--statuschip-foreground);
+  --color-statuschip: var(--statuschip);
   --color-aichat-ai: var(--aichat-ai);
   --color-aichat-ai-foreground: var(--aichat-ai-foreground);
   --color-aichat-user: var(--aichat-user);
@@ -696,6 +698,8 @@
   /* Figma: badge/statuschip-success, badge/statuschip-success-foreground（解決済みチップ）。Light/Dark 共通の固定色 */
   --statuschip-success: #ece7df; /* neutral-300 */
   --statuschip-success-foreground: #a59a8d; /* neutral-600 */
+  --statuschip-foreground: #ff8560;
+  --statuschip: #ffe7df;
 
   /* Figma: unofficial/AIchat 系（AIチャットの吹き出し）。Light/Dark 共通の固定色 */
   --aichat-ai: #f6f3ed; /* neutral-200 */
@@ -785,6 +789,8 @@
   --tenurechip-foreground: #65a30d; /* Light と固定 */
   --statuschip-success: #ece7df; /* Light と固定 */
   --statuschip-success-foreground: #a59a8d; /* Light と固定 */
+  --statuschip-foreground: #ff8560; /* Light と固定 */
+  --statuschip: #ffe7df; /* Light と固定 */
   --aichat-ai: #f6f3ed; /* Light と固定 */
   --aichat-ai-foreground: #544d46; /* Light と固定 */
   --aichat-user: #33c1ed; /* Light と固定 */

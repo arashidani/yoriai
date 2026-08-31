@@ -4,7 +4,6 @@ export type ActivityItem = {
   id: string
   icon: StaticImageData
   text: string
-  time: string
 }
 
 export function ActivityHistory({ items }: { items: ActivityItem[] }) {
@@ -19,11 +18,7 @@ export function ActivityHistory({ items }: { items: ActivityItem[] }) {
         >
           <Image src={item.icon} alt="" className="mt-1" />
 
-          <div className="space-y-1">
-            <p className="text-body-small text-secondary-foreground">{item.text}</p>
-
-            <span className="text-caption text-muted-foreground">{item.time}</span>
-          </div>
+          <p className="text-body-small text-secondary-foreground">{item.text}</p>
         </div>
       ))}
     </div>
