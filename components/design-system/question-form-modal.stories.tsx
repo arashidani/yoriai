@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn, screen, waitFor, within } from 'storybook/test'
+import { expect, fn, screen, userEvent, waitFor, within } from 'storybook/test'
 import { QuestionFormModal } from './question-form-modal'
 
 const meta = {
@@ -8,6 +8,18 @@ const meta = {
 
 export default meta
 type Story = StoryObj<typeof meta>
+
+async function typeQuestionBody(
+  canvas: Parameters<NonNullable<Story['play']>>[0]['canvas'],
+  text: string,
+) {
+  await waitFor(() => {
+    expect(canvas.getByLabelText('質問の本文')).toHaveAttribute('contenteditable', 'true')
+  })
+  const body = canvas.getByLabelText('質問の本文')
+  await userEvent.click(body)
+  await userEvent.type(body, text)
+}
 
 export const Default: Story = {
   args: {
@@ -18,7 +30,7 @@ export const Default: Story = {
     await expect(canvas.getByText('質問を投稿する')).toBeVisible()
     await expect(canvas.queryByText('名無しのおせワニ')).not.toBeInTheDocument()
     await expect(canvas.getByLabelText('質問のタイトル')).toBeVisible()
-    await expect(canvas.getByLabelText('質問の本文')).toBeVisible()
+    await expect(await canvas.findByLabelText('質問の本文')).toBeVisible()
     await expect(canvas.getByText('カテゴリー')).toBeVisible()
     await expect(
       canvas.getByText('カテゴリーを未選択で投稿した場合、AIが自動でカテゴリタグを付与します。'),
@@ -72,7 +84,7 @@ export const DisabledUntilFilled: Story = {
     await userEvent.type(canvas.getByLabelText('質問のタイトル'), '有給申請の方法について')
     await expect(submitButton).toBeDisabled()
 
-    await userEvent.type(canvas.getByLabelText('質問の本文'), '申請画面の場所が分かりません。')
+    await typeQuestionBody(canvas, '申請画面の場所が分かりません。')
     await expect(submitButton).toBeEnabled()
   },
 }
@@ -84,7 +96,7 @@ export const Submit: Story = {
   },
   play: async ({ args, canvas, userEvent }) => {
     await userEvent.type(canvas.getByLabelText('質問のタイトル'), '有給申請の方法について')
-    await userEvent.type(canvas.getByLabelText('質問の本文'), '申請画面の場所が分かりません。')
+    await typeQuestionBody(canvas, '申請画面の場所が分かりません。')
     await userEvent.click(canvas.getByRole('button', { name: /投稿する/ }))
     await expect(args.onSubmit).toHaveBeenCalledWith(
       {
@@ -112,7 +124,7 @@ export const ManualTag: Story = {
   },
   play: async ({ args, canvas, userEvent }) => {
     await userEvent.type(canvas.getByLabelText('質問のタイトル'), '有給申請について')
-    await userEvent.type(canvas.getByLabelText('質問の本文'), '申請方法を教えてください。')
+    await typeQuestionBody(canvas, '申請方法を教えてください。')
     await userEvent.click(canvas.getByLabelText('カテゴリー'))
     await expect(screen.queryByText('社内ルール・手続き')).not.toBeInTheDocument()
     await userEvent.click(await screen.findByText('勤怠・有給関連'))

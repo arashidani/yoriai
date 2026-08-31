@@ -9,9 +9,9 @@ import { IconClose } from '@/components/design-system/icons/icon-close'
 import { IconPencil } from '@/components/design-system/icons/icon-pencil'
 import { SelectCategories } from '@/components/design-system/ui/select-categories'
 import { Spinner } from '@/components/design-system/ui/spinner'
+import { RichTextEditor } from '@/components/mentions/rich-text-editor'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
-import { Textarea } from '@/components/ui/textarea'
 import { type CreatePostInput, createPostSchema } from '@/lib/schemas/post'
 import { cn } from '@/lib/utils'
 
@@ -91,15 +91,24 @@ export function QuestionFormModal({
             }}
           />
           <div className="flex w-full flex-col gap-2">
-            <Label htmlFor="body">
+            <Label id="question-body-label">
               <p className="text-sm font-bold text-foreground">質問の本文</p>
             </Label>
-            <Textarea
-              id="body"
-              placeholder="お疲れ様です！！！質問したいのですが..."
-              className="h-36 resize-none p-3"
-              {...register('body')}
-              aria-invalid={!!errors.body}
+            <Controller
+              name="body"
+              control={control}
+              render={({ field }) => (
+                <RichTextEditor
+                  labelledBy="question-body-label"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder="お疲れ様です！！！質問したいのですが..."
+                  ariaInvalid={!!errors.body}
+                  editorClassName="h-36 overflow-y-auto"
+                  toolbarBlocks
+                />
+              )}
             />
             {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
           </div>

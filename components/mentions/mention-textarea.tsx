@@ -5,14 +5,23 @@ import {
   type KeyboardEventHandler,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react'
+import type { MentionCandidate } from '@/components/mentions/mention-candidate'
+import { MentionListbox } from '@/components/mentions/mention-listbox'
 import { Textarea } from '@/components/ui/textarea'
-import { cn } from '@/lib/utils'
+import {
+  filterMentionCandidates,
+  mentionQueryBeforeCursor,
+  mentionReplacement,
+  mentionTokenBeforeCursor,
+  selectedMentionIdsInBody,
+} from '@/lib/mentions/mention-query'
 
-export type MentionCandidate = { id: string; displayName: string }
+export type { MentionCandidate } from '@/components/mentions/mention-candidate'
 
 type MentionTextareaProps = {
   value: string
@@ -60,6 +69,7 @@ export function MentionTextarea({
   const [cursor, setCursor] = useState(0)
   const [activeIndex, setActiveIndex] = useState(0)
   const [dismissedQuery, setDismissedQuery] = useState<string | null>(null)
+  const [popupPosition, setPopupPosition] = useState({ top: 0, left: 0 })
 
   useEffect(() => {
     void loadCandidates()
@@ -67,35 +77,40 @@ export function MentionTextarea({
       .catch(() => setCandidates([]))
   }, [loadCandidates])
 
-  const query = value.slice(0, cursor).match(/(?:^|\s)@([^\s@]*)$/)?.[1]
+  const query = mentionQueryBeforeCursor(value.slice(0, cursor))
   const matches = useMemo(
-    () =>
-      query === undefined
-        ? []
-        : candidates.filter((candidate) => candidate.displayName.includes(query)).slice(0, 8),
+    () => (query === undefined ? [] : filterMentionCandidates(candidates, query)),
     [candidates, query],
   )
   const isOpen = matches.length > 0 && query !== dismissedQuery
+  const selectedIndex = matches.length === 0 ? 0 : activeIndex % matches.length
+
+  useLayoutEffect(() => {
+    if (!isOpen) return
+    const rect = inputRef.current?.getBoundingClientRect()
+    if (!rect) return
+    setPopupPosition({
+      top: rect.bottom + 4,
+      left: Math.min(rect.left, window.innerWidth - 180),
+    })
+  }, [isOpen])
 
   function updateValue(nextValue: string, nextCursor: number) {
     onChange(nextValue)
     setCursor(nextCursor)
     setActiveIndex(0)
     setDismissedQuery(null)
-    onSelectedIdsChange(
-      selectedIds.filter((id) => {
-        const candidate = candidates.find((item) => item.id === id)
-        return candidate && nextValue.includes(`@${candidate.displayName}`)
-      }),
-    )
+    onSelectedIdsChange(selectedMentionIdsInBody(selectedIds, candidates, nextValue))
   }
 
   function selectCandidate(candidate: MentionCandidate) {
     const beforeCursor = value.slice(0, cursor)
-    const at = beforeCursor.lastIndexOf('@')
-    const inserted = `@${candidate.displayName} `
-    const nextValue = `${value.slice(0, at)}${inserted}${value.slice(cursor)}`
-    const nextCursor = at + inserted.length
+    const token = mentionTokenBeforeCursor(beforeCursor)
+    if (!token) return
+    const start = beforeCursor.length - token.length
+    const inserted = mentionReplacement(candidate.displayName)
+    const nextValue = `${value.slice(0, start)}${inserted}${value.slice(cursor)}`
+    const nextCursor = start + inserted.length
     onChange(nextValue)
     onSelectedIdsChange([...new Set([...selectedIds, candidate.id])])
     setCursor(nextCursor)
@@ -130,7 +145,8 @@ export function MentionTextarea({
       }
       if (event.key === 'Enter' || event.key === 'Tab') {
         event.preventDefault()
-        selectCandidate(matches[activeIndex])
+        const candidate = matches[selectedIndex]
+        if (candidate) selectCandidate(candidate)
         return
       }
       if (event.key === 'Escape') {
@@ -157,7 +173,7 @@ export function MentionTextarea({
         role="combobox"
         aria-expanded={isOpen}
         aria-controls={isOpen ? listboxId : undefined}
-        aria-activedescendant={isOpen ? `${listboxId}-option-${activeIndex}` : undefined}
+        aria-activedescendant={isOpen ? `${listboxId}-option-${selectedIndex}` : undefined}
         aria-invalid={ariaInvalid}
         onChange={(event) => updateValue(event.target.value, event.target.selectionStart)}
         onClick={(event) => setCursor(event.currentTarget.selectionStart)}
@@ -166,32 +182,14 @@ export function MentionTextarea({
         onBlur={onBlur}
       />
       {isOpen && (
-        <div
-          id={listboxId}
-          role="listbox"
-          tabIndex={-1}
-          className="absolute z-10 mt-1 w-full overflow-hidden rounded-md border border-border bg-popover py-1 shadow-md"
-        >
-          {matches.map((candidate, index) => (
-            <button
-              key={candidate.id}
-              id={`${listboxId}-option-${index}`}
-              type="button"
-              role="option"
-              tabIndex={-1}
-              aria-selected={index === activeIndex}
-              className={cn(
-                'cursor-pointer px-3 py-2 text-left text-paragraph-small hover:bg-accent',
-                index === activeIndex && 'bg-accent',
-              )}
-              onMouseDown={(event) => event.preventDefault()}
-              onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => selectCandidate(candidate)}
-            >
-              @{candidate.displayName}
-            </button>
-          ))}
-        </div>
+        <MentionListbox
+          listboxId={listboxId}
+          matches={matches}
+          selectedIndex={selectedIndex}
+          onSelect={selectCandidate}
+          onHover={setActiveIndex}
+          position={popupPosition}
+        />
       )}
     </div>
   )

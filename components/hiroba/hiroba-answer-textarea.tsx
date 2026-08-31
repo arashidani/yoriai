@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
 import { Button } from '@/components/design-system/button'
-import { type MentionCandidate, MentionTextarea } from '@/components/mentions/mention-textarea'
+import type { MentionCandidate } from '@/components/mentions/mention-candidate'
+import { RichTextEditor } from '@/components/mentions/rich-text-editor'
 import { client } from '@/lib/hono/client'
 
 type HirobaAnswerTextareaProps = {
@@ -72,18 +73,23 @@ export function HirobaAnswerTextarea({ postId }: HirobaAnswerTextareaProps) {
       )}
 
       <div className="space-y-3 rounded-lg border-2 border-border-3 p-4">
-        <MentionTextarea
+        <RichTextEditor
           id="hiroba-answer-body"
-          name="body"
           value={body}
           onChange={setBody}
-          selectedIds={mentionedUserIds}
-          onSelectedIdsChange={setMentionedUserIds}
-          loadCandidates={loadCandidates}
+          onSubmit={() => {
+            if (isSubmitting || !body.trim()) return
+            void handleSubmit()
+          }}
           placeholder="コメントを入力する"
-          className="resize-none border-0 p-0 focus-visible:border-0 focus-visible:ring-0"
+          ariaLabel="コメントを入力する"
           disabled={isSubmitting}
-          onSubmit={handleSubmit}
+          editorClassName="min-h-24"
+          mentions={{
+            selectedIds: mentionedUserIds,
+            onSelectedIdsChange: setMentionedUserIds,
+            loadCandidates,
+          }}
         />
         <div className="flex justify-end">
           <Button

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect } from 'storybook/test'
+import { expect, waitFor } from 'storybook/test'
 import { AiChatWidget } from './ai-chat-widget'
 
 const meta = {
@@ -17,6 +17,22 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(canvas.getByLabelText('AIチャットサポートを開く')).toBeVisible()
     await expect(canvas.queryByLabelText('メッセージ')).not.toBeInTheDocument()
+  },
+}
+
+// 吹き出しの文言はホバーのたびにランダムなので「ワン」を含む何か、で検証する
+const TOOLTIP_PATTERN = /ワン/
+
+export const TooltipOnHover: Story = {
+  play: async ({ canvas, userEvent, step }) => {
+    const button = canvas.getByLabelText('AIチャットサポートを開く')
+    await expect(canvas.queryByText(TOOLTIP_PATTERN)).not.toBeInTheDocument()
+    await userEvent.hover(button)
+    // フェードイン(opacity 0→1)が終わってから可視判定する
+    await step('吹き出しが表示される', async () => {
+      await waitFor(() => expect(canvas.getByText(TOOLTIP_PATTERN)).toBeVisible())
+    })
+    await userEvent.unhover(button)
   },
 }
 

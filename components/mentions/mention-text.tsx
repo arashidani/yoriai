@@ -5,9 +5,11 @@ type MentionTextProps = {
   text: string
   /** カード全体がリンクのときなど、URL に追加で当てる className */
   linkClassName?: string
+  /** Markdown 内ではリンク化済みなので、メンションだけ処理する */
+  parseUrls?: boolean
 }
 
-export function MentionText({ text, linkClassName }: MentionTextProps) {
+export function MentionText({ text, linkClassName, parseUrls = true }: MentionTextProps) {
   return (
     <>
       {parseUserText(text).map((segment) => {
@@ -22,7 +24,7 @@ export function MentionText({ text, linkClassName }: MentionTextProps) {
           )
         }
 
-        if (segment.type === 'url') {
+        if (segment.type === 'url' && parseUrls) {
           return (
             <a
               key={segment.start}

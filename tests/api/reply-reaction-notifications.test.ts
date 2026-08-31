@@ -152,7 +152,7 @@ describe('返信・リアクション通知', () => {
       hirobaPostId: 'hiroba-post-1',
       authorId: 'user-1',
       author: MOCK_USERS[0],
-      body: '@一般ユーザー 返信です',
+      body: '@あおさん 返信です',
       isHidden: false,
       likeCount: 0,
       createdAt: new Date(),
@@ -165,7 +165,7 @@ describe('返信・リアクション通知', () => {
         'content-type': 'application/json',
         'idempotency-key': '550e8400-e29b-41d4-a716-446655440000',
       },
-      body: JSON.stringify({ body: '@一般ユーザー 返信です', mentionedUserIds: ['user-2'] }),
+      body: JSON.stringify({ body: '@あおさん 返信です', mentionedUserIds: ['user-2'] }),
     })
 
     expect(response.status).toBe(201)

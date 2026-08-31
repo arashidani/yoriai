@@ -818,6 +818,17 @@
   }
 }
 
+@layer components {
+  /* Tiptap Placeholder。空の段落に data-placeholder を出す */
+  .tiptap p.is-editor-empty:first-child::before {
+    color: var(--muted-foreground);
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+}
+
 @layer utilities {
   /* Figma: unofficial/accent-3。幅6px・角丸のカスタムスクロールバー（webkit系ブラウザのみ） */
   .scrollbar-custom {

@@ -5,6 +5,7 @@ import { SquareCard } from '@/components/design-system/ui/square-card'
 import { SquareIcon } from '@/components/design-system/ui/square-icon'
 import type { HirobaCatalogItem } from '@/lib/hiroba/catalog'
 import { findHiroba, HIROBA_CATALOG } from '@/lib/hiroba/catalog'
+import { stripMarkdown } from '@/lib/text/strip-markdown'
 import { cn } from '@/lib/utils'
 import { IconAi } from '../design-system/icons/icon-ai'
 
@@ -99,7 +100,7 @@ export function HirobaSidebar({ hiroba, popularPosts, showAiSummary = false }: H
                         </p>
                       )}
                       <p className="text-body-small text-secondary-foreground truncate">
-                        {post.body}
+                        {stripMarkdown(post.body)}
                       </p>
                     </div>
                   </div>

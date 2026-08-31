@@ -9,7 +9,8 @@ import {
   AnswerForm as AnswerFormUI,
   answerFormTextareaClassName,
 } from '@/components/design-system/ui/answer-form'
-import { type MentionCandidate, MentionTextarea } from '@/components/mentions/mention-textarea'
+import type { MentionCandidate } from '@/components/mentions/mention-candidate'
+import { RichTextEditor } from '@/components/mentions/rich-text-editor'
 import { client } from '@/lib/hono/client'
 import { type CreateAnswerInput, createAnswerSchema } from '@/lib/schemas/answer'
 
@@ -109,9 +110,8 @@ export function AnswerForm({ postId }: AnswerFormProps) {
               name="body"
               control={control}
               render={({ field }) => (
-                <MentionTextarea
+                <RichTextEditor
                   id="answer-body"
-                  name="body"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -119,13 +119,17 @@ export function AnswerForm({ postId }: AnswerFormProps) {
                     if (isSubmitDisabled) return
                     void handleSubmit(onSubmit)()
                   }}
-                  selectedIds={mentionedUserIds}
-                  onSelectedIdsChange={setMentionedUserIds}
-                  loadCandidates={loadCandidates}
                   placeholder="回答を入力する"
+                  ariaLabel="回答を入力する"
                   disabled={isInputDisabled}
                   ariaInvalid={!!errors.body}
-                  className={answerFormTextareaClassName}
+                  editorClassName={answerFormTextareaClassName}
+                  toolbarBlocks
+                  mentions={{
+                    selectedIds: mentionedUserIds,
+                    onSelectedIdsChange: setMentionedUserIds,
+                    loadCandidates,
+                  }}
                 />
               )}
             />

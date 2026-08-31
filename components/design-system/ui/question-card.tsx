@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { AuthorAvatar } from '@/components/design-system/ui/author-avatar'
 import { CategoryChip } from '@/components/design-system/ui/category-chip'
 import { StatusChip, type StatusChipStatus } from '@/components/design-system/ui/status-chip'
-import { MentionText } from '@/components/mentions/mention-text'
+import { MarkdownBody } from '@/components/mentions/markdown-body'
 import { cn } from '@/lib/utils'
 
 type QuestionCardProps = {
@@ -47,9 +47,9 @@ function QuestionCard({
         </div>
       </div>
       <p className="font-heading text-heading-1">{title}</p>
-      <p className="w-full whitespace-pre-line text-paragraph text-foreground">
-        <MentionText text={body} />
-      </p>
+      <div className="w-full text-paragraph text-foreground">
+        <MarkdownBody text={body} />
+      </div>
       {actions}
     </div>
   )

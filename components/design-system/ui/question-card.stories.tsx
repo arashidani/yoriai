@@ -44,6 +44,17 @@ export const WithUrl: Story = {
   },
 }
 
+export const WithMarkdown: Story = {
+  args: {
+    body: '**太字**で強調します。\n\n- 手順1\n- 手順2',
+  },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByText('太字')).toBeVisible()
+    await expect(canvas.getByText('手順1')).toBeVisible()
+    await expect(canvas.getByText('手順2')).toBeVisible()
+  },
+}
+
 export const Resolved: Story = {
   args: { status: 'RESOLVED' },
   play: async ({ canvas }) => {

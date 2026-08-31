@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { useState } from 'react'
-import { expect, fn, userEvent } from 'storybook/test'
+import { expect, fn, userEvent, within } from 'storybook/test'
 import { MentionTextarea } from './mention-textarea'
 
 function MentionTextareaExample({ onSubmit }: { onSubmit?: () => void }) {
@@ -33,27 +33,29 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
   play: async ({ canvas }) => {
     const textarea = canvas.getByRole('combobox')
+    const body = within(document.body)
     await userEvent.type(textarea, '@')
 
-    const listbox = await canvas.findByRole('listbox')
+    const listbox = await body.findByRole('listbox')
     await expect(textarea).toHaveAttribute('aria-expanded', 'true')
     await expect(textarea).toHaveAttribute('aria-controls', listbox.id)
-    await expect(canvas.getByRole('option', { name: '@ねこ' })).toHaveAttribute(
+    await expect(body.getByRole('option', { name: '@ねこ' })).toHaveAttribute(
       'aria-selected',
       'true',
     )
 
     await userEvent.keyboard('{ArrowDown}{Enter}')
     await expect(textarea).toHaveValue('@いぬ ')
-    await expect(canvas.queryByRole('listbox')).not.toBeInTheDocument()
+    await expect(body.queryByRole('listbox')).not.toBeInTheDocument()
   },
 }
 
 export const TabSelectsCandidate: Story = {
   play: async ({ canvas }) => {
     const textarea = canvas.getByRole('combobox')
+    const body = within(document.body)
     await userEvent.type(textarea, '@')
-    await canvas.findByRole('listbox')
+    await body.findByRole('listbox')
 
     await userEvent.keyboard('{Tab}')
     await expect(textarea).toHaveValue('@ねこ ')
@@ -63,24 +65,26 @@ export const TabSelectsCandidate: Story = {
 export const EscapeClosesList: Story = {
   play: async ({ canvas }) => {
     const textarea = canvas.getByRole('combobox')
+    const body = within(document.body)
     await userEvent.type(textarea, '@')
-    await canvas.findByRole('listbox')
+    await body.findByRole('listbox')
 
     await userEvent.keyboard('{Escape}')
     await expect(textarea).toHaveAttribute('aria-expanded', 'false')
-    await expect(canvas.queryByRole('listbox')).not.toBeInTheDocument()
+    await expect(body.queryByRole('listbox')).not.toBeInTheDocument()
   },
 }
 
 export const ModEnterDoesNotSelectCandidate: Story = {
   play: async ({ canvas }) => {
     const textarea = canvas.getByRole('combobox')
+    const body = within(document.body)
     await userEvent.type(textarea, '@')
-    await canvas.findByRole('listbox')
+    await body.findByRole('listbox')
 
     await userEvent.keyboard('{Control>}{Enter}{/Control}')
     await expect(textarea).toHaveValue('@')
-    await expect(canvas.getByRole('listbox')).toBeVisible()
+    await expect(body.getByRole('listbox')).toBeVisible()
   },
 }
 
