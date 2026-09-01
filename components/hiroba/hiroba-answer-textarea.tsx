@@ -72,9 +72,10 @@ export function HirobaAnswerTextarea({ postId }: HirobaAnswerTextareaProps) {
         </p>
       )}
 
-      <div className="space-y-3 rounded-lg border-2 border-border-3 p-4">
+      <div className="flex w-full flex-col overflow-hidden rounded-lg border-2 border-border-3 bg-card transition-colors focus-within:border-border-4">
         <RichTextEditor
           id="hiroba-answer-body"
+          boxed={false}
           value={body}
           onChange={setBody}
           onSubmit={() => {
@@ -84,14 +85,14 @@ export function HirobaAnswerTextarea({ postId }: HirobaAnswerTextareaProps) {
           placeholder="コメントを入力する"
           ariaLabel="コメントを入力する"
           disabled={isSubmitting}
-          editorClassName="min-h-24"
+          editorClassName="overflow-y-auto px-4 pt-4 pb-0"
           mentions={{
             selectedIds: mentionedUserIds,
             onSelectedIdsChange: setMentionedUserIds,
             loadCandidates,
           }}
         />
-        <div className="flex justify-end">
+        <div className="flex justify-end px-4 pt-2 pb-4">
           <Button
             type="button"
             variant="primary"

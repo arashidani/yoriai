@@ -819,7 +819,9 @@
 }
 
 @layer components {
-  /* Tiptap Placeholder。空の段落に data-placeholder を出す */
+  /* Tiptap Placeholder。空の段落に data-placeholder を出す
+     （@tiptap/extensions v3 は空の <p> に is-empty / is-editor-empty を付与する） */
+  .tiptap p.is-empty:first-child::before,
   .tiptap p.is-editor-empty:first-child::before {
     color: var(--muted-foreground);
     content: attr(data-placeholder);
