@@ -34,17 +34,20 @@ export default async function HirobaPage() {
 
   return (
     <div className="min-w-0 flex-1 pb-12">
-      <Image
-        src={hirobaCover}
-        alt="広場のカバーイラスト"
-        sizes="100vw"
-        className="h-auto w-full object-cover"
-        style={{ height: 'auto' }}
-        loading="eager"
-        preload
-      />
+      {/* カバーは上部に sticky で貼り付き、スクロールすると下のコンテンツが上に覆いかぶさる */}
+      <div className="sticky top-1.5 z-0">
+        <Image
+          src={hirobaCover}
+          alt="広場のカバーイラスト"
+          sizes="100vw"
+          className="h-40 w-full object-cover"
+          loading="eager"
+          preload
+        />
+      </div>
 
-      <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-8 xl:space-y-8 xl:p-8">
+      {/* カバーの上にスクロールで覆いかぶさるよう、背景色付きで前面に置く */}
+      <div className="relative z-10 mx-auto w-full max-w-7xl space-y-6 bg-background px-4 py-6 sm:px-8 xl:space-y-8 xl:p-8">
         <section className="rounded-xl bg-neutral-150 p-4 xl:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-heading-2">
             <span className="size-4 rounded-full bg-primary" aria-hidden />

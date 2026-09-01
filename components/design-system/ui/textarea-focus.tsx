@@ -73,7 +73,7 @@ export function TextareaFocus({
         placeholder="今の気分をシェアしましょう"
         ariaLabel="今の気分をシェアしましょう"
         disabled={isSubmitting}
-        editorClassName="h-16 overflow-y-auto px-4 pt-3.5 pb-2"
+        editorClassName="h-auto overflow-y-auto px-4 pt-4 pb-0"
       />
       {isSubmitting && <Spinner layout="overlay" size="md" />}
       {imagePreviewUrl && (

@@ -16,7 +16,7 @@ export default function QaHomePage() {
   return (
     <div className="flex min-w-0 flex-1 flex-col">
       <QaCover />
-      <div className="flex flex-1 xl:gap-8">
+      <div className="relative z-10 flex flex-1 bg-background xl:gap-8">
         <div className="flex min-w-0 flex-1 flex-col">
           <HeaderSection
             className="sticky top-0 z-30 h-25 p-8"
