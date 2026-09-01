@@ -97,9 +97,10 @@ describe('通知API', () => {
     const response = await app.request('/api/notifications?limit=2')
 
     expect(response.status).toBe(200)
-    expect(await response.json()).toMatchObject({
+    const body = await response.json()
+    expect(body).toMatchObject({
       notifications: [
-        { id: 'notification-1', post: { id: 'post-1' } },
+        { id: 'notification-1', post: { id: 'post-1', title: '質問タイトル' } },
         {
           id: 'notification-2',
           answer: {
@@ -113,6 +114,8 @@ describe('通知API', () => {
       ],
       nextCursor: 'notification-2',
     })
+    expect(body.notifications[0].post).not.toHaveProperty('authorId')
+    expect(body.notifications[0].post).not.toHaveProperty('body')
     expect(prismaMock.notification.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { userId: 'user-1' }, take: 3 }),
     )
