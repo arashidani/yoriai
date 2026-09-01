@@ -47,7 +47,7 @@ function isMockNotificationRead(notification: { id: string; isRead: boolean }) {
 }
 
 const notificationInclude = {
-  post: { select: { id: true, title: true } },
+  post: true,
   answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
   hirobaPost: true,
   hirobaAnswer: { include: { hirobaPost: { select: { id: true, hirobaId: true } } } },
@@ -57,15 +57,8 @@ type NotificationWithRelations = Prisma.NotificationGetPayload<{
   include: typeof notificationInclude
 }>
 
-function toNotificationPostResponse(
-  post: NotificationWithRelations['post'],
-): { id: string; title: string } | null {
-  return post ? { id: post.id, title: post.title } : null
-}
-
 const toNotificationResponse = (notification: NotificationWithRelations) => ({
   ...notification,
-  post: toNotificationPostResponse(notification.post),
   answer: notification.answer ? toAdminAnswerResponse(notification.answer) : null,
 })
 
@@ -160,15 +153,11 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       const hasNextPage = page.length > limit
       const items = page.slice(0, limit).map((notification) => {
         const isRead = isMockNotificationRead(notification)
-        const base = {
-          ...notification,
-          isRead,
-          post: toNotificationPostResponse(notification.post),
-        }
-        if (!notification.answer) return base
+        if (!notification.answer) return { ...notification, isRead }
         const { anonymousProfile, ...answer } = notification.answer
         return {
-          ...base,
+          ...notification,
+          isRead,
           answer: {
             ...answer,
             anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
@@ -242,19 +231,14 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       if (!notification) return c.json({ error: 'Not found' }, 404)
       if (notification.userId !== user.id) return c.json({ error: 'Forbidden' }, 403)
       mockReadNotificationIds.add(id)
-      if (!notification.answer) {
-        return c.json(
-          { notification: toNotificationResponse({ ...notification, isRead: true }) },
-          200,
-        )
-      }
+      if (!notification.answer)
+        return c.json({ notification: { ...notification, isRead: true } }, 200)
       const { anonymousProfile, ...answer } = notification.answer
       return c.json(
         {
           notification: {
             ...notification,
             isRead: true,
-            post: toNotificationPostResponse(notification.post),
             answer: {
               ...answer,
               anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),

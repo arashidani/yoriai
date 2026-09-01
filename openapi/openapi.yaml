@@ -419,7 +419,7 @@ components:
           example: user-2
         author:
           anyOf:
-            - $ref: "#/components/schemas/PublicPostAuthor"
+            - $ref: "#/components/schemas/PostAuthor"
             - type: "null"
         answerCount:
           type: number
@@ -459,143 +459,23 @@ components:
         - deletedAt
         - createdAt
         - updatedAt
-    PublicPostAuthor:
-      type: object
-      properties:
-        id:
-          type: string
-          example: user-1
-        name:
-          type:
-            - string
-            - "null"
-          example: 一般ユーザー
-        username:
-          type:
-            - string
-            - "null"
-          example: あおさん
-        displayNameColor:
-          type:
-            - string
-            - "null"
-          enum:
-            - GREEN
-            - YELLOW
-            - BLUE
-            - PURPLE
-            - GRAY
-            - null
-          example: BLUE
-        avatarUrl:
-          type:
-            - string
-            - "null"
-          example: https://xxxx.supabase.co/storage/v1/object/public/profiles/user-1.webp?v=1
-        role:
-          type: string
-          enum:
-            - USER
-            - ADMIN
-          example: USER
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
-        lunchPreference:
-          type:
-            - string
-            - "null"
-          enum:
-            - NO_PREFERENCE
-            - TEAM
-            - ALONE
-            - null
-          example: TEAM
-      required:
-        - id
-        - name
-        - username
-        - displayNameColor
-        - avatarUrl
-        - role
-        - createdAt
-        - lunchPreference
-    Tag:
-      type: object
-      properties:
-        id:
-          type: string
-          example: tag-1
-        name:
-          type: string
-          example: 経理
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
-      required:
-        - id
-        - name
-        - createdAt
-    HirobaAnswer:
-      type: object
-      properties:
-        id:
-          type: string
-          example: hiroba-answer-1
-        hirobaPostId:
-          type: string
-          example: hiroba-post-1
-        hirobaPost:
-          type:
-            - object
-            - "null"
+    PostAuthor:
+      allOf:
+        - $ref: "#/components/schemas/User"
+        - type: object
           properties:
-            id:
-              type: string
-              example: hiroba-post-1
-            hirobaId:
-              type: string
-              example: hiroba-alcohol
+            lunchPreference:
+              type:
+                - string
+                - "null"
+              enum:
+                - NO_PREFERENCE
+                - TEAM
+                - ALONE
+                - null
+              example: TEAM
           required:
-            - id
-            - hirobaId
-        body:
-          type: string
-          example: いいですね、今度行ってみます！
-        authorId:
-          type:
-            - string
-            - "null"
-          example: user-1
-        author:
-          anyOf:
-            - $ref: "#/components/schemas/PublicPostAuthor"
-            - type: "null"
-        isHidden:
-          type: boolean
-          example: false
-        likeCount:
-          type: number
-          example: 0
-        createdAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
-        updatedAt:
-          type: string
-          format: date-time
-          example: 2024-01-01T00:00:00.000Z
-      required:
-        - id
-        - hirobaPostId
-        - body
-        - authorId
-        - isHidden
-        - likeCount
-        - createdAt
-        - updatedAt
+            - lunchPreference
     User:
       type: object
       properties:
@@ -655,6 +535,81 @@ components:
         - avatarUrl
         - role
         - createdAt
+    Tag:
+      type: object
+      properties:
+        id:
+          type: string
+          example: tag-1
+        name:
+          type: string
+          example: 経理
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - name
+        - createdAt
+    HirobaAnswer:
+      type: object
+      properties:
+        id:
+          type: string
+          example: hiroba-answer-1
+        hirobaPostId:
+          type: string
+          example: hiroba-post-1
+        hirobaPost:
+          type:
+            - object
+            - "null"
+          properties:
+            id:
+              type: string
+              example: hiroba-post-1
+            hirobaId:
+              type: string
+              example: hiroba-alcohol
+          required:
+            - id
+            - hirobaId
+        body:
+          type: string
+          example: いいですね、今度行ってみます！
+        authorId:
+          type:
+            - string
+            - "null"
+          example: user-1
+        author:
+          anyOf:
+            - $ref: "#/components/schemas/PostAuthor"
+            - type: "null"
+        isHidden:
+          type: boolean
+          example: false
+        likeCount:
+          type: number
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2024-01-01T00:00:00.000Z
+      required:
+        - id
+        - hirobaPostId
+        - body
+        - authorId
+        - isHidden
+        - likeCount
+        - createdAt
+        - updatedAt
     InviteCreated:
       type: object
       properties:
@@ -1102,7 +1057,7 @@ components:
           example: post-1
         post:
           anyOf:
-            - $ref: "#/components/schemas/NotificationPostSummary"
+            - $ref: "#/components/schemas/Post"
             - type: "null"
         answerId:
           type:
@@ -1160,18 +1115,6 @@ components:
         - HIROBA_ANSWER_LIKED
         - POST_DELETED
         - ANSWER_HIDDEN
-    NotificationPostSummary:
-      type: object
-      properties:
-        id:
-          type: string
-          example: post-1
-        title:
-          type: string
-          example: Next.js App Routerの使い方を教えてください
-      required:
-        - id
-        - title
     UnreadNotificationCount:
       type: object
       properties:
@@ -2571,8 +2514,6 @@ paths:
       tags:
         - hiroba
       summary: ひろば一覧を取得
-      security: &a3
-        - supabaseSession: []
       responses:
         "200":
           description: ひろば一覧
@@ -2587,20 +2528,11 @@ paths:
                       $ref: "#/components/schemas/Hiroba"
                 required:
                   - hirobas
-        "401":
-          description: 未認証
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
   /api/hiroba/{slug}:
     get:
       tags:
         - hiroba
       summary: ひろば詳細と投稿一覧を取得
-      security: *a3
       parameters:
         - schema:
             type: string
@@ -2625,14 +2557,6 @@ paths:
                 required:
                   - hiroba
                   - posts
-        "401":
-          description: 未認証
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
         "404":
           description: ひろばが見つからない
           content:
@@ -2884,8 +2808,6 @@ paths:
       tags:
         - hiroba-posts
       summary: ひろば投稿を1件取得
-      security: &a4
-        - supabaseSession: []
       parameters:
         - schema:
             type: string
@@ -2905,14 +2827,6 @@ paths:
                     $ref: "#/components/schemas/HirobaPost"
                 required:
                   - post
-        "401":
-          description: 未認証
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
         "404":
           description: 投稿が見つからない
           content:
@@ -2970,7 +2884,6 @@ paths:
       tags:
         - hiroba-posts
       summary: 投稿への回答一覧を取得（いいね数の多い順、同数なら投稿順）
-      security: *a4
       parameters:
         - schema:
             type: string
@@ -2992,14 +2905,6 @@ paths:
                       $ref: "#/components/schemas/HirobaAnswer"
                 required:
                   - answers
-        "401":
-          description: 未認証
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-              example:
-                error: Unauthorized
         "404":
           description: 投稿が見つからない
           content:
@@ -3501,7 +3406,7 @@ paths:
       tags:
         - admin
       summary: ユーザー一覧を取得（管理者専用）
-      security: &a5
+      security: &a3
         - supabaseSession: []
       responses:
         "200":
@@ -3538,7 +3443,7 @@ paths:
       tags:
         - admin
       summary: 招待リンクを発行（管理者専用）
-      security: *a5
+      security: *a3
       requestBody:
         required: true
         content:
@@ -3590,7 +3495,7 @@ paths:
       tags:
         - admin
       summary: 招待一覧を取得（管理者専用）
-      security: *a5
+      security: *a3
       responses:
         "200":
           description: 招待一覧
@@ -3626,7 +3531,7 @@ paths:
       tags:
         - admin
       summary: 招待リンクを削除（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3662,7 +3567,7 @@ paths:
       tags:
         - admin
       summary: ユーザーのパスワードリセットリンクを発行（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3711,7 +3616,7 @@ paths:
       tags:
         - admin
       summary: 投稿一覧を取得（管理者専用）
-      security: *a5
+      security: *a3
       responses:
         "200":
           description: 投稿一覧
@@ -3747,7 +3652,7 @@ paths:
       tags:
         - admin
       summary: 投稿を削除（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3783,7 +3688,7 @@ paths:
       tags:
         - admin
       summary: ソフトデリートされた投稿を復元（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3832,7 +3737,7 @@ paths:
       tags:
         - admin
       summary: 非表示にされた回答を復元（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3881,7 +3786,7 @@ paths:
       tags:
         - admin
       summary: ユーザーの名前・ロールを更新（管理者専用、自分自身のロール変更は不可）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3944,7 +3849,7 @@ paths:
       tags:
         - admin
       summary: ユーザーを削除（管理者専用、自分自身は削除不可）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -3988,7 +3893,7 @@ paths:
       tags:
         - admin
       summary: AIフラグ一覧を取得（管理者専用）
-      security: *a5
+      security: *a3
       responses:
         "200":
           description: AIフラグ一覧
@@ -4024,7 +3929,7 @@ paths:
       tags:
         - admin
       summary: AIフラグを確認済みにする（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -4073,7 +3978,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラ一覧を取得（管理者専用）
-      security: *a5
+      security: *a3
       responses:
         "200":
           description: 匿名キャラ一覧
@@ -4108,7 +4013,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラを追加（管理者専用）
-      security: *a5
+      security: *a3
       requestBody:
         required: true
         content:
@@ -4163,7 +4068,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラの有効状態またはアバター表示順を更新（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -4234,7 +4139,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラを削除（管理者専用、割り当て済みのキャラは削除不可）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -4278,7 +4183,7 @@ paths:
       tags:
         - admin
       summary: 匿名キャラのアバターを追加（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -4371,7 +4276,7 @@ paths:
       tags:
         - admin
       summary: タグカテゴリー一覧を取得（管理者専用）
-      security: *a5
+      security: *a3
       responses:
         "200":
           description: タグカテゴリー一覧
@@ -4406,7 +4311,7 @@ paths:
       tags:
         - admin
       summary: タグカテゴリーを作成（管理者専用）
-      security: *a5
+      security: *a3
       requestBody:
         required: true
         content:
@@ -4461,7 +4366,7 @@ paths:
       tags:
         - admin
       summary: タグカテゴリーを削除（使用中は削除不可）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -4513,7 +4418,7 @@ paths:
       tags:
         - admin
       summary: タグ一覧を取得（管理者専用）
-      security: *a5
+      security: *a3
       responses:
         "200":
           description: タグ一覧
@@ -4548,7 +4453,7 @@ paths:
       tags:
         - admin
       summary: タグを作成（管理者専用）
-      security: *a5
+      security: *a3
       requestBody:
         required: true
         content:
@@ -4614,7 +4519,7 @@ paths:
       tags:
         - admin
       summary: タグを更新（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -4694,7 +4599,7 @@ paths:
       tags:
         - admin
       summary: タグを削除（管理者専用）
-      security: *a5
+      security: *a3
       parameters:
         - schema:
             type: string
@@ -4738,7 +4643,7 @@ paths:
       tags:
         - admin
       summary: 固定ひろば一覧を取得（管理者専用）
-      security: *a5
+      security: *a3
       responses:
         "200":
           description: ひろば一覧
@@ -5074,7 +4979,7 @@ paths:
       tags:
         - onboarding
       summary: オンボーディングで選択できる項目を取得
-      security: &a6
+      security: &a4
         - supabaseSession: []
       responses:
         "200":
@@ -5118,7 +5023,7 @@ paths:
       tags:
         - onboarding
       summary: オンボーディングを完了
-      security: *a6
+      security: *a4
       requestBody:
         required: true
         content:

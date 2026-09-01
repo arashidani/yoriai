@@ -1,12 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import type { HirobaPost, User } from '@/app/generated/prisma/client'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagSeverity } from '@/app/generated/prisma/enums'
-import {
-  hirobaPostInclude,
-  mapHirobaPostResponse,
-  type HirobaPostWithPublicAuthor,
-  toPublicPostAuthor,
-} from '@/lib/hiroba/api-response'
 import { canJoinHiroba, findHiroba, HIROBA_CATALOG, isDefaultHiroba } from '@/lib/hiroba/catalog'
 import { ensureHirobaBySlug } from '@/lib/hiroba/record'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
@@ -19,25 +14,21 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import { MOCK_HIROBA_POSTS, MOCK_HIROBAS, MOCK_JOINED_HIROBA_SLUGS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
+import { publicTagSelect } from '@/lib/prisma/selects'
 import { createHirobaPostSchema } from '@/lib/schemas/hiroba'
 
-const auth = {
-  security: [{ supabaseSession: [] }],
-  middleware: [authMiddleware] as const,
-}
+type HirobaPostWithAuthor = HirobaPost & { author: User | null }
 
 const listRoute = createRoute({
   method: 'get',
   path: '/',
   tags: ['hiroba'],
   summary: 'ひろば一覧を取得',
-  ...auth,
   responses: {
     200: {
       description: 'ひろば一覧',
       content: { 'application/json': { schema: z.object({ hirobas: z.array(HirobaSchema) }) } },
     },
-    401: errorResponse('未認証', 'Unauthorized'),
   },
 })
 
@@ -46,7 +37,6 @@ const getRoute = createRoute({
   path: '/{slug}',
   tags: ['hiroba'],
   summary: 'ひろば詳細と投稿一覧を取得',
-  ...auth,
   request: { params: SlugParamSchema },
   responses: {
     200: {
@@ -57,7 +47,6 @@ const getRoute = createRoute({
         },
       },
     },
-    401: errorResponse('未認証', 'Unauthorized'),
     404: errorResponse('ひろばが見つからない', 'Not found'),
   },
 })
@@ -159,10 +148,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     if (process.env.MOCK_MODE === 'true') {
       const hiroba = MOCK_HIROBAS.find((h) => h.slug === slug)
       if (!hiroba) return c.json({ error: 'Not found' }, 404)
-      const posts = MOCK_HIROBA_POSTS.filter((p) => p.hirobaId === hiroba.id).map((post) => ({
-        ...post,
-        author: toPublicPostAuthor(post.author),
-      }))
+      const posts = MOCK_HIROBA_POSTS.filter((p) => p.hirobaId === hiroba.id)
       return c.json({ hiroba, posts }, 200)
     }
 
@@ -171,10 +157,13 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
 
     const posts = await prisma.hirobaPost.findMany({
       where: { hirobaId: hiroba.id, deletedAt: null },
-      include: hirobaPostInclude,
+      include: { author: true, tags: { include: { tag: { select: publicTagSelect } } } },
       orderBy: { updatedAt: 'desc' },
     })
-    return c.json({ hiroba, posts: posts.map(mapHirobaPostResponse) }, 200)
+    return c.json(
+      { hiroba, posts: posts.map((p) => ({ ...p, tags: p.tags.map((pt) => pt.tag) })) },
+      200,
+    )
   })
   .openapi(joinRoute, async (c) => {
     const { slug } = c.req.valid('param')
@@ -222,7 +211,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
             ...data,
             imageUrl: null,
             authorId: user.id,
-            author: toPublicPostAuthor(user),
+            author: user,
             answerCount: 0,
             likeCount: 0,
             deletedAt: null,
@@ -250,22 +239,22 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
     const data = c.req.valid('json')
     const { 'idempotency-key': idempotencyKey } = c.req.valid('header')
 
-    let post: HirobaPostWithPublicAuthor
+    let post: HirobaPostWithAuthor
     try {
       post = await prisma.hirobaPost.create({
         data: { ...data, hirobaId: hiroba.id, authorId: user.id, idempotencyKey },
-        include: hirobaPostInclude,
+        include: { author: true },
       })
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
         return c.json({ error: '投稿の作成に失敗しました' }, 500)
       }
 
-      let existingPost: HirobaPostWithPublicAuthor | null
+      let existingPost: HirobaPostWithAuthor | null
       try {
         existingPost = await prisma.hirobaPost.findUnique({
           where: { authorId_idempotencyKey: { authorId: user.id, idempotencyKey } },
-          include: hirobaPostInclude,
+          include: { author: true },
         })
       } catch {
         return c.json({ error: '投稿の作成に失敗しました' }, 500)
@@ -276,7 +265,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
         return c.json({ error: '同じ投稿操作に異なる内容が指定されています' }, 409)
       }
 
-      return c.json({ post: { ...mapHirobaPostResponse(existingPost), tags: [] } }, 200)
+      return c.json({ post: { ...existingPost, tags: [] } }, 200)
     }
 
     const { moderatePost } = await import('@/lib/ai/moderate-post')
@@ -296,7 +285,7 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
           prisma.hirobaPost.update({
             where: { id: post.id },
             data: { deletedAt: new Date() },
-            include: hirobaPostInclude,
+            include: { author: true },
           }),
         ])
         post = flaggedPost
@@ -325,5 +314,5 @@ export const hirobaRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defau
       }
     }
 
-    return c.json({ post: { ...mapHirobaPostResponse(post), tags } }, 201)
+    return c.json({ post: { ...post, tags } }, 201)
   })
