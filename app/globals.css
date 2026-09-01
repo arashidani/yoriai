@@ -625,10 +625,10 @@
   --ring: #ece7df; /* neutral-300 */
   --ring-error: #fecaca; /* red-200 */
 
-  --chart-1: #f54a00;
-  --chart-2: #009689;
-  --chart-3: #104e64;
-  --chart-4: #ffb900;
+  --chart-1: var(--hiroba-mbti-green-border);
+  --chart-2: var(--hiroba-mbti-blue-border);
+  --chart-3: var(--hiroba-mbti-yellow-border);
+  --chart-4: var(--hiroba-mbti-purple-border);
   --chart-5: #fe9a00;
   --display-name-green: #15803d; /* green-700 */
   --display-name-yellow: #a16207; /* yellow-700 */
@@ -752,10 +752,10 @@
   --ring: #7d746a;
   --ring-error: #6d2e2f;
 
-  --chart-1: #1447e6;
-  --chart-2: #00bc7d;
-  --chart-3: #fd9a00;
-  --chart-4: #ad46ff;
+  --chart-1: var(--hiroba-mbti-green-border);
+  --chart-2: var(--hiroba-mbti-blue-border);
+  --chart-3: var(--hiroba-mbti-yellow-border);
+  --chart-4: var(--hiroba-mbti-purple-border);
   --chart-5: #ff2056;
   --display-name-green: #4ade80; /* green-400 */
   --display-name-yellow: #facc15; /* yellow-400 */
