@@ -142,6 +142,7 @@ export function RichTextEditor({
   const defaultId = useId()
   const editorId = id ?? defaultId
   const lastEmittedRef = useRef(value)
+  const applyingExternalRef = useRef(false)
   const onChangeRef = useRef(onChange)
   const onSubmitRef = useRef(onSubmit)
   const disabledRef = useRef(disabled)
@@ -219,6 +220,11 @@ export function RichTextEditor({
     },
     onUpdate: ({ editor: next }) => {
       const markdown = next.isEmpty ? '' : next.getMarkdown()
+      if (applyingExternalRef.current || markdown === lastEmittedRef.current) {
+        lastEmittedRef.current = markdown
+        mentionUiRef.current?.onDocumentChangeRef.current(markdown)
+        return
+      }
       lastEmittedRef.current = markdown
       onChangeRef.current(markdown)
       mentionUiRef.current?.onDocumentChangeRef.current(markdown)
@@ -243,12 +249,17 @@ export function RichTextEditor({
   useEffect(() => {
     if (!editor) return
     if (value === lastEmittedRef.current) return
-    if (value) {
-      editor.commands.setContent(value, { contentType: 'markdown' })
-    } else {
-      editor.commands.clearContent()
+    applyingExternalRef.current = true
+    try {
+      if (value) {
+        editor.commands.setContent(value, { contentType: 'markdown' })
+      } else {
+        editor.commands.clearContent()
+      }
+      lastEmittedRef.current = value
+    } finally {
+      applyingExternalRef.current = false
     }
-    lastEmittedRef.current = value
   }, [editor, value])
 
   function openLinkDialog() {
