@@ -1,41 +1,41 @@
 import Image from 'next/image'
-import Link from 'next/link'
-import mascotXxImage from '@/assets/mascots/mascot_xx.svg'
-import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import inu from '@/assets/mascots/mascot_xx.svg'
+import { ToolChip } from '@/components/design-system/ui/tool-chip'
+import { Sidebar } from '@/components/layout/sidebar'
+import { NotificationPanelColumn } from '@/components/notifications/notification-panel-column'
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-background-subtle px-6 py-16">
-      <section className="w-full max-w-3xl rounded-3xl border border-border-3 bg-surface p-8 text-center shadow-sm md:p-12">
-        <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 md:gap-8">
-          <Image
-            src={mascotXxImage}
-            alt="困っているヨリアイのマスコット"
-            className="h-auto w-28 md:w-32"
-            priority
-          />
+    <div className="flex min-h-screen flex-col pt-1.5 lg:flex-row">
+      <div className="fixed inset-x-0 top-0 z-50 h-1.5 bg-primary" />
+      <Sidebar />
 
-          <p className="text-heading-1 leading-none font-bold text-primary">
-            404 NOT FOUND
-          </p>
+      <NotificationPanelColumn />
 
-          <div className="space-y-3">
-            <h1 className="text-heading-1 font-bold text-foreground">
-              ご指定のページが見つからないワン...
-            </h1>
-            <p className="text-paragraph text-foreground-alt">
-              URLが変更されたか、ページが削除された可能性があるワン。
-              <br className="hidden sm:block" />
-              お手数だけどトップページから探してほしいワン。
+      <main className="flex min-w-0 flex-1 items-center justify-center bg-background">
+        <div className="space-y-12">
+          <div className="space-y-4 text-center">
+            <p className="text-heading-1 text-muted-foreground">404 Not Found</p>
+
+            <p className="text-body-small font-medium text-muted-foreground">
+              URLが変更されたか、ページが削除された可能性があります。
+              <br />
+              お手数ですが、左のナビゲーションから目的のページをお探しください。
             </p>
           </div>
 
-          <Link href="/" className={cn(buttonVariants({ variant: 'default', size: 'lg' }), 'px-6')}>
-            トップページへ戻る
-          </Link>
+          <div className="flex flex-col items-center gap-4">
+            <ToolChip text="ここどこだワン..." side="bottom" />
+            <Image
+              src={inu}
+              width={181}
+              height={196}
+              alt="困っているよりあいぬ"
+              className="-scale-x-100"
+            />
+          </div>
         </div>
-      </section>
-    </main>
+      </main>
+    </div>
   )
 }
