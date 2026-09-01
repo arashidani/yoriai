@@ -90,7 +90,7 @@ export default async function HirobaPostDetailPage({ params }: Props) {
 
   return (
     <>
-      <div className="flex h-screen flex-1 flex-col space-y-8 overflow-hidden">
+      <div className="flex flex-1 flex-col space-y-8">
         <div className="flex justify-between">
           <Link href={`/hiroba/${slug}`}>
             <Button variant="secondary" size="large">
@@ -103,8 +103,8 @@ export default async function HirobaPostDetailPage({ params }: Props) {
           )}
         </div>
 
-        <div className="mx-3 flex min-h-0 flex-col space-y-4">
-          <div className="flex min-h-0 flex-1 flex-col">
+        <div className="mx-3 flex flex-col space-y-4">
+          <div className="flex flex-col">
             <PostCard
               post={post}
               joined={joined}
@@ -114,7 +114,7 @@ export default async function HirobaPostDetailPage({ params }: Props) {
             />
 
             {answers.length > 0 && (
-              <div className="min-h-0 flex-1 overflow-y-auto scrollbar-custom border-x-2 border-b-2 border-border-2 rounded-b-lg px-6 py-4 space-y-3">
+              <div className="border-x-2 border-b-2 border-border-2 rounded-b-lg px-6 py-4 space-y-3">
                 {answers.map((answer) => (
                   <AnswerCard
                     key={answer.id}
