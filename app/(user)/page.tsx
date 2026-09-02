@@ -1,104 +1,41 @@
-import { PencilLine } from 'lucide-react'
-import Link from 'next/link'
-import { Role } from '@/app/generated/prisma/enums'
-import { AnswerableQuestions } from '@/components/posts/answerable-questions'
-import { QaFeed } from '@/components/posts/qa-feed'
-import { buttonVariants } from '@/components/ui/button'
-import { getCurrentUser } from '@/lib/auth/current-user'
-import { MOCK_POSTS, MOCK_TAGS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
+import { Suspense } from 'react'
 
-async function getRawPosts() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_POSTS
-  const posts = await prisma.post.findMany({
-    where: { deletedAt: null },
-    include: {
-      author: true,
-      postAnonymousProfile: { include: { anonymousProfile: true } },
-      tags: { include: { tag: true } },
-    },
-    orderBy: { updatedAt: 'desc' },
-  })
-  return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
-}
+import { HeaderSection } from '@/components/design-system/ui/header-section'
+import {
+  HomeAnswerableQuestions,
+  HomeAnswerableQuestionsFallback,
+} from '@/components/posts/home-answerable-questions'
+import { HomeQaQuestionList } from '@/components/posts/home-qa-question-list'
+import { HomeQaTags } from '@/components/posts/home-qa-tags'
+import { QaCover } from '@/components/posts/qa-cover'
+import { QaFeedFiltersFallback } from '@/components/posts/qa-feed-filters-fallback'
+import { QaFeedListFallback } from '@/components/posts/qa-feed-list-fallback'
+import { QuestionComposeDialog } from '@/components/posts/question-compose-dialog'
 
-async function getAllTags() {
-  if (process.env.MOCK_MODE === 'true') return MOCK_TAGS
-  return prisma.tag.findMany({ orderBy: { name: 'asc' } })
-}
-
-async function getViewerState(userId: string | undefined, postIds: string[]) {
-  if (!userId || process.env.MOCK_MODE === 'true' || postIds.length === 0) {
-    return { likedPostIds: new Set<string>(), savedPostIds: new Set<string>() }
-  }
-  const [likes, bookmarks] = await Promise.all([
-    prisma.questionLike.findMany({
-      where: { userId, postId: { in: postIds } },
-      select: { postId: true },
-    }),
-    prisma.postBookmark.findMany({
-      where: { userId, postId: { in: postIds } },
-      select: { postId: true },
-    }),
-  ])
-  return {
-    likedPostIds: new Set(likes.map((l) => l.postId)),
-    savedPostIds: new Set(bookmarks.map((b) => b.postId)),
-  }
-}
-
-async function getPosts(currentUserId: string | undefined) {
-  const rawPosts = await getRawPosts()
-  const { likedPostIds, savedPostIds } = await getViewerState(
-    currentUserId,
-    rawPosts.map((p) => p.id),
-  )
-
-  return rawPosts.map((post) => {
-    const isOwnQuestion = !!currentUserId && post.authorId === currentUserId
-    const displayName = isOwnQuestion
-      ? (post.author?.name ?? post.author?.email ?? '自分')
-      : (post.postAnonymousProfile?.anonymousProfile.displayName ?? '匿名')
-
-    return {
-      id: post.id,
-      title: post.title,
-      body: post.body,
-      displayName,
-      isOwnQuestion,
-      likeCount: post.likeCount,
-      liked: likedPostIds.has(post.id),
-      saved: savedPostIds.has(post.id),
-      status: post.status,
-      answerCount: post.answerCount,
-      tags: post.tags.map((tag) => ({ id: tag.id, name: tag.name })),
-      createdAt: post.createdAt,
-    }
-  })
-}
-
-export default async function HomePage() {
-  const user = await getCurrentUser()
-  const posts = await getPosts(user?.id)
-  const allTags = await getAllTags()
-  const isAdmin = user?.role === Role.ADMIN
-
+export default function QaHomePage() {
   return (
-    <div className="flex flex-1">
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-25 items-center justify-between border-b border-input bg-background p-8">
-          <h1 className="font-heading text-heading-3">おせっかいQA</h1>
-          <Link
-            href="/posts/new"
-            className={buttonVariants({ size: 'lg', className: 'rounded-full px-5' })}
-          >
-            <PencilLine />
-            質問する
-          </Link>
-        </header>
-        <QaFeed posts={posts} isAdmin={isAdmin} allTags={allTags} />
+    <div className="flex min-w-0 flex-1 flex-col">
+      <QaCover />
+      <div className="relative z-10 flex flex-1 bg-background xl:gap-8">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <HeaderSection
+            className="sticky top-0 z-30 h-25 p-8"
+            title="なんでもQ&A"
+            actions={<QuestionComposeDialog />}
+          />
+          <div className="relative flex flex-1 flex-col">
+            <Suspense fallback={<QaFeedFiltersFallback />}>
+              <HomeQaTags />
+            </Suspense>
+            <Suspense fallback={<QaFeedListFallback />}>
+              <HomeQaQuestionList />
+            </Suspense>
+          </div>
+        </div>
+        <Suspense fallback={<HomeAnswerableQuestionsFallback />}>
+          <HomeAnswerableQuestions />
+        </Suspense>
       </div>
-      <AnswerableQuestions posts={posts} />
     </div>
   )
 }

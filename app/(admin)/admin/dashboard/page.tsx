@@ -1,6 +1,14 @@
 import { FileText, Flag, TrendingUp, Users } from 'lucide-react'
+import { WeeklyPostsChart } from '@/components/admin/weekly-posts-chart'
 import { Role } from '@/app/generated/prisma/enums'
-import { MOCK_AI_FLAGS, MOCK_POSTS, MOCK_USERS } from '@/lib/mocks/fixtures'
+import {
+  MOCK_AI_FLAGS,
+  MOCK_ANSWERS,
+  MOCK_HIROBA_ANSWERS,
+  MOCK_HIROBA_POSTS,
+  MOCK_POSTS,
+  MOCK_USERS,
+} from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +22,9 @@ type DashboardPost = {
   createdAt: Date
   author: { name: string | null } | null
 }
+type DashboardAnswer = { createdAt: Date }
+type DashboardHirobaPost = { createdAt: Date }
+type DashboardHirobaAnswer = { createdAt: Date }
 type DashboardFlag = { status: string }
 
 function isSameDay(a: Date, b: Date) {
@@ -36,11 +47,23 @@ function formatRelativeTime(time: Date) {
 function buildDashboardData(
   users: DashboardUser[],
   posts: DashboardPost[],
+  answers: DashboardAnswer[],
   flags: DashboardFlag[],
+  hirobaPosts: DashboardHirobaPost[],
+  hirobaAnswers: DashboardHirobaAnswer[],
 ) {
   const stats = [
     { label: '総ユーザー数', value: users.length.toLocaleString(), icon: Users },
-    { label: '総投稿数', value: posts.length.toLocaleString(), icon: FileText },
+    {
+      label: '総投稿数',
+      value: (
+        posts.length +
+        answers.length +
+        hirobaPosts.length +
+        hirobaAnswers.length
+      ).toLocaleString(),
+      icon: FileText,
+    },
     {
       label: '未確認フラグ',
       value: flags.filter((f) => f.status === 'UNREAD').length.toLocaleString(),
@@ -73,29 +96,41 @@ function buildDashboardData(
     const day = new Date(today)
     day.setDate(today.getDate() - (6 - i))
     return {
-      count: posts.filter((p) => isSameDay(p.createdAt, day)).length,
       label: WEEKDAY_LABELS[day.getDay()],
+      questions: posts.filter((p) => isSameDay(p.createdAt, day)).length,
+      hirobaPosts: hirobaPosts.filter((p) => isSameDay(p.createdAt, day)).length,
+      answers: answers.filter((a) => isSameDay(a.createdAt, day)).length,
+      hirobaAnswers: hirobaAnswers.filter((a) => isSameDay(a.createdAt, day)).length,
     }
   })
-  const maxCount = Math.max(1, ...weekly.map((w) => w.count))
 
-  return { stats, activity, weekly, maxCount }
+  return { stats, activity, weekly }
 }
 
 async function getDashboardData() {
   if (process.env.MOCK_MODE === 'true') {
-    return buildDashboardData(MOCK_USERS, MOCK_POSTS, MOCK_AI_FLAGS)
+    return buildDashboardData(
+      MOCK_USERS,
+      MOCK_POSTS,
+      MOCK_ANSWERS,
+      MOCK_AI_FLAGS,
+      MOCK_HIROBA_POSTS,
+      MOCK_HIROBA_ANSWERS,
+    )
   }
-  const [users, posts, flags] = await Promise.all([
+  const [users, posts, answers, flags, hirobaPosts, hirobaAnswers] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: 'desc' } }),
     prisma.post.findMany({ include: { author: true }, orderBy: { createdAt: 'desc' } }),
+    prisma.answer.findMany({ orderBy: { createdAt: 'desc' } }),
     prisma.aiFlag.findMany(),
+    prisma.hirobaPost.findMany({ select: { createdAt: true }, orderBy: { createdAt: 'desc' } }),
+    prisma.hirobaAnswer.findMany({ select: { createdAt: true }, orderBy: { createdAt: 'desc' } }),
   ])
-  return buildDashboardData(users, posts, flags)
+  return buildDashboardData(users, posts, answers, flags, hirobaPosts, hirobaAnswers)
 }
 
 export default async function DashboardPage() {
-  const { stats, activity, weekly, maxCount } = await getDashboardData()
+  const { stats, activity, weekly } = await getDashboardData()
 
   return (
     <div className="space-y-8">
@@ -116,20 +151,10 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 rounded-xl border p-6">
-          <h3 className="text-sm font-medium mb-6">週間投稿数</h3>
-          <div className="flex items-end justify-between gap-3 h-40">
-            {weekly.map((w) => (
-              <div key={w.label} className="flex-1 flex flex-col items-center gap-2">
-                <div
-                  className="w-full rounded-t-md bg-primary/80"
-                  style={{ height: `${Math.max(4, (w.count / maxCount) * 100)}%` }}
-                />
-                <span className="text-xs text-muted-foreground">{w.label}</span>
-              </div>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border p-6 lg:col-span-2">
+          <h3 className="mb-4 text-sm font-medium">週間投稿数</h3>
+          <WeeklyPostsChart data={weekly} />
         </div>
 
         <div className="rounded-xl border p-6">

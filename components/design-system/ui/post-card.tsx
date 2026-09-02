@@ -1,0 +1,237 @@
+'use client'
+
+import { cva } from 'class-variance-authority'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import type { DisplayNameColor, LunchPreference } from '@/app/generated/prisma/enums'
+import imageNone from '@/assets/image-none.svg'
+import { CommentCount } from '@/components/design-system/ui/comment-count'
+import { LikeButton } from '@/components/design-system/ui/like-button'
+import { DeleteHirobaPostButton } from '@/components/hiroba/delete-hiroba-post-button'
+import { lunchChipType, mbtiChipVariant } from '@/components/hiroba/profile-variants'
+import { MarkdownBody } from '@/components/mentions/markdown-body'
+import { useDebouncedOptimisticToggle } from '@/hooks/use-debounced-optimistic-toggle'
+import { client } from '@/lib/hono/client'
+import { cn } from '@/lib/utils'
+import { LunchChip, type LunchChipType } from './lunch-chip'
+import { MbtiChip, type MbtiChipVariant } from './mbti-chip'
+
+export type HirobaPost = {
+  id: string
+  hirobaSlug: string
+  title: string
+  body: string
+  imageUrl: string | null
+  authorId: string | null
+  displayName: string
+  displayNameColor: DisplayNameColor | null
+  avatarUrl: string | null
+  lunchPreference: LunchPreference | null
+  isOwnPost: boolean
+  likeCount: number
+  liked: boolean
+  saved: boolean
+  answerCount: number
+  tags: { id: string; name: string }[]
+  createdAt: Date | string
+}
+
+function formatRelativeTime(input: Date | string) {
+  const date = new Date(input)
+  const diffMinutes = Math.floor((Date.now() - date.getTime()) / 60_000)
+  if (diffMinutes < 1) return 'たった今'
+  if (diffMinutes < 60) return `${diffMinutes}分前`
+  const diffHours = Math.floor(diffMinutes / 60)
+  if (diffHours < 24) return `${diffHours}時間前`
+  const diffDays = Math.floor(diffHours / 24)
+  if (diffDays < 7) return `${diffDays}日前`
+  return date.toLocaleDateString('ja-JP')
+}
+
+type PostCardState = 'default' | 'muted'
+
+type PostCardProps = {
+  post: HirobaPost
+  lunchVariant?: LunchChipType
+  mbtiVariant?: MbtiChipVariant
+  border?: 'default' | 'none'
+  /** default: いいねをトグルできる / muted: 表示専用（塗りつぶしの肉球） */
+  state?: PostCardState
+  joined: boolean
+  className?: string
+  /** 指定するとカード全体（余白含む）がこのURL（投稿詳細）へのリンクになる。ホバー背景と cursor-pointer が付く */
+  postHref?: string
+  /** true のとき削除ボタンを表示する（削除できるのは管理者のみ） */
+  isAdmin?: boolean
+  /** 削除完了時の処理。未指定ならひろばの投稿一覧へ戻る */
+  onDeleted?: (postId: string) => void
+}
+
+const postCardVariants = cva('relative flex items-start gap-3 transition-colors', {
+  variants: {
+    border: {
+      default: 'border-2 border-neutral-200 p-4 rounded-lg bg-surface',
+      none: 'border-none',
+    },
+    interactive: {
+      true: 'cursor-pointer hover:bg-ghost-hover',
+      false: '',
+    },
+  },
+  defaultVariants: {
+    border: 'default',
+    interactive: false,
+  },
+})
+
+export function PostCard({
+  post,
+  lunchVariant,
+  mbtiVariant,
+  border,
+  state = 'default',
+  joined,
+  className,
+  postHref,
+  isAdmin = false,
+  onDeleted,
+}: PostCardProps) {
+  const resolvedLunchVariant = lunchVariant ?? lunchChipType(post.lunchPreference)
+  const resolvedMbtiVariant = mbtiVariant ?? mbtiChipVariant(post.displayNameColor)
+  const router = useRouter()
+
+  const {
+    pressed: liked,
+    count: likeCount,
+    toggle: toggleLike,
+  } = useDebouncedOptimisticToggle({
+    initialPressed: post.liked,
+    initialCount: post.likeCount,
+    resetKey: post.id,
+    enabled: !post.isOwnPost,
+    onSync: async (next) => {
+      const res = next
+        ? await client.api['hiroba-posts'][':id'].likes.$post({ param: { id: post.id } })
+        : await client.api['hiroba-posts'][':id'].likes.$delete({ param: { id: post.id } })
+      if (!res.ok) throw new Error('いいねの処理に失敗しました')
+      return res.json()
+    },
+    parseResult: (result) => ({ pressed: result.liked, count: result.likeCount }),
+    onError: () => toast.error('いいねの処理に失敗しました'),
+  })
+
+  function handleDeleted(deletedPostId: string) {
+    if (onDeleted) {
+      onDeleted(deletedPostId)
+      return
+    }
+    router.push(`/hiroba/${post.hirobaSlug}`)
+    router.refresh()
+  }
+
+  const body = (
+    <div className="space-y-3">
+      <div className="text-body-small">
+        <MarkdownBody
+          text={post.body}
+          linkClassName={postHref ? 'relative z-10 pointer-events-auto' : undefined}
+        />
+      </div>
+
+      {post.imageUrl && (
+        <Image
+          src={post.imageUrl}
+          alt=""
+          width={0}
+          height={0}
+          sizes="100vw"
+          unoptimized
+          className="w-full h-65 object-cover rounded-lg"
+        />
+      )}
+    </div>
+  )
+
+  const profileHref = post.authorId && (post.isOwnPost ? '/mypage' : `/mypage/${post.authorId}`)
+
+  const avatar = (
+    <Image
+      src={post.avatarUrl || imageNone}
+      alt=""
+      width={42}
+      height={42}
+      unoptimized={!!post.avatarUrl}
+      className="w-10.5 h-10.5 shrink-0 rounded-[5.6px] object-cover"
+    />
+  )
+
+  return (
+    <div className={cn(postCardVariants({ border, interactive: !!postHref }), className)}>
+      {postHref && (
+        <Link href={postHref} className="absolute inset-0" aria-label={post.title} tabIndex={-1} />
+      )}
+
+      {isAdmin && (
+        <div className="absolute top-3 right-3 z-10">
+          <DeleteHirobaPostButton
+            postId={post.id}
+            postTitle={post.title}
+            onDeleted={handleDeleted}
+          />
+        </div>
+      )}
+
+      {profileHref ? (
+        <Link
+          href={profileHref}
+          aria-label={`${post.displayName}のプロフィール`}
+          className="relative z-10 shrink-0"
+        >
+          {avatar}
+        </Link>
+      ) : (
+        avatar
+      )}
+
+      <div className={cn('flex-1 min-w-0 space-y-2 pr-10', postHref && 'pointer-events-none')}>
+        <div className="space-y-2">
+          <div className="flex gap-2 items-center">
+            <p className="text-label text-foreground tracking-normal">{post.displayName}</p>
+
+            {resolvedLunchVariant && <LunchChip lunchType={resolvedLunchVariant} />}
+
+            {resolvedMbtiVariant && <MbtiChip variant={resolvedMbtiVariant} />}
+
+            <div
+              className="text-caption text-muted-foreground tracking-normal"
+              suppressHydrationWarning
+            >
+              {formatRelativeTime(post.createdAt)}
+            </div>
+          </div>
+
+          {body}
+        </div>
+
+        <div className="flex gap-2">
+          <CommentCount count={post.answerCount} />
+
+          <LikeButton
+            className={postHref ? 'relative z-10 pointer-events-auto' : undefined}
+            state={state}
+            count={likeCount ?? 0}
+            pressed={liked}
+            disabled={!joined || post.isOwnPost}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onPressedChange={toggleLike}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -2,19 +2,35 @@ import { swaggerUI } from '@hono/swagger-ui'
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { openApiConfig } from './openapi/config'
 import { adminRoute } from './routes/admin'
+import { adminProfileOptionsRoute } from './routes/admin-profile-options'
 import { answersRoute } from './routes/answers'
+import { chatRoute } from './routes/chat'
+import { hirobaRoute } from './routes/hiroba'
+import { hirobaAnswersRoute } from './routes/hiroba-answers'
+import { hirobaPostsRoute } from './routes/hiroba-posts'
 import { invitesRoute } from './routes/invites'
+import { notificationsRoute } from './routes/notifications'
+import { onboardingRoute } from './routes/onboarding'
 import { passwordResetsRoute } from './routes/password-resets'
-import { postsRoute } from './routes/posts'
+import { meQuestionsRoute, qaQuestionsRoute, questionTagsRoute } from './routes/qa-questions'
 import { usersRoute } from './routes/users'
 
 const app = new OpenAPIHono()
   .basePath('/api')
-  .route('/posts', postsRoute)
+  .route('/questions', qaQuestionsRoute)
+  .route('/question-tags', questionTagsRoute)
+  .route('/users/me', meQuestionsRoute)
   .route('/answers', answersRoute)
+  .route('/chat', chatRoute)
+  .route('/admin/profile-options', adminProfileOptionsRoute)
+  .route('/hiroba', hirobaRoute)
+  .route('/hiroba-posts', hirobaPostsRoute)
+  .route('/hiroba-answers', hirobaAnswersRoute)
   .route('/admin', adminRoute)
   .route('/users', usersRoute)
+  .route('/onboarding', onboardingRoute)
   .route('/invites', invitesRoute)
+  .route('/notifications', notificationsRoute)
   .route('/password-resets', passwordResetsRoute)
 
 app.openAPIRegistry.registerComponent('securitySchemes', 'supabaseSession', {

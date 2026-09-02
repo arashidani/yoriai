@@ -1,13 +1,6 @@
-import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '@/app/generated/prisma/client'
-import { requireEnv } from '@/lib/env'
+import { createPrismaClient } from '@/lib/prisma/create-client'
 
-function createPrismaClient() {
-  const adapter = new PrismaPg({ connectionString: requireEnv('DATABASE_URL') })
-  return new PrismaClient({ adapter })
-}
-
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+const globalForPrisma = globalThis as unknown as { prisma: ReturnType<typeof createPrismaClient> }
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 

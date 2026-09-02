@@ -1,4 +1,6 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi'
+import { NotificationType } from '@/app/generated/prisma/enums'
+import { scheduleAfterResponse } from '@/lib/hono/after-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse, IdParamSchema, LikeStatusSchema } from '@/lib/hono/openapi/schemas'
@@ -57,19 +59,45 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
       return c.json({ liked: true, likeCount: answer.likeCount + 1 }, 200)
     }
 
-    const answer = await prisma.answer.findUnique({ where: { id } })
+    const answer = await prisma.answer.findUnique({
+      where: { id },
+      select: { id: true, authorId: true, likeCount: true },
+    })
     if (!answer) return c.json({ error: 'Not found' }, 404)
     if (answer.authorId === user.id) return c.json({ error: '自分の回答にはいいねできません' }, 403)
 
-    const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.answerLike.createMany({
+    const { likeCount, isNewLike } = await prisma.$transaction(async (tx) => {
+      const created = await tx.answerLike.createMany({
         data: [{ answerId: id, userId: user.id }],
         skipDuplicates: true,
       })
-      const likeCount = await tx.answerLike.count({ where: { answerId: id } })
-      await tx.answer.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      if (created.count === 0) return { likeCount: answer.likeCount, isNewLike: false }
+
+      const updatedAnswer = await tx.answer.update({
+        where: { id },
+        data: { likeCount: { increment: 1 } },
+        select: { likeCount: true },
+      })
+      return { likeCount: updatedAnswer.likeCount, isNewLike: true }
     })
+
+    if (isNewLike && answer.authorId) {
+      const authorId = answer.authorId
+      scheduleAfterResponse(async () => {
+        try {
+          await prisma.notification.create({
+            data: {
+              userId: authorId,
+              type: NotificationType.ANSWER_LIKED,
+              answerId: id,
+            },
+          })
+        } catch (error) {
+          console.error('Failed to create answer like notification', { answerId: id, error })
+        }
+      })
+    }
+
     return c.json({ liked: true, likeCount }, 200)
   })
   .openapi(unlikeRoute, async (c) => {
@@ -82,14 +110,22 @@ export const answersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defa
       return c.json({ liked: false, likeCount: Math.max(0, answer.likeCount - 1) }, 200)
     }
 
-    const answer = await prisma.answer.findUnique({ where: { id } })
+    const answer = await prisma.answer.findUnique({
+      where: { id },
+      select: { id: true, authorId: true, likeCount: true },
+    })
     if (!answer) return c.json({ error: 'Not found' }, 404)
 
     const likeCount = await prisma.$transaction(async (tx) => {
-      await tx.answerLike.deleteMany({ where: { answerId: id, userId: user.id } })
-      const likeCount = await tx.answerLike.count({ where: { answerId: id } })
-      await tx.answer.update({ where: { id }, data: { likeCount } })
-      return likeCount
+      const deleted = await tx.answerLike.deleteMany({ where: { answerId: id, userId: user.id } })
+      if (deleted.count === 0) return answer.likeCount
+
+      const updatedAnswer = await tx.answer.update({
+        where: { id },
+        data: { likeCount: { decrement: 1 } },
+        select: { likeCount: true },
+      })
+      return updatedAnswer.likeCount
     })
     return c.json({ liked: false, likeCount }, 200)
   })

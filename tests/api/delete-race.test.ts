@@ -2,10 +2,6 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { prismaMock } = vi.hoisted(() => ({
   prismaMock: {
-    post: {
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-    },
     user: {
       delete: vi.fn(),
     },
@@ -47,25 +43,6 @@ describe('削除APIの同時操作', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('投稿が先に削除された場合も成功扱いにする', async () => {
-    prismaMock.post.findUnique.mockResolvedValue({ id: 'post-1' })
-    prismaMock.post.delete.mockRejectedValue(p2025Error())
-
-    const response = await app.request('/api/posts/post-1', { method: 'DELETE' })
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ success: true })
-  })
-
-  it('投稿が既に存在しない場合も成功扱いにする', async () => {
-    prismaMock.post.findUnique.mockResolvedValue(null)
-
-    const response = await app.request('/api/posts/post-1', { method: 'DELETE' })
-
-    expect(response.status).toBe(200)
-    expect(await response.json()).toEqual({ success: true })
   })
 
   it('ユーザーが先に削除された場合も成功扱いにする', async () => {

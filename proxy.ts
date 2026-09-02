@@ -3,6 +3,13 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { requireEnv } from '@/lib/env'
 
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const isQaMockPage =
+    pathname === '/' || pathname === '/my-questions' || pathname.startsWith('/posts/')
+  if (process.env.MOCK_MODE === 'true' && process.env.MOCK_AUTH_BYPASS === 'true' && isQaMockPage) {
+    return NextResponse.next({ request })
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -26,27 +33,31 @@ export async function proxy(request: NextRequest) {
     },
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const claims = claimsData?.claims
 
-  const { pathname } = request.nextUrl
-  const publicPaths = ['/login', '/register', '/reset-password']
+  const publicPaths = [
+    '/login',
+    '/register',
+    '/register/confirm',
+    '/register/complete',
+    '/reset-password',
+  ]
   const isPublicPath = publicPaths.includes(pathname)
 
   // 未認証ユーザーを /login にリダイレクト（/login・/register・/reset-password・/api は除外）
-  if (!user) {
+  if (!claims) {
     if (!isPublicPath && !pathname.startsWith('/api')) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
     return supabaseResponse
   }
 
-  const role = (user.app_metadata?.role as string) ?? 'USER'
+  const role = (claims.app_metadata?.role as string) ?? 'USER'
   const homePath = role === 'ADMIN' ? '/admin' : '/'
 
   // ログイン済みユーザーが /login・/register・/reset-password にアクセスしたら自分のホームへ
-  if (isPublicPath) {
+  if (isPublicPath && pathname !== '/register/complete') {
     return NextResponse.redirect(new URL(homePath, request.url))
   }
 
@@ -59,5 +70,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon(?:/|$)|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+  ],
 }

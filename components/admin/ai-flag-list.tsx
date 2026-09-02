@@ -5,7 +5,9 @@ import { AlertTriangle, Loader2, MessageSquareWarning, ShieldAlert } from 'lucid
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { DeletePostButton } from '@/components/posts/delete-post-button'
+import { formatDateTimeJst } from '@/lib/date-time'
 import { client } from '@/lib/hono/client'
+import { stripMarkdown } from '@/lib/text/strip-markdown'
 
 const SEVERITY_ICONS = {
   HIGH: ShieldAlert,
@@ -164,7 +166,7 @@ export function AiFlagList() {
                 <p className="text-sm text-muted-foreground">{flag.detail}</p>
                 <p className="text-xs text-muted-foreground">
                   対象ユーザー: {flag.targetUser?.name ?? '不明'} ・{' '}
-                  {new Date(flag.createdAt).toLocaleString('ja-JP')}
+                  {formatDateTimeJst(flag.createdAt)}
                 </p>
                 {flag.post && (
                   <Link
@@ -179,7 +181,7 @@ export function AiFlagList() {
                 )}
                 {flag.answer && (
                   <p className="text-xs text-muted-foreground line-clamp-2">
-                    該当の回答: {flag.answer.body}
+                    該当の回答: {stripMarkdown(flag.answer.body)}
                   </p>
                 )}
                 {flag.answer?.isHidden && (

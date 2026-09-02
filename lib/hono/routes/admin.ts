@@ -1,49 +1,63 @@
 import { randomBytes } from 'node:crypto'
 import { $, createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
+import { bodyLimit } from 'hono/body-limit'
 import { createMiddleware } from 'hono/factory'
 import { Prisma } from '@/app/generated/prisma/client'
 import { FlagStatus, Role } from '@/app/generated/prisma/enums'
+import { HIROBA_CATALOG } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
+  AdminTagSchema,
   AiFlagSchema,
   AnonymousProfileSchema,
   AnswerSchema,
-  BadgeSchema,
   errorResponse,
+  HirobaSchema,
   IdParamSchema,
   InviteCreatedSchema,
   InviteListItemSchema,
-  MissionSchema,
   PasswordResetCreatedSchema,
   PostSchema,
   SuccessSchema,
-  TagSchema,
+  TagCategorySchema,
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
-import { toAnswerResponse } from '@/lib/hono/routes/posts'
+import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_MESSAGE } from '@/lib/image/avatar-limits'
+import {
+  AvatarProcessingError,
+  processAvatarImage,
+  UnsupportedImageError,
+} from '@/lib/image/process-avatar'
 import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
-  MOCK_BADGES,
+  MOCK_HIROBAS,
   MOCK_INVITES,
-  MOCK_MISSIONS,
   MOCK_POSTS,
+  MOCK_TAG_CATEGORIES,
   MOCK_TAGS,
   MOCK_USERS,
 } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import {
+  toAdminAnswerResponse,
+  toAnswerAnonymousProfileResponse,
+} from '@/lib/questions/admin-answer-response'
+import {
   createAnonymousProfileSchema,
   updateAnonymousProfileSchema,
 } from '@/lib/schemas/anonymous-profile'
-import { createBadgeSchema } from '@/lib/schemas/badge'
 import { createInviteSchema } from '@/lib/schemas/invite'
-import { createMissionSchema } from '@/lib/schemas/mission'
-import { createTagSchema } from '@/lib/schemas/tag'
+import { createTagSchema, updateTagSchema } from '@/lib/schemas/tag'
+import { createTagCategorySchema } from '@/lib/schemas/tag-category'
 import { updateUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import {
+  AnonymousProfileAvatarUploadError,
+  uploadAnonymousProfileAvatar,
+} from '@/lib/supabase/storage/anonymous-profile-avatar'
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 const PASSWORD_RESET_TTL_MS = 24 * 60 * 60 * 1000
@@ -54,6 +68,19 @@ function inviteStatus(invite: InviteStatusSource): 'PENDING' | 'USED' | 'EXPIRED
   if (invite.usedAt) return 'USED'
   if (invite.expiresAt < new Date()) return 'EXPIRED'
   return 'PENDING'
+}
+
+const ANONYMOUS_PROFILE_DISPLAY_NAME_CONFLICT_MESSAGE =
+  '同じ表示名の匿名キャラがすでに登録されています'
+
+/** AnonymousProfile.displayName の一意制約違反（P2002）だけを判定する */
+function isDisplayNameConflict(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') {
+    return false
+  }
+  const target = error.meta?.target
+  const fields = Array.isArray(target) ? target : typeof target === 'string' ? [target] : []
+  return fields.some((field) => String(field).includes('displayName'))
 }
 
 const adminGuard = createMiddleware<{ Variables: AuthVariables }>(async (c, next) => {
@@ -166,6 +193,20 @@ const listPostsRoute = createRoute({
   },
 })
 
+const deletePostRoute = createRoute({
+  method: 'delete',
+  path: '/posts/{id}',
+  tags: ['admin'],
+  summary: '投稿を削除（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
 const restorePostRoute = createRoute({
   method: 'patch',
   path: '/posts/{id}/restore',
@@ -233,76 +274,6 @@ const deleteUserRoute = createRoute({
   responses: {
     200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
     400: errorResponse('自分自身は削除できない', '自分自身は削除できません'),
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const listBadgesRoute = createRoute({
-  method: 'get',
-  path: '/badges',
-  tags: ['admin'],
-  summary: 'バッジ一覧を取得（管理者専用）',
-  security,
-  responses: {
-    200: {
-      description: 'バッジ一覧',
-      content: { 'application/json': { schema: z.object({ badges: z.array(BadgeSchema) }) } },
-    },
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const createBadgeRoute = createRoute({
-  method: 'post',
-  path: '/badges',
-  tags: ['admin'],
-  summary: 'バッジを作成（管理者専用）',
-  security,
-  request: {
-    body: { required: true, content: { 'application/json': { schema: createBadgeSchema } } },
-  },
-  responses: {
-    201: {
-      description: '作成されたバッジ',
-      content: { 'application/json': { schema: z.object({ badge: BadgeSchema }) } },
-    },
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const listMissionsRoute = createRoute({
-  method: 'get',
-  path: '/missions',
-  tags: ['admin'],
-  summary: 'ミッション一覧を取得（管理者専用）',
-  security,
-  responses: {
-    200: {
-      description: 'ミッション一覧',
-      content: { 'application/json': { schema: z.object({ missions: z.array(MissionSchema) }) } },
-    },
-    401: errorResponse('未認証', 'Unauthorized'),
-    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
-  },
-})
-
-const createMissionRoute = createRoute({
-  method: 'post',
-  path: '/missions',
-  tags: ['admin'],
-  summary: 'ミッションを作成（管理者専用）',
-  security,
-  request: {
-    body: { required: true, content: { 'application/json': { schema: createMissionSchema } } },
-  },
-  responses: {
-    201: {
-      description: '作成されたミッション',
-      content: { 'application/json': { schema: z.object({ mission: MissionSchema }) } },
-    },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
@@ -379,6 +350,10 @@ const createAnonymousProfileRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    409: errorResponse(
+      '同じ表示名の匿名キャラがすでに存在する',
+      ANONYMOUS_PROFILE_DISPLAY_NAME_CONFLICT_MESSAGE,
+    ),
   },
 })
 
@@ -386,7 +361,7 @@ const updateAnonymousProfileRoute = createRoute({
   method: 'patch',
   path: '/anonymous-profiles/{id}',
   tags: ['admin'],
-  summary: '匿名キャラの割り当て候補への出し入れを切り替える（管理者専用）',
+  summary: '匿名キャラの有効状態またはアバター表示順を更新（管理者専用）',
   security,
   request: {
     params: IdParamSchema,
@@ -402,7 +377,48 @@ const updateAnonymousProfileRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    400: errorResponse('アバターの並び順が不正', '登録済みのアバターだけを並べ替えられます'),
     404: errorResponse('匿名キャラが見つからない', 'Not found'),
+  },
+})
+
+const uploadAnonymousProfileAvatarRoute = createRoute({
+  method: 'post',
+  path: '/anonymous-profiles/{id}/avatars',
+  tags: ['admin'],
+  summary: '匿名キャラのアバターを追加（管理者専用）',
+  security,
+  middleware: [
+    bodyLimit({
+      maxSize: AVATAR_MAX_BYTES,
+      onError: (c) => c.json({ error: AVATAR_TOO_LARGE_MESSAGE }, 413),
+    }),
+  ] as const,
+  request: {
+    params: IdParamSchema,
+    body: {
+      required: true,
+      content: {
+        'multipart/form-data': {
+          schema: z.object({
+            file: z.instanceof(File).openapi({ type: 'string', format: 'binary' }),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'アバター追加後の匿名キャラ',
+      content: { 'application/json': { schema: z.object({ profile: AnonymousProfileSchema }) } },
+    },
+    400: errorResponse('対応していない画像形式', '対応していない画像形式です'),
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('匿名キャラが見つからない', 'Not found'),
+    413: errorResponse('ファイルサイズ超過', AVATAR_TOO_LARGE_MESSAGE),
+    422: errorResponse('画像処理に失敗', '画像を処理できませんでした'),
+    502: errorResponse('アップロード失敗', '画像のアップロードに失敗しました'),
   },
 })
 
@@ -433,10 +449,70 @@ const listTagsRoute = createRoute({
   responses: {
     200: {
       description: 'タグ一覧',
-      content: { 'application/json': { schema: z.object({ tags: z.array(TagSchema) }) } },
+      content: { 'application/json': { schema: z.object({ tags: z.array(AdminTagSchema) }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const listTagCategoriesRoute = createRoute({
+  method: 'get',
+  path: '/tag-categories',
+  tags: ['admin'],
+  summary: 'タグカテゴリー一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: 'タグカテゴリー一覧',
+      content: {
+        'application/json': { schema: z.object({ categories: z.array(TagCategorySchema) }) },
+      },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const createTagCategoryRoute = createRoute({
+  method: 'post',
+  path: '/tag-categories',
+  tags: ['admin'],
+  summary: 'タグカテゴリーを作成（管理者専用）',
+  security,
+  request: {
+    body: { required: true, content: { 'application/json': { schema: createTagCategorySchema } } },
+  },
+  responses: {
+    201: {
+      description: '作成されたタグカテゴリー',
+      content: { 'application/json': { schema: z.object({ category: TagCategorySchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    409: errorResponse(
+      '同名のタグカテゴリーがすでに存在する',
+      '同じ名前のカテゴリーがすでに存在します',
+    ),
+  },
+})
+
+const deleteTagCategoryRoute = createRoute({
+  method: 'delete',
+  path: '/tag-categories/{id}',
+  tags: ['admin'],
+  summary: 'タグカテゴリーを削除（使用中は削除不可）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: { description: '削除成功', content: { 'application/json': { schema: SuccessSchema } } },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('タグカテゴリーが見つからない', 'Not found'),
+    409: errorResponse(
+      'タグで使用中のため削除不可',
+      'このカテゴリーを使用しているタグがあるため削除できません',
+    ),
   },
 })
 
@@ -452,11 +528,36 @@ const createTagRoute = createRoute({
   responses: {
     201: {
       description: '作成されたタグ',
-      content: { 'application/json': { schema: z.object({ tag: TagSchema }) } },
+      content: { 'application/json': { schema: z.object({ tag: AdminTagSchema }) } },
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
     409: errorResponse('同名のタグがすでに存在する', '同じ名前のタグがすでに存在します'),
+  },
+})
+
+const updateTagRoute = createRoute({
+  method: 'patch',
+  path: '/tags/{id}',
+  tags: ['admin'],
+  summary: 'タグを更新（管理者専用）',
+  security,
+  request: {
+    params: IdParamSchema,
+    body: { required: true, content: { 'application/json': { schema: updateTagSchema } } },
+  },
+  responses: {
+    200: {
+      description: '更新されたタグ',
+      content: { 'application/json': { schema: z.object({ tag: AdminTagSchema }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('タグが見つからない', 'Not found'),
+    409: errorResponse(
+      '同名タグまたはカテゴリー変更による割り当て競合',
+      'カテゴリー変更により1つの投稿へ同じカテゴリーのタグが複数割り当てられます',
+    ),
   },
 })
 
@@ -472,6 +573,22 @@ const deleteTagRoute = createRoute({
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
     404: errorResponse('タグが見つからない', 'Not found'),
+  },
+})
+
+const listHirobasRoute = createRoute({
+  method: 'get',
+  path: '/hiroba',
+  tags: ['admin'],
+  summary: '固定ひろば一覧を取得（管理者専用）',
+  security,
+  responses: {
+    200: {
+      description: 'ひろば一覧',
+      content: { 'application/json': { schema: z.object({ hirobas: z.array(HirobaSchema) }) } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
   },
 })
 
@@ -550,6 +667,21 @@ export const adminRoute = $(
     })
     return c.json({ posts }, 200)
   })
+  .openapi(deletePostRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') return c.json({ success: true }, 200)
+
+    try {
+      await prisma.post.delete({ where: { id } })
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+        return c.json({ success: true }, 200)
+      }
+      throw error
+    }
+    return c.json({ success: true }, 200)
+  })
   .openapi(restorePostRoute, async (c) => {
     const { id } = c.req.valid('param')
 
@@ -575,18 +707,38 @@ export const adminRoute = $(
     if (process.env.MOCK_MODE === 'true') {
       const answer = MOCK_ANSWERS.find((a) => a.id === id)
       if (!answer) return c.json({ error: 'Not found' }, 404)
-      return c.json({ answer: { ...answer, isHidden: false } }, 200)
+      const { anonymousProfile, ...rest } = answer
+      return c.json(
+        {
+          answer: {
+            ...rest,
+            isHidden: false,
+            anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
+          },
+        },
+        200,
+      )
     }
 
     const existing = await prisma.answer.findUnique({ where: { id } })
     if (!existing) return c.json({ error: 'Not found' }, 404)
 
-    const answer = await prisma.answer.update({
-      where: { id },
-      data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
-      include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
-    })
-    return c.json({ answer: toAnswerResponse(answer) }, 200)
+    const [answer] = await prisma.$transaction([
+      prisma.answer.update({
+        where: { id },
+        data: { isHidden: false, hiddenAt: null, hiddenByUserId: null, hiddenReason: null },
+        include: { postAnonymousProfile: { include: { anonymousProfile: true } } },
+      }),
+      ...(existing.isHidden
+        ? [
+            prisma.post.update({
+              where: { id: existing.postId },
+              data: { answerCount: { increment: 1 } },
+            }),
+          ]
+        : []),
+    ])
+    return c.json({ answer: toAdminAnswerResponse(answer) }, 200)
   })
   .openapi(patchUserRoute, async (c) => {
     const currentUser = c.get('user')
@@ -647,73 +799,6 @@ export const adminRoute = $(
     }
     return c.json({ success: true }, 200)
   })
-  .openapi(listBadgesRoute, async (c) => {
-    if (process.env.MOCK_MODE === 'true') {
-      return c.json({ badges: MOCK_BADGES }, 200)
-    }
-    const badges = await prisma.badge.findMany({ orderBy: { createdAt: 'desc' } })
-    return c.json({ badges }, 200)
-  })
-  .openapi(createBadgeRoute, async (c) => {
-    const data = c.req.valid('json')
-
-    if (process.env.MOCK_MODE === 'true') {
-      return c.json(
-        {
-          badge: {
-            id: `badge-${MOCK_BADGES.length + 1}`,
-            ...data,
-            earnedCount: 0,
-            createdAt: new Date(),
-          },
-        },
-        201,
-      )
-    }
-
-    const badge = await prisma.badge.create({ data })
-    return c.json({ badge }, 201)
-  })
-  .openapi(listMissionsRoute, async (c) => {
-    if (process.env.MOCK_MODE === 'true') {
-      return c.json({ missions: MOCK_MISSIONS }, 200)
-    }
-    const missions = await prisma.mission.findMany({
-      include: { rewardBadge: true },
-      orderBy: { createdAt: 'desc' },
-    })
-    return c.json({ missions }, 200)
-  })
-  .openapi(createMissionRoute, async (c) => {
-    const { rewardBadgeId, ...rest } = c.req.valid('json')
-
-    if (process.env.MOCK_MODE === 'true') {
-      const rewardBadge = rewardBadgeId
-        ? (MOCK_BADGES.find((b) => b.id === rewardBadgeId) ?? null)
-        : null
-      return c.json(
-        {
-          mission: {
-            id: `mission-${MOCK_MISSIONS.length + 1}`,
-            ...rest,
-            rewardBadgeId: rewardBadgeId ?? null,
-            rewardBadge,
-            active: true,
-            participantsCount: 0,
-            progressPercent: 0,
-            createdAt: new Date(),
-          },
-        },
-        201,
-      )
-    }
-
-    const mission = await prisma.mission.create({
-      data: { ...rest, rewardBadgeId: rewardBadgeId || null },
-      include: { rewardBadge: true },
-    })
-    return c.json({ mission }, 201)
-  })
   .openapi(listAiFlagsRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
       return c.json({ flags: MOCK_AI_FLAGS }, 200)
@@ -727,7 +812,12 @@ export const adminRoute = $(
       orderBy: { createdAt: 'desc' },
     })
     return c.json(
-      { flags: flags.map((f) => ({ ...f, answer: f.answer ? toAnswerResponse(f.answer) : null })) },
+      {
+        flags: flags.map((f) => ({
+          ...f,
+          answer: f.answer ? toAdminAnswerResponse(f.answer) : null,
+        })),
+      },
       200,
     )
   })
@@ -750,7 +840,7 @@ export const adminRoute = $(
       },
     })
     return c.json(
-      { flag: { ...flag, answer: flag.answer ? toAnswerResponse(flag.answer) : null } },
+      { flag: { ...flag, answer: flag.answer ? toAdminAnswerResponse(flag.answer) : null } },
       200,
     )
   })
@@ -770,6 +860,7 @@ export const adminRoute = $(
           profile: {
             id: `anon-${MOCK_ANONYMOUS_PROFILES.length + 1}`,
             ...data,
+            avatarUrls: [],
             isActive: true,
             createdAt: new Date(),
           },
@@ -778,24 +869,88 @@ export const adminRoute = $(
       )
     }
 
-    const profile = await prisma.anonymousProfile.create({ data })
-    return c.json({ profile }, 201)
+    try {
+      const profile = await prisma.anonymousProfile.create({ data })
+      return c.json({ profile }, 201)
+    } catch (error) {
+      if (isDisplayNameConflict(error)) {
+        return c.json({ error: ANONYMOUS_PROFILE_DISPLAY_NAME_CONFLICT_MESSAGE }, 409)
+      }
+      throw error
+    }
   })
   .openapi(updateAnonymousProfileRoute, async (c) => {
     const { id } = c.req.valid('param')
-    const { isActive } = c.req.valid('json')
+    const data = c.req.valid('json')
 
     if (process.env.MOCK_MODE === 'true') {
       const profile = MOCK_ANONYMOUS_PROFILES.find((p) => p.id === id)
       if (!profile) return c.json({ error: 'Not found' }, 404)
-      return c.json({ profile: { ...profile, isActive } }, 200)
+      return c.json({ profile: { ...profile, ...data } }, 200)
     }
 
     const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
     if (!existing) return c.json({ error: 'Not found' }, 404)
 
-    const profile = await prisma.anonymousProfile.update({ where: { id }, data: { isActive } })
+    if (data.avatarUrls) {
+      const isSameAvatarSet =
+        data.avatarUrls.length === existing.avatarUrls.length &&
+        [...data.avatarUrls]
+          .sort()
+          .every((url, index) => url === [...existing.avatarUrls].sort()[index])
+      if (!isSameAvatarSet)
+        return c.json({ error: '登録済みのアバターだけを並べ替えられます' }, 400)
+    }
+
+    const profile = await prisma.anonymousProfile.update({ where: { id }, data })
     return c.json({ profile }, 200)
+  })
+  .openapi(uploadAnonymousProfileAvatarRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const { file } = c.req.valid('form')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const profile = MOCK_ANONYMOUS_PROFILES.find((item) => item.id === id)
+      if (!profile) return c.json({ error: 'Not found' }, 404)
+      return c.json(
+        {
+          profile: {
+            ...profile,
+            avatarUrls: [...profile.avatarUrls, '/anonymous-profiles/new.svg'],
+          },
+        },
+        200,
+      )
+    }
+
+    const existing = await prisma.anonymousProfile.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+    if (existing.avatarUrls.length >= 20) {
+      return c.json({ error: 'アバターは20枚までです' }, 400)
+    }
+
+    let image: Buffer
+    try {
+      image = await processAvatarImage(Buffer.from(await file.arrayBuffer()))
+    } catch (error) {
+      if (error instanceof UnsupportedImageError) return c.json({ error: error.message }, 400)
+      if (error instanceof AvatarProcessingError) return c.json({ error: error.message }, 422)
+      throw error
+    }
+
+    try {
+      const avatarUrl = await uploadAnonymousProfileAvatar(id, image)
+      const profile = await prisma.anonymousProfile.update({
+        where: { id },
+        data: { avatarUrls: { push: avatarUrl } },
+      })
+      return c.json({ profile }, 200)
+    } catch (error) {
+      if (error instanceof AnonymousProfileAvatarUploadError) {
+        return c.json({ error: '画像のアップロードに失敗しました' }, 502)
+      }
+      throw error
+    }
   })
   .openapi(deleteAnonymousProfileRoute, async (c) => {
     const { id } = c.req.valid('param')
@@ -826,6 +981,59 @@ export const adminRoute = $(
     }
     return c.json({ success: true }, 200)
   })
+  .openapi(listTagCategoriesRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ categories: MOCK_TAG_CATEGORIES }, 200)
+    }
+    const categories = await prisma.tagCategory.findMany({ orderBy: { name: 'asc' } })
+    return c.json({ categories }, 200)
+  })
+  .openapi(createTagCategoryRoute, async (c) => {
+    const data = c.req.valid('json')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json(
+        {
+          category: {
+            id: `tag-category-${MOCK_TAG_CATEGORIES.length + 1}`,
+            ...data,
+            createdAt: new Date(),
+          },
+        },
+        201,
+      )
+    }
+
+    try {
+      const category = await prisma.tagCategory.create({ data })
+      return c.json({ category }, 201)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ error: '同じ名前のカテゴリーがすでに存在します' }, 409)
+      }
+      throw error
+    }
+  })
+  .openapi(deleteTagCategoryRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ success: true }, 200)
+    }
+
+    const existing = await prisma.tagCategory.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    try {
+      await prisma.tagCategory.delete({ where: { id } })
+      return c.json({ success: true }, 200)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json({ error: 'このカテゴリーを使用しているタグがあるため削除できません' }, 409)
+      }
+      throw error
+    }
+  })
   .openapi(listTagsRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
       return c.json({ tags: MOCK_TAGS }, 200)
@@ -834,21 +1042,89 @@ export const adminRoute = $(
     return c.json({ tags }, 200)
   })
   .openapi(createTagRoute, async (c) => {
-    const data = c.req.valid('json')
+    const { description, ...data } = c.req.valid('json')
+    const tagData = { ...data, description: description || null }
 
     if (process.env.MOCK_MODE === 'true') {
       return c.json(
-        { tag: { id: `tag-${MOCK_TAGS.length + 1}`, ...data, createdAt: new Date() } },
+        { tag: { id: `tag-${MOCK_TAGS.length + 1}`, ...tagData, createdAt: new Date() } },
         201,
       )
     }
 
     try {
-      const tag = await prisma.tag.create({ data })
+      const tag = await prisma.tag.create({ data: tagData })
       return c.json({ tag }, 201)
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         return c.json({ error: '同じ名前のタグがすでに存在します' }, 409)
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json({ error: '指定されたカテゴリーが見つかりません' }, 409)
+      }
+      throw error
+    }
+  })
+  .openapi(updateTagRoute, async (c) => {
+    const { id } = c.req.valid('param')
+    const { description, ...data } = c.req.valid('json')
+    const tagData = { ...data, description: description || null }
+
+    if (process.env.MOCK_MODE === 'true') {
+      const existing = MOCK_TAGS.find((tag) => tag.id === id)
+      if (!existing) return c.json({ error: 'Not found' }, 404)
+      return c.json({ tag: { ...existing, ...tagData } }, 200)
+    }
+
+    const existing = await prisma.tag.findUnique({ where: { id } })
+    if (!existing) return c.json({ error: 'Not found' }, 404)
+
+    if (existing.category !== tagData.category) {
+      const [postConflict, hirobaConflict] = await Promise.all([
+        tagData.isWorkTag
+          ? prisma.postTag.findFirst({
+              where: {
+                tagId: id,
+                post: {
+                  tags: { some: { tagId: { not: id }, tag: { category: tagData.category } } },
+                },
+              },
+              select: { id: true },
+            })
+          : null,
+        prisma.hirobaPostTag.findFirst({
+          where: {
+            tagId: id,
+            hirobaPost: {
+              tags: { some: { tagId: { not: id }, tag: { category: tagData.category } } },
+            },
+          },
+          select: { id: true },
+        }),
+      ])
+      if (postConflict || hirobaConflict) {
+        return c.json(
+          { error: 'カテゴリー変更により1つの投稿へ同じカテゴリーのタグが複数割り当てられます' },
+          409,
+        )
+      }
+    }
+
+    try {
+      const tag =
+        existing.isWorkTag && !tagData.isWorkTag
+          ? await prisma.$transaction(async (tx) => {
+              await tx.postTag.deleteMany({ where: { tagId: id } })
+              return tx.tag.update({ where: { id }, data: tagData })
+            })
+          : await prisma.tag.update({ where: { id }, data: tagData })
+      return c.json({ tag }, 200)
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        return c.json({ error: '同じ名前のタグがすでに存在します' }, 409)
+      }
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        return c.json({ error: '指定されたカテゴリーが見つかりません' }, 409)
       }
       throw error
     }
@@ -865,4 +1141,17 @@ export const adminRoute = $(
 
     await prisma.tag.delete({ where: { id } })
     return c.json({ success: true }, 200)
+  })
+  .openapi(listHirobasRoute, async (c) => {
+    if (process.env.MOCK_MODE === 'true') {
+      return c.json({ hirobas: MOCK_HIROBAS }, 200)
+    }
+    const hirobas = await prisma.hiroba.findMany({
+      where: { slug: { in: HIROBA_CATALOG.map((hiroba) => hiroba.slug) } },
+    })
+    const bySlug = new Map(hirobas.map((hiroba) => [hiroba.slug, hiroba]))
+    return c.json(
+      { hirobas: HIROBA_CATALOG.flatMap((hiroba) => bySlug.get(hiroba.slug) ?? []) },
+      200,
+    )
   })

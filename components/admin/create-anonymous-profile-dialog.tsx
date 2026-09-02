@@ -26,7 +26,7 @@ import {
 type AnonymousProfile = {
   id: string
   displayName: string
-  avatarUrl: string
+  avatarUrls: string[]
   isActive: boolean
   createdAt: Date | string
 }
@@ -41,6 +41,7 @@ export function CreateAnonymousProfileDialog({ onCreated }: CreateAnonymousProfi
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<CreateAnonymousProfileInput>({
     resolver: zodResolver(createAnonymousProfileSchema),
@@ -58,6 +59,7 @@ export function CreateAnonymousProfileDialog({ onCreated }: CreateAnonymousProfi
       const body = await res.json()
       const message =
         'error' in body && typeof body.error === 'string' ? body.error : '追加に失敗しました'
+      if (res.status === 409) setError('displayName', { type: 'server', message })
       toast.error(message)
       return
     }
@@ -66,6 +68,7 @@ export function CreateAnonymousProfileDialog({ onCreated }: CreateAnonymousProfi
     onCreated({
       ...profile,
       isActive: profile.isActive ?? true,
+      avatarUrls: profile.avatarUrls ?? [],
       createdAt: profile.createdAt ?? new Date(),
     })
     toast.success('匿名キャラを追加しました')
@@ -102,18 +105,9 @@ export function CreateAnonymousProfileDialog({ onCreated }: CreateAnonymousProfi
               <p className="text-sm text-destructive">{errors.displayName.message}</p>
             )}
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="anon-avatar-url">アイコンURL</Label>
-            <Input
-              id="anon-avatar-url"
-              placeholder="/anonymous-profiles/rabbit.svg"
-              {...register('avatarUrl')}
-              aria-invalid={!!errors.avatarUrl}
-            />
-            {errors.avatarUrl && (
-              <p className="text-sm text-destructive">{errors.avatarUrl.message}</p>
-            )}
-          </div>
+          <p className="text-sm text-muted-foreground">
+            作成後にアバター画像を複数アップロードできます。並び順が #1、#2、#3… に対応します。
+          </p>
           <DialogFooter>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? '追加中...' : '追加する'}
