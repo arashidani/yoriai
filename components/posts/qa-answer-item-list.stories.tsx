@@ -5,7 +5,7 @@ import { MOCK_ANSWERS } from '@/lib/mocks/fixtures'
 import { getIbjCareerName } from '@/lib/users/ibj-career'
 import { QaAnswerItemList } from './qa-answer-item-list'
 
-const answers = MOCK_ANSWERS.map((answer, index) => ({
+const answers = MOCK_ANSWERS.filter((answer) => !answer.isHidden).map((answer, index) => ({
   id: answer.id,
   body: answer.body,
   likeCount: index === 0 ? 0 : answer.likeCount,

@@ -515,6 +515,20 @@ export const MOCK_ANSWERS = [
     createdAt: new Date('2024-01-12T02:00:00Z'),
     updatedAt: new Date('2024-01-12T02:00:00Z'),
   },
+  {
+    id: 'answer-hidden',
+    postId: 'post-deleted',
+    authorId: 'user-2',
+    author: MOCK_USERS[1],
+    body: '非表示になった回答です。',
+    anonymousProfile: MOCK_ANONYMOUS_PROFILES[0],
+    isHidden: true,
+    hiddenAt: new Date('2024-01-14T01:00:00Z'),
+    hiddenReason: 'AIによる自動検出',
+    likeCount: 0,
+    createdAt: new Date('2024-01-14T00:30:00Z'),
+    updatedAt: new Date('2024-01-14T01:00:00Z'),
+  },
 ]
 
 export const MOCK_NOTIFICATIONS = [
@@ -583,14 +597,14 @@ export const MOCK_NOTIFICATIONS = [
 export const MOCK_AI_FLAGS = [
   {
     id: 'flag-1',
-    title: '不適切な投稿の可能性: 有給休暇の申請方法を教えてください',
+    title: '不適切な投稿の可能性: 削除済みの質問',
     detail: '投稿内に、脅迫・ハラスメントとみられる表現が含まれています',
     severity: FlagSeverity.HIGH,
     status: FlagStatus.UNREAD,
     targetUserId: 'user-1',
     targetUser: MOCK_USERS[0],
-    postId: 'post-1',
-    post: MOCK_POSTS[0],
+    postId: 'post-deleted',
+    post: MOCK_POSTS[5],
     answerId: null,
     answer: null,
     createdAt: new Date('2024-01-10'),
@@ -605,8 +619,8 @@ export const MOCK_AI_FLAGS = [
     targetUser: MOCK_USERS[1],
     postId: null,
     post: null,
-    answerId: null,
-    answer: null,
+    answerId: 'answer-hidden',
+    answer: MOCK_ANSWERS[2],
     createdAt: new Date('2024-01-11'),
   },
   {

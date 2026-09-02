@@ -30,7 +30,7 @@ type AiFlag = {
   status: 'UNREAD' | 'CONFIRMED'
   targetUser: { name: string | null } | null
   post: { id: string; title: string; deletedAt: Date | string | null } | null
-  answer: { id: string; body: string; isHidden: boolean } | null
+  answer: { id: string; postId: string; body: string; isHidden: boolean } | null
   createdAt: Date | string
 }
 
@@ -170,7 +170,7 @@ export function AiFlagList() {
                 </p>
                 {flag.post && (
                   <Link
-                    href={`/posts/${flag.post.id}`}
+                    href={`/admin/posts/${flag.post.id}`}
                     className="inline-block text-xs underline underline-offset-4 text-muted-foreground hover:text-primary"
                   >
                     該当の投稿を見る: {flag.post.title}
@@ -183,6 +183,14 @@ export function AiFlagList() {
                   <p className="text-xs text-muted-foreground line-clamp-2">
                     該当の回答: {stripMarkdown(flag.answer.body)}
                   </p>
+                )}
+                {flag.answer && (
+                  <Link
+                    href={`/admin/posts/${flag.answer.postId}#answer-${flag.answer.id}`}
+                    className="inline-block text-xs underline underline-offset-4 text-muted-foreground hover:text-primary"
+                  >
+                    該当の回答を見る
+                  </Link>
                 )}
                 {flag.answer?.isHidden && (
                   <p className="text-xs text-destructive">この回答は自動的に非表示になっています</p>

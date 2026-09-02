@@ -306,6 +306,22 @@ export const AiFlagSchema = z
   })
   .openapi('AiFlag')
 
+/** 管理者の投稿確認画面用。非表示の回答も含め、実名の投稿者と非表示理由を返す。 */
+export const AdminModerationAnswerSchema = AnswerSchema.extend({
+  authorId: z.string().nullable().openapi({ example: 'user-2' }),
+  author: z.union([UserSchema, z.null()]).optional(),
+  hiddenAt: z.union([dateTime(), z.null()]).optional(),
+  hiddenReason: z.string().nullable().optional().openapi({ example: 'AIによる自動検出' }),
+}).openapi('AdminModerationAnswer')
+
+export const AdminPostDetailSchema = z
+  .object({
+    post: PostSchema,
+    answers: z.array(AdminModerationAnswerSchema),
+    flags: z.array(AiFlagSchema),
+  })
+  .openapi('AdminPostDetail')
+
 export const InviteSchema = z
   .object({
     name: z.string().nullable().openapi({ example: '山田 太郎（仮）' }),

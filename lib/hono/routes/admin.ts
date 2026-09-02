@@ -8,6 +8,7 @@ import { HIROBA_CATALOG } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
+  AdminPostDetailSchema,
   AdminTagSchema,
   AiFlagSchema,
   AnonymousProfileSchema,
@@ -43,6 +44,7 @@ import {
 import { prisma } from '@/lib/prisma/client'
 import {
   toAdminAnswerResponse,
+  toAdminModerationAnswerResponse,
   toAnswerAnonymousProfileResponse,
 } from '@/lib/questions/admin-answer-response'
 import {
@@ -68,6 +70,41 @@ function inviteStatus(invite: InviteStatusSource): 'PENDING' | 'USED' | 'EXPIRED
   if (invite.usedAt) return 'USED'
   if (invite.expiresAt < new Date()) return 'EXPIRED'
   return 'PENDING'
+}
+
+function toMockAdminModerationAnswer(answer: (typeof MOCK_ANSWERS)[number]) {
+  return {
+    id: answer.id,
+    postId: answer.postId,
+    body: answer.body,
+    isHidden: answer.isHidden,
+    likeCount: answer.likeCount,
+    anonymousProfile: toAnswerAnonymousProfileResponse(answer.anonymousProfile),
+    createdAt: answer.createdAt,
+    updatedAt: answer.updatedAt,
+    authorId: answer.authorId,
+    author: answer.author,
+    hiddenAt: 'hiddenAt' in answer ? (answer.hiddenAt ?? null) : null,
+    hiddenReason: 'hiddenReason' in answer ? (answer.hiddenReason ?? null) : null,
+  }
+}
+
+function toMockAiFlagResponse(flag: (typeof MOCK_AI_FLAGS)[number]) {
+  return {
+    ...flag,
+    answer: flag.answer
+      ? {
+          id: flag.answer.id,
+          postId: flag.answer.postId,
+          body: flag.answer.body,
+          isHidden: flag.answer.isHidden,
+          likeCount: flag.answer.likeCount,
+          anonymousProfile: toAnswerAnonymousProfileResponse(flag.answer.anonymousProfile),
+          createdAt: flag.answer.createdAt,
+          updatedAt: flag.answer.updatedAt,
+        }
+      : null,
+  }
 }
 
 const ANONYMOUS_PROFILE_DISPLAY_NAME_CONFLICT_MESSAGE =
@@ -190,6 +227,24 @@ const listPostsRoute = createRoute({
     },
     401: errorResponse('未認証', 'Unauthorized'),
     403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+  },
+})
+
+const getPostRoute = createRoute({
+  method: 'get',
+  path: '/posts/{id}',
+  tags: ['admin'],
+  summary: '非表示投稿を含む投稿詳細を取得（管理者専用）',
+  security,
+  request: { params: IdParamSchema },
+  responses: {
+    200: {
+      description: '投稿詳細',
+      content: { 'application/json': { schema: AdminPostDetailSchema } },
+    },
+    401: errorResponse('未認証', 'Unauthorized'),
+    403: errorResponse('権限不足（管理者専用）', 'Forbidden'),
+    404: errorResponse('投稿が見つからない', 'Not found'),
   },
 })
 
@@ -667,6 +722,59 @@ export const adminRoute = $(
     })
     return c.json({ posts }, 200)
   })
+  .openapi(getPostRoute, async (c) => {
+    const { id } = c.req.valid('param')
+
+    if (process.env.MOCK_MODE === 'true') {
+      const post = MOCK_POSTS.find((item) => item.id === id)
+      if (!post) return c.json({ error: 'Not found' }, 404)
+      const answers = MOCK_ANSWERS.filter((answer) => answer.postId === id).map(
+        toMockAdminModerationAnswer,
+      )
+      const flags = MOCK_AI_FLAGS.filter(
+        (flag) => flag.postId === id || answers.some((answer) => answer.id === flag.answerId),
+      ).map(toMockAiFlagResponse)
+      return c.json({ post, answers, flags }, 200)
+    }
+
+    const post = await prisma.post.findUnique({
+      where: { id },
+      include: {
+        author: true,
+        answers: {
+          include: {
+            author: true,
+            postAnonymousProfile: { include: { anonymousProfile: true } },
+          },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        },
+      },
+    })
+    if (!post) return c.json({ error: 'Not found' }, 404)
+
+    const flags = await prisma.aiFlag.findMany({
+      where: { OR: [{ postId: id }, { answer: { postId: id } }] },
+      include: {
+        targetUser: true,
+        post: true,
+        answer: { include: { postAnonymousProfile: { include: { anonymousProfile: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const { answers, ...postData } = post
+    return c.json(
+      {
+        post: postData,
+        answers: answers.map(toAdminModerationAnswerResponse),
+        flags: flags.map((flag) => ({
+          ...flag,
+          answer: flag.answer ? toAdminAnswerResponse(flag.answer) : null,
+        })),
+      },
+      200,
+    )
+  })
   .openapi(deletePostRoute, async (c) => {
     const { id } = c.req.valid('param')
 
@@ -801,7 +909,7 @@ export const adminRoute = $(
   })
   .openapi(listAiFlagsRoute, async (c) => {
     if (process.env.MOCK_MODE === 'true') {
-      return c.json({ flags: MOCK_AI_FLAGS }, 200)
+      return c.json({ flags: MOCK_AI_FLAGS.map(toMockAiFlagResponse) }, 200)
     }
     const flags = await prisma.aiFlag.findMany({
       include: {
@@ -827,7 +935,7 @@ export const adminRoute = $(
     if (process.env.MOCK_MODE === 'true') {
       const flag = MOCK_AI_FLAGS.find((f) => f.id === id)
       if (!flag) return c.json({ error: 'Not found' }, 404)
-      return c.json({ flag: { ...flag, status: FlagStatus.CONFIRMED } }, 200)
+      return c.json({ flag: { ...toMockAiFlagResponse(flag), status: FlagStatus.CONFIRMED } }, 200)
     }
 
     const flag = await prisma.aiFlag.update({

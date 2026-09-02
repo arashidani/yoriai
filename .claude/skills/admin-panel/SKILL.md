@@ -38,6 +38,7 @@ app/(admin)/admin/
 ├── badge/page.tsx, badge/create/page.tsx
 ├── mission/page.tsx, mission/create/page.tsx
 ├── ai-flags/page.tsx      → AiFlagList（確認済みにするボタン付き）
+├── posts/[id]/page.tsx    → 非表示投稿を含む管理者専用の投稿確認（AIフラグから遷移）
 └── tags/page.tsx          → TagList（作成・削除、Gemini自動付与の対象マスタ）
 ```
 
@@ -145,7 +146,7 @@ Badge/Missionは一覧・作成のみ（更新・削除は無い、リネーム�
 - `MOCK_MODE === 'true'` のときは Prisma 呼び出し前に早期returnするため、Gemini は一切呼ばれない（既存の MOCK_MODE パターンをそのまま踏襲）。
 - 必要な環境変数: `GEMINI_API_KEY`（サーバー専用、`requireEnv()` 経由）。取得は https://aistudio.google.com/apikey 。無料枠あり。
 - **地雷**: Google Cloud Console でAPIキーの制限をかける場合、選択すべきAPIは「Generative Language API」（AI Studioキー用）であり、「Gemini API」（Vertex AI用、サービスアカウント認証が必要）ではない。プロジェクトで有効化していないと制限リストに出てこない。それでも `API_KEY_SERVICE_BLOCKED` が出る場合は https://aistudio.google.com/apikey で新規キーを発行するのが最速（正しいAPIが自動で有効化された状態のプロジェクトが作られる）。
-- admin ai-flags 一覧（`components/admin/ai-flag-list.tsx`）は `flag.post` があれば投稿へのリンクと `DeletePostButton`（`components/posts/delete-post-button.tsx`）を表示する。投稿削除に成功すると `postId` カスケードでサーバー側のフラグ行も消えるため、フロントは楽観的にローカルの `flags` state から該当フラグを取り除くだけでよい。
+- admin ai-flags 一覧（`components/admin/ai-flag-list.tsx`）は `flag.post` があれば管理者専用の投稿確認画面（`/admin/posts/[id]`）へのリンクと `DeletePostButton`（`components/posts/delete-post-button.tsx`）を表示する。非表示投稿の本文は公開の `/posts/[id]` ではなくこの管理者画面で確認する。投稿削除に成功すると `postId` カスケードでサーバー側のフラグ行も消えるため、フロントは楽観的にローカルの `flags` state から該当フラグを取り除くだけでよい。
 
 ## 6.5 投稿削除（管理者専用アイコン）
 
@@ -170,7 +171,7 @@ Badge/Missionは一覧・作成のみ（更新・削除は無い、リネーム�
 
 ## 7. このセッションで踏んだ地雷（再発防止）
 
-- **`process.env.MOCK_MODE === 'true'` の分岐は本番ビルド時に静的評価される。** Server Component が `cookies()` を呼ぶ関数（例: `getCurrentUser()`）を、その関数内で `MOCK_MODE` 分岐より後に呼んでいると、ビルド時 `MOCK_MODE=true` だと dead-code除去されて該当ページが「静的」と誤判定されることがある。管理者ページのように毎回最新データを出したいページには `export const dynamic = 'force-dynamic'` を明示する（本セッションでは dashboard/badge/mission/ai-flags に付与）。ビルド後の `Route (app)` 表に `○`(static) と出たら疑う。
+- **`process.env.MOCK_MODE === 'true'` の分岐は本番ビルド時に静的評価される。** Server Component が `cookies()` を呼ぶ関数（例: `getCurrentUser()`）を、その関数内で `MOCK_MODE` 分岐より後に呼んでいると、ビルド時 `MOCK_MODE=true` だと dead-code除去されて該当ページが「静的」と誤判定されることがある。管理者ページのように毎回最新データを出したいページには `export const dynamic = 'force-dynamic'` を明示する（本セッションでは dashboard/badge/mission/ai-flags/posts に付与）。ビルド後の `Route (app)` 表に `○`(static) と出たら疑う。
 - **Hono RPCクライアントでダッシュ入りパスセグメントやネストしたパラメータは bracket記法。** 例: `client.api.admin['ai-flags'][':id'].$patch(...)`、`client.api.admin.users[':id']['password-resets'].$post(...)`。
 - **`scripts/*.ts` を `tsx` で直接実行すると `.env.local` は自動で読み込まれない。** Next.js内部やPrisma CLIは自前でdotenvを読むが、単体スクリプトは `npx tsx -r dotenv/config scripts/foo.ts ... dotenv_config_path=.env.local` のように明示的にpreloadする。
 - **`useSearchParams()` を使うクライアントページは `<Suspense>` で包む。**（`/register`・`/reset-password` 参照）

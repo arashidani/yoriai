@@ -1,0 +1,20 @@
+---
+description: ブラウザでログインするとき、auth.json の users から対象ユーザーを選んで適用する
+alwaysApply: false
+---
+
+# ローカルログイン（auth.json）
+
+`auth.json` はローカル専用の認証情報。コミットしない。実ファイルがなければ `auth.json.example` をコピーする。
+
+## 形式
+
+- `users`: `id` / `userName`（メール）/ `pass` の配列
+- `active`: 使うユーザーの `id`
+
+## 適用
+
+1. `auth.json` を読む
+2. ユーザー指定があればその `id`、なければ `active` のユーザーを使う
+3. `/login` で `userName` と `pass` を入力してログインする
+4. 別ユーザーに切り替えるときは一度ログアウトしてから、指定の `id` でやり直す

@@ -1141,6 +1141,107 @@
           "updatedAt"
         ]
       },
+      "AdminPostDetail": {
+        "type": "object",
+        "properties": {
+          "post": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminModerationAnswer"
+            }
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiFlag"
+            }
+          }
+        },
+        "required": [
+          "post",
+          "answers",
+          "flags"
+        ]
+      },
+      "AdminModerationAnswer": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Answer"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "authorId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "user-2"
+              },
+              "author": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/User"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hiddenAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-01-01T00:00:00.000Z"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hiddenReason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "AIによる自動検出"
+              }
+            },
+            "required": [
+              "authorId"
+            ]
+          }
+        ]
+      },
+      "AnswerAnonymousProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "anon-1"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "ねこ#2"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "/anonymous-profiles/cat.svg"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "avatarUrl"
+        ]
+      },
       "Answer": {
         "type": "object",
         "properties": {
@@ -1187,31 +1288,6 @@
           "likeCount",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "AnswerAnonymousProfile": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "anon-1"
-          },
-          "displayName": {
-            "type": "string",
-            "example": "ねこ#2"
-          },
-          "avatarUrl": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "/anonymous-profiles/cat.svg"
-          }
-        },
-        "required": [
-          "id",
-          "displayName",
-          "avatarUrl"
         ]
       },
       "AiFlag": {
@@ -5898,6 +5974,79 @@
       }
     },
     "/api/admin/posts/{id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "非表示投稿を含む投稿詳細を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "投稿詳細",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPostDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "admin"
@@ -7714,8 +7863,7 @@
                   "error": "Unauthorized"
                 }
               }
-            }
-          },
+            }          },
           "500": {
             "description": "ユーザー情報の保存に失敗した",
             "content": {
