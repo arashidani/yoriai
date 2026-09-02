@@ -7715,6 +7715,19 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "ユーザー情報の保存に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ユーザー情報の保存に失敗しました"
+                }
+              }
+            }
           }
         }
       }
