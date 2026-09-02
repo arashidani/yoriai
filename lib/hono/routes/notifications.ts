@@ -1,5 +1,6 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import type { Prisma } from '@/app/generated/prisma/client'
+import { toPublicPostAuthor } from '@/lib/hiroba/api-response'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import {
@@ -58,7 +59,7 @@ type NotificationWithRelations = Prisma.NotificationGetPayload<{
 }>
 
 function toNotificationPostResponse(
-  post: NotificationWithRelations['post'],
+  post: { id: string; title: string } | null | undefined,
 ): { id: string; title: string } | null {
   return post ? { id: post.id, title: post.title } : null
 }
@@ -68,6 +69,40 @@ const toNotificationResponse = (notification: NotificationWithRelations) => ({
   post: toNotificationPostResponse(notification.post),
   answer: notification.answer ? toAdminAnswerResponse(notification.answer) : null,
 })
+
+type MockNotification = (typeof MOCK_NOTIFICATIONS)[number]
+
+function toMockNotificationResponse(notification: MockNotification, isRead: boolean) {
+  const answer = notification.answer
+  return {
+    id: notification.id,
+    userId: notification.userId,
+    type: notification.type,
+    postId: notification.postId,
+    post: toNotificationPostResponse(notification.post),
+    answerId: notification.answerId,
+    answer: answer
+      ? {
+          id: answer.id,
+          postId: answer.postId,
+          body: answer.body,
+          isHidden: answer.isHidden,
+          likeCount: answer.likeCount,
+          anonymousProfile: toAnswerAnonymousProfileResponse(answer.anonymousProfile),
+          createdAt: answer.createdAt,
+          updatedAt: answer.updatedAt,
+        }
+      : null,
+    hirobaPostId: notification.hirobaPostId,
+    hirobaPost: notification.hirobaPost
+      ? { ...notification.hirobaPost, author: toPublicPostAuthor(notification.hirobaPost.author) }
+      : null,
+    hirobaAnswerId: notification.hirobaAnswerId,
+    hirobaAnswer: notification.hirobaAnswer,
+    isRead,
+    createdAt: notification.createdAt,
+  }
+}
 
 const listRoute = createRoute({
   method: 'get',
@@ -158,23 +193,9 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       const start = cursor ? notifications.findIndex((item) => item.id === cursor) + 1 : 0
       const page = notifications.slice(start, start + limit + 1)
       const hasNextPage = page.length > limit
-      const items = page.slice(0, limit).map((notification) => {
-        const isRead = isMockNotificationRead(notification)
-        const base = {
-          ...notification,
-          isRead,
-          post: toNotificationPostResponse(notification.post),
-        }
-        if (!notification.answer) return base
-        const { anonymousProfile, ...answer } = notification.answer
-        return {
-          ...base,
-          answer: {
-            ...answer,
-            anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
-          },
-        }
-      })
+      const items = page.slice(0, limit).map((notification) =>
+        toMockNotificationResponse(notification, isMockNotificationRead(notification)),
+      )
       return c.json(
         {
           notifications: items,
@@ -242,27 +263,7 @@ export const notificationsRoute = new OpenAPIHono<{ Variables: AuthVariables }>(
       if (!notification) return c.json({ error: 'Not found' }, 404)
       if (notification.userId !== user.id) return c.json({ error: 'Forbidden' }, 403)
       mockReadNotificationIds.add(id)
-      if (!notification.answer) {
-        return c.json(
-          { notification: toNotificationResponse({ ...notification, isRead: true }) },
-          200,
-        )
-      }
-      const { anonymousProfile, ...answer } = notification.answer
-      return c.json(
-        {
-          notification: {
-            ...notification,
-            isRead: true,
-            post: toNotificationPostResponse(notification.post),
-            answer: {
-              ...answer,
-              anonymousProfile: toAnswerAnonymousProfileResponse(anonymousProfile),
-            },
-          },
-        },
-        200,
-      )
+      return c.json({ notification: toMockNotificationResponse(notification, true) }, 200)
     }
 
     const notification = await prisma.notification.findUnique({

@@ -82,6 +82,7 @@ Prisma モデル: `User` `Post` `Badge` `Mission` `AiFlag` `Tag` `PostTag` `Invi
   → 有効なら name（招待のnameを初期値、編集可）・email・password を本人が入力
   → supabase.auth.signUp（クライアント側、anon keyのみで完結。service role key 不要）
   → POST /api/users { name, inviteToken } → 招待を検証・usedAt をマーク・Prisma User作成（roleは招待から）
+  → POST /api/users 失敗時はサーバー側で Auth ユーザーを補償削除する
 ```
 
 `GET /api/admin/invites`（管理者専用一覧）はステータスをサーバー側で計算して返す（`PENDING` / `USED` / `EXPIRED`）。フロントで日付比較をしない。
