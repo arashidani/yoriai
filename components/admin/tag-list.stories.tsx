@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
-import { expect } from 'storybook/test'
+import { expect, fn, screen, waitFor } from 'storybook/test'
 import { TagList } from './tag-list'
 
 const meta = {
@@ -71,5 +71,46 @@ export const Empty: Story = {
   },
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('まだタグがありません')).toBeVisible()
+  },
+}
+
+const deleteTagSpy = fn()
+
+export const DeleteRequiresConfirmation: Story = {
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/admin/tags', () => HttpResponse.json({ tags })),
+        http.get('/api/admin/tag-categories', () => HttpResponse.json({ categories })),
+        http.delete('/api/admin/tags/:id', ({ params }) => {
+          deleteTagSpy(params.id)
+          return HttpResponse.json({ success: true })
+        }),
+      ],
+    },
+  },
+  play: async ({ canvas, userEvent }) => {
+    deleteTagSpy.mockClear()
+
+    await userEvent.click(await canvas.findByRole('button', { name: 'ランチを削除' }))
+    await waitFor(() => expect(screen.getByText('タグを削除しますか？')).toBeVisible())
+    await waitFor(() =>
+      expect(
+        screen.getByText(
+          '「ランチ」を削除します。このタグが付いている投稿からもタグが外れます。この操作は取り消せません。',
+        ),
+      ).toBeVisible(),
+    )
+    await expect(deleteTagSpy).not.toHaveBeenCalled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'キャンセル' }))
+    await waitFor(() => expect(screen.queryByText('タグを削除しますか？')).not.toBeInTheDocument())
+    await expect(deleteTagSpy).not.toHaveBeenCalled()
+    await expect(canvas.getByText('ランチ')).toBeVisible()
+
+    await userEvent.click(canvas.getByRole('button', { name: 'ランチを削除' }))
+    await userEvent.click(await screen.findByRole('button', { name: '削除する' }))
+    await waitFor(() => expect(deleteTagSpy).toHaveBeenCalledWith('tag-2'))
+    await expect(await screen.findByText('タグを削除しました')).toBeInTheDocument()
   },
 }
