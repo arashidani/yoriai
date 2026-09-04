@@ -23,7 +23,7 @@ import { createHirobaPostSchema } from '@/lib/schemas/hiroba'
 
 const auth = {
   security: [{ supabaseSession: [] }],
-  middleware: [authMiddleware] as const,
+  middleware: [authMiddleware],
 }
 
 const listRoute = createRoute({

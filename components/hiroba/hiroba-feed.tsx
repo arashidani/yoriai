@@ -148,8 +148,8 @@ export function HirobaFeed({ hiroba, posts, initialJoined, canJoin, isAdmin }: H
         body: post.body,
         imageUrl,
         authorId: post.authorId,
-        displayName:
-          post.author?.username ?? post.author?.name ?? post.author?.email ?? '削除されたユーザー',
+        // API のレスポンスは publicPostAuthorSelect なので email を含まない
+        displayName: post.author?.username ?? post.author?.name ?? '削除されたユーザー',
         displayNameColor: post.author?.displayNameColor ?? null,
         avatarUrl: post.author?.avatarUrl ?? null,
         lunchPreference: post.author?.lunchPreference ?? null,
