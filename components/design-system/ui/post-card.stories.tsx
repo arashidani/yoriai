@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
-import { expect, fn, screen } from 'storybook/test'
+import { expect, fn, screen, waitFor } from 'storybook/test'
 import { PostCard } from './post-card'
 
 const meta = {
@@ -139,7 +139,7 @@ export const AsAdmin: Story = {
   play: async ({ canvas, userEvent, args }) => {
     await userEvent.click(canvas.getByRole('button', { name: '投稿を削除' }))
     await userEvent.click(await screen.findByRole('button', { name: '削除する' }))
-    await expect(args.onDeleted).toHaveBeenCalledWith('hiroba-post-1')
+    await waitFor(() => expect(args.onDeleted).toHaveBeenCalledWith('hiroba-post-1'))
   },
 }
 

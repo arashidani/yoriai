@@ -2,9 +2,10 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FolderTree, Loader2, Trash2 } from 'lucide-react'
+import { FolderTree, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
+import { ConfirmDeleteButton } from '@/components/admin/confirm-delete-button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { client } from '@/lib/hono/client'
@@ -124,16 +125,13 @@ export function TagCategoryList() {
             <li key={category.id} className="flex items-center gap-3 rounded-lg border p-3">
               <FolderTree className="size-4 text-muted-foreground" />
               <span className="flex-1 font-medium">{category.name}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={`${category.name}を削除`}
+              <ConfirmDeleteButton
+                triggerLabel={`${category.name}を削除`}
+                title="カテゴリーを削除しますか？"
+                description={`「${category.name}」を削除します。このカテゴリーを使用しているタグがある場合は削除できません。この操作は取り消せません。`}
                 disabled={deleteMutation.isPending}
-                onClick={() => deleteMutation.mutate(category.id)}
-              >
-                <Trash2 />
-              </Button>
+                onConfirm={() => deleteMutation.mutateAsync(category.id)}
+              />
             </li>
           ))}
         </ul>
