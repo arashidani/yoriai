@@ -93,6 +93,43 @@ describe('authMiddleware', () => {
     await expect(response.json()).resolves.toEqual({ error: 'User not found' })
   })
 
+  it('user idを詐称するヘッダを付けても401になる', async () => {
+    getClaimsMock.mockResolvedValue({ data: null, error: { message: 'Invalid JWT' } })
+
+    const response = await app.request('/protected', {
+      headers: {
+        'x-internal-user-id': MOCK_USERS[0].id,
+        'x-user-id': MOCK_USERS[0].id,
+        'x-supabase-user-id': MOCK_USERS[0].supabaseId,
+      },
+    })
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({ error: 'Unauthorized' })
+    expect(findUniqueMock).not.toHaveBeenCalled()
+  })
+
+  it('ヘッダで別ユーザーを指定してもJWTのsubが優先される', async () => {
+    getClaimsMock.mockResolvedValue({
+      data: { claims: { sub: MOCK_USERS[1].supabaseId } },
+      error: null,
+    })
+    findUniqueMock.mockResolvedValue(MOCK_USERS[1])
+
+    const response = await app.request('/protected', {
+      headers: {
+        cookie: 'sb-example-auth-token=test-session',
+        'x-internal-user-id': MOCK_USERS[0].id,
+      },
+    })
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({ userId: MOCK_USERS[1].id })
+    expect(findUniqueMock).toHaveBeenCalledWith({
+      where: { supabaseId: MOCK_USERS[1].supabaseId },
+    })
+  })
+
   it('MOCK_MODEではSupabaseとDBを呼ばずに従来のユーザーを設定する', async () => {
     vi.stubEnv('MOCK_MODE', 'true')
 

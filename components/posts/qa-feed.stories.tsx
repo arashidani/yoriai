@@ -181,8 +181,8 @@ export const StatusFilter: Story = {
     await waitFor(() => expect(canvas.queryByText(/有給休暇の申請方法/)).not.toBeInTheDocument())
     await expect(canvas.queryByText(/Next\.js App Router/)).not.toBeInTheDocument()
 
-    const unanswered = canvas.getByRole('button', { name: '回答募集中' })
-    await userEvent.click(unanswered)
+    const openFilter = canvas.getByRole('button', { name: '回答募集中' })
+    await userEvent.click(openFilter)
     await expect(await canvas.findByText(/有給休暇の申請方法/)).toBeVisible()
     await waitFor(() =>
       expect(canvas.queryByText(/利用できる福利厚生を知りたい/)).not.toBeInTheDocument(),

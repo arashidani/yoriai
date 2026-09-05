@@ -9,7 +9,7 @@ import { QaFilterBar, type QuestionTagCategory } from './qa-filter-bar'
 
 const STATUS_FILTERS = [
   { id: 'all', label: '全て' },
-  { id: 'unanswered', label: '回答募集中' },
+  { id: 'open', label: '回答募集中' },
   { id: 'resolved', label: '解決済み' },
 ] as const
 

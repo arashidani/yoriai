@@ -117,7 +117,7 @@ export const PageQuerySchema = z.object({
 
 export const QuestionListQuerySchema = PageQuerySchema.extend({
   keyword: z.string().trim().max(100).optional(),
-  status: z.enum(['all', 'unanswered', 'resolved']).default('all'),
+  status: z.enum(['all', 'open', 'resolved']).default('all'),
   tagId: z.string().optional(),
   categoryIds: z.string().optional().openapi({ example: 'tag-category-1,tag-category-2' }),
   tagIds: z.string().optional().openapi({ example: 'tag-1,tag-2' }),

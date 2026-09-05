@@ -159,13 +159,13 @@ Query:
 - `page?: number`
 - `pageSize?: number`
 - `keyword?: string` — タイトル・本文の部分一致
-- `status?: all | unanswered | resolved`
+- `status?: all | open | resolved`
 - `tagId?: string`
 
 状態条件:
 
 - `all`: `OPEN`、`RESOLVED`
-- `unanswered`: `OPEN`（画面表示は「回答募集中」）
+- `open`: `OPEN`（画面表示は「回答募集中」）
 - `resolved`: `RESOLVED`
 
 Response `200`:

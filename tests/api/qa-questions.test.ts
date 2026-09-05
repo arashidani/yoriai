@@ -40,9 +40,7 @@ describe('Q&A API contract (MOCK_MODE)', () => {
   })
 
   it('keyword・status・tagIdで絞り込む', async () => {
-    const response = await app.request(
-      '/api/questions?keyword=経費精算&status=unanswered&tagId=tag-2',
-    )
+    const response = await app.request('/api/questions?keyword=経費精算&status=open&tagId=tag-2')
     const body = await response.json()
 
     expect(body.questions.map((question: { id: string }) => question.id)).toEqual(['post-2'])

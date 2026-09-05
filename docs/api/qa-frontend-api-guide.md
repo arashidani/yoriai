@@ -87,7 +87,7 @@ Query:
 - `page`（既定1）
 - `pageSize`（既定10、最大50）
 - `keyword`
-- `status`: `all | unanswered | resolved`
+- `status`: `all | open | resolved`
 - `tagId`
 
 Response: `{ questions: Question[], pagination: Pagination }`
