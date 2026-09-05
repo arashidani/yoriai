@@ -28,7 +28,7 @@ describe('moderatePost', () => {
 
     expect(generateContentMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.5-flash-lite',
         contents: 'タイトル: 質問タイトル\n本文: 質問本文',
         config: expect.objectContaining({
           systemInstruction: expect.stringMatching(/下品な表現.*公共の場で使うべきでない表現/),
