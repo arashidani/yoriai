@@ -6,7 +6,7 @@
 | --- | --- | --- | --- |
 | QA-001 | `GET /api/questions` | Queryなし | page=1、pageSize=10、単数 `tag` を返す |
 | QA-002 | 質問一覧 | `keyword` | タイトル・本文の部分一致だけ返す |
-| QA-003 | 質問一覧 | `status=unanswered` | `OPEN` だけ返す |
+| QA-003 | 質問一覧 | `status=open` | `OPEN` だけ返す |
 | QA-004 | 質問一覧 | `status=resolved` | `RESOLVED` だけ返す |
 | QA-005 | 質問一覧 | `tagId` | 対象PostTagを持つ質問だけ返す |
 | QA-006 | 質問一覧 | `page=2&pageSize=2` | 件数とpaginationが一致する |

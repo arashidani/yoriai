@@ -507,8 +507,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
       let questions = mockQuestions(user.id)
       if (keyword)
         questions = questions.filter((q) => q.title.includes(keyword) || q.body.includes(keyword))
-      if (status === 'unanswered')
-        questions = questions.filter((q) => q.status === QuestionStatus.OPEN)
+      if (status === 'open') questions = questions.filter((q) => q.status === QuestionStatus.OPEN)
       if (status === 'resolved')
         questions = questions.filter((q) => q.status === QuestionStatus.RESOLVED)
       if (tagId) questions = questions.filter((q) => mockPostHasTagId(q.id, tagId))
@@ -540,7 +539,7 @@ export const qaQuestionsRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ 
     const where: Prisma.PostWhereInput = {
       deletedAt: null,
       status:
-        status === 'unanswered'
+        status === 'open'
           ? QuestionStatus.OPEN
           : status === 'resolved'
             ? QuestionStatus.RESOLVED

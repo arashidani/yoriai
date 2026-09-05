@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type QaFeedStatusFilter = 'all' | 'unanswered' | 'resolved'
+export type QaFeedStatusFilter = 'all' | 'open' | 'resolved'
 
 const DEFAULT_STATE = {
   keyword: '',

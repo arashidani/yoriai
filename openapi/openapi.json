@@ -1895,7 +1895,7 @@
               "type": "string",
               "enum": [
                 "all",
-                "unanswered",
+                "open",
                 "resolved"
               ],
               "default": "all"
@@ -7863,7 +7863,8 @@
                   "error": "Unauthorized"
                 }
               }
-            }          },
+            }
+          },
           "500": {
             "description": "ユーザー情報の保存に失敗した",
             "content": {
