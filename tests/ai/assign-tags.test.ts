@@ -81,7 +81,7 @@ describe('assignTagsWithStatus', () => {
 
     expect(generateContentMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: 'gemini-3.5-flash',
+        model: 'gemini-3.5-flash-lite',
         contents:
           '候補タグ: [{"name":"給与","category":"人事","description":"給与計算や支給日の質問"},{"name":"その他（雑談に近い質問）","category":"その他","description":null}]\nタイトル: 給与の支給日\n本文: 今月の給与の支給日を教えてください',
       }),
