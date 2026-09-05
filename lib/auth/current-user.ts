@@ -1,6 +1,6 @@
 import { cache } from 'react'
+import { getUserBySupabaseId } from '@/lib/auth/user-lookup'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
 import { createClient } from '@/lib/supabase/server'
 
 export const getCurrentUser = cache(async () => {
@@ -9,10 +9,9 @@ export const getCurrentUser = cache(async () => {
   }
 
   const supabase = await createClient()
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-  if (!authUser) return null
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims()
+  const supabaseId = claimsData?.claims.sub
+  if (claimsError || !supabaseId) return null
 
-  return prisma.user.findUnique({ where: { supabaseId: authUser.id } })
+  return getUserBySupabaseId(supabaseId)
 })
