@@ -44,7 +44,7 @@ import {
 
 const auth = {
   security: [{ supabaseSession: [] }],
-  middleware: [authMiddleware] as const,
+  middleware: [authMiddleware],
 }
 
 async function getHirobaMentionCandidates(postId: string, viewerId: string) {

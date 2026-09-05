@@ -134,6 +134,9 @@ NEXT_PUBLIC_MOCK_MODE=true
 # Supabase 接続時に追加（MOCK_MODE / NEXT_PUBLIC_MOCK_MODE は削除する）
 # DATABASE_URL=postgresql://...
 # DIRECT_URL=postgresql://...
+
+# 1 インスタンスあたりの接続プール上限。未設定なら 3（「接続プールと接続先」を参照）
+# DATABASE_POOL_MAX=3
 # NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
 # NEXT_PUBLIC_SUPABASE_ANON_KEY=xxx
 
@@ -292,6 +295,21 @@ npm run openapi:generate
 1. 上記を参考に `.env.local` にキーを追加
 2. `MOCK_MODE=true` と `NEXT_PUBLIC_MOCK_MODE=true` を削除
 3. `npx prisma migrate dev` でマイグレーション実行
+
+### 接続プールと接続先
+
+`DATABASE_URL` は Supavisor の transaction pooler（`*.pooler.supabase.com:6543`）を指す。マイグレーション用の `DIRECT_URL` だけが直接接続（`db.*.supabase.co:5432`）でよい。Connect → ORMs → Prisma からコピーすればこの組み合わせになるが、取得時期によっては `DATABASE_URL` 側も 5432 になっていることがある。本番で直接接続を指している場合は、サーバー起動時に `[prisma] DATABASE_URL が Supabase の直接接続 ...` という警告がログに出る。
+
+`@prisma/adapter-pg` は `statementNameGenerator` を渡さない限り名前付き prepared statement を作らないため、transaction mode の pooler でもそのまま動く。`pgbouncer=true` のようなクエリパラメータは不要。
+
+プール上限は `lib/prisma/pool-config.ts` で明示している。デフォルトは 1 インスタンスあたり 3 本。
+
+- サーバーレス関数はインスタンスごとに独立したプールを持つので、DB への同時接続数は **同時に生きているインスタンス数 N × `max`** になる
+- 直接接続の `max_connections` は Small インスタンスで 60 前後、うち数本は管理用に予約されている。実質 50 本として `3 × N ≦ 50` → N ≦ 16 インスタンスまで耐える
+- transaction pooler のクライアント接続上限はこれより桁で大きいため、3 では当たらない
+- 1 本にするとインスタンス内の並列リクエストが直列化し、Like / Bookmark のような短いクエリでも待ち行列ができる
+
+プランや Compute サイズを変えたときは、Settings → Database の `max_connections` と上の式を突き合わせ、必要なら `DATABASE_POOL_MAX` で上書きする。
 
 ### メール確認を無効化する（社内ツール推奨）
 

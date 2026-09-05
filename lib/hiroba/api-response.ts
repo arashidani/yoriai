@@ -34,7 +34,24 @@ export function mapHirobaPostResponse(post: HirobaPostWithPublicAuthor) {
   }
 }
 
-export function toHirobaAnswerResponse(answer: HirobaAnswerWithPublicAuthor) {
+/**
+ * レスポンスに載せるフィールドだけを要求する。Prisma の行をそのまま渡すこともできるし、
+ * モックのように内部フィールド（`hiddenAt` など）を持たないデータも渡せる。
+ */
+export type HirobaAnswerResponseInput = Pick<
+  HirobaAnswerWithPublicAuthor,
+  | 'id'
+  | 'hirobaPostId'
+  | 'body'
+  | 'authorId'
+  | 'author'
+  | 'isHidden'
+  | 'likeCount'
+  | 'createdAt'
+  | 'updatedAt'
+>
+
+export function toHirobaAnswerResponse(answer: HirobaAnswerResponseInput) {
   return {
     id: answer.id,
     hirobaPostId: answer.hirobaPostId,
