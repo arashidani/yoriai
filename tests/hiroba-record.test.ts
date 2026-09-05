@@ -36,7 +36,7 @@ describe('ensureHirobaBySlug', () => {
     expect(prismaMock.hiroba.create).toHaveBeenCalledWith({
       data: {
         slug: 'mbti-green',
-        name: '緑の人の広場',
+        name: 'みどりの人',
         description: 'MBTIが緑グループの人のためのひろばです。',
       },
     })
