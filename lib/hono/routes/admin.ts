@@ -26,11 +26,6 @@ import {
 } from '@/lib/hono/openapi/schemas'
 import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_MESSAGE } from '@/lib/image/avatar-limits'
 import {
-  AvatarProcessingError,
-  processAvatarImage,
-  UnsupportedImageError,
-} from '@/lib/image/process-avatar'
-import {
   MOCK_AI_FLAGS,
   MOCK_ANONYMOUS_PROFILES,
   MOCK_ANSWERS,
@@ -1036,6 +1031,11 @@ export const adminRoute = $(
     if (existing.avatarUrls.length >= 20) {
       return c.json({ error: 'アバターは20枚までです' }, 400)
     }
+
+    // sharp は重いので、アバター画像を実際に処理するリクエストでのみ読み込む
+    const { processAvatarImage, UnsupportedImageError, AvatarProcessingError } = await import(
+      '@/lib/image/process-avatar'
+    )
 
     let image: Buffer
     try {
