@@ -116,7 +116,7 @@ export const mswHandlers = {
           (question) => question.title.includes(keyword) || question.body.includes(keyword),
         )
       }
-      if (status === 'unanswered') {
+      if (status === 'open') {
         questions = questions.filter((question) => question.status === 'OPEN')
       }
       if (status === 'resolved') {

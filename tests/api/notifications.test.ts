@@ -38,7 +38,7 @@ const postNotification = {
     title: '質問タイトル',
     body: '質問本文',
     authorId: 'user-1',
-    status: 'ANSWERED',
+    status: 'OPEN',
     answerCount: 1,
     likeCount: 0,
     resolvedAt: null,
