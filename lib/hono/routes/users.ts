@@ -1,6 +1,7 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
 import { createServerClient } from '@supabase/ssr'
 import { bodyLimit } from 'hono/body-limit'
+import type { User } from '@/app/generated/prisma/client'
 import { requireEnv } from '@/lib/env'
 import { DEFAULT_HIROBA_SLUGS } from '@/lib/hiroba/catalog'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
@@ -12,11 +13,6 @@ import {
   UserSchema,
 } from '@/lib/hono/openapi/schemas'
 import { AVATAR_MAX_BYTES, AVATAR_TOO_LARGE_MESSAGE } from '@/lib/image/avatar-limits'
-import {
-  AvatarProcessingError,
-  processAvatarImage,
-  UnsupportedImageError,
-} from '@/lib/image/process-avatar'
 import { MOCK_AVATAR_URL, MOCK_INVITES, MOCK_USER_PROFILE, MOCK_USERS } from '@/lib/mocks/fixtures'
 import { prisma } from '@/lib/prisma/client'
 import { updateUserProfile } from '@/lib/prisma/update-user-profile'
@@ -198,7 +194,7 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
 
     const now = new Date()
 
-    let user
+    let user: User | null
     try {
       user = await prisma.$transaction(async (tx) => {
         // usedAt/expiresAtを条件にした原子的な確保。同一トークンの並行リクエストでも1件しか成功しない
@@ -306,6 +302,12 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     }
 
     const original = Buffer.from(await file.arrayBuffer())
+
+    // sharp(+libvips) は18MB近くあり、関数の初期化時にロードするとコールドスタートが伸びる。
+    // アバターアップロード時にだけ必要なので、ここで動的に読み込む。
+    const { processAvatarImage, UnsupportedImageError, AvatarProcessingError } = await import(
+      '@/lib/image/process-avatar'
+    )
 
     let processed: Buffer
     try {
