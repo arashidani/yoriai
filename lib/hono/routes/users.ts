@@ -24,6 +24,7 @@ import { updateProfileSchema } from '@/lib/schemas/profile'
 import { COMPANY_EMAIL_ERROR, companyEmailSchema } from '@/lib/schemas/register'
 import { createUserSchema } from '@/lib/schemas/user'
 import { createSupabaseAdminClient } from '@/lib/supabase/admin'
+import { rollbackOrphanedAuthUser } from '@/lib/supabase/rollback-registration'
 import { AvatarUploadError, deleteAvatar, uploadAvatar } from '@/lib/supabase/storage/avatar'
 
 const createRoute_ = createRoute({
@@ -49,6 +50,7 @@ const createRoute_ = createRoute({
       '招待リンクが無効です',
     ),
     401: errorResponse('未認証', 'Unauthorized'),
+    500: errorResponse('ユーザー情報の保存に失敗した', 'ユーザー情報の保存に失敗しました'),
   },
 })
 
@@ -186,38 +188,48 @@ export const usersRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ defaul
     if (existing) return c.json({ user: existing }, 200)
 
     if (!authUser.email) {
+      await rollbackOrphanedAuthUser(authUser.id)
       return c.json({ error: 'Email not found' }, 400)
     }
     if (!companyEmailSchema.safeParse(authUser.email).success) {
+      await rollbackOrphanedAuthUser(authUser.id)
       return c.json({ error: COMPANY_EMAIL_ERROR }, 400)
     }
 
     const now = new Date()
 
-    const user = await prisma.$transaction(async (tx) => {
-      // usedAt/expiresAtを条件にした原子的な確保。同一トークンの並行リクエストでも1件しか成功しない
-      const claimed = await tx.invite.updateMany({
-        where: { token: inviteToken, usedAt: null, expiresAt: { gt: now } },
-        data: { usedAt: now },
-      })
-      if (claimed.count !== 1) return null
+    let user
+    try {
+      user = await prisma.$transaction(async (tx) => {
+        // usedAt/expiresAtを条件にした原子的な確保。同一トークンの並行リクエストでも1件しか成功しない
+        const claimed = await tx.invite.updateMany({
+          where: { token: inviteToken, usedAt: null, expiresAt: { gt: now } },
+          data: { usedAt: now },
+        })
+        if (claimed.count !== 1) return null
 
-      const invite = await tx.invite.findUniqueOrThrow({ where: { token: inviteToken } })
+        const invite = await tx.invite.findUniqueOrThrow({ where: { token: inviteToken } })
 
-      return tx.user.create({
-        data: {
-          supabaseId: authUser.id,
-          email: authUser.email as string,
-          name: name ?? invite.name ?? authUser.user_metadata?.name ?? null,
-          role: invite.role,
-          hirobaMemberships: {
-            create: DEFAULT_HIROBA_SLUGS.map((slug) => ({ hiroba: { connect: { slug } } })),
+        return tx.user.create({
+          data: {
+            supabaseId: authUser.id,
+            email: authUser.email as string,
+            name: name ?? invite.name ?? authUser.user_metadata?.name ?? null,
+            role: invite.role,
+            hirobaMemberships: {
+              create: DEFAULT_HIROBA_SLUGS.map((slug) => ({ hiroba: { connect: { slug } } })),
+            },
           },
-        },
+        })
       })
-    })
+    } catch (error) {
+      console.error('Failed to create user during registration', { supabaseId: authUser.id, error })
+      await rollbackOrphanedAuthUser(authUser.id)
+      return c.json({ error: 'ユーザー情報の保存に失敗しました' }, 500)
+    }
 
     if (!user) {
+      await rollbackOrphanedAuthUser(authUser.id)
       return c.json({ error: '招待リンクが無効です' }, 400)
     }
 

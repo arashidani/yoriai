@@ -23,6 +23,15 @@ export const Default: Story = {
   play: async ({ canvas }) => {
     await expect(await canvas.findByText('未確認 2 件')).toBeVisible()
     await expect(await canvas.findAllByRole('button', { name: '確認済みにする' })).toHaveLength(2)
+    await expect(await canvas.findByText('この投稿は自動的に非表示になっています')).toBeVisible()
+    await expect(await canvas.findByRole('link', { name: /該当の投稿を見る/ })).toHaveAttribute(
+      'href',
+      '/admin/posts/post-deleted',
+    )
+    await expect(await canvas.findByRole('link', { name: '該当の回答を見る' })).toHaveAttribute(
+      'href',
+      '/admin/posts/post-deleted#answer-answer-hidden',
+    )
   },
 }
 

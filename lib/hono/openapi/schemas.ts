@@ -37,6 +37,36 @@ export const PostAuthorSchema = UserSchema.extend({
     .openapi({ example: 'TEAM' }),
 }).openapi('PostAuthor')
 
+/** API レスポンス用の著者情報。email / supabaseId は含めない。 */
+export const PublicPostAuthorSchema = z
+  .object({
+    id: z.string().openapi({ example: 'user-1' }),
+    name: z.string().nullable().openapi({ example: '一般ユーザー' }),
+    username: z.string().nullable().openapi({ example: 'あおさん' }),
+    displayNameColor: z
+      .enum(['GREEN', 'YELLOW', 'BLUE', 'PURPLE', 'GRAY'])
+      .nullable()
+      .openapi({ example: 'BLUE' }),
+    avatarUrl: z.string().nullable().openapi({
+      example: 'https://xxxx.supabase.co/storage/v1/object/public/profiles/user-1.webp?v=1',
+    }),
+    role: z.enum(['USER', 'ADMIN']).openapi({ example: 'USER' }),
+    createdAt: dateTime(),
+    lunchPreference: z
+      .enum(['NO_PREFERENCE', 'TEAM', 'ALONE'])
+      .nullable()
+      .openapi({ example: 'TEAM' }),
+  })
+  .openapi('PublicPostAuthor')
+
+/** 通知 API で Q&A 投稿を参照するときの最小情報。匿名性を守るため authorId は含めない。 */
+export const NotificationPostSummarySchema = z
+  .object({
+    id: z.string().openapi({ example: 'post-1' }),
+    title: z.string().openapi({ example: 'Next.js App Routerの使い方を教えてください' }),
+  })
+  .openapi('NotificationPostSummary')
+
 export const UserProfileSchema = UserSchema.extend({
   departmentId: z.string().nullable().openapi({ example: 'department-1' }),
   businessAreaId: z.string().nullable().openapi({ example: 'business-area-1' }),
@@ -133,7 +163,7 @@ export const HirobaPostSchema = z
       .openapi({ example: '近くに新しくできたお店に行ってみたら、とても美味しかったです。' }),
     imageUrl: z.string().nullable().openapi({ example: null }),
     authorId: z.string().nullable().openapi({ example: 'user-2' }),
-    author: z.union([PostAuthorSchema, z.null()]).optional(),
+    author: z.union([PublicPostAuthorSchema, z.null()]).optional(),
     answerCount: z.number().openapi({ example: 0 }),
     likeCount: z.number().openapi({ example: 0 }),
     deletedAt: z.union([dateTime(), z.null()]).openapi({ example: null }),
@@ -156,7 +186,7 @@ export const HirobaAnswerSchema = z
       .nullish(),
     body: z.string().openapi({ example: 'いいですね、今度行ってみます！' }),
     authorId: z.string().nullable().openapi({ example: 'user-1' }),
-    author: z.union([PostAuthorSchema, z.null()]).optional(),
+    author: z.union([PublicPostAuthorSchema, z.null()]).optional(),
     isHidden: z.boolean().openapi({ example: false }),
     likeCount: z.number().openapi({ example: 0 }),
     createdAt: dateTime(),
@@ -225,7 +255,7 @@ export const NotificationSchema = z
     userId: z.string().openapi({ example: 'user-1' }),
     type: NotificationTypeSchema,
     postId: z.string().nullable().openapi({ example: 'post-1' }),
-    post: z.union([PostSchema, z.null()]).optional(),
+    post: z.union([NotificationPostSummarySchema, z.null()]).optional(),
     answerId: z.string().nullable().openapi({ example: null }),
     answer: z.union([AnswerSchema, z.null()]).optional(),
     hirobaPostId: z.string().nullable().openapi({ example: null }),
@@ -275,6 +305,22 @@ export const AiFlagSchema = z
     createdAt: dateTime(),
   })
   .openapi('AiFlag')
+
+/** 管理者の投稿確認画面用。非表示の回答も含め、実名の投稿者と非表示理由を返す。 */
+export const AdminModerationAnswerSchema = AnswerSchema.extend({
+  authorId: z.string().nullable().openapi({ example: 'user-2' }),
+  author: z.union([UserSchema, z.null()]).optional(),
+  hiddenAt: z.union([dateTime(), z.null()]).optional(),
+  hiddenReason: z.string().nullable().optional().openapi({ example: 'AIによる自動検出' }),
+}).openapi('AdminModerationAnswer')
+
+export const AdminPostDetailSchema = z
+  .object({
+    post: PostSchema,
+    answers: z.array(AdminModerationAnswerSchema),
+    flags: z.array(AiFlagSchema),
+  })
+  .openapi('AdminPostDetail')
 
 export const InviteSchema = z
   .object({

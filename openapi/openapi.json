@@ -607,7 +607,7 @@
           "author": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/PostAuthor"
+                "$ref": "#/components/schemas/PublicPostAuthor"
               },
               {
                 "type": "null"
@@ -667,32 +667,190 @@
           "updatedAt"
         ]
       },
-      "PostAuthor": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/User"
+      "PublicPostAuthor": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "user-1"
           },
-          {
-            "type": "object",
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "一般ユーザー"
+          },
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "あおさん"
+          },
+          "displayNameColor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "GREEN",
+              "YELLOW",
+              "BLUE",
+              "PURPLE",
+              "GRAY",
+              null
+            ],
+            "example": "BLUE"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "https://xxxx.supabase.co/storage/v1/object/public/profiles/user-1.webp?v=1"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "USER",
+              "ADMIN"
+            ],
+            "example": "USER"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "lunchPreference": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "NO_PREFERENCE",
+              "TEAM",
+              "ALONE",
+              null
+            ],
+            "example": "TEAM"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "username",
+          "displayNameColor",
+          "avatarUrl",
+          "role",
+          "createdAt",
+          "lunchPreference"
+        ]
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tag-1"
+          },
+          "name": {
+            "type": "string",
+            "example": "経理"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt"
+        ]
+      },
+      "HirobaAnswer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "hiroba-answer-1"
+          },
+          "hirobaPostId": {
+            "type": "string",
+            "example": "hiroba-post-1"
+          },
+          "hirobaPost": {
+            "type": [
+              "object",
+              "null"
+            ],
             "properties": {
-              "lunchPreference": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "enum": [
-                  "NO_PREFERENCE",
-                  "TEAM",
-                  "ALONE",
-                  null
-                ],
-                "example": "TEAM"
+              "id": {
+                "type": "string",
+                "example": "hiroba-post-1"
+              },
+              "hirobaId": {
+                "type": "string",
+                "example": "hiroba-alcohol"
               }
             },
             "required": [
-              "lunchPreference"
+              "id",
+              "hirobaId"
             ]
+          },
+          "body": {
+            "type": "string",
+            "example": "いいですね、今度行ってみます！"
+          },
+          "authorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "user-1"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicPostAuthor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isHidden": {
+            "type": "boolean",
+            "example": false
+          },
+          "likeCount": {
+            "type": "number",
+            "example": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2024-01-01T00:00:00.000Z"
           }
+        },
+        "required": [
+          "id",
+          "hirobaPostId",
+          "body",
+          "authorId",
+          "isHidden",
+          "likeCount",
+          "createdAt",
+          "updatedAt"
         ]
       },
       "User": {
@@ -770,111 +928,6 @@
           "avatarUrl",
           "role",
           "createdAt"
-        ]
-      },
-      "Tag": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "tag-1"
-          },
-          "name": {
-            "type": "string",
-            "example": "経理"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "createdAt"
-        ]
-      },
-      "HirobaAnswer": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "hiroba-answer-1"
-          },
-          "hirobaPostId": {
-            "type": "string",
-            "example": "hiroba-post-1"
-          },
-          "hirobaPost": {
-            "type": [
-              "object",
-              "null"
-            ],
-            "properties": {
-              "id": {
-                "type": "string",
-                "example": "hiroba-post-1"
-              },
-              "hirobaId": {
-                "type": "string",
-                "example": "hiroba-alcohol"
-              }
-            },
-            "required": [
-              "id",
-              "hirobaId"
-            ]
-          },
-          "body": {
-            "type": "string",
-            "example": "いいですね、今度行ってみます！"
-          },
-          "authorId": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "user-1"
-          },
-          "author": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PostAuthor"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "isHidden": {
-            "type": "boolean",
-            "example": false
-          },
-          "likeCount": {
-            "type": "number",
-            "example": 0
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2024-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "hirobaPostId",
-          "body",
-          "authorId",
-          "isHidden",
-          "likeCount",
-          "createdAt",
-          "updatedAt"
         ]
       },
       "InviteCreated": {
@@ -1088,6 +1141,107 @@
           "updatedAt"
         ]
       },
+      "AdminPostDetail": {
+        "type": "object",
+        "properties": {
+          "post": {
+            "$ref": "#/components/schemas/Post"
+          },
+          "answers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdminModerationAnswer"
+            }
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AiFlag"
+            }
+          }
+        },
+        "required": [
+          "post",
+          "answers",
+          "flags"
+        ]
+      },
+      "AdminModerationAnswer": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Answer"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "authorId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "user-2"
+              },
+              "author": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/User"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hiddenAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "example": "2024-01-01T00:00:00.000Z"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hiddenReason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "example": "AIによる自動検出"
+              }
+            },
+            "required": [
+              "authorId"
+            ]
+          }
+        ]
+      },
+      "AnswerAnonymousProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "anon-1"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "ねこ#2"
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "/anonymous-profiles/cat.svg"
+          }
+        },
+        "required": [
+          "id",
+          "displayName",
+          "avatarUrl"
+        ]
+      },
       "Answer": {
         "type": "object",
         "properties": {
@@ -1134,31 +1288,6 @@
           "likeCount",
           "createdAt",
           "updatedAt"
-        ]
-      },
-      "AnswerAnonymousProfile": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "anon-1"
-          },
-          "displayName": {
-            "type": "string",
-            "example": "ねこ#2"
-          },
-          "avatarUrl": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "example": "/anonymous-profiles/cat.svg"
-          }
-        },
-        "required": [
-          "id",
-          "displayName",
-          "avatarUrl"
         ]
       },
       "AiFlag": {
@@ -1505,7 +1634,7 @@
           "post": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/Post"
+                "$ref": "#/components/schemas/NotificationPostSummary"
               },
               {
                 "type": "null"
@@ -1597,6 +1726,23 @@
           "HIROBA_ANSWER_LIKED",
           "POST_DELETED",
           "ANSWER_HIDDEN"
+        ]
+      },
+      "NotificationPostSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "post-1"
+          },
+          "title": {
+            "type": "string",
+            "example": "Next.js App Routerの使い方を教えてください"
+          }
+        },
+        "required": [
+          "id",
+          "title"
         ]
       },
       "UnreadNotificationCount": {
@@ -3886,6 +4032,11 @@
           "hiroba"
         ],
         "summary": "ひろば一覧を取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "ひろば一覧",
@@ -3907,6 +4058,19 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
           }
         }
       }
@@ -3917,6 +4081,11 @@
           "hiroba"
         ],
         "summary": "ひろば詳細と投稿一覧を取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
         "parameters": [
           {
             "schema": {
@@ -3950,6 +4119,19 @@
                     "hiroba",
                     "posts"
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -4364,6 +4546,11 @@
           "hiroba-posts"
         ],
         "summary": "ひろば投稿を1件取得",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
         "parameters": [
           {
             "schema": {
@@ -4390,6 +4577,19 @@
                   "required": [
                     "post"
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -4489,6 +4689,11 @@
           "hiroba-posts"
         ],
         "summary": "投稿への回答一覧を取得（いいね数の多い順、同数なら投稿順）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
         "parameters": [
           {
             "schema": {
@@ -4518,6 +4723,19 @@
                   "required": [
                     "answers"
                   ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
                 }
               }
             }
@@ -5756,6 +5974,79 @@
       }
     },
     "/api/admin/posts/{id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "非表示投稿を含む投稿詳細を取得（管理者専用）",
+        "security": [
+          {
+            "supabaseSession": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "example": "post-1"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "投稿詳細",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPostDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未認証",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Unauthorized"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "権限不足（管理者専用）",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Forbidden"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "投稿が見つからない",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Not found"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "admin"
@@ -7570,6 +7861,18 @@
                 },
                 "example": {
                   "error": "Unauthorized"
+                }
+              }
+            }          },
+          "500": {
+            "description": "ユーザー情報の保存に失敗した",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "ユーザー情報の保存に失敗しました"
                 }
               }
             }

@@ -1,4 +1,9 @@
-import type { AnonymousProfile, Answer, PostAnonymousProfile } from '@/app/generated/prisma/client'
+import type {
+  AnonymousProfile,
+  Answer,
+  PostAnonymousProfile,
+  User,
+} from '@/app/generated/prisma/client'
 import {
   anonymousProfileDisplayName,
   avatarUrlForAlias,
@@ -30,5 +35,18 @@ export function toAdminAnswerResponse(answer: AnswerWithAnonymousProfile) {
     ),
     createdAt: answer.createdAt,
     updatedAt: answer.updatedAt,
+  }
+}
+
+/** 管理者の投稿確認画面用。実名の投稿者と非表示理由を含める。 */
+export function toAdminModerationAnswerResponse(
+  answer: AnswerWithAnonymousProfile & { author?: User | null },
+) {
+  return {
+    ...toAdminAnswerResponse(answer),
+    authorId: answer.authorId,
+    author: answer.author ?? null,
+    hiddenAt: answer.hiddenAt,
+    hiddenReason: answer.hiddenReason,
   }
 }

@@ -175,6 +175,13 @@ describe('Q&A API contract (MOCK_MODE)', () => {
     expect(response.status).toBe(404)
   })
 
+  it('削除済み質問の詳細は公開APIでは404を返す', async () => {
+    const response = await app.request('/api/questions/post-deleted')
+
+    expect(response.status).toBe(404)
+    expect(await response.json()).toEqual({ error: 'Not found' })
+  })
+
   it('MOCK_MODEでも削除済み質問への回答は410を返す', async () => {
     const response = await app.request('/api/questions/post-deleted/answers', {
       method: 'POST',

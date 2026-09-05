@@ -341,6 +341,16 @@ export const mswHandlers = {
     ),
     http.get('/api/admin/users', () => HttpResponse.json({ users: MOCK_USERS })),
     http.get('/api/admin/posts', () => HttpResponse.json({ posts: MOCK_POSTS })),
+    http.get('/api/admin/posts/:id', ({ params }) => {
+      const post = MOCK_POSTS.find((item) => item.id === params.id)
+      if (!post) return HttpResponse.json({ error: 'Not found' }, { status: 404 })
+      const answers = MOCK_ANSWERS.filter((answer) => answer.postId === params.id)
+      const flags = MOCK_AI_FLAGS.filter(
+        (flag) =>
+          flag.postId === params.id || answers.some((answer) => answer.id === flag.answerId),
+      )
+      return HttpResponse.json({ post, answers, flags })
+    }),
     http.patch('/api/admin/users/:id', () => HttpResponse.json({ success: true })),
     http.delete('/api/admin/users/:id', () => HttpResponse.json({ success: true })),
     http.get('/api/admin/ai-flags', () => HttpResponse.json({ flags: MOCK_AI_FLAGS })),

@@ -3,7 +3,7 @@
 import { Select } from '@base-ui/react/select'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronsUpDown, Loader2, Pencil, Tag as TagIcon, Trash2 } from 'lucide-react'
+import { Check, ChevronsUpDown, Loader2, Pencil, Tag as TagIcon } from 'lucide-react'
 import { useState } from 'react'
 import {
   type Control,
@@ -13,6 +13,7 @@ import {
   useForm,
 } from 'react-hook-form'
 import { toast } from 'sonner'
+import { ConfirmDeleteButton } from '@/components/admin/confirm-delete-button'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -350,16 +351,13 @@ export function TagList() {
                 categories={categories}
                 onUpdated={() => queryClient.invalidateQueries({ queryKey: ['tags'] })}
               />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={`${tag.name}を削除`}
+              <ConfirmDeleteButton
+                triggerLabel={`${tag.name}を削除`}
+                title="タグを削除しますか？"
+                description={`「${tag.name}」を削除します。このタグが付いている投稿からもタグが外れます。この操作は取り消せません。`}
                 disabled={deleteMutation.isPending}
-                onClick={() => deleteMutation.mutate(tag.id)}
-              >
-                <Trash2 />
-              </Button>
+                onConfirm={() => deleteMutation.mutateAsync(tag.id)}
+              />
             </li>
           ))}
         </ul>
