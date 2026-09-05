@@ -1,12 +1,18 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi'
-import { createUIMessageStreamResponse } from 'ai'
-import { createMockChatStream, toChatUIMessageStream } from '@/lib/chat/dify-ui-stream'
 import { toDifyQuery } from '@/lib/chat/types'
 import { sendChatMessage } from '@/lib/dify/chat'
 import { type AuthVariables, authMiddleware } from '@/lib/hono/middleware/auth'
 import { defaultHook } from '@/lib/hono/openapi/hook'
 import { errorResponse } from '@/lib/hono/openapi/schemas'
 import { chatRequestSchema } from '@/lib/schemas/chat'
+
+/**
+ * ai は 7.9MB あり、全 API を束ねる catch-all の Route Handler では
+ * チャット以外のリクエストでも関数の初期化時にロードされてしまう。
+ * dify-ui-stream も ai を値として import しているため、両方まとめて
+ * チャットのリクエスト内でのみ読み込む。
+ */
+const loadStreamDeps = () => Promise.all([import('ai'), import('@/lib/chat/dify-ui-stream')])
 
 const sendChatRoute = createRoute({
   method: 'post',
@@ -52,6 +58,7 @@ export const chatRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ default
 
     // MOCK_MODE=true のときはモックストリームを返す
     if (process.env.MOCK_MODE === 'true') {
+      const [{ createUIMessageStreamResponse }, { createMockChatStream }] = await loadStreamDeps()
       return createUIMessageStreamResponse({ stream: createMockChatStream(query) })
     }
 
@@ -74,6 +81,7 @@ export const chatRoute = new OpenAPIHono<{ Variables: AuthVariables }>({ default
       return c.json({ error: 'AIとの通信に失敗しました' }, 502)
     }
 
+    const [{ createUIMessageStreamResponse }, { toChatUIMessageStream }] = await loadStreamDeps()
     return createUIMessageStreamResponse({ stream: toChatUIMessageStream(difyRes.body) })
   },
 )
