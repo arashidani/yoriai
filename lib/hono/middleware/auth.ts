@@ -1,9 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { createMiddleware } from 'hono/factory'
 import type { User } from '@/app/generated/prisma/client'
+import { getUserBySupabaseId } from '@/lib/auth/user-lookup'
 import { requireEnv } from '@/lib/env'
 import { MOCK_USERS } from '@/lib/mocks/fixtures'
-import { prisma } from '@/lib/prisma/client'
 
 export type AuthVariables = {
   user: User | (typeof MOCK_USERS)[number]
@@ -37,9 +37,7 @@ export const authMiddleware = createMiddleware<{ Variables: AuthVariables }>(asy
   const supabaseId = claimsData?.claims.sub
   if (claimsError || !supabaseId) return c.json({ error: 'Unauthorized' }, 401)
 
-  const user = await prisma.user.findUnique({
-    where: { supabaseId },
-  })
+  const user = await getUserBySupabaseId(supabaseId)
   if (!user) return c.json({ error: 'User not found' }, 401)
 
   c.set('user', user)
