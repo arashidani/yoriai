@@ -26,7 +26,7 @@ const baseAnswer = {
 }
 
 export const Default: Story = {
-  args: { answer: baseAnswer, liked: false },
+  args: { answer: baseAnswer, liked: false, joined: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('いいですね、今度行ってみます！')).toBeVisible()
     await expect(canvas.getByText('じろちゃん')).toBeVisible()
@@ -39,14 +39,14 @@ export const Default: Story = {
 }
 
 export const Liked: Story = {
-  args: { answer: baseAnswer, liked: true },
+  args: { answer: baseAnswer, liked: true, joined: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('button', { name: /3/ })).toHaveAttribute('aria-pressed', 'true')
   },
 }
 
 export const OwnAnswer: Story = {
-  args: { answer: { ...baseAnswer, isOwnAnswer: true }, liked: false },
+  args: { answer: { ...baseAnswer, isOwnAnswer: true }, liked: false, joined: true },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('link', { name: 'じろちゃん' })).toHaveAttribute(
       'href',
@@ -56,8 +56,15 @@ export const OwnAnswer: Story = {
   },
 }
 
+export const NotJoined: Story = {
+  args: { answer: baseAnswer, liked: false, joined: false },
+  play: async ({ canvas }) => {
+    await expect(canvas.getByRole('button', { name: /3/ })).toBeDisabled()
+  },
+}
+
 export const WithMention: Story = {
-  args: { answer: baseAnswer, liked: false, mentionNames: ['たろちゃん'] },
+  args: { answer: baseAnswer, liked: false, joined: true, mentionNames: ['たろちゃん'] },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('たろちゃんさん')).toBeVisible()
   },
@@ -67,6 +74,7 @@ export const WithUrl: Story = {
   args: {
     answer: { ...baseAnswer, body: 'お店のサイトは https://example.com です。' },
     liked: false,
+    joined: true,
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByRole('link', { name: 'https://example.com' })).toHaveAttribute(
@@ -80,6 +88,7 @@ export const NoAuthor: Story = {
   args: {
     answer: { ...baseAnswer, authorId: null, displayName: '削除されたユーザー' },
     liked: false,
+    joined: true,
   },
   play: async ({ canvas }) => {
     await expect(canvas.getByText('削除されたユーザー')).toBeVisible()

@@ -41,6 +41,8 @@ function formatRelativeTime(input: Date | string) {
 type AnswerCardProps = {
   answer: HirobaAnswer
   liked: boolean
+  /** ひろばに参加しているか。未参加のときはいいねできない */
+  joined: boolean
   lunchVariant?: LunchChipType
   mbtiVariant?: MbtiChipVariant
   mentionNames?: string[]
@@ -49,6 +51,7 @@ type AnswerCardProps = {
 export function AnswerCard({
   answer,
   liked,
+  joined,
   lunchVariant,
   mbtiVariant,
   mentionNames = [],
@@ -64,7 +67,7 @@ export function AnswerCard({
     initialPressed: liked,
     initialCount: answer.likeCount,
     resetKey: answer.id,
-    enabled: !answer.isOwnAnswer,
+    enabled: joined && !answer.isOwnAnswer,
     onSync: async (next) => {
       const res = next
         ? await client.api['hiroba-answers'][':id'].likes.$post({ param: { id: answer.id } })
@@ -134,7 +137,7 @@ export function AnswerCard({
         <LikeButton
           count={likeCount ?? 0}
           pressed={isLiked}
-          disabled={answer.isOwnAnswer}
+          disabled={!joined || answer.isOwnAnswer}
           onPressedChange={toggleLike}
         />
       </div>
