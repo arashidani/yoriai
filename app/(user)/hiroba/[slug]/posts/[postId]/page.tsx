@@ -119,6 +119,7 @@ export default async function HirobaPostDetailPage({ params }: Props) {
                   <AnswerCard
                     key={answer.id}
                     answer={answer}
+                    joined={joined}
                     liked={likedAnswerIds.has(answer.id)}
                   />
                 ))}
