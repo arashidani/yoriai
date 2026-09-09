@@ -95,7 +95,8 @@
     "postcss": "^8.5.10",
     "@hono/node-server": "^2.0.5",
     "find-my-way": "^9.7.0",
-    "sharp": "^0.35.0"
+    "sharp": "^0.35.0",
+    "typescript": "^6.0.3"
   },
   "allowScripts": {
     "@prisma/engines@7.8.0": true,
