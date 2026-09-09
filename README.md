@@ -1,8 +1,8 @@
 # YORIAI（よりあい）
 
-![Next.js](https://img.shields.io/badge/Next.js-16.2.11-black?logo=next.js)
+![Next.js](https://img.shields.io/badge/Next.js-16.3.4-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.4-61dafb?logo=react)
-![Hono](https://img.shields.io/badge/Hono-4.13.0-orange?logo=hono)
+![Hono](https://img.shields.io/badge/Hono-4.13.7-orange?logo=hono)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?logo=tailwindcss)
 ![Supabase](https://img.shields.io/badge/Supabase-2.110.0-3ecf8e?logo=supabase)
