@@ -3,7 +3,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js-16.2.11-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.4-61dafb?logo=react)
 ![Hono](https://img.shields.io/badge/Hono-4.13.0-orange?logo=hono)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![TypeScript](https://img.shields.io/badge/TypeScript-6-blue?logo=typescript)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?logo=tailwindcss)
 ![Supabase](https://img.shields.io/badge/Supabase-2.110.0-3ecf8e?logo=supabase)
 ![Prisma](https://img.shields.io/badge/Prisma-7.9.1-2d3748?logo=prisma)
@@ -38,6 +38,7 @@
 
 ## 技術スタック
 
+- **言語**: TypeScript 6
 - **フレームワーク**: Next.js 16 (App Router)
 - **API**: Hono (Route Handler) + Hono RPC + OpenAPI (Swagger UI)
 - **DB**: Supabase (PostgreSQL) + Prisma 7
@@ -149,6 +150,12 @@ NEXT_PUBLIC_MOCK_MODE=true
 ```
 
 **MOCK_MODE の使い分け:** Server Component / Hono routes は `MOCK_MODE`、Client Component は `NEXT_PUBLIC_MOCK_MODE` を参照する。
+
+### 依存関係のオーバーライド
+
+`package.json` の `overrides` で `typescript` を単一バージョンに固定している。Storybook が推移的に依存する `tsconfck` の optional peer が `typescript@^5.0.0` のまま更新されておらず（npm 上で unmaintained と表示される）、固定しないと npm 10 系で `typescript@5` が二重にインストールされるため。
+
+依存の経路（`@storybook/nextjs-vite` → `vite-plugin-storybook-nextjs` → `vite-tsconfig-paths` → `tsconfck`）はいずれも hard dependency なので、Storybook 側を更新しても解消しない。TypeScript のメジャーを上げるときは、この `overrides` の範囲もあわせて更新する。
 
 ## 開発
 
