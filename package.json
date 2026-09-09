@@ -41,7 +41,7 @@
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "hono": "^4.13.0",
+    "hono": "^4.13.7",
     "lucide-react": "^1.23.0",
     "motion": "^12.42.2",
     "next": "16.2.11",
