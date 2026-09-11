@@ -25,7 +25,7 @@ const buttonVariants = cva(
       {
         variant: 'ghost',
         size: 'default',
-        class: 'text-xs leading-5',
+        class: 'text-label-small',
       },
     ],
     defaultVariants: {

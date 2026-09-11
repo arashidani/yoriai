@@ -14,7 +14,7 @@ export function FormLabel({ label, isRequired, isInfoIcon, id }: FormLabelProps)
   return (
     <div className="flex gap-2 items-center">
       <Label htmlFor={id}>
-        <p className="text-sm font-bold text-foreground">{label}</p>
+        <p className="text-label text-foreground">{label}</p>
       </Label>
 
       {isInfoIcon && (

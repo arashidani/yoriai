@@ -91,12 +91,12 @@ export function AnswerForm({ postId }: AnswerFormProps) {
     <section id="answer-form" className="w-full scroll-mt-8">
       <div className="space-y-3">
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-paragraph-small text-destructive">
             {error}
           </p>
         )}
         {isPostUnavailable && (
-          <Link href="/" className="text-sm font-medium text-primary underline underline-offset-4">
+          <Link href="/" className="text-body-small text-primary underline underline-offset-4">
             一覧に戻る
           </Link>
         )}
@@ -135,7 +135,9 @@ export function AnswerForm({ postId }: AnswerFormProps) {
             />
           }
         />
-        {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
+        {errors.body && (
+          <p className="text-paragraph-small text-destructive">{errors.body.message}</p>
+        )}
       </div>
     </section>
   )
