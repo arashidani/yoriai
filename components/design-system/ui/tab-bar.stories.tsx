@@ -17,7 +17,7 @@ const meta = {
       {
         value: 'saved',
         label: '保存した質問',
-        icon: <IconBookmark className="size-full text-amber-400" />,
+        icon: <IconBookmark className="size-full text-action-bookmark" />,
       },
     ],
   },
@@ -57,7 +57,7 @@ export const LinkedTabs: Story = {
       {
         value: 'saved',
         label: '保存した質問',
-        icon: <IconBookmark className="size-full text-amber-400" />,
+        icon: <IconBookmark className="size-full text-action-bookmark" />,
         href: '/my-questions?tab=saved&page=1',
       },
     ],
