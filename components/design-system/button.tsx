@@ -18,14 +18,14 @@ const buttonVariants = cva(
         secondary:
           'border-2 border-input bg-secondary transition-colors text-secondary-foreground hover:border-transparent hover:bg-secondary-hover focus-visible:border-transparent focus-visible:bg-secondary-hover focus-visible:ring-3 focus-visible:ring-ring disabled:border-transparent',
         ghost:
-          'bg-transparent text-neutral-800 transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring',
+          'bg-transparent text-foreground transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring',
       },
     },
     compoundVariants: [
       {
         variant: 'ghost',
         size: 'default',
-        class: 'text-xs leading-5 hover:text-foreground',
+        class: 'text-xs leading-5',
       },
     ],
     defaultVariants: {

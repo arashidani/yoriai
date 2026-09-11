@@ -191,7 +191,7 @@ function RegisterForm() {
                       />
                       <span
                         className={cn(
-                          isPasswordValid ? 'text-green-400' : 'text-secondary-foreground',
+                          isPasswordValid ? 'text-success' : 'text-secondary-foreground',
                           'text-caption',
                         )}
                       >
@@ -209,7 +209,7 @@ function RegisterForm() {
                       />
                       <span
                         className={cn(
-                          isOverEightWords ? 'text-green-400' : 'text-secondary-foreground',
+                          isOverEightWords ? 'text-success' : 'text-secondary-foreground',
                           'text-caption',
                         )}
                       >

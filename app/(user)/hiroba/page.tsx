@@ -48,7 +48,7 @@ export default async function HirobaPage() {
 
       {/* カバーの上にスクロールで覆いかぶさるよう、背景色付きで前面に置く */}
       <div className="relative z-10 mx-auto w-full max-w-7xl space-y-6 bg-background px-4 py-6 sm:px-8 xl:space-y-8 xl:p-8">
-        <section className="rounded-xl bg-neutral-150 p-4 xl:p-6">
+        <section className="rounded-xl bg-muted p-4 xl:p-6">
           <h2 className="mb-4 flex items-center gap-2 text-heading-2">
             <span className="size-4 rounded-full bg-primary" aria-hidden />
             参加中のひろば

@@ -26,8 +26,8 @@ export function FormLabel({ label, isRequired, isInfoIcon, id }: FormLabelProps)
             <Image src={infoIcon} alt="" width={14} height={14} className="my-1" />
           </TooltipTrigger>
           <TooltipContent
-            className="bg-sky-500 px-3 py-2 text-white"
-            arrowClassName="bg-sky-500 fill-sky-500"
+            className="bg-informative px-3 py-2 text-informative-foreground"
+            arrowClassName="bg-informative fill-informative"
           >
             IBJ歴表示に使用します
           </TooltipContent>

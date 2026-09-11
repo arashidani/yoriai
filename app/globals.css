@@ -45,6 +45,7 @@
   --color-destructive-subtle: var(--destructive-subtle);
   --color-success: var(--success);
   --color-informative: var(--informative);
+  --color-informative-hover: var(--informative-hover);
   --color-informative-foreground: var(--informative-foreground);
   --color-informative-background: var(--informative-background);
   --color-action-like: var(--action-like);
@@ -615,6 +616,7 @@
   --destructive-subtle: #fef2f2; /* red-50 */
   --success: #34d399; /* emerald-400 */
   --informative: #33c1ed; /* sky-500 */
+  --informative-hover: #1ea9d3; /* sky-600（Light/Dark 共通・固定色） */
   --informative-foreground: #fffefc;
   --informative-background: #f0fcff; /* sky-50 */
   --action-like: #fb7185; /* rose-400（Light/Dark 共通・固定色） */
@@ -744,6 +746,7 @@
   --destructive-subtle: #450a0a; /* red-950 */
   --success: #d1fae5; /* emerald-100 */
   --informative: #33c1ed; /* sky-500（Light と固定・上部 NOTE 参照） */
+  --informative-hover: #1ea9d3; /* sky-600（Light と固定） */
   --informative-foreground: #fffefc;
   --informative-background: #0a4a5e; /* sky-900 */
   --action-like: #fb7185; /* rose-400（Light と固定） */
