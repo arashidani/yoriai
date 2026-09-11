@@ -364,6 +364,8 @@ model HirobaPost {
   deletedAt DateTime?
 
   @@unique([authorId, idempotencyKey])
+  @@index([hirobaId, updatedAt(sort: Desc)], map: "HirobaPost_visible_feed_idx", where: raw("\"deletedAt\" IS NULL"))
+  @@index([createdAt(sort: Desc)], map: "HirobaPost_visible_recent_idx", where: raw("\"deletedAt\" IS NULL"))
 }
 
 /// ひろば投稿への回答。実名で表示する
@@ -402,6 +404,7 @@ model HirobaPostLike {
   createdAt    DateTime   @default(now())
 
   @@unique([hirobaPostId, userId])
+  @@index([userId, hirobaPostId])
 }
 
 model HirobaAnswerLike {
@@ -424,6 +427,7 @@ model HirobaPostBookmark {
   createdAt    DateTime   @default(now())
 
   @@unique([hirobaPostId, userId])
+  @@index([userId, hirobaPostId])
 }
 
 /// ひろば投稿とタグの中間テーブル（Tagマスタを共用、AI自動付与）

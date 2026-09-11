@@ -184,6 +184,14 @@ function FeatureTutorialProvider({ children }: { children: ReactNode }) {
     goToStep(step + 1)
   }
 
+  // 案内は router.push で遷移するため、Link と違って自動プリフェッチが働かない。
+  // 次のステップのルートを先に取りに行き、「ひろばへ行く」を押した直後の待ちを減らす。
+  useEffect(() => {
+    if (step === null) return
+    const nextRoute = TUTORIAL_STEPS[step + 1]?.route
+    if (nextRoute && nextRoute !== pathname) router.prefetch(nextRoute)
+  }, [step, pathname, router])
+
   useEffect(() => {
     if (initialized.current) return
     initialized.current = true
