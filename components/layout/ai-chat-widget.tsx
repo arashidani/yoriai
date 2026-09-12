@@ -207,9 +207,9 @@ export function AiChatWidget() {
             whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 260, damping: 20 }}
             // Figma: AI icon = 90x90
-            // 背景は よりあいぬアイコンの円と同じ青(sky-500)。
+            // 背景は よりあいぬアイコンの円と同じ青(informative)。
             // なでなで中の笑顔SVGは円の地色を持たないので、透ける下地をこの青に合わせる。
-            className="relative flex size-[90px] items-center justify-center rounded-full bg-sky-500 text-primary-foreground shadow-xl transition-colors hover:bg-sky-600"
+            className="relative flex size-[90px] items-center justify-center rounded-full bg-informative text-primary-foreground shadow-xl transition-colors hover:bg-informative-hover"
           >
             {/* よりあいぬのアイコン。円形の地色を持つのでボタン全面に敷く。 */}
             <LaunchIcon />
@@ -219,7 +219,7 @@ export function AiChatWidget() {
             <AnimatePresence>
               {happy && (
                 <motion.div
-                  className="absolute inset-0 rounded-full bg-sky-500"
+                  className="absolute inset-0 rounded-full bg-informative"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -242,7 +242,7 @@ export function AiChatWidget() {
           {...launchButtonProps}
           // Figma: AI icon = 90x90
           className={cn(
-            'flex size-[90px] items-center justify-center rounded-full bg-sky-500 text-primary-foreground shadow-xl transition-colors hover:bg-sky-600',
+            'flex size-[90px] items-center justify-center rounded-full bg-informative text-primary-foreground shadow-xl transition-colors hover:bg-informative-hover',
             open && 'invisible pointer-events-none',
           )}
         >

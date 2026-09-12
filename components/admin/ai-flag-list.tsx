@@ -39,7 +39,7 @@ function StatusBadge({ status }: { status: AiFlag['status'] }) {
   return (
     <span
       className={`text-xs px-2 py-0.5 rounded-full font-medium shrink-0 ${
-        isUnread ? 'bg-amber-500/10 text-amber-600' : 'bg-muted text-muted-foreground'
+        isUnread ? 'bg-warning/10 text-warning' : 'bg-muted text-muted-foreground'
       }`}
     >
       {isUnread ? '未確認' : '確認済み'}
@@ -139,7 +139,7 @@ export function AiFlagList() {
   return (
     <div className="space-y-3 max-w-2xl">
       {unreadCount > 0 && (
-        <span className="inline-block text-xs px-3 py-1.5 rounded-full bg-amber-500/10 text-amber-600 font-medium">
+        <span className="inline-block text-xs px-3 py-1.5 rounded-full bg-warning/10 text-warning font-medium">
           未確認 {unreadCount} 件
         </span>
       )}

@@ -27,7 +27,7 @@ function MyQuestionsTabs({ tab }: MyQuestionsTabsProps) {
         {
           value: 'saved',
           label: '保存した質問',
-          icon: <IconBookmark className="size-full text-amber-400" />,
+          icon: <IconBookmark className="size-full text-action-bookmark" />,
         },
       ]}
     />

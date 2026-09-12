@@ -136,7 +136,7 @@ export function OnboardingForm({
     return <Spinner layout="center" className="min-h-dvh" />
   }
   if (error || !options)
-    return <p className="text-sm text-destructive">選択肢の取得に失敗しました</p>
+    return <p className="text-paragraph-small text-destructive">選択肢の取得に失敗しました</p>
 
   async function onSubmit(data: OnboardingInput) {
     setSubmitError(null)
@@ -538,7 +538,9 @@ export function OnboardingForm({
                     {avatarUrl ? '設定済み' : '未設定'}
                   </dd>
                 </dl>
-                {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+                {submitError && (
+                  <p className="text-paragraph-small text-destructive">{submitError}</p>
+                )}
 
                 <FormBottomButtons
                   step={step}
