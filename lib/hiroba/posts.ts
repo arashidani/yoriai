@@ -6,6 +6,16 @@ import { publicTagSelect } from '@/lib/prisma/selects'
 
 const THREE_DAYS_IN_MS = 3 * 24 * 60 * 60 * 1000
 
+/** 投稿カードの表示に必要な著者情報だけを取る。supabaseId など不要な列をRSCペイロードに載せない。 */
+const postAuthorSelect = {
+  name: true,
+  username: true,
+  email: true,
+  displayNameColor: true,
+  avatarUrl: true,
+  lunchPreference: true,
+} as const
+
 export async function getHiroba(slug: string) {
   const catalogHiroba = findHiroba(slug)
   if (!catalogHiroba) return null
@@ -23,7 +33,10 @@ async function getRawPosts(hirobaId: string) {
   }
   const posts = await prisma.hirobaPost.findMany({
     where: { hirobaId, deletedAt: null },
-    include: { author: true, tags: { include: { tag: { select: publicTagSelect } } } },
+    include: {
+      author: { select: postAuthorSelect },
+      tags: { include: { tag: { select: publicTagSelect } } },
+    },
     orderBy: { updatedAt: 'desc' },
   })
   return posts.map((post) => ({ ...post, tags: post.tags.map((pt) => pt.tag) }))
@@ -35,7 +48,10 @@ async function getRawPost(postId: string) {
   }
   const post = await prisma.hirobaPost.findFirst({
     where: { id: postId, deletedAt: null },
-    include: { author: true, tags: { include: { tag: { select: publicTagSelect } } } },
+    include: {
+      author: { select: postAuthorSelect },
+      tags: { include: { tag: { select: publicTagSelect } } },
+    },
   })
   return post ? { ...post, tags: post.tags.map((pt) => pt.tag) } : null
 }

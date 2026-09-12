@@ -9,10 +9,10 @@ import { getHiroba, getHirobaPosts, getPopularPosts } from '@/lib/hiroba/posts'
 
 export default async function HirobaDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const hiroba = await getHiroba(slug)
+  // ひろばの取得と認証は互いに独立しているため、直列に待たず同時に走らせる。
+  const [hiroba, user] = await Promise.all([getHiroba(slug), getCurrentUser()])
   if (!hiroba) notFound()
 
-  const user = await getCurrentUser()
   const [posts, joined, popularPosts] = await Promise.all([
     getHirobaPosts(hiroba.id, hiroba.slug, user?.id),
     getHirobaJoined(hiroba.slug, hiroba.id, user?.id, user?.displayNameColor),

@@ -1,6 +1,8 @@
 import Image from 'next/image'
+import { Suspense } from 'react'
 import hirobaCover from '@/assets/hiroba-cover.svg'
 import { SquareCard } from '@/components/design-system/ui/square-card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { getCurrentUser } from '@/lib/auth/current-user'
 import {
   DEFAULT_HIROBA_SLUGS,
@@ -29,9 +31,37 @@ async function getJoinedHirobas() {
   return HIROBA_CATALOG.filter((hiroba) => joinedSlugs.has(hiroba.slug))
 }
 
-export default async function HirobaPage() {
+async function JoinedHirobas() {
   const participating = await getJoinedHirobas()
 
+  if (participating.length === 0) {
+    return (
+      <p className="text-paragraph-small text-secondary-foreground">
+        参加中のひろばはまだありません。
+      </p>
+    )
+  }
+
+  return (
+    <>
+      {participating.map((hiroba) => (
+        <SquareCard key={hiroba.id} hiroba={hiroba} size="large" />
+      ))}
+    </>
+  )
+}
+
+function JoinedHirobasFallback() {
+  return (
+    <div className="flex gap-4" role="status" aria-label="参加中のひろばを読み込み中">
+      {['joined-1', 'joined-2', 'joined-3'].map((key) => (
+        <Skeleton key={key} className="size-40 shrink-0 rounded-lg" aria-hidden />
+      ))}
+    </div>
+  )
+}
+
+export default function HirobaPage() {
   return (
     <div className="min-w-0 flex-1 pb-12">
       {/* カバーは上部に sticky で貼り付き、スクロールすると下のコンテンツが上に覆いかぶさる */}
@@ -54,16 +84,11 @@ export default async function HirobaPage() {
             参加中のひろば
           </h2>
 
+          {/* 参加状況だけが認証とDBに依存するので、カタログ本体を待たせないよう分離する。 */}
           <div className="flex gap-4 overflow-x-auto scrollbar-custom pb-[19px]">
-            {participating.length === 0 ? (
-              <p className="text-paragraph-small text-secondary-foreground">
-                参加中のひろばはまだありません。
-              </p>
-            ) : (
-              participating.map((hiroba) => (
-                <SquareCard key={hiroba.id} hiroba={hiroba} size="large" />
-              ))
-            )}
+            <Suspense fallback={<JoinedHirobasFallback />}>
+              <JoinedHirobas />
+            </Suspense>
           </div>
         </section>
 
