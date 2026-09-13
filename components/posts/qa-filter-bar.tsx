@@ -156,7 +156,7 @@ function QaFilterBar({
                     {category.tags.map((tag) => (
                       <label
                         key={tag.id}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
+                        className="flex cursor-pointer items-center gap-2 text-paragraph-small"
                       >
                         <input
                           type="checkbox"

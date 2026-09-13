@@ -6,7 +6,7 @@ import { TabButton } from './tab-button'
 const meta = {
   component: TabButton,
   args: {
-    icon: <IconBookmark className="size-full text-amber-400" />,
+    icon: <IconBookmark className="size-full text-action-bookmark" />,
     children: 'tab',
   },
 } satisfies Meta<typeof TabButton>

@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/nextjs-vite'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HttpResponse, http } from 'msw'
-import { expect } from 'storybook/test'
+import { expect, within } from 'storybook/test'
 import { AdminPostViewer } from './admin-post-viewer'
 
 const meta = {
@@ -24,8 +24,15 @@ type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
   play: async ({ canvas }) => {
-    await expect(await canvas.findByText('有給休暇の申請方法を教えてください')).toBeVisible()
-    await expect(await canvas.findByText('公開中')).toBeVisible()
+    const title = await canvas.findByRole('heading', {
+      name: '有給休暇の申請方法を教えてください',
+    })
+    await expect(title).toBeVisible()
+
+    // 公開中バッジは投稿と回答の両方に出るため、投稿のセクションに絞って確認する
+    const postSection = title.closest('section')
+    if (!postSection) throw new Error('投稿のセクションが見つかりません')
+    await expect(within(postSection).getByText('公開中')).toBeVisible()
   },
 }
 

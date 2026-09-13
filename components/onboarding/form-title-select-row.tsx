@@ -70,7 +70,7 @@ export function FormTitleSelectRow({
             error={yearError}
             placeholder={placeholder[0]}
           />
-          <span className="text-sm font-bold text-foreground">年</span>
+          <span className="text-body-small-bold text-foreground">年</span>
         </div>
 
         <div className="flex flex-1 items-center gap-2">
@@ -83,7 +83,7 @@ export function FormTitleSelectRow({
             error={monthError}
             placeholder={placeholder[1]}
           />
-          <span className="text-sm font-bold text-foreground">月</span>
+          <span className="text-body-small-bold text-foreground">月</span>
         </div>
       </div>
 

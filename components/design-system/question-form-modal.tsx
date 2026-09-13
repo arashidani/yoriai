@@ -76,7 +76,7 @@ export function QuestionFormModal({
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-paragraph-small text-destructive">
               {error}
             </p>
           )}
@@ -92,7 +92,7 @@ export function QuestionFormModal({
           />
           <div className="flex w-full flex-col gap-2">
             <Label id="question-body-label">
-              <p className="text-sm font-bold text-foreground">質問の本文</p>
+              <p className="text-label text-foreground">質問の本文</p>
             </Label>
             <Controller
               name="body"
@@ -110,11 +110,13 @@ export function QuestionFormModal({
                 />
               )}
             />
-            {errors.body && <p className="text-sm text-destructive">{errors.body.message}</p>}
+            {errors.body && (
+              <p className="text-paragraph-small text-destructive">{errors.body.message}</p>
+            )}
           </div>
           <div className="flex w-full flex-col gap-2">
             <Label htmlFor="tagId">
-              <p className="text-sm font-bold text-foreground">カテゴリー</p>
+              <p className="text-label text-foreground">カテゴリー</p>
             </Label>
             <div className="flex w-full items-center gap-2 rounded-lg bg-informative-background p-3">
               <IconAi className="size-4 shrink-0 text-informative" />

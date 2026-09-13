@@ -16,7 +16,7 @@ export function MultiSelectButton({ text, isSelected = false, onClick }: MultiSe
       className={cn(
         'flex h-9 items-center justify-center rounded-full border px-4 py-2 transition-colors hover:opacity-80 text-label font-bold',
         isSelected
-          ? ' bg-orange-100 text-primary'
+          ? ' bg-brand-2 text-primary'
           : 'border-muted-foreground bg-secondary text-muted-foreground',
       )}
     >

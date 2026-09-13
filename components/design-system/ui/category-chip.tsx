@@ -4,7 +4,7 @@ import { IconAi } from '@/components/design-system/icons/icon-ai'
 import { cn } from '@/lib/utils'
 
 const categoryChipVariants = cva(
-  'inline-flex items-center justify-center gap-1 whitespace-nowrap bg-sky-100 font-bold text-sky-500',
+  'inline-flex items-center justify-center gap-1 whitespace-nowrap bg-informative-background font-bold text-informative',
   {
     variants: {
       size: {

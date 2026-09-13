@@ -72,7 +72,7 @@ type PostCardProps = {
 const postCardVariants = cva('relative flex items-start gap-3 transition-colors', {
   variants: {
     border: {
-      default: 'border-2 border-neutral-200 p-4 rounded-lg bg-surface',
+      default: 'border-2 border-border p-4 rounded-lg bg-surface',
       none: 'border-none',
     },
     interactive: {
